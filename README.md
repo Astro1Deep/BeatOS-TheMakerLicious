@@ -57,8 +57,8 @@ mpc-sample-database-toolkit/
 ### Opción 1: En macOS o Linux (Vía Terminal)
 ```bash
 # 1. Clona el repositorio
-git clone https://github.com/TU_USUARIO/mpc-sample-database-toolkit.git
-cd mpc-sample-database-toolkit
+git clone https://github.com/Astro1Deep/mpc-sample-database.git
+cd mpc-sample-database
 
 # 2. Da permisos de ejecución e inicia el instalador
 chmod +x install.sh
@@ -109,8 +109,8 @@ A lightweight, zero-dependency toolkit for **Akai MPC Standalone** users (MPC On
 ### How to use:
 1. Clone this repo:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/mpc-sample-database-toolkit.git
-   cd mpc-sample-database-toolkit
+   git clone https://github.com/Astro1Deep/mpc-sample-database.git
+   cd mpc-sample-database
    ```
 2. Run the indexer pointing to your MPC SD card or sample folder:
    ```bash
