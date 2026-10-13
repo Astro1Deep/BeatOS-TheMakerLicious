@@ -1,0 +1,30 @@
+# macOS system files
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+
+# Python temporary files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# SQLite WAL and temp files
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Large data files (optional)
+*.wav
+*.aif
+*.aiff
+*.mp3
+*.flac
+*.zip
+*.xpn

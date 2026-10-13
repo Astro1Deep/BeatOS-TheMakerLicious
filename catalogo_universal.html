@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Akai MPC Sample • Universal Browser & Finder</title>
+<style>
+  :root {
+    --bg-dark: #0f1115;
+    --bg-card: #171b22;
+    --bg-header: #1b2029;
+    --text-primary: #f0f3f6;
+    --text-muted: #8b949e;
+    --mpc-red: #ff3344;
+    --mpc-gold: #f5a623;
+    --mpc-cyan: #00d2d3;
+    --mpc-green: #2ecc71;
+    --border-color: #272e3a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
+  body { background: var(--bg-dark); color: var(--text-primary); display: flex; flex-direction: column; min-height: 100vh; }
+  
+  .header { background: var(--bg-header); border-bottom: 2px solid var(--mpc-red); padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+  .header h1 { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 12px; }
+  .header h1 span.logo-mpc { background: var(--mpc-red); color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 14px; letter-spacing: 1px; }
+  .header-metrics { display: flex; gap: 20px; font-size: 13px; color: var(--text-muted); }
+  .header-metrics strong { color: var(--mpc-cyan); font-weight: 700; }
+  
+  .container { max-width: 1400px; margin: 0 auto; width: 100%; padding: 24px; flex: 1; }
+  
+  .search-box-wrapper { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .search-bar { flex: 1; min-width: 280px; padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: #fff; font-size: 14px; outline: none; }
+  .search-bar:focus { border-color: var(--mpc-red); }
+  
+  .filters-row { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+  .filter-select { padding: 9px 14px; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 13px; outline: none; }
+  
+  .sound-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .chip { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted); transition: 0.15s; }
+  .chip:hover { border-color: var(--mpc-cyan); color: #fff; }
+  .chip.active { background: var(--mpc-red); color: #fff; border-color: var(--mpc-red); }
+  
+  .table-box { overflow-x: auto; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #1c222c; padding: 12px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border-color); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+  tr:hover { background: rgba(255, 51, 68, 0.04); }
+  
+  .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+  .badge-chill { background: rgba(0, 210, 211, 0.15); color: var(--mpc-cyan); }
+  .badge-groove { background: rgba(245, 166, 35, 0.15); color: var(--mpc-gold); }
+  .badge-banger { background: rgba(255, 51, 68, 0.15); color: var(--mpc-red); }
+  
+  .btn-action { padding: 5px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: var(--text-primary); cursor: pointer; transition: 0.15s; }
+  .btn-action:hover { border-color: var(--mpc-cyan); color: #fff; }
+  
+  .audio-player-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #151922; border-top: 2px solid var(--mpc-red); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; z-index: 100; }
+  .audio-info { font-size: 13px; color: var(--text-primary); font-weight: 600; display: flex; gap: 12px; align-items: center; }
+  audio { height: 32px; outline: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span class="logo-mpc">MPC</span> Sample Explorer & Hardware Finder</h1>
+  <div class="header-metrics">
+    <span>Base de Datos: <strong>SQLite 3</strong></span>
+    <span>Formato: <strong>WAV / AIFF / MP3</strong></span>
+    <span>Dispositivos: <strong>Live, One, X, Key, Studio</strong></span>
+  </div>
+</div>
+
+<div class="container">
+  <div class="search-box-wrapper">
+    <input type="text" id="searchInput" class="search-bar" placeholder="Buscar por instrumento, bombo, caja, 808, Rhodes, BPM (ej: 140), clave (ej: Dm)..." onkeyup="filterSamples()">
+  </div>
+
+  <div class="sound-chips">
+    <button class="chip active" onclick="selectChip('', this)">Todos</button>
+    <button class="chip" onclick="selectChip('KICK', this)">🥁 Kicks</button>
+    <button class="chip" onclick="selectChip('SNARE', this)">💥 Snares</button>
+    <button class="chip" onclick="selectChip('CLAP', this)">👏 Claps</button>
+    <button class="chip" onclick="selectChip('HIHAT', this)">✨ Hi-Hats</button>
+    <button class="chip" onclick="selectChip('BASS_808', this)">🔊 808 & Sub</button>
+    <button class="chip" onclick="selectChip('KEYS_SYNTH', this)">🎹 Pianos & Synths</button>
+    <button class="chip" onclick="selectChip('MELODIC_LOOP', this)">🎸 Melodic Loops</button>
+    <button class="chip" onclick="selectChip('DRUM_LOOP', this)">🔁 Breaks</button>
+    <button class="chip" onclick="selectChip('VOCAL', this)">🎤 Vocales</button>
+    <button class="chip" onclick="selectChip('FX', this)">⚡ FX / Texturas</button>
+  </div>
+
+  <div class="filters-row">
+    <select id="energyFilter" class="filter-select" onchange="filterSamples()">
+      <option value="">Cualquier Energía</option>
+      <option value="CHILL">Chill / Suave</option>
+      <option value="GROOVE">Groove / Ritmo</option>
+      <option value="BANGER">Banger / Alta Energía</option>
+    </select>
+
+    <select id="bpmFilter" class="filter-select" onchange="filterSamples()">
+      <option value="">Cualquier Rango BPM</option>
+      <option value="DOWN_TEMPO">Lo-Fi Lento / Down Tempo (&lt; 85 BPM)</option>
+      <option value="BOOM_BAP_LOFI">Boom Bap &amp; Lo-Fi (85 - 98 BPM)</option>
+      <option value="MID_TEMPO">Mid-Tempo &amp; Pop (99 - 118 BPM)</option>
+      <option value="HOUSE_GARAGE">House &amp; Garage (119 - 132 BPM)</option>
+      <option value="TRAP_HALFTIME">Trap &amp; Drill (133 - 155 BPM)</option>
+      <option value="DNB_JUNGLE">Drum &amp; Bass / Jungle (&gt; 155 BPM)</option>
+    </select>
+  </div>
+
+  <div class="table-box">
+    <table id="samplesTable">
+      <thead>
+        <tr>
+          <th>Archivo</th>
+          <th>Tipo</th>
+          <th>Colección</th>
+          <th>BPM</th>
+          <th>Tonalidad</th>
+          <th>Camelot</th>
+          <th>Energía</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <!-- Contenido dinámico o generado por el indexador -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="audio-player-bar">
+  <div class="audio-info">
+    <span>🎵 Muestra Activa:</span>
+    <span id="nowPlayingTitle" style="color:var(--mpc-cyan);">Ninguna muestra seleccionada</span>
+  </div>
+  <audio id="audioPlayer" controls></audio>
+</div>
+
+<script>
+let currentSelectedType = '';
+
+function selectChip(type, el) {
+  currentSelectedType = type;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  filterSamples();
+}
+
+function filterSamples() {
+  const query = document.getElementById('searchInput').value.toLowerCase();
+  const energyFilter = document.getElementById('energyFilter').value;
+  const bpmFilter = document.getElementById('bpmFilter').value;
+  
+  const rows = document.querySelectorAll('#samplesTable tbody tr');
+  rows.forEach(row => {
+    const text = row.innerText.toLowerCase();
+    const type = row.getAttribute('data-type');
+    const energy = row.getAttribute('data-energy');
+    const btier = row.getAttribute('data-btier');
+    
+    const matchesQuery = !query || text.includes(query);
+    const matchesType = !currentSelectedType || type === currentSelectedType;
+    const matchesEnergy = !energyFilter || energy === energyFilter;
+    const matchesBpm = !bpmFilter || btier === bpmFilter;
+    
+    row.style.display = (matchesQuery && matchesType && matchesEnergy && matchesBpm) ? '' : 'none';
+  });
+}
+
+function playSample(fullPath, filename) {
+  const player = document.getElementById('audioPlayer');
+  const title = document.getElementById('nowPlayingTitle');
+  player.src = fullPath;
+  title.innerText = filename;
+  player.play();
+}
+
+function copyPath(relPath) {
+  navigator.clipboard.writeText(relPath).then(() => {
+    alert('✔ Ruta copiada al portapapeles para Akai MPC:\n' + relPath);
+  });
+}
+</script>
+
+</body>
+</html>
