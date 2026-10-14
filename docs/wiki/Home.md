@@ -22,13 +22,13 @@ A continuación tienes acceso directo a todos los módulos y guías del toolkit:
 
 | Módulo | Descripción |
 | :--- | :--- |
-| **[🚀 1. Instalación y Puesta en Marcha](01-Instalacion-y-Puesta-en-Marcha)** | Requisitos mínimos, clonado del repositorio y ejecución del instalador interactivo en macOS, Linux y Windows. |
-| **[📁 2. Organización MicroSD para MPC](02-Organizacion-MicroSD-para-MPC)** | La arquitectura ergonómica recomendada de 7 macro-categorías, formato ExFAT y purga de archivos `._*`. |
-| **[🎹 3. Taxonomía y Detección de Audio](03-Taxonomia-y-Deteccion-de-Audio)** | Los 12 tipos de sonido, rangos de BPM (Lo-Fi a DnB), ruedas de armónicos Camelot y cálculo de energía. |
-| **[🔍 4. Auditoría de Proyectos (.xpj)](04-Auditoria-de-Proyectos-MPC-(xpj))** | Descompresión gzip, lectura de JSON interno, validación de carpetas `_[ProjectData]` y estados HEALTHY. |
-| **[📦 5. Expansiones Oficiales Akai](05-Expansiones-Oficiales-Akai)** | Parseo de `Expansion.xml`, programas `.xpm` / `.pgm`, carátulas gráficas y convivencia con kits de usuario. |
-| **[🌐 6. Catálogo Web y Audio Player](06-Catalogo-Web-y-Audio-Player)** | Funcionamiento del catálogo HTML5, solución al sandbox local con el servidor ligero y botón de copiado de rutas. |
-| **[📊 7. Consultas Avanzadas SQLite](07-Consultas-Avanzadas-SQLite)** | Consultas SQL prácticas para productores musicales, análisis estadístico y exportación a CSV/JSON. |
+| **[🚀 1. Instalación y Puesta en Marcha](01-Instalacion-y-Puesta-en-Marcha.md)** | Requisitos mínimos, clonado del repositorio y ejecución del instalador interactivo en macOS, Linux y Windows. |
+| **[📁 2. Organización MicroSD para MPC](02-Organizacion-MicroSD-para-MPC.md)** | La arquitectura ergonómica recomendada de 7 macro-categorías, formato ExFAT y purga de archivos `._*`. |
+| **[🎹 3. Taxonomía y Detección de Audio](03-Taxonomia-y-Deteccion-de-Audio.md)** | Los 12 tipos de sonido, rangos de BPM (Lo-Fi a DnB), ruedas de armónicos Camelot y cálculo de energía. |
+| **[🔍 4. Auditoría de Proyectos (.xpj)](04-Auditoria-de-Proyectos-MPC-(xpj).md)** | Descompresión gzip, lectura de JSON interno, validación de carpetas `_[ProjectData]` y estados HEALTHY. |
+| **[📦 5. Expansiones Oficiales Akai](05-Expansiones-Oficiales-Akai.md)** | Parseo de `Expansion.xml`, programas `.xpm` / `.pgm`, carátulas gráficas y convivencia con kits de usuario. |
+| **[🌐 6. Catálogo Web y Audio Player](06-Catalogo-Web-y-Audio-Player.md)** | Funcionamiento del catálogo HTML5, solución al sandbox local con el servidor ligero y botón de copiado de rutas. |
+| **[📊 7. Consultas Avanzadas SQLite](07-Consultas-Avanzadas-SQLite.md)** | Consultas SQL prácticas para productores musicales, análisis estadístico y exportación a CSV/JSON. |
 
 ---
 
