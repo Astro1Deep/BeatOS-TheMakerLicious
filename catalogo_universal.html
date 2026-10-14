@@ -549,16 +549,23 @@ function handlePlay(relPath, filename, btn) {
   // Codificación segura segmento a segmento (preserva barras / pero escapa #, &, comillas, espacios)
   const encodedPath = relPath.split('/').map(seg => encodeURIComponent(seg)).join('/');
   
-  // Construcción de URL según protocolo
-  let candidateUrl = '';
+  // Construcción de rutas de intento (primaria y alternativa)
+  let primaryUrl = '';
+  let fallbackUrl = '';
+  const isSubdir = window.location.pathname.includes('/SQLITE_DATABASE/');
+  
   if (window.location.protocol.startsWith('http')) {
-    // Si corre bajo servidor local
-    candidateUrl = '/' + encodedPath;
+    // Modo Servidor Local HTTP: probar raíz absoluta del servidor
+    primaryUrl = '/' + encodedPath;
+    fallbackUrl = (isSubdir ? '../' : './') + encodedPath;
   } else {
-    // Si corre con file://
-    const isSubdir = window.location.pathname.includes('/SQLITE_DATABASE/');
-    const prefix = isSubdir ? '../' : './';
-    candidateUrl = prefix + encodedPath;
+    // Modo Local file://
+    primaryUrl = (isSubdir ? '../' : './') + encodedPath;
+    let baseUri = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+    if (isSubdir) {
+      baseUri = baseUri.replace(/SQLITE_DATABASE\/[^\/]*$/, '');
+    }
+    fallbackUrl = baseUri + encodedPath;
   }
   
   document.getElementById('nowPlayingTitle').innerText = 'Cargando: ' + filename;
@@ -566,30 +573,48 @@ function handlePlay(relPath, filename, btn) {
   document.getElementById('btnCopyPlayer').setAttribute('data-copy', relPath);
   document.getElementById('btnCopyPlayer').style.display = 'inline-flex';
   
-  audio.src = candidateUrl;
+  function triggerFinalError() {
+    btn.innerText = '▶ Play';
+    if (window.location.protocol === 'file:') {
+      document.getElementById('nowPlayingTitle').innerHTML = 
+        '⚠️ <strong>' + escapeHtml(filename) + '</strong>: El navegador bloquea archivos locales (file://). Inicia el servidor con <code>./install.sh</code> (Opción 2) o pulsa 📋 Copiar Ruta.';
+    } else {
+      document.getElementById('nowPlayingTitle').innerHTML = 
+        '⚠️ <strong>' + escapeHtml(filename) + '</strong>: No se pudo reproducir este archivo. Pulsa 📋 Copiar Ruta para cargarlo en tu hardware MPC.';
+    }
+  }
+
+  audio.onerror = function() {
+    console.warn('Error en reproducción primaria:', primaryUrl);
+    if (fallbackUrl && audio.src !== fallbackUrl) {
+      audio.src = fallbackUrl;
+      audio.play().then(() => {
+        document.getElementById('nowPlayingTitle').innerText = '▶ ' + filename;
+        btn.innerText = '⏸ Pause';
+        currentPlayingBtn = btn;
+      }).catch(triggerFinalError);
+    } else {
+      triggerFinalError();
+    }
+  };
+  
+  audio.src = primaryUrl;
   audio.play().then(() => {
     document.getElementById('nowPlayingTitle').innerText = '▶ ' + filename;
     btn.innerText = '⏸ Pause';
     currentPlayingBtn = btn;
   }).catch(err => {
-    console.warn('Primer intento de reproducción relativo:', err);
-    // Fallback: Si corre bajo file:// y está en subdirectorio, calcular URL base absoluta del documento
-    let baseUri = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-    if (window.location.pathname.includes('/SQLITE_DATABASE/')) {
-      baseUri = baseUri.replace(/SQLITE_DATABASE\/[^\/]*$/, '');
+    console.warn('Primer intento directo pausado/restringido:', err);
+    if (fallbackUrl && audio.src !== fallbackUrl) {
+      audio.src = fallbackUrl;
+      audio.play().then(() => {
+        document.getElementById('nowPlayingTitle').innerText = '▶ ' + filename;
+        btn.innerText = '⏸ Pause';
+        currentPlayingBtn = btn;
+      }).catch(triggerFinalError);
+    } else {
+      triggerFinalError();
     }
-    const fallbackUrl = baseUri + encodedPath;
-    
-    audio.src = fallbackUrl;
-    audio.play().then(() => {
-      document.getElementById('nowPlayingTitle').innerText = '▶ ' + filename;
-      btn.innerText = '⏸ Pause';
-      currentPlayingBtn = btn;
-    }).catch(err2 => {
-      console.error('Fallo en reproducción directa local:', err2);
-      document.getElementById('nowPlayingTitle').innerHTML = '⚠️ <strong>' + filename + '</strong> (Navegador restringe audio local. Ejecuta <code>./install.sh</code> opción 2)';
-      btn.innerText = '▶ Play';
-    });
   });
 }
 

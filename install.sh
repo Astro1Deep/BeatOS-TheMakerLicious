@@ -97,28 +97,10 @@ case $OPTION in
         ;;
     2)
         echo -e "\n${BOLD}Ruta del catálogo / tarjeta SD:${NC}"
-        echo -e "Ingresa la ruta raíz de la tarjeta (o ENTER para usar la carpeta actual):"
+        echo -e "Ingresa la ruta raíz de la tarjeta (o ENTER para auto-detectar tarjeta montada):"
         read -p "> " SERVE_PATH
-        if [ -z "$SERVE_PATH" ]; then
-            SERVE_PATH="$SCRIPT_DIR"
-        fi
         
-        PORT=8888
-        URL="http://localhost:$PORT/catalogo_mpc_sample.html"
-        echo -e "\n${GREEN}Iniciando servidor local en el puerto $PORT...${NC}"
-        echo -e "${CYAN}Dirección del catálogo:${NC} $URL"
-        echo -e "${GOLD}Presiona Ctrl+C en esta terminal para detener el servidor.${NC}\n"
-        
-        # Abrir navegador tras 1 segundo
-        (sleep 1 && (
-            if [[ "$OSTYPE" == "darwin"* ]]; then
-                open "$URL" || open "http://localhost:$PORT/SQLITE_DATABASE/catalogo_mpc_sample.html"
-            elif command -v xdg-open &>/dev/null; then
-                xdg-open "$URL" || xdg-open "http://localhost:$PORT/SQLITE_DATABASE/catalogo_mpc_sample.html"
-            fi
-        )) &
-        
-        python3 -m http.server "$PORT" --directory "$SERVE_PATH"
+        python3 "$SCRIPT_DIR/serve_mpc.py" "$SERVE_PATH"
         ;;
     3)
         echo -e "\n${BOLD}Ruta a limpiar de metadatos de macOS:${NC}"

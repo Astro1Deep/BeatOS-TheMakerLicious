@@ -58,30 +58,14 @@ def main():
                 open_url_or_file(target_cat)
                 
     elif choice == "2":
-        path = input("Ingresa la ruta de la tarjeta SD (Enter para carpeta actual): ").strip()
-        if not path:
-            path = script_dir
-            
-        port = 8888
-        url = f"http://localhost:{port}/catalogo_mpc_sample.html"
-        print(f"\n🌐 Iniciando servidor web en: {url}")
-        print("💡 Para detener el servidor, presiona Ctrl+C en esta terminal.\n")
-        
-        import threading
-        def delayed_open():
-            time.sleep(1)
-            open_url_or_file(url)
-            
-        threading.Thread(target=delayed_open, daemon=True).start()
-        
-        from http.server import HTTPServer, SimpleHTTPRequestHandler
-        import functools
-        handler = functools.partial(SimpleHTTPRequestHandler, directory=path)
-        httpd = HTTPServer(('127.0.0.1', port), handler)
+        path = input("Ingresa la ruta de la tarjeta SD (Enter para auto-detectar tarjeta montada): ").strip()
         try:
-            httpd.serve_forever()
-        except KeyboardInterrupt:
-            print("\nServidor detenido.")
+            import serve_mpc
+            serve_mpc.run_server(path if path else None)
+        except ImportError:
+            # Fallback inline si serve_mpc no estuviera disponible
+            import subprocess
+            subprocess.run([sys.executable, os.path.join(script_dir, "serve_mpc.py"), path if path else ""])
             
     elif choice == "3":
         path = input("Ingresa la ruta a limpiar (Enter para carpeta actual): ").strip()
