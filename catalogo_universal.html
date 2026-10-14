@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Akai MPC Sample • Universal Browser & Finder</title>
+<title>Akai MPC Sample • Master Audio Catalog & Database Explorer</title>
 <style>
   :root {
     --bg-dark: #0f1115;
     --bg-card: #171b22;
     --bg-header: #1b2029;
+    --bg-hover: #222733;
     --text-primary: #f0f3f6;
     --text-muted: #8b949e;
     --mpc-red: #ff3344;
@@ -18,61 +19,106 @@
     --border-color: #272e3a;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
-  body { background: var(--bg-dark); color: var(--text-primary); display: flex; flex-direction: column; min-height: 100vh; }
+  body { background: var(--bg-dark); color: var(--text-primary); display: flex; flex-direction: column; min-height: 100vh; padding-bottom: 95px; }
   
   .header { background: var(--bg-header); border-bottom: 2px solid var(--mpc-red); padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
   .header h1 { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 12px; }
   .header h1 span.logo-mpc { background: var(--mpc-red); color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 14px; letter-spacing: 1px; }
-  .header-metrics { display: flex; gap: 20px; font-size: 13px; color: var(--text-muted); }
+  .header-metrics { display: flex; gap: 20px; font-size: 13px; color: var(--text-muted); flex-wrap: wrap; }
   .header-metrics strong { color: var(--mpc-cyan); font-weight: 700; }
   
-  .container { max-width: 1400px; margin: 0 auto; width: 100%; padding: 24px; flex: 1; }
+  .notice-banner { background: rgba(0, 210, 211, 0.08); border-bottom: 1px solid rgba(0, 210, 211, 0.2); padding: 10px 24px; font-size: 12px; color: var(--mpc-cyan); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .notice-banner code { background: rgba(0,0,0,0.35); padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #fff; }
   
-  .search-box-wrapper { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tabs { display: flex; background: var(--bg-card); border-bottom: 1px solid var(--border-color); padding: 0 24px; gap: 8px; overflow-x: auto; }
+  .tab-btn { background: transparent; border: none; color: var(--text-muted); padding: 14px 20px; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.2s; white-space: nowrap; }
+  .tab-btn:hover { color: #fff; }
+  .tab-btn.active { color: var(--mpc-red); border-bottom-color: var(--mpc-red); }
+  
+  .tab-pane { display: none; padding: 24px; flex: 1; }
+  .tab-pane.active { display: block; }
+  
+  .search-container { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
   .search-bar { flex: 1; min-width: 280px; padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: #fff; font-size: 14px; outline: none; }
   .search-bar:focus { border-color: var(--mpc-red); }
   
-  .filters-row { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
-  .filter-select { padding: 9px 14px; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 13px; outline: none; }
-  
-  .sound-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .sound-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
   .chip { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted); transition: 0.15s; }
   .chip:hover { border-color: var(--mpc-cyan); color: #fff; }
   .chip.active { background: var(--mpc-red); color: #fff; border-color: var(--mpc-red); }
   
+  .filters-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+  .filter-select { padding: 9px 14px; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 13px; outline: none; }
+  
   .table-box { overflow-x: auto; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { background: #1c222c; padding: 12px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border-color); }
+  th { background: #1c222c; padding: 12px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; }
   td { padding: 10px 14px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
   tr:hover { background: rgba(255, 51, 68, 0.04); }
   
   .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+  .badge-healthy { background: rgba(46, 204, 113, 0.15); color: var(--mpc-green); border: 1px solid var(--mpc-green); }
+  .badge-attention { background: rgba(255, 51, 68, 0.15); color: var(--mpc-red); border: 1px solid var(--mpc-red); }
   .badge-chill { background: rgba(0, 210, 211, 0.15); color: var(--mpc-cyan); }
   .badge-groove { background: rgba(245, 166, 35, 0.15); color: var(--mpc-gold); }
   .badge-banger { background: rgba(255, 51, 68, 0.15); color: var(--mpc-red); }
   
-  .btn-action { padding: 5px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: var(--text-primary); cursor: pointer; transition: 0.15s; }
-  .btn-action:hover { border-color: var(--mpc-cyan); color: #fff; }
+  .btn-play { padding: 6px 12px; border-radius: 6px; border: none; font-size: 11px; font-weight: 700; cursor: pointer; background: var(--mpc-red); color: #fff; transition: 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-play:hover { opacity: 0.9; transform: scale(1.02); }
+  .btn-copy { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 11px; font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.05); color: var(--text-muted); transition: 0.15s; margin-left: 6px; }
+  .btn-copy:hover { color: #fff; border-color: var(--mpc-cyan); }
   
-  .audio-player-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #151922; border-top: 2px solid var(--mpc-red); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; z-index: 100; }
-  .audio-info { font-size: 13px; color: var(--text-primary); font-weight: 600; display: flex; gap: 12px; align-items: center; }
-  audio { height: 32px; outline: none; }
+  .pagination { display: flex; justify-content: space-between; align-items: center; padding: 16px 4px; font-size: 13px; color: var(--text-muted); flex-wrap: wrap; gap: 10px; }
+  .btn-page { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-card); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .btn-page:disabled { opacity: 0.4; cursor: not-allowed; }
+  
+  .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+  .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; transition: 0.2s; }
+  .card:hover { border-color: var(--mpc-red); transform: translateY(-2px); }
+  .card h3 { font-size: 16px; margin-bottom: 8px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+  .card p { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+  
+  .audio-player-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #151922; border-top: 2px solid var(--mpc-red); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.6); gap: 15px; flex-wrap: wrap; }
+  .player-track-info { display: flex; flex-direction: column; min-width: 240px; }
+  .player-track-title { font-size: 13px; color: #fff; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .player-track-path { font-size: 11px; color: var(--text-muted); font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 550px; }
+  .player-controls { display: flex; align-items: center; gap: 15px; }
+  audio { height: 34px; outline: none; }
+  
+  .chart-bar-container { margin-bottom: 12px; }
+  .chart-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: var(--text-muted); }
+  .chart-bar-bg { background: rgba(255,255,255,0.06); height: 10px; border-radius: 5px; overflow: hidden; }
+  .chart-bar-fill { background: var(--mpc-red); height: 100%; border-radius: 5px; transition: width 0.3s; }
+  
+  .toast { position: fixed; bottom: 85px; right: 24px; background: #2ecc71; color: #000; padding: 10px 18px; border-radius: 6px; font-size: 12px; font-weight: bold; display: none; z-index: 200; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1><span class="logo-mpc">MPC</span> Sample Explorer & Hardware Finder</h1>
-  <div class="header-metrics">
+  <h1><span class="logo-mpc">MPC</span> Akai MPC Sample • Master Audio Catalog</h1>
+  <div class="header-metrics" id="headerMetrics">
     <span>Base de Datos: <strong>SQLite 3</strong></span>
     <span>Formato: <strong>WAV / AIFF / MP3</strong></span>
-    <span>Dispositivos: <strong>Live, One, X, Key, Studio</strong></span>
+    <span>Hardware: <strong>Akai MPC Standalone</strong></span>
   </div>
 </div>
 
-<div class="container">
-  <div class="search-box-wrapper">
-    <input type="text" id="searchInput" class="search-bar" placeholder="Buscar por instrumento, bombo, caja, 808, Rhodes, BPM (ej: 140), clave (ej: Dm)..." onkeyup="filterSamples()">
+<div class="notice-banner">
+  <span>💡 <strong>Consejo de Reproducción:</strong> Si tu navegador restringe la reproducción de archivos locales (protocolo <code>file://</code>), inicia el servidor local sin restricciones ejecutando en Terminal: <code>./install.sh</code> (Opción 2) o utiliza el botón <strong>📋 Copiar Ruta</strong> para cargar al instante en tu hardware MPC.</span>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('tab-samples', this)" id="tabSamplesBtn">🔊 Explorador de Samples</button>
+  <button class="tab-btn" onclick="switchTab('tab-projects', this)" id="tabProjectsBtn">📁 Proyectos MPC (.xpj)</button>
+  <button class="tab-btn" onclick="switchTab('tab-expansions', this)" id="tabExpansionsBtn">🎛️ Expansiones Oficiales</button>
+  <button class="tab-btn" onclick="switchTab('tab-stats', this)">📊 Distribución Sonora</button>
+</div>
+
+<!-- TAB 1: SAMPLES -->
+<div id="tab-samples" class="tab-pane active">
+  <div class="search-container">
+    <input type="text" id="searchInput" class="search-bar" placeholder="Buscar por bombo, caja, 808, Rhodes, tempo (ej: 140), tono (ej: Dm), pack..." oninput="onSearchInput()">
   </div>
 
   <div class="sound-chips">
@@ -81,25 +127,27 @@
     <button class="chip" onclick="selectChip('SNARE', this)">💥 Snares</button>
     <button class="chip" onclick="selectChip('CLAP', this)">👏 Claps</button>
     <button class="chip" onclick="selectChip('HIHAT', this)">✨ Hi-Hats</button>
-    <button class="chip" onclick="selectChip('BASS_808', this)">🔊 808 & Sub</button>
+    <button class="chip" onclick="selectChip('CYMBAL', this)">💿 Címbalos</button>
+    <button class="chip" onclick="selectChip('PERCUSSION', this)">🪘 Percusión</button>
+    <button class="chip" onclick="selectChip('BASS_808', this)">🔊 808s & Subs</button>
     <button class="chip" onclick="selectChip('KEYS_SYNTH', this)">🎹 Pianos & Synths</button>
-    <button class="chip" onclick="selectChip('MELODIC_LOOP', this)">🎸 Melodic Loops</button>
-    <button class="chip" onclick="selectChip('DRUM_LOOP', this)">🔁 Breaks</button>
-    <button class="chip" onclick="selectChip('VOCAL', this)">🎤 Vocales</button>
-    <button class="chip" onclick="selectChip('FX', this)">⚡ FX / Texturas</button>
+    <button class="chip" onclick="selectChip('MELODIC_LOOP', this)">🎸 Loops Melódicos</button>
+    <button class="chip" onclick="selectChip('DRUM_LOOP', this)">🔁 Breakbeats</button>
+    <button class="chip" onclick="selectChip('VOCAL', this)">🎤 Voces</button>
+    <button class="chip" onclick="selectChip('FX', this)">⚡ Efectos & FX</button>
   </div>
 
-  <div class="filters-row">
-    <select id="energyFilter" class="filter-select" onchange="filterSamples()">
+  <div class="filters-bar">
+    <select id="energyFilter" class="filter-select" onchange="applyFilters()">
       <option value="">Cualquier Energía</option>
-      <option value="CHILL">Chill / Suave</option>
-      <option value="GROOVE">Groove / Ritmo</option>
-      <option value="BANGER">Banger / Alta Energía</option>
+      <option value="CHILL">Chill / Suave (Baja)</option>
+      <option value="GROOVE">Groove / Ritmo (Media)</option>
+      <option value="BANGER">Banger / Peak (Alta)</option>
     </select>
 
-    <select id="bpmFilter" class="filter-select" onchange="filterSamples()">
-      <option value="">Cualquier Rango BPM</option>
-      <option value="DOWN_TEMPO">Lo-Fi Lento / Down Tempo (&lt; 85 BPM)</option>
+    <select id="bpmFilter" class="filter-select" onchange="applyFilters()">
+      <option value="">Cualquier Rango de Tempo (BPM)</option>
+      <option value="DOWN_TEMPO">Lo-Fi / Down Tempo (&lt; 85 BPM)</option>
       <option value="BOOM_BAP_LOFI">Boom Bap &amp; Lo-Fi (85 - 98 BPM)</option>
       <option value="MID_TEMPO">Mid-Tempo &amp; Pop (99 - 118 BPM)</option>
       <option value="HOUSE_GARAGE">House &amp; Garage (119 - 132 BPM)</option>
@@ -108,79 +156,468 @@
     </select>
   </div>
 
+  <div class="pagination">
+    <span id="resultsCount">Cargando muestras...</span>
+    <div>
+      <button id="btnPrev" class="btn-page" onclick="prevPage()">◀ Anterior</button>
+      <span id="pageIndicator" style="margin: 0 12px; font-weight: bold;">1 / 1</span>
+      <button id="btnNext" class="btn-page" onclick="nextPage()">Siguiente ▶</button>
+    </div>
+  </div>
+
   <div class="table-box">
     <table id="samplesTable">
       <thead>
         <tr>
           <th>Archivo</th>
           <th>Tipo</th>
-          <th>Colección</th>
+          <th>Categoría / Pack</th>
           <th>BPM</th>
           <th>Tonalidad</th>
           <th>Camelot</th>
           <th>Energía</th>
-          <th>Acciones</th>
+          <th>Tamaño</th>
+          <th>Acción</th>
         </tr>
       </thead>
       <tbody id="tableBody">
-        <!-- Contenido dinámico o generado por el indexador -->
+        <!-- Renderizado dinámicamente por JavaScript -->
       </tbody>
     </table>
   </div>
 </div>
 
-<div class="audio-player-bar">
-  <div class="audio-info">
-    <span>🎵 Muestra Activa:</span>
-    <span id="nowPlayingTitle" style="color:var(--mpc-cyan);">Ninguna muestra seleccionada</span>
+<!-- TAB 2: PROYECTOS -->
+<div id="tab-projects" class="tab-pane">
+  <div class="grid-cards" id="projectsGrid">
+    <!-- Renderizado dinámicamente por JavaScript -->
   </div>
-  <audio id="audioPlayer" controls></audio>
 </div>
 
+<!-- TAB 3: EXPANSIONES -->
+<div id="tab-expansions" class="tab-pane">
+  <div class="grid-cards" id="expansionsGrid">
+    <!-- Renderizado dinámicamente por JavaScript -->
+  </div>
+</div>
+
+<!-- TAB 4: ESTADÍSTICAS -->
+<div id="tab-stats" class="tab-pane">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px;">
+    <div class="card">
+      <h3 style="margin-bottom: 16px;">🥁 Tipos de Sonido en la Colección</h3>
+      <div id="soundTypesChart"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom: 16px;">⚡ Distribución de Energía</h3>
+      <div id="energyChart"></div>
+    </div>
+  </div>
+</div>
+
+<!-- BARRA DE REPRODUCCIÓN FLOTANTE -->
+<div class="audio-player-bar">
+  <div class="player-track-info">
+    <div class="player-track-title">
+      <span id="nowPlayingTitle">Ningún sample en reproducción</span>
+    </div>
+    <div class="player-track-path" id="nowPlayingPath">-</div>
+  </div>
+  <div class="player-controls">
+    <audio id="audioPlayer" controls></audio>
+    <button id="btnCopyPlayer" class="btn-copy" style="display:none;" onclick="copyActivePath()">📋 Copiar Ruta MPC</button>
+  </div>
+</div>
+
+<div id="toast" class="toast">✔ Ruta copiada al portapapeles</div>
+
+<!-- INYECCIÓN AUTOMÁTICA DE DATOS POR EL INDEXADOR -->
+<!-- DATA_PLACEHOLDER -->
+
 <script>
-let currentSelectedType = '';
+// Fallback si no hay inyección de datos (plantilla limpia)
+if (typeof SAMPLES === 'undefined') {
+  window.SAMPLES = [];
+}
+if (typeof METADATA === 'undefined') {
+  window.METADATA = {
+    total_samples: 0,
+    total_size_gb: 0,
+    total_projects: 0,
+    total_expansions: 0,
+    sound_types: {},
+    energy_distribution: {},
+    projects: [],
+    expansions: []
+  };
+}
+
+let filteredSamples = [...SAMPLES];
+let currentChip = '';
+let currentPage = 1;
+const PAGE_SIZE = 60;
+let currentPlayingBtn = null;
+
+function initCatalog() {
+  if (METADATA) {
+    const metricsEl = document.getElementById('headerMetrics');
+    if (metricsEl && METADATA.total_samples) {
+      metricsEl.innerHTML = `
+        <span>Samples en Base de Datos: <strong>${METADATA.total_samples.toLocaleString()}</strong></span>
+        <span>Volumen Total: <strong>${METADATA.total_size_gb} GB</strong></span>
+        <span>Expansiones Oficiales: <strong>${METADATA.total_expansions}</strong></span>
+        <span>Proyectos Standalone: <strong>${METADATA.total_projects}</strong></span>
+        <span>Base de Datos: <strong>mpc_sample.db</strong></span>
+      `;
+    }
+    const tabSamples = document.getElementById('tabSamplesBtn');
+    if (tabSamples && METADATA.total_samples) tabSamples.innerText = `🔊 Explorador de Samples (${METADATA.total_samples.toLocaleString()})`;
+    const tabProjects = document.getElementById('tabProjectsBtn');
+    if (tabProjects && METADATA.total_projects !== undefined) tabProjects.innerText = `📁 Proyectos MPC (${METADATA.total_projects})`;
+    const tabExpansions = document.getElementById('tabExpansionsBtn');
+    if (tabExpansions && METADATA.total_expansions !== undefined) tabExpansions.innerText = `🎛️ Expansiones Oficiales (${METADATA.total_expansions})`;
+
+    renderProjects();
+    renderExpansions();
+    renderStats();
+  }
+  applyFilters();
+}
+
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  const target = document.getElementById(tabId);
+  if (target) target.classList.add('active');
+}
 
 function selectChip(type, el) {
-  currentSelectedType = type;
+  currentChip = type;
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
-  filterSamples();
+  currentPage = 1;
+  applyFilters();
 }
 
-function filterSamples() {
-  const query = document.getElementById('searchInput').value.toLowerCase();
-  const energyFilter = document.getElementById('energyFilter').value;
-  const bpmFilter = document.getElementById('bpmFilter').value;
+function onSearchInput() {
+  currentPage = 1;
+  applyFilters();
+}
+
+function getBpmTier(bpm) {
+  if (!bpm || bpm <= 0) return 'UNSPECIFIED';
+  if (bpm < 85) return 'DOWN_TEMPO';
+  if (bpm <= 98) return 'BOOM_BAP_LOFI';
+  if (bpm <= 118) return 'MID_TEMPO';
+  if (bpm <= 132) return 'HOUSE_GARAGE';
+  if (bpm <= 155) return 'TRAP_HALFTIME';
+  return 'DNB_JUNGLE';
+}
+
+function applyFilters() {
+  const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+  const energy = document.getElementById('energyFilter').value;
+  const bpmRange = document.getElementById('bpmFilter').value;
+
+  filteredSamples = SAMPLES.filter(s => {
+    // Estructura: [filename, sound_type, macro, sub, bpm, key, camelot, energy, size_mb, rel_path]
+    const filename = (s[0] || '').toLowerCase();
+    const type = s[1] || '';
+    const macro = (s[2] || '').toLowerCase();
+    const sub = (s[3] || '').toLowerCase();
+    const bpm = s[4] || 0;
+    const key = (s[5] || '').toLowerCase();
+    const camelot = (s[6] || '').toLowerCase();
+    const sEnergy = s[7] || '';
+
+    if (currentChip && type !== currentChip) return false;
+    if (energy && sEnergy !== energy) return false;
+    if (bpmRange && getBpmTier(bpm) !== bpmRange) return false;
+
+    if (query) {
+      const match = filename.includes(query) ||
+                    macro.includes(query) ||
+                    sub.includes(query) ||
+                    key.includes(query) ||
+                    camelot.includes(query) ||
+                    type.toLowerCase().includes(query) ||
+                    (bpm > 0 && bpm.toString().includes(query));
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  currentPage = 1;
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  if (!tbody) return;
+
+  const total = filteredSamples.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  document.getElementById('resultsCount').innerText = `Mostrando ${Math.min(total, (currentPage-1)*PAGE_SIZE + 1)} - ${Math.min(total, currentPage*PAGE_SIZE)} de ${total.toLocaleString()} muestras`;
+  document.getElementById('pageIndicator').innerText = `${currentPage} / ${totalPages}`;
+  document.getElementById('btnPrev').disabled = (currentPage <= 1);
+  document.getElementById('btnNext').disabled = (currentPage >= totalPages);
+
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageItems = filteredSamples.slice(start, start + PAGE_SIZE);
+
+  let html = '';
+  pageItems.forEach(s => {
+    const [name, type, macro, sub, bpm, key, camelot, energy, sz, rel] = s;
+    const bpmText = bpm > 0 ? `${bpm} BPM` : '-';
+    let energyBadge = '-';
+    if (energy === 'CHILL') energyBadge = '<span class="badge badge-chill">CHILL</span>';
+    else if (energy === 'GROOVE') energyBadge = '<span class="badge badge-groove">GROOVE</span>';
+    else if (energy === 'BANGER') energyBadge = '<span class="badge badge-banger">BANGER</span>';
+
+    const safeRel = escapeHtml(rel);
+    const safeName = escapeHtml(name);
+
+    html += `<tr>
+      <td><strong>${safeName}</strong></td>
+      <td><span class="badge" style="background:rgba(255,255,255,0.08);">${escapeHtml(type)}</span></td>
+      <td style="color:var(--text-muted); font-size:12px;">${escapeHtml(macro)} / ${escapeHtml(sub)}</td>
+      <td><strong>${bpmText}</strong></td>
+      <td>${escapeHtml(key)}</td>
+      <td style="color:var(--mpc-gold); font-weight:bold;">${escapeHtml(camelot)}</td>
+      <td>${energyBadge}</td>
+      <td style="color:var(--text-muted);">${sz} MB</td>
+      <td>
+        <button class="btn-play" data-rel="${safeRel}" data-name="${safeName}">▶ Play</button>
+        <button class="btn-copy" data-copy="${safeRel}" title="Copiar ruta para Akai MPC">📋 Copiar</button>
+      </td>
+    </tr>`;
+  });
+
+  tbody.innerHTML = html || '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">No se encontraron muestras que coincidan con los filtros.</td></tr>';
+}
+
+function renderProjects() {
+  const container = document.getElementById('projectsGrid');
+  if (!container || !METADATA.projects) return;
+  let html = '';
+  METADATA.projects.forEach(p => {
+    const isHealthy = p.status === 'HEALTHY';
+    const badge = isHealthy
+      ? '<span class="badge badge-healthy">HEALTHY (100%)</span>'
+      : `<span class="badge badge-attention">ATTENTION (${p.missing} faltantes)</span>`;
+    html += `
+      <div class="card">
+        <h3>${escapeHtml(p.name)} ${badge}</h3>
+        <p>Tempo: <strong>${p.tempo} BPM</strong> • Tono: <strong>${escapeHtml(p.key || '-')}</strong></p>
+        <p>Samples vinculados: <strong>${p.samples}</strong></p>
+        <p>Tamaño archivo: <strong>${p.size_kb} KB</strong></p>
+        <div style="margin-top:12px;">
+          <button class="btn-copy" data-copy="MPC-Sample/Projects/${escapeHtml(p.name)}.xpj" style="margin-left:0;">📋 Copiar Ruta Proyecto</button>
+        </div>
+      </div>
+    `;
+  });
+  container.innerHTML = html || '<p style="color:var(--text-muted);">No se encontraron proyectos .xpj.</p>';
+}
+
+function renderExpansions() {
+  const container = document.getElementById('expansionsGrid');
+  if (!container || !METADATA.expansions) return;
+  let html = '';
+  METADATA.expansions.forEach(exp => {
+    html += `
+      <div class="card">
+        <h3>🎛️ ${escapeHtml(exp.title)}</h3>
+        <p>Fabricante: <strong>${escapeHtml(exp.mfg || 'Akai Professional')}</strong></p>
+        <p>Programas (.xpm): <strong>${exp.programs}</strong> • Muestras: <strong>${exp.samples}</strong></p>
+        <p>Tamaño en Disco: <strong>${exp.size_mb} MB</strong></p>
+        <div style="margin-top:12px;">
+          <button class="btn-copy" data-copy="Expansions/${escapeHtml(exp.title)}" style="margin-left:0;">📋 Copiar Ruta Expansión</button>
+        </div>
+      </div>
+    `;
+  });
+  container.innerHTML = html || '<p style="color:var(--text-muted);">No se detectaron expansiones oficiales con Expansion.xml.</p>';
+}
+
+function renderStats() {
+  const soundChart = document.getElementById('soundTypesChart');
+  const energyChart = document.getElementById('energyChart');
+  if (!soundChart || !energyChart || !METADATA.sound_types) return;
+
+  const total = METADATA.total_samples || 1;
+  let sHtml = '';
+  for (const [st, count] of Object.entries(METADATA.sound_types)) {
+    const pct = Math.round((count / total) * 100);
+    sHtml += `
+      <div class="chart-bar-container">
+        <div class="chart-label"><span>${escapeHtml(st)}</span><span>${count.toLocaleString()} (${pct}%)</span></div>
+        <div class="chart-bar-bg"><div class="chart-bar-fill" style="width: ${pct}%;"></div></div>
+      </div>
+    `;
+  }
+  soundChart.innerHTML = sHtml;
+
+  let eHtml = '';
+  if (METADATA.energy_distribution) {
+    for (const [en, count] of Object.entries(METADATA.energy_distribution)) {
+      const pct = Math.round((count / total) * 100);
+      let col = 'var(--mpc-gold)';
+      if (en === 'CHILL') col = 'var(--mpc-cyan)';
+      if (en === 'BANGER') col = 'var(--mpc-red)';
+      eHtml += `
+        <div class="chart-bar-container">
+          <div class="chart-label"><span>${escapeHtml(en)}</span><span>${count.toLocaleString()} (${pct}%)</span></div>
+          <div class="chart-bar-bg"><div class="chart-bar-fill" style="width: ${pct}%; background: ${col};"></div></div>
+        </div>
+      `;
+    }
+  }
+  energyChart.innerHTML = eHtml;
+}
+
+function prevPage() {
+  if (currentPage > 1) {
+    currentPage--;
+    renderTable();
+    window.scrollTo({ top: 220, behavior: 'smooth' });
+  }
+}
+
+function nextPage() {
+  const totalPages = Math.ceil(filteredSamples.length / PAGE_SIZE);
+  if (currentPage < totalPages) {
+    currentPage++;
+    renderTable();
+    window.scrollTo({ top: 220, behavior: 'smooth' });
+  }
+}
+
+// Delegación global de clics para Play y Copiar
+document.addEventListener('click', function(e) {
+  const playBtn = e.target.closest('.btn-play');
+  if (playBtn) {
+    const rel = playBtn.getAttribute('data-rel');
+    const name = playBtn.getAttribute('data-name');
+    handlePlay(rel, name, playBtn);
+    return;
+  }
   
-  const rows = document.querySelectorAll('#samplesTable tbody tr');
-  rows.forEach(row => {
-    const text = row.innerText.toLowerCase();
-    const type = row.getAttribute('data-type');
-    const energy = row.getAttribute('data-energy');
-    const btier = row.getAttribute('data-btier');
+  const copyBtn = e.target.closest('.btn-copy');
+  if (copyBtn) {
+    const path = copyBtn.getAttribute('data-copy');
+    if (path) copyText(path);
+    return;
+  }
+});
+
+const audio = document.getElementById('audioPlayer');
+
+audio.addEventListener('ended', function() {
+  document.getElementById('nowPlayingTitle').innerText = 'Reproducción finalizada';
+  if (currentPlayingBtn) {
+    currentPlayingBtn.innerText = '▶ Play';
+  }
+});
+
+function handlePlay(relPath, filename, btn) {
+  if (audio.src && !audio.paused && currentPlayingBtn === btn) {
+    audio.pause();
+    btn.innerText = '▶ Play';
+    document.getElementById('nowPlayingTitle').innerText = 'Pausado: ' + filename;
+    return;
+  }
+  
+  if (currentPlayingBtn && currentPlayingBtn !== btn) {
+    currentPlayingBtn.innerText = '▶ Play';
+  }
+  
+  // Codificación segura segmento a segmento (preserva barras / pero escapa #, &, comillas, espacios)
+  const encodedPath = relPath.split('/').map(seg => encodeURIComponent(seg)).join('/');
+  
+  // Construcción de URL según protocolo
+  let candidateUrl = '';
+  if (window.location.protocol.startsWith('http')) {
+    // Si corre bajo servidor local
+    candidateUrl = '/' + encodedPath;
+  } else {
+    // Si corre con file://
+    const isSubdir = window.location.pathname.includes('/SQLITE_DATABASE/');
+    const prefix = isSubdir ? '../' : './';
+    candidateUrl = prefix + encodedPath;
+  }
+  
+  document.getElementById('nowPlayingTitle').innerText = 'Cargando: ' + filename;
+  document.getElementById('nowPlayingPath').innerText = relPath;
+  document.getElementById('btnCopyPlayer').setAttribute('data-copy', relPath);
+  document.getElementById('btnCopyPlayer').style.display = 'inline-flex';
+  
+  audio.src = candidateUrl;
+  audio.play().then(() => {
+    document.getElementById('nowPlayingTitle').innerText = '▶ ' + filename;
+    btn.innerText = '⏸ Pause';
+    currentPlayingBtn = btn;
+  }).catch(err => {
+    console.warn('Primer intento de reproducción relativo:', err);
+    // Fallback: Si corre bajo file:// y está en subdirectorio, calcular URL base absoluta del documento
+    let baseUri = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+    if (window.location.pathname.includes('/SQLITE_DATABASE/')) {
+      baseUri = baseUri.replace(/SQLITE_DATABASE\/[^\/]*$/, '');
+    }
+    const fallbackUrl = baseUri + encodedPath;
     
-    const matchesQuery = !query || text.includes(query);
-    const matchesType = !currentSelectedType || type === currentSelectedType;
-    const matchesEnergy = !energyFilter || energy === energyFilter;
-    const matchesBpm = !bpmFilter || btier === bpmFilter;
-    
-    row.style.display = (matchesQuery && matchesType && matchesEnergy && matchesBpm) ? '' : 'none';
+    audio.src = fallbackUrl;
+    audio.play().then(() => {
+      document.getElementById('nowPlayingTitle').innerText = '▶ ' + filename;
+      btn.innerText = '⏸ Pause';
+      currentPlayingBtn = btn;
+    }).catch(err2 => {
+      console.error('Fallo en reproducción directa local:', err2);
+      document.getElementById('nowPlayingTitle').innerHTML = '⚠️ <strong>' + filename + '</strong> (Navegador restringe audio local. Ejecuta <code>./install.sh</code> opción 2)';
+      btn.innerText = '▶ Play';
+    });
   });
 }
 
-function playSample(fullPath, filename) {
-  const player = document.getElementById('audioPlayer');
-  const title = document.getElementById('nowPlayingTitle');
-  player.src = fullPath;
-  title.innerText = filename;
-  player.play();
+function copyActivePath() {
+  const path = document.getElementById('btnCopyPlayer').getAttribute('data-copy');
+  if (path) copyText(path);
 }
 
-function copyPath(relPath) {
-  navigator.clipboard.writeText(relPath).then(() => {
-    alert('✔ Ruta copiada al portapapeles para Akai MPC:\n' + relPath);
-  });
+function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => showToast());
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast();
+  }
 }
+
+function showToast() {
+  const toast = document.getElementById('toast');
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 2500);
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+window.addEventListener('DOMContentLoaded', initCatalog);
 </script>
 
 </body>

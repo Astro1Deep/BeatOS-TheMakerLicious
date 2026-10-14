@@ -2,11 +2,11 @@
 """
 Akai MPC Sample Universal Indexer & Database Generator
 Motor portátil y universal de indexación de audio y proyectos MPC para la comunidad.
-No requiere dependencias externas (usa la biblioteca estándar de Python 3).
+No requiere dependencias externas (usa exclusivamente la biblioteca estándar de Python 3).
 
 Uso:
     python3 index_mpc_library.py
-    python3 index_mpc_library.py --path "/Volumes/MiTarjetaMPC" --output "./output"
+    python3 index_mpc_library.py --path "/Volumes/MiTarjetaMPC" --output "./SQLITE_DATABASE"
 """
 
 import os
@@ -21,19 +21,23 @@ from datetime import datetime
 from xml.etree import ElementTree as ET
 from collections import defaultdict
 
+# ==============================================================================
+# TAXONOMÍA Y REGLAS DE FORMAS DE SONIDO Y GÉNEROS UNIVERSALES
+# ==============================================================================
+
 SOUND_RULES = [
-    ("KICK", ["kick", "bd", "bombo", "bassdrum", "kik"]),
-    ("SNARE", ["snare", "snr", "rimshot", "caja", "tarola", "sidestick"]),
-    ("CLAP", ["clap", "clp", "snap"]),
-    ("HIHAT", ["hihat", "hi-hat", "hat", "hh", "openhh", "closedhh", "open-hat", "closed-hat", "oh", "ch"]),
-    ("CYMBAL", ["crash", "ride", "cymbal", "splash", "china"]),
-    ("PERCUSSION", ["perc", "prc", "conga", "bongo", "shaker", "tambourine", "tamb", "cowbell", "woodblock", "foley", "tom", "organic"]),
-    ("BASS_808", ["808", "sub", "bass", "subbass", "reese", "synthbass", "ace_of_bass"]),
-    ("MELODIC_LOOP", ["arp loop", "melody", "keyslp", "voxlp", "synth loop", "guitar loop", "riff", "stem"]),
-    ("DRUM_LOOP", ["break", "drum loop", "drumloop", "breaks", "reworked breaks", "amen", "groove"]),
-    ("VOCAL", ["vocal", "vox", "acapella", "chant", "adlib", "voices", "speech", "phrase"]),
-    ("FX", ["fx", "sfx", "riser", "sweep", "impact", "downlifter", "noise", "texture", "vinyl", "space echo", "echo"]),
-    ("KEYS_SYNTH", ["piano", "rhodes", "wurli", "synth", "lead", "pluck", "organ", "brass", "horn", "string", "chord", "stab", "keys", "music box", "vapor keys", "eclipse"])
+    ("KICK", ["kick", "kik", "bd", "bassdrum", "bass drum", "bombo", "sub kick", "acoustic kick", "808 kick"]),
+    ("SNARE", ["snare", "snr", "rimshot", "rim", "cross stick", "sidestick", "caja", "tarola", "snare roll", "acoustic snare"]),
+    ("CLAP", ["clap", "clp", "snap", "finger snap", "palma", "palmas", "handclap"]),
+    ("HIHAT", ["hihat", "hi-hat", "hat", "hh", "openhh", "closedhh", "open hat", "closed hat", "open-hat", "closed-hat", "oh", "ch", "pedal hat", "shaker", "tambourine", "tamb"]),
+    ("CYMBAL", ["crash", "ride", "cymbal", "splash", "china", "gong", "cymb"]),
+    ("PERCUSSION", ["perc", "prc", "conga", "bongo", "cowbell", "woodblock", "foley", "tom", "organic", "agogo", "timbales", "clave", "claves", "cabasa", "triangle", "cajon", "djembe", "tabla", "guiro", "cuica", "chimes", "maraca"]),
+    ("BASS_808", ["808", "sub", "bass", "subbass", "reese", "synthbass", "synth bass", "electric bass", "upright bass", "slap bass", "bassline", "sub-bass"]),
+    ("KEYS_SYNTH", ["piano", "rhodes", "wurli", "wurlitzer", "clav", "clavinet", "synth", "lead", "pluck", "organ", "brass", "horn", "trumpet", "trombone", "sax", "strings", "violin", "cello", "chord", "stab", "keys", "pad", "arp", "music box"]),
+    ("MELODIC_LOOP", ["melody", "arp loop", "keyslp", "voxlp", "synth loop", "guitar loop", "riff", "stem", "sample chop", "chops", "loop", "acoustic guitar", "electric guitar", "lick"]),
+    ("DRUM_LOOP", ["break", "drum loop", "drumloop", "breaks", "breakbeat", "amen", "groove", "top loop", "perc loop", "drum track", "beat"]),
+    ("VOCAL", ["vocal", "vox", "acapella", "chant", "adlib", "voices", "speech", "phrase", "acap", "singing", "spoken word", "vocal chop"]),
+    ("FX", ["fx", "sfx", "riser", "sweep", "downlifter", "impact", "noise", "texture", "vinyl", "crackle", "tape", "space echo", "echo", "transition", "laser", "sub drop", "reverse", "whoosh"])
 ]
 
 CAMELOT_MAP = {
@@ -138,28 +142,26 @@ def main():
     db_path = os.path.join(output_dir, "mpc_sample.db")
     json_path = os.path.join(output_dir, "mpc_sample.json")
     csv_path = os.path.join(output_dir, "mpc_sample_resumen.csv")
-    html_path = os.path.join(output_dir, "catalogo_mpc_sample.html")
+    html_root_path = os.path.join(root_path, "catalogo_mpc_sample.html")
+    html_sqlite_path = os.path.join(output_dir, "catalogo_mpc_sample.html")
 
-    print("=" * 60)
+    print("=" * 65)
     print("🎛️  AKAI MPC SAMPLE DATABASE & FINDER TOOLKIT")
-    print("=" * 60)
+    print("=" * 65)
     print(f"Ruta de Origen : {root_path}")
     print(f"Ruta de Salida : {output_dir}")
     print(f"Base de Datos  : {db_path}")
 
-    # Inicializar Base de Datos SQLite
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
     cur.execute("PRAGMA journal_mode=WAL;")
     cur.execute("PRAGMA synchronous=NORMAL;")
 
-    # Cargar o crear schema
     schema_file = os.path.join(os.path.dirname(__file__), "schema.sql")
     if os.path.exists(schema_file):
         with open(schema_file, 'r', encoding='utf-8') as f:
             cur.executescript(f.read())
     else:
-        # Fallback DDL
         cur.executescript("""
         CREATE TABLE IF NOT EXISTS sound_categories (code TEXT PRIMARY KEY, name TEXT NOT NULL, icon TEXT);
         CREATE TABLE IF NOT EXISTS expansions (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, identifier TEXT, manufacturer TEXT, exp_type TEXT, version TEXT, cover_image TEXT, programs_count INTEGER DEFAULT 0, samples_count INTEGER DEFAULT 0, size_mb REAL DEFAULT 0.0, full_path TEXT);
@@ -210,13 +212,14 @@ def main():
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """, (p_name, xpj_path, tempo, key, len(unique_paths), missing_count, status, sz_kb))
                 total_projects += 1
-                projects_list.append({"name": p_name, "tempo": tempo, "key": key, "samples": len(unique_paths), "missing": missing_count, "status": status})
-                print(f"  ✔ Proyecto: {p_name} | {tempo} BPM | Clave: {key} | Samples: {len(unique_paths)} | Estado: {status}")
+                projects_list.append({"name": p_name, "tempo": round(tempo, 1), "key": key, "samples": len(unique_paths), "missing": missing_count, "status": status, "size_kb": sz_kb})
+                print(f"  ✔ Proyecto: {p_name} | {round(tempo, 1)} BPM | Clave: {key} | Samples: {len(unique_paths)} | Estado: {status}")
     conn.commit()
 
     # 2. Escanear Expansiones Oficiales
     print("\n📦 2. Buscando Expansiones Oficiales MPC...")
     total_expansions = 0
+    expansions_list = []
     for r, dirs, files in os.walk(root_path):
         if any(part.startswith('.') for part in r.split(os.sep)): continue
         if "Expansion.xml" in files:
@@ -253,6 +256,7 @@ def main():
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (title, title.lower(), mfg, etype, "1.0", cover_img, p_count, s_count, sz_mb, r))
             total_expansions += 1
+            expansions_list.append({"title": title, "mfg": mfg, "type": etype, "programs": p_count, "samples": s_count, "size_mb": sz_mb, "path": r})
             print(f"  ✔ Expansión: {title} ({mfg}) | {p_count} Programas | {s_count} Samples")
     conn.commit()
 
@@ -328,15 +332,45 @@ def main():
         "total_expansions": total_expansions,
         "sound_types": stypes,
         "energy_distribution": energies,
-        "projects": projects_list
+        "projects": projects_list,
+        "expansions": expansions_list
     }
     with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(json_payload, f, indent=2, ensure_ascii=False)
 
-    print(f"✔ Base de Datos : {db_path}")
-    print(f"✔ Resumen CSV   : {csv_path}")
-    print(f"✔ Metadatos JSON: {json_path}")
-    print("\n🎉 Indexación completada. Ejecuta install.sh o abre catalogo_mpc_sample.html para explorar.")
+    # 5. Generar Catálogo HTML5
+    print("\n🌐 5. Generando Catálogo Web HTML5 interactivo...")
+    cur.execute("""
+    SELECT filename, sound_type, macro_category, sub_pack, COALESCE(bpm, 0), COALESCE(musical_key, '-'), COALESCE(camelot, '-'), energy_level, size_mb, rel_path
+    FROM samples
+    ORDER BY RANDOM()
+    LIMIT 15000
+    """)
+    catalog_records = cur.fetchall()
+    records_json = json.dumps(catalog_records, ensure_ascii=False)
+    metadata_json = json.dumps(json_payload, ensure_ascii=False)
+
+    # Leer catalogo_universal.html como base
+    universal_template_path = os.path.join(os.path.dirname(__file__), "catalogo_universal.html")
+    if os.path.exists(universal_template_path):
+        with open(universal_template_path, 'r', encoding='utf-8') as f:
+            html_code = f.read()
+        # Inyectar datos completos
+        inject_script = f"<script>\nconst SAMPLES = {records_json};\nconst METADATA = {metadata_json};\n</script>\n"
+        html_code = html_code.replace("<!-- DATA_PLACEHOLDER -->", inject_script)
+    else:
+        # Fallback inline minimal catalog
+        html_code = f"<html><body><h1>MPC Sample Catalog</h1><script>const SAMPLES={records_json}; const METADATA={metadata_json};</script></body></html>"
+
+    with open(html_root_path, 'w', encoding='utf-8') as f:
+        f.write(html_code)
+    with open(html_sqlite_path, 'w', encoding='utf-8') as f:
+        f.write(html_code)
+
+    print(f"✔ Catálogo en Raíz: {html_root_path}")
+    print(f"✔ Catálogo en Carpeta SQLite: {html_sqlite_path}")
+    print(f"✔ Base de Datos SQLite: {db_path}")
+    print("\n🎉 Indexación completada con éxito. Ejecuta ./install.sh para explorar tu colección.")
     conn.close()
 
 if __name__ == "__main__":
