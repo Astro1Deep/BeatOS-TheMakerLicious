@@ -96,7 +96,18 @@
 <body>
 
 <div class="header">
-  <h1><span class="logo-mpc">MPC</span> Akai MPC Sample • Master Audio Catalog</h1>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <img src="docs/assets/branding/waxspaceship_label_logo.png" alt="WaxSpaceship" style="height:42px; object-fit:contain; filter:drop-shadow(0 0 8px rgba(0,210,211,0.35));" onerror="this.style.display='none'">
+    <img src="docs/assets/branding/astro1deep_artist_logo.png" alt="Astro1Deep" style="height:32px; object-fit:contain; filter:drop-shadow(0 0 8px rgba(255,51,68,0.35));" onerror="this.style.display='none'">
+    <div>
+      <h1 style="font-size:20px; font-weight:800; display:flex; align-items:center; gap:10px;">
+        <span class="logo-mpc">MPC</span> Akai MPC Sample • Master Audio Catalog
+      </h1>
+      <div style="font-size:11px; color:var(--text-muted); letter-spacing:1px; margin-top:2px;">
+        WAXSPACESHIP SOUND LAB · CURATED BY <strong style="color:var(--mpc-cyan);">ASTRO1DEEP</strong> · CEREBRO OS COMPLEMENT
+      </div>
+    </div>
+  </div>
   <div class="header-metrics" id="headerMetrics">
     <span>Base de Datos: <strong>SQLite 3</strong></span>
     <span>Formato: <strong>WAV / AIFF / MP3</strong></span>

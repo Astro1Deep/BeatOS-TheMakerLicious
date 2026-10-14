@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="docs/assets/branding/mpc_sample_db_hero_banner.svg" alt="MPC Sample Database Hero Banner" width="100%">
+</div>
+
 # 🎛️ Akai MPC Sample Database & Finder Toolkit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
