@@ -17,7 +17,7 @@
 
 Un ecosistema universal, ultraligero y autónomo en **Python 3 + SQLite + HTML5** diseñado para beatmakers y productores musicales. Permite indexar, preescuchar, auditar y diseñar drum kits para:
 - **Akai MPC Standalone** (Live, Live II, One, One+, X, X SE, Key 37, Key 61, Studio)
-- **Roland SP-404MK2 & DOOM OS / SP-404A / SX**
+- **Roland SP-404MK2 / SP-404A / SX**
 - **Native Instruments Maschine** (MK3, Plus, Mikro)
 - **Teenage Engineering Pocket Operator** (PO-33 K.O.! & PO-133 Street Fighter)
 

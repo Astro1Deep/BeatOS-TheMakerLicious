@@ -51,10 +51,10 @@ El motor autónomo [`hardware_kit_builder.py`](file:///Users/ivan/Documents/mpc-
 * Estructura los 16 pads con nombres estandarizados y mapeo MIDI en C3 (Root Note 60).
 * Organiza los samples en la subcarpeta `Samples/Group_A/` lista para importar en Maschine MK3, Plus y Mikro.
 
-### C. Roland SP-404MK2 & DOOM OS
+### C. Roland SP-404MK2 & Serie SP
 * Exporta los 16 pads directamente al formato de importación rápida del **Banco A**.
 * Calibra el formato de audio a **WAV 16-bit / 48 kHz** nativo de Roland, eliminando conversiones de sample rate en el hardware.
-* Compatible al 100% con DOOM OS y el secuenciador TR-REC.
+* Compatible con el firmware oficial de Roland, secuenciador TR-REC y extensiones de la comunidad (como DOOM OS).
 
 ### D. Roland SP-404A / SX
 * Mapea los primeros 12 pads al Banco A con formato **WAV 16-bit / 44.1 kHz**.

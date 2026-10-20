@@ -1506,7 +1506,6 @@
   <!-- Technical Registration Markers & Millimeter Ticks -->
   <g stroke="var(--banner-subtext, #8c93a3)" stroke-width="1" opacity="0.7">
     <path d="M 18 36 L 36 18 M 1182 36 L 1164 18 M 18 444 L 36 462 M 1182 444 L 1164 462" stroke="var(--banner-accent, #ff6600)" stroke-width="1.5" />
-    <!-- Millimeter Ticks -->
     <line x1="80" y1="18" x2="80" y2="25" /><line x1="130" y1="18" x2="130" y2="22" /><line x1="180" y1="18" x2="180" y2="25" />
     <line x1="230" y1="18" x2="230" y2="22" /><line x1="280" y1="18" x2="280" y2="25" /><line x1="330" y1="18" x2="330" y2="22" />
     <line x1="870" y1="18" x2="870" y2="22" /><line x1="920" y1="18" x2="920" y2="25" /><line x1="970" y1="18" x2="970" y2="22" />
@@ -1515,48 +1514,56 @@
 
   <!-- HEADER: Technical Blueprint Serigraphy -->
   <g class="te-mono" font-size="9" letter-spacing="1.2">
-    <rect x="36" y="32" width="130" height="18" rx="2" class="te-accent-fill" />
-    <text x="44" y="44" fill="#ffffff" font-weight="800">beatos labs</text>
-    
-    <text x="178" y="45" class="te-text-main" font-weight="700">// hardware blueprint guide</text>
-    <text x="410" y="45" class="te-text-muted">hardware reference manual / 4-way multi-sampler architecture</text>
-    <text x="1060" y="45" class="te-text-main" text-anchor="end" font-weight="700">rev. 2026</text>
+    <rect x="36" y="30" width="126" height="18" rx="2" class="te-accent-fill" />
+    <text x="44" y="42" fill="#ffffff" font-weight="800">beatos labs</text>
+    <text x="174" y="43" class="te-text-main" font-weight="700">// hardware blueprint guide</text>
+    <text x="408" y="43" class="te-text-muted">hardware reference manual / 4-way multi-sampler architecture</text>
+    <text x="1164" y="43" class="te-text-main" text-anchor="end" font-weight="700">rev. 2026</text>
   </g>
 
   <!-- MAIN MANUAL TITLE: BeatOS — The MakerLicious -->
   <g class="te-text" text-anchor="middle">
-    <text x="600" y="76" font-size="25" font-weight="900" class="te-text-main" letter-spacing="1.5">
+    <text x="600" y="74" font-size="24" font-weight="900" class="te-text-main" letter-spacing="1.5">
       BeatOS — The MakerLicious
     </text>
-    <text x="600" y="94" class="te-mono te-accent-fill" font-size="10.5" font-weight="700" letter-spacing="1.5">
+    <text x="600" y="92" class="te-mono te-accent-fill" font-size="10.5" font-weight="700" letter-spacing="1.5">
       The system  ★  [universal beatmaker station]
     </text>
-    <text x="600" y="109" class="te-mono te-text-muted" font-size="8.5" letter-spacing="1">
+    <text x="600" y="106" class="te-mono te-text-muted" font-size="8.5" letter-spacing="1">
       │  ref: mpc · sp-404 · pocket operator · maschine  │
     </text>
   </g>
 
   <!-- DIVIDER LINE -->
-  <line x1="36" y1="118" x2="1164" y2="118" stroke="var(--banner-border, #2b3242)" stroke-width="1" />
+  <line x1="36" y1="116" x2="1164" y2="116" stroke="var(--banner-border, #2b3242)" stroke-width="1" />
 
-  <!-- ==================== 1. TEENAGE ENGINEERING PO-20 ARCADE ==================== -->
-  <g transform="translate(55, 132)">
+  <!-- ==================== 1. TEENAGE ENGINEERING POCKET OPERATOR ==================== -->
+  <g transform="translate(42, 126)">
     <!-- Sub-header -->
-    <text x="0" y="0" class="te-mono te-bold" font-size="11" class="te-text-main">01 / pocket operator</text>
-    <text x="130" y="0" class="te-mono te-accent-fill" font-size="9" font-weight="700">chiptune &amp; sample engine</text>
+    <text x="0" y="0" class="te-mono te-bold te-text-main" font-size="10">01 / pocket operator</text>
+    <text x="125" y="0" class="te-mono te-accent-fill" font-size="8.5" font-weight="700">po-20 · po-33</text>
     
-    <!-- Wire Hanger Loop -->
-    <path d="M 45 18 C 45 8, 60 4, 85 4 C 110 4, 125 8, 125 18 L 125 32 L 45 32 Z" class="te-paper-fill" stroke-width="1.4" />
-    <circle cx="85" cy="16" r="5.5" class="te-bg-fill" stroke="var(--banner-border, #2b3242)" stroke-width="1" />
-    <line x1="45" y1="32" x2="125" y2="32" stroke="var(--banner-line, #f4f4f6)" stroke-dasharray="2,2" stroke-width="0.8" />
+    <!-- Wire Hanger Loop & Tear-off Perforation -->
+    <path d="M 50 14 C 50 5, 65 2, 90 2 C 115 2, 130 5, 130 14 L 130 26 L 50 26 Z" class="te-paper-fill" stroke-width="1.2" />
+    <circle cx="90" cy="12" r="5" class="te-bg-fill" stroke="var(--banner-border, #2b3242)" stroke-width="1" />
+    <line x1="45" y1="26" x2="135" y2="26" stroke="var(--banner-line, #f4f4f6)" stroke-dasharray="2,2" stroke-width="0.8" />
+
+    <!-- 3.5mm Stereo Audio IN / OUT Barrels (Real Hardware Tabs) -->
+    <rect x="-4" y="65" width="5" height="18" rx="1" class="te-paper-fill" stroke-width="1" />
+    <rect x="180" y="65" width="5" height="18" rx="1" class="te-paper-fill" stroke-width="1" />
+    <!-- Microphone Capsule & Quartz Crystal -->
+    <circle cx="16" cy="38" r="3.5" class="te-paper-fill" stroke-width="1" />
+    <text x="16" y="47" class="te-mono te-text-muted" font-size="5" text-anchor="middle">mic</text>
+    <rect x="160" y="35" width="10" height="5" rx="1" class="te-paper-fill" stroke-width="0.8" />
+    <text x="165" y="47" class="te-mono te-text-muted" font-size="5" text-anchor="middle">clk</text>
     
     <!-- Naked PCB Board Body -->
-    <rect x="0" y="32" width="170" height="265" rx="4" class="te-device-fill" stroke-width="1.8" />
+    <rect x="0" y="26" width="181" height="282" rx="4" class="te-device-fill" stroke-width="1.6" />
     
     <!-- Segmented LCD Screen -->
-    <rect x="12" y="46" width="146" height="76" rx="3" class="te-screen-fill" stroke-width="1.5" />
+    <rect x="10" y="52" width="161" height="74" rx="3" class="te-screen-fill" stroke-width="1.4" />
     <!-- 8-Bit Arcade Sprite (PO-20 Signature) -->
-    <g class="te-accent-fill" transform="translate(22, 58)">
+    <g class="te-accent-fill" transform="translate(18, 62)">
       <rect x="6" y="0" width="8" height="2" />
       <rect x="4" y="2" width="12" height="2" />
       <rect x="2" y="4" width="16" height="8" />
@@ -1567,357 +1574,767 @@
       <rect x="14" y="12" width="4" height="4" />
     </g>
     <!-- Screen Readout -->
-    <text x="54" y="72" class="te-mono te-text-main" font-size="16" font-weight="900">120<tspan font-size="9" class="te-text-muted">bpm</tspan></text>
-    <text x="54" y="88" class="te-mono te-accent2-fill" font-size="8.5" font-weight="bold">chord: Dm</text>
+    <text x="50" y="74" class="te-mono te-text-main" font-size="15" font-weight="900">120<tspan font-size="8" class="te-text-muted">bpm</tspan></text>
+    <text x="50" y="88" class="te-mono te-accent2-fill" font-size="8" font-weight="bold">chord: Dm</text>
+    <text x="50" y="99" class="te-mono te-accent3-fill" font-size="7">pat 01 · step 16</text>
     <!-- Step LEDs on screen -->
-    <g transform="translate(22, 104)" class="te-accent-fill">
-      <circle cx="0" cy="0" r="1.5" /><circle cx="8" cy="0" r="1.5" /><circle cx="16" cy="0" r="1.5" /><circle cx="24" cy="0" r="1.5" />
-      <circle cx="32" cy="0" r="1.5" /><circle cx="40" cy="0" r="1.5" /><circle cx="48" cy="0" r="1.5" /><circle cx="56" cy="0" r="1.5" />
-      <circle cx="64" cy="0" r="1.5" /><circle cx="72" cy="0" r="1.5" /><circle cx="80" cy="0" r="1.5" /><circle cx="88" cy="0" r="1.5" />
-      <circle cx="96" cy="0" r="1.5" /><circle cx="104" cy="0" r="1.5" /><circle cx="112" cy="0" r="1.5" /><circle cx="120" cy="0" r="1.5" />
+    <g transform="translate(18, 114)" class="te-accent-fill">
+      <circle cx="0" cy="0" r="1.4" /><circle cx="9" cy="0" r="1.4" /><circle cx="18" cy="0" r="1.4" /><circle cx="27" cy="0" r="1.4" />
+      <circle cx="36" cy="0" r="1.4" /><circle cx="45" cy="0" r="1.4" /><circle cx="54" cy="0" r="1.4" /><circle cx="63" cy="0" r="1.4" />
+      <circle cx="72" cy="0" r="1.4" /><circle cx="81" cy="0" r="1.4" /><circle cx="90" cy="0" r="1.4" /><circle cx="99" cy="0" r="1.4" />
+      <circle cx="108" cy="0" r="1.4" /><circle cx="117" cy="0" r="1.4" /><circle cx="126" cy="0" r="1.4" /><circle cx="135" cy="0" r="1.4" />
     </g>
     
     <!-- Potentiometers A and B -->
-    <circle cx="35" cy="144" r="12" class="te-paper-fill" stroke-width="1.4" />
-    <line x1="35" y1="132" x2="35" y2="144" class="te-accent-stroke" stroke-width="2" />
-    <text x="35" y="164" class="te-mono te-text-muted" font-size="7" text-anchor="middle">knob a</text>
+    <circle cx="36" cy="144" r="11" class="te-paper-fill" stroke-width="1.3" />
+    <line x1="36" y1="133" x2="36" y2="144" class="te-accent-stroke" stroke-width="1.8" />
+    <text x="36" y="162" class="te-mono te-text-muted" font-size="6.5" text-anchor="middle">knob a</text>
 
-    <circle cx="135" cy="144" r="12" class="te-paper-fill" stroke-width="1.4" />
-    <line x1="135" y1="132" x2="142" y2="140" class="te-accent-stroke" stroke-width="2" />
-    <text x="135" y="164" class="te-mono te-text-muted" font-size="7" text-anchor="middle">knob b</text>
+    <circle cx="145" cy="144" r="11" class="te-paper-fill" stroke-width="1.3" />
+    <line x1="145" y1="133" x2="152" y2="140" class="te-accent-stroke" stroke-width="1.8" />
+    <text x="145" y="162" class="te-mono te-text-muted" font-size="6.5" text-anchor="middle">knob b</text>
 
-    <!-- 16 Real Tactile Micro-Buttons Grid (Numbered 1-16) -->
-    <g transform="translate(18, 178)">
+    <!-- Authentic Pocket Operator Dedicated Function Buttons -->
+    <!-- Left Column: sound, pattern, bpm -->
+    <circle cx="16" cy="178" r="5" class="te-paper-fill" stroke-width="1" />
+    <text x="16" y="188" class="te-mono te-text-muted" font-size="5" text-anchor="middle">snd</text>
+
+    <circle cx="16" cy="204" r="5" class="te-paper-fill" stroke-width="1" />
+    <text x="16" y="214" class="te-mono te-text-muted" font-size="5" text-anchor="middle">ptn</text>
+
+    <circle cx="16" cy="230" r="5" class="te-paper-fill" stroke-width="1" />
+    <text x="16" y="240" class="te-mono te-text-muted" font-size="5" text-anchor="middle">bpm</text>
+
+    <!-- Right Column: chord/fx, write with Red Recording LED -->
+    <circle cx="165" cy="178" r="5" class="te-paper-fill" stroke-width="1" />
+    <text x="165" y="188" class="te-mono te-text-muted" font-size="5" text-anchor="middle">chd</text>
+
+    <circle cx="165" cy="204" r="5" class="te-paper-fill" stroke-width="1" />
+    <text x="165" y="214" class="te-mono te-text-muted" font-size="5" text-anchor="middle">wrt</text>
+    <!-- Real PO Red Recording LED -->
+    <circle cx="174" cy="204" r="2" fill="#ff3333" stroke="#ffffff" stroke-width="0.5" />
+
+    <!-- 16 Real Tactile Micro-Buttons Grid (Dome switches with solder ring) -->
+    <g transform="translate(34, 168)">
       <!-- Row 1: 1, 2, 3, 4 -->
-      <circle cx="12" cy="12" r="8" class="te-pad-idle" stroke-width="1.4" />
-      <text x="12" y="12" class="te-mono te-text-main" font-size="8" font-weight="700" text-anchor="middle" dominant-baseline="central">1</text>
-      <circle cx="47" cy="12" r="8" class="te-pad-idle" stroke-width="1.4" />
-      <text x="47" y="12" class="te-mono te-text-main" font-size="8" font-weight="700" text-anchor="middle" dominant-baseline="central">2</text>
-      <circle cx="82" cy="12" r="8" class="te-pad-idle" stroke-width="1.4" />
-      <text x="82" y="12" class="te-mono te-text-main" font-size="8" font-weight="700" text-anchor="middle" dominant-baseline="central">3</text>
-      <circle cx="117" cy="12" r="8" class="te-pad-idle" stroke-width="1.4" />
-      <text x="117" y="12" class="te-mono te-text-main" font-size="8" font-weight="700" text-anchor="middle" dominant-baseline="central">4</text>
+      <circle cx="10" cy="10" r="7.5" class="te-pad-idle" stroke-width="1.2" />
+      <circle cx="10" cy="10" r="4.5" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.7" />
+      <text x="10" y="10" class="te-mono te-text-main" font-size="7" font-weight="700" text-anchor="middle" dominant-baseline="central">1</text>
+
+      <circle cx="41" cy="10" r="7.5" class="te-pad-idle" stroke-width="1.2" />
+      <circle cx="41" cy="10" r="4.5" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.7" />
+      <text x="41" y="10" class="te-mono te-text-main" font-size="7" font-weight="700" text-anchor="middle" dominant-baseline="central">2</text>
+
+      <circle cx="72" cy="10" r="7.5" class="te-pad-idle" stroke-width="1.2" />
+      <circle cx="72" cy="10" r="4.5" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.7" />
+      <text x="72" y="10" class="te-mono te-text-main" font-size="7" font-weight="700" text-anchor="middle" dominant-baseline="central">3</text>
+
+      <circle cx="103" cy="10" r="7.5" class="te-pad-idle" stroke-width="1.2" />
+      <circle cx="103" cy="10" r="4.5" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.7" />
+      <text x="103" y="10" class="te-mono te-text-main" font-size="7" font-weight="700" text-anchor="middle" dominant-baseline="central">4</text>
 
       <!-- Row 2: 5, 6, 7, 8 -->
-      <circle cx="12" cy="38" r="8" class="te-pad-idle" stroke-width="1.4" />
-      <text x="12" y="38" class="te-mono te-text-main" font-size="8" font-weight="700" text-anchor="middle" dominant-baseline="central">5</text>
-      <circle cx="47" cy="38" r="8" class="te-pad-idle" stroke-width="1.4" />
-      <text x="47" y="38" class="te-mono te-text-main" font-size="8" font-weight="700" text-anchor="middle" dominant-baseline="central">6</text>
-      <circle cx="82" cy="38" r="8" class="te-pad-idle" stroke-width="1.4" />
-      <text x="82" y="38" class="te-mono te-text-main" font-size="8" font-weight="700" text-anchor="middle" dominant-baseline="central">7</text>
-      <circle cx="117" cy="38" r="8" class="te-pad-idle" stroke-width="1.4" />
-      <text x="117" y="38" class="te-mono te-text-main" font-size="8" font-weight="700" text-anchor="middle" dominant-baseline="central">8</text>
+      <circle cx="10" cy="36" r="7.5" class="te-pad-idle" stroke-width="1.2" />
+      <circle cx="10" cy="36" r="4.5" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.7" />
+      <text x="10" y="36" class="te-mono te-text-main" font-size="7" font-weight="700" text-anchor="middle" dominant-baseline="central">5</text>
+
+      <circle cx="41" cy="36" r="7.5" class="te-pad-idle" stroke-width="1.2" />
+      <circle cx="41" cy="36" r="4.5" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.7" />
+      <text x="41" y="36" class="te-mono te-text-main" font-size="7" font-weight="700" text-anchor="middle" dominant-baseline="central">6</text>
+
+      <circle cx="72" cy="36" r="7.5" class="te-pad-idle" stroke-width="1.2" />
+      <circle cx="72" cy="36" r="4.5" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.7" />
+      <text x="72" y="36" class="te-mono te-text-main" font-size="7" font-weight="700" text-anchor="middle" dominant-baseline="central">7</text>
+
+      <circle cx="103" cy="36" r="7.5" class="te-pad-idle" stroke-width="1.2" />
+      <circle cx="103" cy="36" r="4.5" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.7" />
+      <text x="103" y="36" class="te-mono te-text-main" font-size="7" font-weight="700" text-anchor="middle" dominant-baseline="central">8</text>
 
       <!-- Row 3: 9, 10, 11, 12 -->
-      <circle cx="12" cy="64" r="8" class="te-pad-idle" stroke-width="1.4" />
-      <text x="12" y="64" class="te-mono te-text-main" font-size="8" font-weight="700" text-anchor="middle" dominant-baseline="central">9</text>
-      <circle cx="47" cy="64" r="8" class="te-pad-idle" stroke-width="1.4" />
-      <text x="47" y="64" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">10</text>
-      <circle cx="82" cy="64" r="8" class="te-pad-idle" stroke-width="1.4" />
-      <text x="82" y="64" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">11</text>
-      <circle cx="117" cy="64" r="8" class="te-pad-idle" stroke-width="1.4" />
-      <text x="117" y="64" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">12</text>
+      <circle cx="10" cy="62" r="7.5" class="te-pad-idle" stroke-width="1.2" />
+      <circle cx="10" cy="62" r="4.5" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.7" />
+      <text x="10" y="62" class="te-mono te-text-main" font-size="7" font-weight="700" text-anchor="middle" dominant-baseline="central">9</text>
 
-      <!-- Row 4: 13, 14, 15, 16 (PO-20 Arcade Active Highlight Pad) -->
-      <circle cx="12" cy="90" r="8" class="te-pad-idle" stroke-width="1.4" />
-      <text x="12" y="90" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">13</text>
-      <circle cx="47" cy="90" r="8" class="te-pad-idle" stroke-width="1.4" />
-      <text x="47" y="90" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">14</text>
-      <circle cx="82" cy="90" r="8" class="te-pad-idle" stroke-width="1.4" />
-      <text x="82" y="90" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">15</text>
-      <circle cx="117" cy="90" r="8" class="te-pad-active" stroke-width="1.4" />
-      <text x="117" y="90" class="te-mono" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle" dominant-baseline="central">16</text>
+      <circle cx="41" cy="62" r="7.5" class="te-pad-idle" stroke-width="1.2" />
+      <circle cx="41" cy="62" r="4.5" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.7" />
+      <text x="41" y="62" class="te-mono te-text-main" font-size="6.5" font-weight="700" text-anchor="middle" dominant-baseline="central">10</text>
+
+      <circle cx="72" cy="62" r="7.5" class="te-pad-idle" stroke-width="1.2" />
+      <circle cx="72" cy="62" r="4.5" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.7" />
+      <text x="72" y="62" class="te-mono te-text-main" font-size="6.5" font-weight="700" text-anchor="middle" dominant-baseline="central">11</text>
+
+      <circle cx="103" cy="62" r="7.5" class="te-pad-idle" stroke-width="1.2" />
+      <circle cx="103" cy="62" r="4.5" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.7" />
+      <text x="103" y="62" class="te-mono te-text-main" font-size="6.5" font-weight="700" text-anchor="middle" dominant-baseline="central">12</text>
+
+      <!-- Row 4: 13, 14, 15, 16 -->
+      <circle cx="10" cy="88" r="7.5" class="te-pad-idle" stroke-width="1.2" />
+      <circle cx="10" cy="88" r="4.5" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.7" />
+      <text x="10" y="88" class="te-mono te-text-main" font-size="6.5" font-weight="700" text-anchor="middle" dominant-baseline="central">13</text>
+
+      <circle cx="41" cy="88" r="7.5" class="te-pad-idle" stroke-width="1.2" />
+      <circle cx="41" cy="88" r="4.5" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.7" />
+      <text x="41" y="88" class="te-mono te-text-main" font-size="6.5" font-weight="700" text-anchor="middle" dominant-baseline="central">14</text>
+
+      <circle cx="72" cy="88" r="7.5" class="te-pad-idle" stroke-width="1.2" />
+      <circle cx="72" cy="88" r="4.5" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.7" />
+      <text x="72" y="88" class="te-mono te-text-main" font-size="6.5" font-weight="700" text-anchor="middle" dominant-baseline="central">15</text>
+
+      <circle cx="103" cy="88" r="7.5" class="te-pad-active" stroke-width="1.2" />
+      <circle cx="103" cy="88" r="4.5" fill="none" stroke="#ffffff" stroke-width="0.7" />
+      <text x="103" y="88" class="te-mono" font-size="6.5" font-weight="800" fill="#ffffff" text-anchor="middle" dominant-baseline="central">16</text>
     </g>
     
     <!-- Micro Speaker Perforation Ring -->
-    <circle cx="150" cy="282" r="7" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="1" stroke-dasharray="2,2" />
+    <circle cx="18" cy="278" r="7" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="1" stroke-dasharray="2,2" />
+    <circle cx="18" cy="278" r="3.5" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.8" />
+    <text x="32" y="280" class="te-mono te-text-muted" font-size="5.5">spkr</text>
 
     <!-- Callout A -->
-    <circle cx="178" cy="82" r="7" class="te-badge" />
-    <text x="178" y="82" class="te-badge-txt">A</text>
-    <line x1="158" y1="82" x2="171" y2="82" stroke="var(--banner-accent, #ff6600)" stroke-width="1" />
+    <circle cx="196" cy="74" r="7" class="te-badge" />
+    <text x="196" y="74" class="te-badge-txt">A</text>
+    <line x1="171" y1="74" x2="189" y2="74" stroke="var(--banner-accent, #ff6600)" stroke-width="1" />
   </g>
 
   <!-- ==================== 2. AKAI MPC STANDALONE ==================== -->
-  <g transform="translate(325, 132)">
+  <g transform="translate(262, 126)">
     <!-- Sub-header -->
-    <text x="0" y="0" class="te-mono te-bold" font-size="11" class="te-text-main">02 / akai mpc</text>
-    <text x="100" y="0" class="te-mono te-text-muted" font-size="9">one · live · x · key</text>
+    <text x="0" y="0" class="te-mono te-bold te-text-main" font-size="10">02 / akai mpc</text>
+    <text x="90" y="0" class="te-mono te-text-muted" font-size="8.5">one · live ii · x</text>
 
-    <!-- Real Hardware Chassis (Proportional) -->
-    <rect x="0" y="20" width="240" height="277" rx="6" class="te-device-fill" stroke-width="1.8" />
+    <!-- Real Hardware Chassis (Proportional MPC Standalone) -->
+    <rect x="0" y="16" width="270" height="292" rx="6" class="te-device-fill" stroke-width="1.6" />
     
-    <!-- Top Touchscreen Display -->
-    <rect x="14" y="34" width="150" height="65" rx="3" class="te-screen-fill" stroke-width="1.4" />
-    <text x="24" y="52" class="te-mono te-bold" font-size="9" class="te-accent-fill">MPC STANDALONE OS</text>
-    <text x="24" y="66" class="te-mono te-text-muted" font-size="8">kit: boombap_90</text>
-    <rect x="24" y="74" width="130" height="18" class="te-paper-fill" stroke-width="0.8" />
-    <line x1="50" y1="74" x2="50" y2="92" stroke="var(--banner-border, #2b3242)" stroke-width="0.8" />
-    <line x1="85" y1="74" x2="85" y2="92" stroke="var(--banner-border, #2b3242)" stroke-width="0.8" />
-    <line x1="120" y1="74" x2="120" y2="92" stroke="var(--banner-border, #2b3242)" stroke-width="0.8" />
+    <!-- 7-inch Multi-Touch Display (Color Interface) -->
+    <rect x="12" y="28" width="154" height="92" rx="3" class="te-screen-fill" stroke-width="1.4" />
+    <!-- Screen Header Bar -->
+    <rect x="12" y="28" width="154" height="13" class="te-paper-fill" />
+    <text x="16" y="37" class="te-mono te-accent-fill" font-size="6.5" font-weight="700">TRACK 01: DRUMS</text>
+    <text x="162" y="37" class="te-mono te-text-main" font-size="6.5" text-anchor="end">93.0 BPM</text>
 
-    <!-- 4 Q-Link Vertical Encoders (Right of screen) -->
-    <g transform="translate(182, 38)">
-      <circle cx="10" cy="6" r="6" class="te-paper-fill" stroke-width="1.2" /><line x1="10" y1="2" x2="10" y2="6" class="te-accent-stroke" stroke-width="1.5" />
-      <circle cx="10" cy="22" r="6" class="te-paper-fill" stroke-width="1.2" /><line x1="10" y1="18" x2="10" y2="22" class="te-accent-stroke" stroke-width="1.5" />
-      <circle cx="10" cy="38" r="6" class="te-paper-fill" stroke-width="1.2" /><line x1="10" y1="34" x2="10" y2="38" class="te-accent-stroke" stroke-width="1.5" />
-      <circle cx="10" cy="54" r="6" class="te-paper-fill" stroke-width="1.2" /><line x1="10" y1="50" x2="10" y2="54" class="te-accent-stroke" stroke-width="1.5" />
-      <text x="26" y="32" class="te-mono te-text-muted" font-size="7">q-links</text>
+    <!-- Mini 16-Pad Matrix on Screen -->
+    <g transform="translate(18, 46)">
+      <rect x="0" y="0" width="8" height="6" class="te-pad-idle" /><rect x="10" y="0" width="8" height="6" class="te-pad-idle" /><rect x="20" y="0" width="8" height="6" class="te-pad-idle" /><rect x="30" y="0" width="8" height="6" class="te-pad-active" />
+      <rect x="0" y="8" width="8" height="6" class="te-pad-idle" /><rect x="10" y="8" width="8" height="6" class="te-pad-idle" /><rect x="20" y="8" width="8" height="6" class="te-pad-idle" /><rect x="30" y="8" width="8" height="6" class="te-pad-idle" />
+      <rect x="0" y="16" width="8" height="6" class="te-pad-idle" /><rect x="10" y="16" width="8" height="6" class="te-pad-idle" /><rect x="20" y="16" width="8" height="6" class="te-pad-idle" /><rect x="30" y="16" width="8" height="6" class="te-pad-idle" />
+      <rect x="0" y="24" width="8" height="6" class="te-pad-active" /><rect x="10" y="24" width="8" height="6" class="te-pad-idle" /><rect x="20" y="24" width="8" height="6" class="te-pad-idle" /><rect x="30" y="24" width="8" height="6" class="te-pad-idle" />
+    </g>
+    <!-- Sample Waveform on Screen -->
+    <path d="M 64 68 Q 72 48 80 68 T 96 68 T 112 52 T 128 68 T 144 60 T 160 68" fill="none" stroke="var(--banner-accent, #ff6600)" stroke-width="1.3" />
+    <line x1="64" y1="68" x2="160" y2="68" stroke="var(--banner-border, #2b3242)" stroke-width="0.8" />
+    <text x="64" y="83" class="te-mono te-accent2-fill" font-size="6.5">Kit: BoomBap-MP</text>
+    <text x="64" y="93" class="te-mono te-text-muted" font-size="6">16/16 pads mapped</text>
+    <rect x="12" y="108" width="154" height="12" class="te-paper-fill" />
+    <text x="16" y="116" class="te-mono te-accent-fill" font-size="6">SAMPLE EDIT</text>
+    <text x="65" y="116" class="te-mono te-text-muted" font-size="6">GRID</text>
+    <text x="105" y="116" class="te-mono te-text-muted" font-size="6">PROGRAM</text>
+    <text x="145" y="116" class="te-mono te-text-muted" font-size="6">MIXER</text>
+
+    <!-- 4 Dedicated Q-Link Rotary Encoders (Right of Screen, Stacked Vertically) -->
+    <g transform="translate(176, 28)">
+      <!-- Q-Link 1 -->
+      <circle cx="10" cy="10" r="7.5" class="te-paper-fill" stroke-width="1.2" />
+      <line x1="10" y1="4" x2="10" y2="10" class="te-accent-stroke" stroke-width="1.5" />
+      <rect x="22" y="5" width="22" height="10" rx="1.5" class="te-paper-fill" stroke-width="0.8" />
+      <text x="33" y="12" class="te-mono te-text-muted" font-size="5" text-anchor="middle">q1</text>
+
+      <!-- Q-Link 2 -->
+      <circle cx="10" cy="33" r="7.5" class="te-paper-fill" stroke-width="1.2" />
+      <line x1="10" y1="27" x2="14" y2="33" class="te-accent-stroke" stroke-width="1.5" />
+      <rect x="22" y="28" width="22" height="10" rx="1.5" class="te-paper-fill" stroke-width="0.8" />
+      <text x="33" y="35" class="te-mono te-text-muted" font-size="5" text-anchor="middle">q2</text>
+
+      <!-- Q-Link 3 -->
+      <circle cx="10" cy="56" r="7.5" class="te-paper-fill" stroke-width="1.2" />
+      <line x1="10" y1="50" x2="10" y2="56" class="te-accent-stroke" stroke-width="1.5" />
+      <rect x="22" y="51" width="22" height="10" rx="1.5" class="te-paper-fill" stroke-width="0.8" />
+      <text x="33" y="58" class="te-mono te-text-muted" font-size="5" text-anchor="middle">q3</text>
+
+      <!-- Q-Link 4 -->
+      <circle cx="10" cy="79" r="7.5" class="te-paper-fill" stroke-width="1.2" />
+      <line x1="10" y1="73" x2="7" y2="78" class="te-accent-stroke" stroke-width="1.5" />
+      <rect x="22" y="74" width="22" height="10" rx="1.5" class="te-paper-fill" stroke-width="0.8" />
+      <text x="33" y="81" class="te-mono te-text-muted" font-size="5" text-anchor="middle">q4</text>
     </g>
 
-    <!-- Data Jog Dial (Under Q-Links) -->
-    <circle cx="192" cy="130" r="16" class="te-paper-fill" stroke-width="1.8" />
-    <circle cx="192" cy="130" r="12" class="te-device-fill" stroke-width="0.8" />
-    <circle cx="192" cy="120" r="2" class="te-accent-fill" />
+    <!-- Master Volume Knob (Top Right) -->
+    <circle cx="242" cy="38" r="9" class="te-paper-fill" stroke-width="1.2" />
+    <line x1="242" y1="31" x2="242" y2="38" class="te-line-stroke" stroke-width="1.4" />
+    <text x="242" y="52" class="te-mono te-text-muted" font-size="5" text-anchor="middle">vol</text>
 
-    <!-- Authentic 4x4 Thick Rubber Pads Matrix (Standard Akai Geometry) -->
-    <g transform="translate(14, 110)">
-      <!-- Row 4 (13-16) -->
-      <rect x="0" y="0" width="34" height="34" rx="3" class="te-pad-idle" stroke-width="1.4" />
-      <rect x="40" y="0" width="34" height="34" rx="3" class="te-pad-idle" stroke-width="1.4" />
-      <rect x="80" y="0" width="34" height="34" rx="3" class="te-pad-idle" stroke-width="1.4" />
-      <rect x="120" y="0" width="34" height="34" rx="3" class="te-pad-idle" stroke-width="1.4" />
-      <!-- Row 3 (9-12) -->
-      <rect x="0" y="40" width="34" height="34" rx="3" class="te-pad-idle" stroke-width="1.4" />
-      <rect x="40" y="40" width="34" height="34" rx="3" class="te-pad-idle" stroke-width="1.4" />
-      <rect x="80" y="40" width="34" height="34" rx="3" class="te-pad-idle" stroke-width="1.4" />
-      <rect x="120" y="40" width="34" height="34" rx="3" class="te-pad-idle" stroke-width="1.4" />
-      <!-- Row 2 (5-8) -->
-      <rect x="0" y="80" width="34" height="34" rx="3" class="te-pad-idle" stroke-width="1.4" />
-      <rect x="40" y="80" width="34" height="34" rx="3" class="te-pad-idle" stroke-width="1.4" />
-      <rect x="80" y="80" width="34" height="34" rx="3" class="te-pad-idle" stroke-width="1.4" />
-      <rect x="120" y="80" width="34" height="34" rx="3" class="te-pad-idle" stroke-width="1.4" />
-      <!-- Row 1 (1-4) -->
-      <rect x="0" y="120" width="34" height="34" rx="3" class="te-pad-active" stroke-width="1.5" />
-      <rect x="40" y="120" width="34" height="34" rx="3" class="te-pad-idle" stroke-width="1.4" />
-      <rect x="80" y="120" width="34" height="34" rx="3" class="te-pad-idle" stroke-width="1.4" />
-      <rect x="120" y="120" width="34" height="34" rx="3" class="te-pad-idle" stroke-width="1.4" />
+    <!-- Large Knurled Data Jog Wheel + Navigation Cursors -->
+    <circle cx="240" cy="82" r="14" class="te-paper-fill" stroke-width="1.4" />
+    <circle cx="240" cy="82" r="9" class="te-device-fill" stroke="var(--banner-border, #2b3242)" stroke-width="0.8" />
+    <circle cx="240" cy="77" r="2.5" class="te-paper-fill" />
+    <!-- Cursors -->
+    <text x="240" y="66" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">▲</text>
+    <text x="240" y="101" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">▼</text>
+    <text x="223" y="84" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">◄</text>
+    <text x="257" y="84" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">►</text>
+
+    <!-- Bank Buttons Row (Bank A, B, C, D) + Pad Modes -->
+    <g transform="translate(12, 126)">
+      <rect x="0" y="0" width="34" height="11" rx="2" class="te-paper-fill" stroke-width="0.9" />
+      <text x="17" y="7" class="te-mono te-accent-fill te-bold" font-size="6" text-anchor="middle">bank a</text>
+
+      <rect x="38" y="0" width="34" height="11" rx="2" class="te-paper-fill" stroke-width="0.9" />
+      <text x="55" y="7" class="te-mono te-text-main" font-size="6" text-anchor="middle">bank b</text>
+
+      <rect x="76" y="0" width="34" height="11" rx="2" class="te-paper-fill" stroke-width="0.9" />
+      <text x="93" y="7" class="te-mono te-text-main" font-size="6" text-anchor="middle">bank c</text>
+
+      <rect x="114" y="0" width="34" height="11" rx="2" class="te-paper-fill" stroke-width="0.9" />
+      <text x="131" y="7" class="te-mono te-text-main" font-size="6" text-anchor="middle">bank d</text>
+
+      <rect x="156" y="0" width="44" height="11" rx="2" class="te-paper-fill" stroke-width="0.9" />
+      <text x="178" y="7" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">full lvl</text>
+
+      <rect x="204" y="0" width="44" height="11" rx="2" class="te-paper-fill" stroke-width="0.9" />
+      <text x="226" y="7" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">16 lvl</text>
     </g>
 
-    <!-- Transport Controls (Bottom Right) -->
-    <g transform="translate(176, 230)">
-      <circle cx="8" cy="8" r="5" class="te-paper-fill" stroke-width="1" />
-      <circle cx="22" cy="8" r="5" class="te-paper-fill" stroke-width="1" />
-      <circle cx="36" cy="8" r="5" class="te-paper-fill" stroke-width="1" />
-      <circle cx="50" cy="8" r="5" class="te-accent-fill" />
+    <!-- 16 Thick Rubber MPC Velocity Pads Matrix (4x4 Grid) -->
+    <g transform="translate(12, 144)">
+      <!-- Row 4: Pads 13, 14, 15, 16 -->
+      <rect x="0" y="0" width="34" height="32" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <rect x="3" y="3" width="28" height="26" rx="2" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.6" />
+      <text x="17" y="16" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">13</text>
+
+      <rect x="39" y="0" width="34" height="32" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <rect x="42" y="3" width="28" height="26" rx="2" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.6" />
+      <text x="56" y="16" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">14</text>
+
+      <rect x="78" y="0" width="34" height="32" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <rect x="81" y="3" width="28" height="26" rx="2" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.6" />
+      <text x="95" y="16" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">15</text>
+
+      <rect x="117" y="0" width="34" height="32" rx="3" class="te-pad-active" stroke-width="1.3" />
+      <rect x="120" y="3" width="28" height="26" rx="2" fill="none" stroke="#ffffff" stroke-width="0.6" />
+      <text x="134" y="16" class="te-mono" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle" dominant-baseline="central">16</text>
+
+      <!-- Row 3: Pads 9, 10, 11, 12 -->
+      <rect x="0" y="37" width="34" height="32" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <rect x="3" y="40" width="28" height="26" rx="2" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.6" />
+      <text x="17" y="53" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">9</text>
+
+      <rect x="39" y="37" width="34" height="32" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <rect x="42" y="40" width="28" height="26" rx="2" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.6" />
+      <text x="56" y="53" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">10</text>
+
+      <rect x="78" y="37" width="34" height="32" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <rect x="81" y="40" width="28" height="26" rx="2" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.6" />
+      <text x="95" y="53" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">11</text>
+
+      <rect x="117" y="37" width="34" height="32" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <rect x="120" y="40" width="28" height="26" rx="2" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.6" />
+      <text x="134" y="53" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">12</text>
+
+      <!-- Row 2: Pads 5, 6, 7, 8 -->
+      <rect x="0" y="74" width="34" height="32" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <rect x="3" y="77" width="28" height="26" rx="2" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.6" />
+      <text x="17" y="90" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">5</text>
+
+      <rect x="39" y="74" width="34" height="32" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <rect x="42" y="77" width="28" height="26" rx="2" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.6" />
+      <text x="56" y="90" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">6</text>
+
+      <rect x="78" y="74" width="34" height="32" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <rect x="81" y="77" width="28" height="26" rx="2" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.6" />
+      <text x="95" y="90" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">7</text>
+
+      <rect x="117" y="74" width="34" height="32" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <rect x="120" y="77" width="28" height="26" rx="2" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.6" />
+      <text x="134" y="90" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">8</text>
+
+      <!-- Row 1: Pads 1, 2, 3, 4 -->
+      <rect x="0" y="111" width="34" height="32" rx="3" class="te-pad-active" stroke-width="1.3" />
+      <rect x="3" y="114" width="28" height="26" rx="2" fill="none" stroke="#ffffff" stroke-width="0.6" />
+      <text x="17" y="127" class="te-mono" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle" dominant-baseline="central">1</text>
+
+      <rect x="39" y="111" width="34" height="32" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <rect x="42" y="114" width="28" height="26" rx="2" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.6" />
+      <text x="56" y="127" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">2</text>
+
+      <rect x="78" y="111" width="34" height="32" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <rect x="81" y="114" width="28" height="26" rx="2" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.6" />
+      <text x="95" y="127" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">3</text>
+
+      <rect x="117" y="111" width="34" height="32" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <rect x="120" y="114" width="28" height="26" rx="2" fill="none" stroke="var(--banner-border, #2b3242)" stroke-width="0.6" />
+      <text x="134" y="127" class="te-mono te-text-main" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central">4</text>
+    </g>
+
+    <!-- Side Control Buttons & Transport Bar (Right of Pads) -->
+    <g transform="translate(168, 144)">
+      <!-- Utility Buttons Column -->
+      <rect x="0" y="0" width="40" height="13" rx="2" class="te-paper-fill" stroke-width="0.8" />
+      <text x="20" y="8" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">grid</text>
+      <rect x="46" y="0" width="40" height="13" rx="2" class="te-paper-fill" stroke-width="0.8" />
+      <text x="66" y="8" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">track</text>
+
+      <rect x="0" y="18" width="40" height="13" rx="2" class="te-paper-fill" stroke-width="0.8" />
+      <text x="20" y="26" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">sampler</text>
+      <rect x="46" y="18" width="40" height="13" rx="2" class="te-paper-fill" stroke-width="0.8" />
+      <text x="66" y="26" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">prog edit</text>
+
+      <rect x="0" y="36" width="40" height="13" rx="2" class="te-paper-fill" stroke-width="0.8" />
+      <text x="20" y="44" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">undo</text>
+      <rect x="46" y="36" width="40" height="13" rx="2" class="te-paper-fill" stroke-width="0.8" />
+      <text x="66" y="44" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">shift</text>
+
+      <rect x="0" y="54" width="40" height="13" rx="2" class="te-paper-fill" stroke-width="0.8" />
+      <text x="20" y="62" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">copy</text>
+      <rect x="46" y="54" width="40" height="13" rx="2" class="te-paper-fill" stroke-width="0.8" />
+      <text x="66" y="62" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">erase</text>
+
+      <rect x="0" y="72" width="86" height="13" rx="2" class="te-paper-fill" stroke-width="0.8" />
+      <text x="43" y="80" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">tap tempo / note repeat</text>
+
+      <!-- MPC Transport Buttons (Horizontal Cluster) -->
+      <g transform="translate(0, 108)">
+        <!-- REC -->
+        <rect x="0" y="0" width="15" height="35" rx="2" class="te-paper-fill" stroke-width="0.9" />
+        <circle cx="7.5" cy="17.5" r="4" fill="#ff3333" />
+        
+        <!-- OVERDUB -->
+        <rect x="18" y="0" width="15" height="35" rx="2" class="te-paper-fill" stroke-width="0.9" />
+        <circle cx="25.5" cy="17.5" r="3.5" fill="none" stroke="#ffaa00" stroke-width="1.2" />
+
+        <!-- STOP -->
+        <rect x="36" y="0" width="15" height="35" rx="2" class="te-paper-fill" stroke-width="0.9" />
+        <rect x="40.5" y="12.5" width="6" height="6" class="te-text-main" />
+
+        <!-- PLAY -->
+        <rect x="54" y="0" width="15" height="35" rx="2" class="te-paper-fill" stroke-width="0.9" />
+        <path d="M 59 13 L 66 17.5 L 59 22 Z" class="te-accent2-fill" />
+
+        <!-- PLAY START -->
+        <rect x="72" y="0" width="15" height="35" rx="2" class="te-paper-fill" stroke-width="0.9" />
+        <path d="M 75 13 L 81 17.5 L 75 22 Z" class="te-text-main" />
+        <line x1="74" y1="13" x2="74" y2="22" stroke="var(--banner-line, #f4f4f6)" stroke-width="1" />
+      </g>
     </g>
 
     <!-- Callout B -->
-    <circle cx="248" cy="176" r="7" class="te-badge" />
-    <text x="248" y="176" class="te-badge-txt">B</text>
-    <line x1="228" y1="176" x2="241" y2="176" stroke="var(--banner-accent, #ff6600)" stroke-width="1" />
+    <circle cx="286" cy="74" r="7" class="te-badge" />
+    <text x="286" y="74" class="te-badge-txt">B</text>
+    <line x1="270" y1="74" x2="279" y2="74" stroke="var(--banner-accent, #ff6600)" stroke-width="1" />
   </g>
 
   <!-- ==================== 3. ROLAND SP-404MK2 ==================== -->
-  <g transform="translate(620, 132)">
+  <g transform="translate(562, 126)">
     <!-- Sub-header -->
-    <text x="0" y="0" class="te-mono te-bold" font-size="11" class="te-text-main">03 / roland sp-404mk2</text>
-    <text x="150" y="0" class="te-mono te-text-muted" font-size="9">linear wave &amp; vinyl sim</text>
+    <text x="0" y="0" class="te-mono te-bold te-text-main" font-size="10">03 / roland sp-404mk2</text>
+    <text x="145" y="0" class="te-mono te-accent-fill" font-size="8.5" font-weight="700">linear wave sampler</text>
 
-    <!-- Distinct SP-404 Faceplate with Curved Top Shoulders & Corner Screws -->
-    <path d="M 0 30 C 0 22, 10 20, 20 20 L 190 20 C 200 20, 210 22, 210 30 L 210 287 C 210 294, 202 297, 190 297 L 20 297 C 8 297, 0 294, 0 287 Z" class="te-device-fill" stroke-width="1.8" />
-    <!-- 4 Corner Hex Screws -->
-    <circle cx="12" cy="32" r="2.5" class="te-paper-fill" stroke-width="1" />
-    <circle cx="198" cy="32" r="2.5" class="te-paper-fill" stroke-width="1" />
-    <circle cx="12" cy="285" r="2.5" class="te-paper-fill" stroke-width="1" />
-    <circle cx="198" cy="285" r="2.5" class="te-paper-fill" stroke-width="1" />
-
-    <!-- 3 Aluminum Control Knobs (CTRL 1, 2, 3) + Volume Knob -->
-    <g transform="translate(0, 36)">
-      <circle cx="36" cy="14" r="8" class="te-paper-fill" stroke-width="1.2" /><line x1="36" y1="8" x2="36" y2="14" class="te-accent-stroke" stroke-width="1.5" />
-      <text x="36" y="28" class="te-mono te-text-muted" font-size="6" text-anchor="middle">c1</text>
-
-      <circle cx="82" cy="14" r="8" class="te-paper-fill" stroke-width="1.2" /><line x1="82" y1="8" x2="82" y2="14" class="te-accent-stroke" stroke-width="1.5" />
-      <text x="82" y="28" class="te-mono te-text-muted" font-size="6" text-anchor="middle">c2</text>
-
-      <circle cx="128" cy="14" r="8" class="te-paper-fill" stroke-width="1.2" /><line x1="128" y1="8" x2="128" y2="14" class="te-accent-stroke" stroke-width="1.5" />
-      <text x="128" y="28" class="te-mono te-text-muted" font-size="6" text-anchor="middle">c3</text>
-
-      <circle cx="174" cy="14" r="8" class="te-paper-fill" stroke-width="1.2" /><line x1="174" y1="8" x2="174" y2="14" class="te-line-stroke" stroke-width="1.5" />
-      <text x="174" y="28" class="te-mono te-text-muted" font-size="6" text-anchor="middle">vol</text>
+    <!-- Beveled Aluminum Faceplate with 4 Hex Screws -->
+    <rect x="0" y="16" width="260" height="292" rx="10" class="te-device-fill" stroke-width="1.6" />
+    
+    <!-- 4 Corner Allen / Hex Bolts -->
+    <g class="te-line-subtle" stroke-width="0.8">
+      <circle cx="10" cy="26" r="3" class="te-paper-fill" /><line x1="8" y1="26" x2="12" y2="26" stroke="var(--banner-line, #f4f4f6)" />
+      <circle cx="250" cy="26" r="3" class="te-paper-fill" /><line x1="248" y1="26" x2="252" y2="26" stroke="var(--banner-line, #f4f4f6)" />
+      <circle cx="10" cy="298" r="3" class="te-paper-fill" /><line x1="8" y1="298" x2="12" y2="298" stroke="var(--banner-line, #f4f4f6)" />
+      <circle cx="250" cy="298" r="3" class="te-paper-fill" /><line x1="248" y1="298" x2="252" y2="298" stroke="var(--banner-line, #f4f4f6)" />
     </g>
 
-    <!-- Circular Signature OLED Display with Outer Ring -->
-    <circle cx="105" cy="98" r="28" class="te-device-fill" stroke="var(--banner-accent, #ff6600)" stroke-width="2" />
-    <circle cx="105" cy="98" r="23" class="te-paper-fill" stroke-width="0.8" />
-    <text x="105" y="93" class="te-mono te-accent-fill te-bold" font-size="8" text-anchor="middle">ROLAND</text>
-    <text x="105" y="105" class="te-mono te-text-main te-bold" font-size="11" text-anchor="middle">SP-404MK2</text>
+    <!-- Top 4 Knobs (Volume + CTRL 1, 2, 3) -->
+    <g transform="translate(18, 26)">
+      <!-- Volume Knob (Smaller) -->
+      <circle cx="14" cy="14" r="7.5" class="te-paper-fill" stroke-width="1.2" />
+      <line x1="14" y1="8" x2="14" y2="14" class="te-line-stroke" stroke-width="1.4" />
+      <text x="14" y="27" class="te-mono te-text-muted" font-size="5" text-anchor="middle">vol</text>
 
-    <!-- Bank Buttons Row (A-E, F-J) -->
-    <g transform="translate(20, 138)">
-      <rect x="0" y="0" width="30" height="12" rx="2" class="te-paper-fill" stroke-width="1" />
-      <text x="15" y="6" class="te-mono te-text-main" font-size="6.5" text-anchor="middle" dominant-baseline="central">a/f</text>
-      <rect x="35" y="0" width="30" height="12" rx="2" class="te-paper-fill" stroke-width="1" />
-      <text x="50" y="6" class="te-mono te-text-main" font-size="6.5" text-anchor="middle" dominant-baseline="central">b/g</text>
-      <rect x="70" y="0" width="30" height="12" rx="2" class="te-paper-fill" stroke-width="1" />
-      <text x="85" y="6" class="te-mono te-text-main" font-size="6.5" text-anchor="middle" dominant-baseline="central">c/h</text>
-      <rect x="105" y="0" width="30" height="12" rx="2" class="te-paper-fill" stroke-width="1" />
-      <text x="120" y="6" class="te-mono te-text-main" font-size="6.5" text-anchor="middle" dominant-baseline="central">d/i</text>
-      <rect x="140" y="0" width="30" height="12" rx="2" class="te-paper-fill" stroke-width="1" />
-      <text x="155" y="6" class="te-mono te-text-main" font-size="6.5" text-anchor="middle" dominant-baseline="central">e/j</text>
+      <!-- CTRL 1 Knob -->
+      <circle cx="56" cy="14" r="10" class="te-paper-fill" stroke-width="1.3" />
+      <line x1="56" y1="6" x2="56" y2="14" class="te-accent-stroke" stroke-width="1.6" />
+      <text x="56" y="29" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">ctrl 1</text>
+
+      <!-- CTRL 2 Knob -->
+      <circle cx="104" cy="14" r="10" class="te-paper-fill" stroke-width="1.3" />
+      <line x1="104" y1="6" x2="108" y2="12" class="te-accent-stroke" stroke-width="1.6" />
+      <text x="104" y="29" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">ctrl 2</text>
+
+      <!-- CTRL 3 Knob -->
+      <circle cx="152" cy="14" r="10" class="te-paper-fill" stroke-width="1.3" />
+      <line x1="152" y1="6" x2="152" y2="14" class="te-accent-stroke" stroke-width="1.6" />
+      <text x="152" y="29" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">ctrl 3</text>
+
+      <!-- Input Gain Knob -->
+      <circle cx="198" cy="14" r="7" class="te-paper-fill" stroke-width="1" />
+      <line x1="198" y1="9" x2="198" y2="14" class="te-line-stroke" stroke-width="1.2" />
+      <text x="198" y="27" class="te-mono te-text-muted" font-size="5" text-anchor="middle">gain</text>
     </g>
 
-    <!-- 16 Real SP-404MK2 Pads (12 Main Sample Pads + 4 Bottom Utility Pads) -->
-    <g transform="translate(20, 160)">
-      <!-- Row 4 (Pads 9, 10, 11, 12) -->
-      <rect x="0" y="0" width="36" height="26" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="18" y="13" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">9</text>
-      <rect x="45" y="0" width="36" height="26" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="63" y="13" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">10</text>
-      <rect x="89" y="0" width="36" height="26" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="107" y="13" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">11</text>
-      <rect x="134" y="0" width="36" height="26" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="152" y="13" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">12</text>
+    <!-- Circular Signature OLED Display with Outer Ring (ZERO OVERFLOW, CRISP CENTERING) -->
+    <g transform="translate(85, 90)">
+      <!-- Outer Bezel Ring & Aluminum Chamfer -->
+      <circle cx="0" cy="0" r="31" class="te-device-fill" stroke="var(--banner-accent, #ff6600)" stroke-width="2" />
+      <circle cx="0" cy="0" r="27" class="te-paper-fill" stroke="var(--banner-border, #2b3242)" stroke-width="0.8" />
+      <!-- Graphic OLED Rectangular Window -->
+      <rect x="-24" y="-16" width="48" height="32" rx="2" class="te-bg-fill" stroke="var(--banner-accent, #ff6600)" stroke-width="0.8" />
+      <!-- High-fidelity Centered Readouts with Safe Margin -->
+      <text x="0" y="-7" class="te-mono te-accent-fill te-bold" font-size="6.5" text-anchor="middle" letter-spacing="0.8">ROLAND</text>
+      <text x="0" y="3" class="te-mono te-text-main te-bold" font-size="7.5" text-anchor="middle" letter-spacing="0.5">SP-404MKII</text>
+      <text x="0" y="11" class="te-mono te-accent2-fill" font-size="5.5" font-weight="700" text-anchor="middle">BPM 87.0</text>
+    </g>
 
-      <!-- Row 3 (Pads 5, 6, 7, 8) -->
-      <rect x="0" y="32" width="36" height="26" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="18" y="45" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">5</text>
-      <rect x="45" y="32" width="36" height="26" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="63" y="45" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">6</text>
-      <rect x="89" y="32" width="36" height="26" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="107" y="45" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">7</text>
-      <rect x="134" y="32" width="36" height="26" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="152" y="45" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">8</text>
+    <!-- Direct Push Enter / Value Dial (Right of Circular Display) -->
+    <g transform="translate(162, 90)">
+      <circle cx="0" cy="0" r="13" class="te-paper-fill" stroke-width="1.4" />
+      <circle cx="0" cy="0" r="6" class="te-device-fill" stroke="var(--banner-border, #2b3242)" stroke-width="0.8" />
+      <text x="0" y="18" class="te-mono te-text-muted" font-size="5" text-anchor="middle">value</text>
+    </g>
 
-      <!-- Row 2 (Pads 1, 2, 3, 4) -->
-      <rect x="0" y="64" width="36" height="26" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="18" y="77" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">1</text>
-      <rect x="45" y="64" width="36" height="26" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="63" y="77" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">2</text>
-      <rect x="89" y="64" width="36" height="26" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="107" y="77" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">3</text>
-      <rect x="134" y="64" width="36" height="26" rx="2" class="te-pad-active" stroke-width="1.4" />
-      <text x="152" y="77" class="te-mono" font-size="8" font-weight="800" fill="#ffffff" text-anchor="middle" dominant-baseline="central">4</text>
+    <!-- Authentic SP-404MK2 Utility & Effect Buttons Around Screen -->
+    <!-- Left Flank: BUS FX, REC, RESAMPLE -->
+    <g transform="translate(18, 68)">
+      <rect x="0" y="0" width="26" height="9" rx="1.5" class="te-paper-fill" stroke-width="0.8" />
+      <text x="13" y="6" class="te-mono te-text-muted" font-size="5" text-anchor="middle">bus fx</text>
 
-      <!-- Row 1 (Bank / Mute / Roll / Hold utility pads) -->
-      <rect x="0" y="96" width="36" height="20" rx="2" class="te-paper-fill" stroke-width="1" />
-      <text x="18" y="106" class="te-mono te-text-muted" font-size="6.5" text-anchor="middle" dominant-baseline="central">hold</text>
-      <rect x="45" y="96" width="36" height="20" rx="2" class="te-paper-fill" stroke-width="1" />
-      <text x="63" y="106" class="te-mono te-text-muted" font-size="6.5" text-anchor="middle" dominant-baseline="central">pad</text>
-      <rect x="89" y="96" width="36" height="20" rx="2" class="te-paper-fill" stroke-width="1" />
-      <text x="107" y="106" class="te-mono te-text-muted" font-size="6.5" text-anchor="middle" dominant-baseline="central">roll</text>
-      <rect x="134" y="96" width="36" height="20" rx="2" class="te-paper-fill" stroke-width="1" />
-      <text x="152" y="106" class="te-mono te-text-muted" font-size="6.5" text-anchor="middle" dominant-baseline="central">bank</text>
+      <rect x="0" y="13" width="26" height="9" rx="1.5" class="te-paper-fill" stroke-width="0.8" />
+      <circle cx="5" cy="17.5" r="2" fill="#ff3333" />
+      <text x="15" y="19" class="te-mono te-text-muted" font-size="5" text-anchor="middle">rec</text>
+
+      <rect x="0" y="26" width="26" height="9" rx="1.5" class="te-paper-fill" stroke-width="0.8" />
+      <text x="13" y="32" class="te-mono te-text-muted" font-size="4.5" text-anchor="middle">resample</text>
+
+      <rect x="0" y="39" width="26" height="9" rx="1.5" class="te-paper-fill" stroke-width="0.8" />
+      <text x="13" y="45" class="te-mono te-text-muted" font-size="5" text-anchor="middle">vinyl sim</text>
+    </g>
+
+    <!-- Right Flank: EXIT, SHIFT, EXT SOURCE, MENU -->
+    <g transform="translate(202, 68)">
+      <rect x="0" y="0" width="26" height="9" rx="1.5" class="te-paper-fill" stroke-width="0.8" />
+      <text x="13" y="6" class="te-mono te-text-muted" font-size="5" text-anchor="middle">exit</text>
+
+      <rect x="0" y="13" width="26" height="9" rx="1.5" class="te-paper-fill" stroke-width="0.8" />
+      <text x="13" y="19" class="te-mono te-accent-fill" font-size="5" font-weight="700" text-anchor="middle">shift</text>
+
+      <rect x="0" y="26" width="26" height="9" rx="1.5" class="te-paper-fill" stroke-width="0.8" />
+      <text x="13" y="32" class="te-mono te-text-muted" font-size="4.5" text-anchor="middle">ext src</text>
+
+      <rect x="0" y="39" width="26" height="9" rx="1.5" class="te-paper-fill" stroke-width="0.8" />
+      <text x="13" y="45" class="te-mono te-text-muted" font-size="5" text-anchor="middle">menu</text>
+    </g>
+
+    <!-- Mid Strip Utilities: MARK, DEL, START/END, PITCH -->
+    <g transform="translate(52, 121)">
+      <rect x="0" y="0" width="20" height="8" rx="1" class="te-paper-fill" stroke-width="0.7" />
+      <text x="10" y="6" class="te-mono te-text-muted" font-size="4.5" text-anchor="middle">mark</text>
+
+      <rect x="24" y="0" width="20" height="8" rx="1" class="te-paper-fill" stroke-width="0.7" />
+      <text x="34" y="6" class="te-mono te-accent-fill" font-size="4.5" text-anchor="middle">del</text>
+
+      <rect x="48" y="0" width="26" height="8" rx="1" class="te-paper-fill" stroke-width="0.7" />
+      <text x="61" y="6" class="te-mono te-text-muted" font-size="4.5" text-anchor="middle">start/end</text>
+
+      <rect x="78" y="0" width="20" height="8" rx="1" class="te-paper-fill" stroke-width="0.7" />
+      <text x="88" y="6" class="te-mono te-text-muted" font-size="4.5" text-anchor="middle">pitch</text>
+
+      <rect x="102" y="0" width="24" height="8" rx="1" class="te-paper-fill" stroke-width="0.7" />
+      <text x="114" y="6" class="te-mono te-text-muted" font-size="4.5" text-anchor="middle">tap bpm</text>
+    </g>
+
+    <!-- 5 Real Bank Buttons Row (A/F, B/G, C/H, D/I, E/J) -->
+    <g transform="translate(18, 134)">
+      <rect x="0" y="0" width="40" height="11" rx="2" class="te-paper-fill" stroke-width="0.9" />
+      <text x="20" y="7" class="te-mono te-accent-fill te-bold" font-size="6" text-anchor="middle">a / f</text>
+
+      <rect x="46" y="0" width="40" height="11" rx="2" class="te-paper-fill" stroke-width="0.9" />
+      <text x="66" y="7" class="te-mono te-text-main" font-size="6" text-anchor="middle">b / g</text>
+
+      <rect x="92" y="0" width="40" height="11" rx="2" class="te-paper-fill" stroke-width="0.9" />
+      <text x="112" y="7" class="te-mono te-text-main" font-size="6" text-anchor="middle">c / h</text>
+
+      <rect x="138" y="0" width="40" height="11" rx="2" class="te-paper-fill" stroke-width="0.9" />
+      <text x="158" y="7" class="te-mono te-text-main" font-size="6" text-anchor="middle">d / i</text>
+
+      <rect x="184" y="0" width="40" height="11" rx="2" class="te-paper-fill" stroke-width="0.9" />
+      <text x="204" y="7" class="te-mono te-text-main" font-size="6" text-anchor="middle">e / j</text>
+    </g>
+
+    <!-- 16 Real SP-404MK2 Pads Matrix (1-16) -->
+    <g transform="translate(18, 151)">
+      <!-- Row 4: Pads 13, 14, 15, 16 -->
+      <rect x="0" y="0" width="50" height="27" rx="2.5" class="te-pad-idle" stroke-width="1.3" />
+      <text x="25" y="14" class="te-mono te-text-main" font-size="7.5" text-anchor="middle" dominant-baseline="central">13</text>
+
+      <rect x="58" y="0" width="50" height="27" rx="2.5" class="te-pad-idle" stroke-width="1.3" />
+      <text x="83" y="14" class="te-mono te-text-main" font-size="7.5" text-anchor="middle" dominant-baseline="central">14</text>
+
+      <rect x="116" y="0" width="50" height="27" rx="2.5" class="te-pad-idle" stroke-width="1.3" />
+      <text x="141" y="14" class="te-mono te-text-main" font-size="7.5" text-anchor="middle" dominant-baseline="central">15</text>
+
+      <rect x="174" y="0" width="50" height="27" rx="2.5" class="te-pad-active" stroke-width="1.3" />
+      <text x="199" y="14" class="te-mono" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle" dominant-baseline="central">16</text>
+
+      <!-- Row 3: Pads 9, 10, 11, 12 -->
+      <rect x="0" y="32" width="50" height="27" rx="2.5" class="te-pad-idle" stroke-width="1.3" />
+      <text x="25" y="46" class="te-mono te-text-main" font-size="7.5" text-anchor="middle" dominant-baseline="central">9</text>
+
+      <rect x="58" y="32" width="50" height="27" rx="2.5" class="te-pad-idle" stroke-width="1.3" />
+      <text x="83" y="46" class="te-mono te-text-main" font-size="7.5" text-anchor="middle" dominant-baseline="central">10</text>
+
+      <rect x="116" y="32" width="50" height="27" rx="2.5" class="te-pad-idle" stroke-width="1.3" />
+      <text x="141" y="46" class="te-mono te-text-main" font-size="7.5" text-anchor="middle" dominant-baseline="central">11</text>
+
+      <rect x="174" y="32" width="50" height="27" rx="2.5" class="te-pad-idle" stroke-width="1.3" />
+      <text x="199" y="46" class="te-mono te-text-main" font-size="7.5" text-anchor="middle" dominant-baseline="central">12</text>
+
+      <!-- Row 2: Pads 5, 6, 7, 8 -->
+      <rect x="0" y="64" width="50" height="27" rx="2.5" class="te-pad-idle" stroke-width="1.3" />
+      <text x="25" y="78" class="te-mono te-text-main" font-size="7.5" text-anchor="middle" dominant-baseline="central">5</text>
+
+      <rect x="58" y="64" width="50" height="27" rx="2.5" class="te-pad-idle" stroke-width="1.3" />
+      <text x="83" y="78" class="te-mono te-text-main" font-size="7.5" text-anchor="middle" dominant-baseline="central">6</text>
+
+      <rect x="116" y="64" width="50" height="27" rx="2.5" class="te-pad-idle" stroke-width="1.3" />
+      <text x="141" y="78" class="te-mono te-text-main" font-size="7.5" text-anchor="middle" dominant-baseline="central">7</text>
+
+      <rect x="174" y="64" width="50" height="27" rx="2.5" class="te-pad-idle" stroke-width="1.3" />
+      <text x="199" y="78" class="te-mono te-text-main" font-size="7.5" text-anchor="middle" dominant-baseline="central">8</text>
+
+      <!-- Row 1: Pads 1, 2, 3, 4 -->
+      <rect x="0" y="96" width="50" height="27" rx="2.5" class="te-pad-active" stroke-width="1.3" />
+      <text x="25" y="110" class="te-mono" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle" dominant-baseline="central">1</text>
+
+      <rect x="58" y="96" width="50" height="27" rx="2.5" class="te-pad-idle" stroke-width="1.3" />
+      <text x="83" y="110" class="te-mono te-text-main" font-size="7.5" text-anchor="middle" dominant-baseline="central">2</text>
+
+      <rect x="116" y="96" width="50" height="27" rx="2.5" class="te-pad-idle" stroke-width="1.3" />
+      <text x="141" y="110" class="te-mono te-text-main" font-size="7.5" text-anchor="middle" dominant-baseline="central">3</text>
+
+      <rect x="174" y="96" width="50" height="27" rx="2.5" class="te-pad-idle" stroke-width="1.3" />
+      <text x="199" y="110" class="te-mono te-text-main" font-size="7.5" text-anchor="middle" dominant-baseline="central">4</text>
+    </g>
+
+    <!-- The Iconic SUB PAD & Hardware Utility Bottom Strip (Signature SP-404MK2) -->
+    <g transform="translate(18, 281)">
+      <!-- SUB PAD (Unique SP-404MK2 feature) -->
+      <rect x="0" y="0" width="50" height="13" rx="2" class="te-paper-fill" stroke="var(--banner-accent, #ff6600)" stroke-width="1" />
+      <text x="25" y="8" class="te-mono te-accent-fill te-bold" font-size="5.5" text-anchor="middle">sub pad</text>
+
+      <!-- ROLL -->
+      <rect x="58" y="0" width="50" height="13" rx="2" class="te-paper-fill" stroke-width="0.8" />
+      <text x="83" y="8" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">roll</text>
+
+      <!-- HOLD -->
+      <rect x="116" y="0" width="50" height="13" rx="2" class="te-paper-fill" stroke-width="0.8" />
+      <text x="141" y="8" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">hold</text>
+
+      <!-- REMAIN -->
+      <rect x="174" y="0" width="50" height="13" rx="2" class="te-paper-fill" stroke-width="0.8" />
+      <text x="199" y="8" class="te-mono te-text-muted" font-size="5.5" text-anchor="middle">remain</text>
     </g>
 
     <!-- Callout C -->
-    <circle cx="224" cy="98" r="7" class="te-badge" />
-    <text x="224" y="98" class="te-badge-txt">C</text>
-    <line x1="205" y1="98" x2="217" y2="98" stroke="var(--banner-accent, #ff6600)" stroke-width="1" />
+    <circle cx="276" cy="74" r="7" class="te-badge" />
+    <text x="276" y="74" class="te-badge-txt">C</text>
+    <line x1="260" y1="74" x2="269" y2="74" stroke="var(--banner-accent, #ff6600)" stroke-width="1" />
   </g>
 
   <!-- ==================== 4. NATIVE INSTRUMENTS MASCHINE ==================== -->
-  <g transform="translate(885, 132)">
+  <g transform="translate(856, 126)">
     <!-- Sub-header -->
-    <text x="0" y="0" class="te-mono te-bold" font-size="11" class="te-text-main">04 / ni maschine</text>
-    <text x="120" y="0" class="te-mono te-text-muted" font-size="9">mk3 · plus · studio</text>
+    <text x="0" y="0" class="te-mono te-bold te-text-main" font-size="10">04 / ni maschine</text>
+    <text x="115" y="0" class="te-mono te-text-muted" font-size="8.5">mk3 · plus studio</text>
 
     <!-- Sleek Studio Chassis -->
-    <rect x="0" y="20" width="255" height="277" rx="6" class="te-device-fill" stroke-width="1.8" />
+    <rect x="0" y="16" width="300" height="292" rx="6" class="te-device-fill" stroke-width="1.6" />
     
+    <!-- 8 Top Display Buttons (Above Dual Screens) -->
+    <g transform="translate(14, 25)">
+      <rect x="4" y="0" width="22" height="6" rx="1" class="te-paper-fill" stroke-width="0.7" />
+      <rect x="36" y="0" width="22" height="6" rx="1" class="te-paper-fill" stroke-width="0.7" />
+      <rect x="68" y="0" width="22" height="6" rx="1" class="te-paper-fill" stroke-width="0.7" />
+      <rect x="100" y="0" width="22" height="6" rx="1" class="te-paper-fill" stroke-width="0.7" />
+
+      <rect x="146" y="0" width="22" height="6" rx="1" class="te-paper-fill" stroke-width="0.7" />
+      <rect x="178" y="0" width="22" height="6" rx="1" class="te-paper-fill" stroke-width="0.7" />
+      <rect x="210" y="0" width="22" height="6" rx="1" class="te-paper-fill" stroke-width="0.7" />
+      <rect x="242" y="0" width="22" height="6" rx="1" class="te-paper-fill" stroke-width="0.7" />
+    </g>
+
     <!-- Dual Displays Side-by-Side (Authentic NI Architecture) -->
     <g transform="translate(14, 34)">
-      <!-- Screen 1 (Left: Group / Kit) -->
-      <rect x="0" y="0" width="108" height="48" rx="3" class="te-screen-fill" stroke-width="1.4" />
-      <text x="8" y="16" class="te-mono te-bold" font-size="8" class="te-text-main">GROUP A1</text>
-      <text x="8" y="28" class="te-mono te-text-muted" font-size="7">kit: urban_boom</text>
-      <text x="8" y="40" class="te-mono te-bold" font-size="7" class="te-accent-fill">16/16 LOADED</text>
+      <!-- Screen 1 (Left: Group / Kit Browser) -->
+      <rect x="0" y="0" width="128" height="52" rx="3" class="te-screen-fill" stroke-width="1.3" />
+      <rect x="0" y="0" width="128" height="11" class="te-paper-fill" />
+      <text x="6" y="8" class="te-mono te-accent-fill" font-size="6.5" font-weight="700">GROUP A1</text>
+      <text x="6" y="24" class="te-mono te-text-main te-bold" font-size="7">kit: urban_boom</text>
+      <text x="6" y="35" class="te-mono te-text-muted" font-size="6">root: C3 · 93.0 bpm</text>
+      <text x="6" y="46" class="te-mono te-accent2-fill te-bold" font-size="6">16/16 SAMPLES LOADED</text>
 
-      <!-- Screen 2 (Right: Sound Waveform / Routing) -->
-      <rect x="120" y="0" width="108" height="48" rx="3" class="te-screen-fill" stroke-width="1.4" />
-      <text x="128" y="16" class="te-mono te-bold" font-size="8" class="te-text-main">PAD 01: KICK</text>
-      <path d="M 128 32 L 138 24 L 148 38 L 158 30 L 168 34 L 183 26 L 198 36 L 213 30" fill="none" stroke="var(--banner-accent2, #2fe070)" stroke-width="1.2" />
+      <!-- Screen 2 (Right: Sound Waveform / Filter Routing) -->
+      <rect x="142" y="0" width="128" height="52" rx="3" class="te-screen-fill" stroke-width="1.3" />
+      <rect x="142" y="0" width="128" height="11" class="te-paper-fill" />
+      <text x="148" y="8" class="te-mono te-accent-fill" font-size="6.5" font-weight="700">PAD 01: KICK 90s</text>
+      <path d="M 148 34 Q 164 16 180 34 T 212 34 T 244 34 T 262 34" fill="none" stroke="var(--banner-accent, #ff6600)" stroke-width="1.2" />
+      <line x1="148" y1="34" x2="262" y2="34" stroke="var(--banner-border, #2b3242)" stroke-width="0.7" />
+      <text x="148" y="46" class="te-mono te-accent3-fill" font-size="5.5">tune: 0.00 · out: master</text>
     </g>
 
-    <!-- 8 Touch Encoders directly under the Dual Screens -->
-    <g transform="translate(14, 90)">
-      <circle cx="10" cy="8" r="5" class="te-paper-fill" stroke-width="1" />
-      <circle cx="38" cy="8" r="5" class="te-paper-fill" stroke-width="1" />
-      <circle cx="66" cy="8" r="5" class="te-paper-fill" stroke-width="1" />
-      <circle cx="94" cy="8" r="5" class="te-paper-fill" stroke-width="1" />
-      <circle cx="134" cy="8" r="5" class="te-paper-fill" stroke-width="1" />
-      <circle cx="162" cy="8" r="5" class="te-paper-fill" stroke-width="1" />
-      <circle cx="190" cy="8" r="5" class="te-paper-fill" stroke-width="1" />
-      <circle cx="218" cy="8" r="5" class="te-paper-fill" stroke-width="1" />
+    <!-- 8 Touch-Sensitive Rotary Encoders (Below Dual Screens) -->
+    <g transform="translate(14, 91)">
+      <!-- Left 4 Encoders -->
+      <circle cx="15" cy="8" r="6" class="te-paper-fill" stroke-width="1" />
+      <line x1="15" y1="3" x2="15" y2="8" class="te-accent-stroke" stroke-width="1.2" />
+      <circle cx="47" cy="8" r="6" class="te-paper-fill" stroke-width="1" />
+      <line x1="47" y1="3" x2="50" y2="7" class="te-accent-stroke" stroke-width="1.2" />
+      <circle cx="79" cy="8" r="6" class="te-paper-fill" stroke-width="1" />
+      <line x1="79" y1="3" x2="79" y2="8" class="te-accent-stroke" stroke-width="1.2" />
+      <circle cx="111" cy="8" r="6" class="te-paper-fill" stroke-width="1" />
+      <line x1="111" y1="3" x2="108" y2="7" class="te-accent-stroke" stroke-width="1.2" />
+
+      <!-- Right 4 Encoders -->
+      <circle cx="157" cy="8" r="6" class="te-paper-fill" stroke-width="1" />
+      <line x1="157" y1="3" x2="157" y2="8" class="te-accent-stroke" stroke-width="1.2" />
+      <circle cx="189" cy="8" r="6" class="te-paper-fill" stroke-width="1" />
+      <line x1="189" y1="3" x2="192" y2="7" class="te-accent-stroke" stroke-width="1.2" />
+      <circle cx="221" cy="8" r="6" class="te-paper-fill" stroke-width="1" />
+      <line x1="221" y1="3" x2="221" y2="8" class="te-accent-stroke" stroke-width="1.2" />
+      <circle cx="253" cy="8" r="6" class="te-paper-fill" stroke-width="1" />
+      <line x1="253" y1="3" x2="250" y2="7" class="te-accent-stroke" stroke-width="1.2" />
     </g>
 
-    <!-- Left Controls: 4D Push Encoder Joystick & Group Buttons -->
-    <g transform="translate(14, 116)">
-      <!-- 4D Encoder -->
-      <circle cx="20" cy="20" r="14" class="te-paper-fill" stroke-width="1.8" />
-      <circle cx="20" cy="20" r="8" class="te-device-fill" stroke-width="1" />
-      <text x="20" y="42" class="te-mono te-text-muted" font-size="6.5" text-anchor="middle">4d encoder</text>
+    <!-- Left Section: 4D Encoder Joystick + Smart Strip + Groups A-H + Transport -->
+    <g transform="translate(14, 114)">
+      <!-- 4D Push Encoder Joystick -->
+      <circle cx="16" cy="18" r="13" class="te-paper-fill" stroke-width="1.4" />
+      <circle cx="16" cy="18" r="6.5" class="te-device-fill" stroke="var(--banner-border, #2b3242)" stroke-width="0.8" />
+      <text x="16" y="7" class="te-mono te-text-muted" font-size="5" text-anchor="middle">▲</text>
+      <text x="16" y="32" class="te-mono te-text-muted" font-size="5" text-anchor="middle">▼</text>
+      <text x="4" y="20" class="te-mono te-text-muted" font-size="5" text-anchor="middle">◄</text>
+      <text x="28" y="20" class="te-mono te-text-muted" font-size="5" text-anchor="middle">►</text>
 
-      <!-- Group Buttons (A, B, C, D) -->
-      <rect x="4" y="52" width="14" height="12" rx="1" class="te-accent-fill" />
-      <text x="11" y="58" class="te-mono te-bold" font-size="6.5" fill="#ffffff" text-anchor="middle" dominant-baseline="central">A</text>
-      <rect x="22" y="52" width="14" height="12" rx="1" class="te-paper-fill" stroke-width="1" />
-      <text x="29" y="58" class="te-mono" font-size="6.5" class="te-text-main" text-anchor="middle" dominant-baseline="central">B</text>
-      <rect x="4" y="68" width="14" height="12" rx="1" class="te-paper-fill" stroke-width="1" />
-      <text x="11" y="74" class="te-mono" font-size="6.5" class="te-text-main" text-anchor="middle" dominant-baseline="central">C</text>
-      <rect x="22" y="68" width="14" height="12" rx="1" class="te-paper-fill" stroke-width="1" />
-      <text x="29" y="74" class="te-mono" font-size="6.5" class="te-text-main" text-anchor="middle" dominant-baseline="central">D</text>
+      <!-- 8 Group Buttons (A to H) in 2 Columns -->
+      <g transform="translate(42, 5)">
+        <rect x="0" y="0" width="16" height="10" rx="1.5" class="te-paper-fill" stroke="var(--banner-accent, #ff6600)" stroke-width="0.8" />
+        <text x="8" y="7" class="te-mono te-accent-fill te-bold" font-size="5.5" text-anchor="middle">a</text>
+        <rect x="20" y="0" width="16" height="10" rx="1.5" class="te-paper-fill" stroke-width="0.7" />
+        <text x="28" y="7" class="te-mono te-text-main" font-size="5.5" text-anchor="middle">e</text>
 
-      <!-- Smart Strip Ribbon -->
-      <rect x="4" y="90" width="32" height="70" rx="2" class="te-paper-fill" stroke-width="1" />
-      <text x="20" y="125" class="te-mono te-text-muted" font-size="6" text-anchor="middle">pitch / mod</text>
+        <rect x="0" y="13" width="16" height="10" rx="1.5" class="te-paper-fill" stroke-width="0.7" />
+        <text x="8" y="20" class="te-mono te-text-main" font-size="5.5" text-anchor="middle">b</text>
+        <rect x="20" y="13" width="16" height="10" rx="1.5" class="te-paper-fill" stroke-width="0.7" />
+        <text x="28" y="20" class="te-mono te-text-main" font-size="5.5" text-anchor="middle">f</text>
+
+        <rect x="0" y="26" width="16" height="10" rx="1.5" class="te-paper-fill" stroke-width="0.7" />
+        <text x="8" y="33" class="te-mono te-text-main" font-size="5.5" text-anchor="middle">c</text>
+        <rect x="20" y="26" width="16" height="10" rx="1.5" class="te-paper-fill" stroke-width="0.7" />
+        <text x="28" y="33" class="te-mono te-text-main" font-size="5.5" text-anchor="middle">g</text>
+
+        <rect x="0" y="39" width="16" height="10" rx="1.5" class="te-paper-fill" stroke-width="0.7" />
+        <text x="8" y="46" class="te-mono te-text-main" font-size="5.5" text-anchor="middle">d</text>
+        <rect x="20" y="39" width="16" height="10" rx="1.5" class="te-paper-fill" stroke-width="0.7" />
+        <text x="28" y="46" class="te-mono te-text-main" font-size="5.5" text-anchor="middle">h</text>
+      </g>
+
+      <!-- Dual-Touch Smart Strip (Vertical Ribbon Controller) -->
+      <g transform="translate(6, 62)">
+        <rect x="0" y="0" width="20" height="74" rx="2" class="te-paper-fill" stroke="var(--banner-border, #2b3242)" stroke-width="1" />
+        <line x1="0" y1="37" x2="20" y2="37" stroke="var(--banner-accent, #ff6600)" stroke-width="1.2" />
+        <!-- LED Segment Indicators on Strip -->
+        <circle cx="10" cy="12" r="1.5" class="te-accent-fill" />
+        <circle cx="10" cy="24" r="1.5" class="te-accent-fill" />
+        <circle cx="10" cy="50" r="1.5" class="te-line-subtle" />
+        <circle cx="10" cy="62" r="1.5" class="te-line-subtle" />
+        <text x="10" y="83" class="te-mono te-text-muted" font-size="4.5" text-anchor="middle">strip</text>
+      </g>
+
+      <!-- Pad Mode Buttons: Pad Mode, Keyboard, Chords, Step -->
+      <g transform="translate(36, 62)">
+        <rect x="0" y="0" width="42" height="11" rx="1.5" class="te-paper-fill" stroke="var(--banner-accent, #ff6600)" stroke-width="0.8" />
+        <text x="21" y="7" class="te-mono te-accent-fill te-bold" font-size="5" text-anchor="middle">pad mode</text>
+
+        <rect x="0" y="15" width="42" height="11" rx="1.5" class="te-paper-fill" stroke-width="0.7" />
+        <text x="21" y="22" class="te-mono te-text-muted" font-size="5" text-anchor="middle">keyboard</text>
+
+        <rect x="0" y="30" width="42" height="11" rx="1.5" class="te-paper-fill" stroke-width="0.7" />
+        <text x="21" y="37" class="te-mono te-text-muted" font-size="5" text-anchor="middle">chords</text>
+
+        <rect x="0" y="45" width="42" height="11" rx="1.5" class="te-paper-fill" stroke-width="0.7" />
+        <text x="21" y="52" class="te-mono te-text-muted" font-size="5" text-anchor="middle">step seq</text>
+      </g>
+
+      <!-- Transport Buttons Cluster (Restart, Rec, Stop, Play) -->
+      <g transform="translate(36, 126)">
+        <rect x="0" y="0" width="18" height="20" rx="1.5" class="te-paper-fill" stroke-width="0.8" />
+        <circle cx="9" cy="10" r="3" fill="#ff3333" />
+        
+        <rect x="22" y="0" width="18" height="20" rx="1.5" class="te-paper-fill" stroke-width="0.8" />
+        <path d="M 28 6 L 35 10 L 28 14 Z" class="te-accent2-fill" />
+      </g>
     </g>
 
-    <!-- 16 Velocity Pads Grid (Right Side of Maschine MK3) -->
-    <g transform="translate(70, 116)">
-      <!-- Row 4 -->
-      <rect x="0" y="0" width="38" height="34" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="19" y="17" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">13</text>
-      <rect x="44" y="0" width="38" height="34" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="63" y="17" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">14</text>
-      <rect x="88" y="0" width="38" height="34" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="107" y="17" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">15</text>
-      <rect x="132" y="0" width="38" height="34" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="151" y="17" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">16</text>
+    <!-- Right Section: 16 Large RGB Velocity Pads Grid (4x4 Matrix) -->
+    <g transform="translate(112, 114)">
+      <!-- Row 4: Pads 13, 14, 15, 16 -->
+      <rect x="0" y="0" width="40" height="34" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <text x="20" y="17" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">13</text>
 
-      <!-- Row 3 -->
-      <rect x="0" y="40" width="38" height="34" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="19" y="57" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">9</text>
-      <rect x="44" y="40" width="38" height="34" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="63" y="57" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">10</text>
-      <rect x="88" y="40" width="38" height="34" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="107" y="57" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">11</text>
-      <rect x="132" y="40" width="38" height="34" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="151" y="57" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">12</text>
+      <rect x="45" y="0" width="40" height="34" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <text x="65" y="17" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">14</text>
 
-      <!-- Row 2 -->
-      <rect x="0" y="80" width="38" height="34" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="19" y="97" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">5</text>
-      <rect x="44" y="80" width="38" height="34" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="63" y="97" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">6</text>
-      <rect x="88" y="80" width="38" height="34" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="107" y="97" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">7</text>
-      <rect x="132" y="80" width="38" height="34" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="151" y="97" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">8</text>
+      <rect x="90" y="0" width="40" height="34" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <text x="110" y="17" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">15</text>
 
-      <!-- Row 1 -->
-      <rect x="0" y="120" width="38" height="34" rx="2" class="te-pad-active" stroke-width="1.5" />
-      <text x="19" y="137" class="te-mono" font-size="8" font-weight="800" fill="#ffffff" text-anchor="middle" dominant-baseline="central">1</text>
-      <rect x="44" y="120" width="38" height="34" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="63" y="137" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">2</text>
-      <rect x="88" y="120" width="38" height="34" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="107" y="137" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">3</text>
-      <rect x="132" y="120" width="38" height="34" rx="2" class="te-pad-idle" stroke-width="1.4" />
-      <text x="151" y="137" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">4</text>
+      <rect x="135" y="0" width="40" height="34" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <text x="155" y="17" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">16</text>
+
+      <!-- Row 3: Pads 9, 10, 11, 12 -->
+      <rect x="0" y="38" width="40" height="34" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <text x="20" y="55" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">9</text>
+
+      <rect x="45" y="38" width="40" height="34" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <text x="65" y="55" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">10</text>
+
+      <rect x="90" y="38" width="40" height="34" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <text x="110" y="55" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">11</text>
+
+      <rect x="135" y="38" width="40" height="34" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <text x="155" y="55" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">12</text>
+
+      <!-- Row 2: Pads 5, 6, 7, 8 -->
+      <rect x="0" y="76" width="40" height="34" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <text x="20" y="93" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">5</text>
+
+      <rect x="45" y="76" width="40" height="34" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <text x="65" y="93" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">6</text>
+
+      <rect x="90" y="76" width="40" height="34" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <text x="110" y="93" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">7</text>
+
+      <rect x="135" y="76" width="40" height="34" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <text x="155" y="93" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">8</text>
+
+      <!-- Row 1: Pads 1, 2, 3, 4 -->
+      <rect x="0" y="114" width="40" height="34" rx="3" class="te-pad-active" stroke-width="1.4" />
+      <text x="20" y="131" class="te-mono" font-size="8" font-weight="800" fill="#ffffff" text-anchor="middle" dominant-baseline="central">1</text>
+
+      <rect x="45" y="114" width="40" height="34" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <text x="65" y="131" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">2</text>
+
+      <rect x="90" y="114" width="40" height="34" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <text x="110" y="131" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">3</text>
+
+      <rect x="135" y="114" width="40" height="34" rx="3" class="te-pad-idle" stroke-width="1.3" />
+      <text x="155" y="131" class="te-mono te-text-main" font-size="8" text-anchor="middle" dominant-baseline="central">4</text>
     </g>
 
     <!-- Callout D -->
-    <circle cx="264" cy="176" r="7" class="te-badge" />
-    <text x="264" y="176" class="te-badge-txt">D</text>
-    <line x1="244" y1="176" x2="257" y2="176" stroke="var(--banner-accent, #ff6600)" stroke-width="1" />
+    <circle cx="316" cy="74" r="7" class="te-badge" />
+    <text x="316" y="74" class="te-badge-txt">D</text>
+    <line x1="300" y1="74" x2="309" y2="74" stroke="var(--banner-accent, #ff6600)" stroke-width="1" />
   </g>
 
   <!-- FOOTER: Authentic TE Blueprint Notation -->
   <g class="te-mono" font-size="9">
-    <line x1="36" y1="435" x2="1164" y2="435" stroke="var(--banner-border, #2b3242)" stroke-width="1" />
-    <text x="36" y="452" font-weight="700" class="te-text-main">hardware guide specification // sheet 01 of 01</text>
-    <text x="600" y="452" text-anchor="middle" class="te-accent-fill" font-weight="700">[A] pocket operator · [B] akai mpc standalone · [C] roland sp-404mk2 · [D] ni maschine</text>
-    <text x="1164" y="452" text-anchor="end" class="te-text-muted">16-pad unified fingerdrumming architecture</text>
+    <line x1="36" y1="438" x2="1164" y2="438" stroke="var(--banner-border, #2b3242)" stroke-width="1" />
+    <text x="36" y="454" font-weight="700" class="te-text-main">hardware guide specification // sheet 01 of 01</text>
+    <text x="600" y="454" text-anchor="middle" class="te-accent-fill" font-weight="700">[A] pocket operator · [B] akai mpc standalone · [C] roland sp-404mk2 · [D] ni maschine</text>
+    <text x="1164" y="454" text-anchor="end" class="te-text-muted">16-pad unified fingerdrumming architecture</text>
   </g>
 </svg>
 </div>
