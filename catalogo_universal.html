@@ -3505,22 +3505,123 @@ if (window.location.hash) {
 
 // ==================== 1-CLICK KIT LOADERS & MULTI-SAMPLER INSPECTOR ====================
 
+function getSampleRelPath(s) {
+  if (!s) return '';
+  if (typeof s[10] === 'string' && s[10].length > 0) return s[10];
+  if (typeof s[9] === 'string' && s[9].length > 0) return s[9];
+  if (typeof s.relPath === 'string') return s.relPath;
+  if (typeof s.rel_path === 'string') return s.rel_path;
+  return s[0] || '';
+}
+
+function getSamplePack(s) {
+  if (!s) return '';
+  if (typeof s[4] === 'string') return s[4];
+  if (typeof s[3] === 'string') return s[3];
+  return '';
+}
+
+function detectSoundTypeFromFilename(filename) {
+  const f = (filename || '').toLowerCase();
+  if (f.includes('kick') || f.includes('bd_') || f.includes('bassdrum')) return 'KICK';
+  if (f.includes('snare') || f.includes('sd_')) return 'SNARE';
+  if (f.includes('clap') || f.includes('cp_')) return 'CLAP';
+  if (f.includes('hat') || f.includes('hh_') || f.includes('cymbal') || f.includes('ride') || f.includes('crash')) return 'HIHAT';
+  if (f.includes('bass') || f.includes('808') || f.includes('sub')) return 'BASS_808';
+  if (f.includes('perc') || f.includes('shaker') || f.includes('conga') || f.includes('bongo') || f.includes('rim') || f.includes('cowbell')) return 'PERCUSSION';
+  if (f.includes('vox') || f.includes('vocal') || f.includes('chant')) return 'VOCAL';
+  if (f.includes('synth') || f.includes('key') || f.includes('piano') || f.includes('chord') || f.includes('rhodes') || f.includes('pad')) return 'KEYS_SYNTH';
+  if (f.includes('fx') || f.includes('sweep') || f.includes('riser') || f.includes('downlifter') || f.includes('hit')) return 'FX';
+  if (f.includes('loop')) return 'MELODIC_LOOP';
+  return 'PERCUSSION';
+}
+
 function loadProjectToRack(projectName) {
-  if (!window.SAMPLES || !SAMPLES.length) {
-    showToast('⚠️ Catálogo de muestras cargando...');
-    return;
-  }
-  const cleanName = projectName.replace(/[^a-zA-Z0-9_\-\#]/g, '');
-  const matched = SAMPLES.filter(s => s[9] && (s[9].includes(projectName + '_[ProjectData]') || s[9].includes(cleanName)));
+  showToast('⏳ Cargando kit del proyecto ' + projectName + '...');
   
-  if (!matched.length) {
-    // Fallback: buscar por nombre similar
-    const loose = SAMPLES.filter(s => s[9] && s[9].toLowerCase().includes(projectName.toLowerCase()));
-    if (!loose.length) {
-      showToast('⚠️ No se encontraron muestras vinculadas para ' + projectName);
+  const relPathCandidates = [
+    'MPC-Sample/Projects/' + projectName + '.xpj',
+    'Projects/' + projectName + '.xpj',
+    '01_PROYECTOS_MPC/' + projectName + '.xpj',
+    projectName + '.xpj'
+  ];
+
+  function tryFetchProject(candIdx) {
+    if (candIdx >= relPathCandidates.length) {
+      loadProjectFromLocalSamples(projectName);
       return;
     }
-    loadSamplesIntoPads(loose.slice(0, 16), 'Proyecto ' + projectName);
+
+    fetch('/api/load_project', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rel_path: relPathCandidates[candIdx] })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success && data.project && data.project.pads && Object.keys(data.project.pads).length > 0) {
+        clearRack();
+        const padsObj = data.project.pads;
+        let loaded = 0;
+        for (let pNum = 1; pNum <= 16; pNum++) {
+          const pData = padsObj[pNum] || padsObj[String(pNum)];
+          if (pData) {
+            const stype = detectSoundTypeFromFilename(pData.sample_file || pData.sample_name);
+            let relP = pData.full_path || pData.sample_file || '';
+            if (relP.includes('/Volumes/MPCSMPL/')) {
+              relP = relP.replace('/Volumes/MPCSMPL/', '');
+            }
+            RACK_PADS[pNum - 1] = {
+              filename: pData.sample_file || (pData.sample_name + '.wav'),
+              soundType: stype,
+              relPath: relP,
+              volume: (pData.volume !== undefined) ? pData.volume : 0.707946,
+              pan: (pData.pan !== undefined) ? pData.pan : 0.5,
+              tune: pData.tune || 0,
+              muteGroup: pData.mute_group || ((stype === 'HIHAT' || stype === 'BASS_808') ? 1 : 0),
+              playMode: 'ONE_SHOT',
+              reverse: false,
+              padColor: PAD_COLORS[stype] || '#00f0ff'
+            };
+            loaded++;
+          }
+        }
+        renderRackGrid();
+        renderDockMatrix();
+        updateRackCounts();
+        switchTab('tab-rack', document.getElementById('tabBtnRack'));
+        showToast('✔ Proyecto ' + projectName + ' montado en Rack (' + loaded + '/16 pads)');
+      } else {
+        tryFetchProject(candIdx + 1);
+      }
+    })
+    .catch(() => {
+      tryFetchProject(candIdx + 1);
+    });
+  }
+
+  tryFetchProject(0);
+}
+
+function loadProjectFromLocalSamples(projectName) {
+  if (!window.SAMPLES || !SAMPLES.length) {
+    showToast('⚠️ Catálogo de muestras no disponible.');
+    return;
+  }
+  const cleanName = projectName.replace(/[^a-zA-Z0-9_\-\#]/g, '').toLowerCase();
+  const projLow = projectName.toLowerCase().trim();
+
+  const matched = SAMPLES.filter(s => {
+    const rel = getSampleRelPath(s).toLowerCase();
+    const fn = (s[0] || '').toLowerCase();
+    return rel.includes(projLow + '_[projectdata]') || 
+           rel.includes(projLow + '_projectdata') || 
+           rel.includes(cleanName) ||
+           rel.includes(projLow);
+  });
+
+  if (!matched.length) {
+    showToast('⚠️ No se encontraron muestras vinculadas para ' + projectName);
     return;
   }
   loadSamplesIntoPads(matched.slice(0, 16), 'Proyecto ' + projectName);
@@ -3531,23 +3632,56 @@ function loadExpansionToRack(expTitle) {
     showToast('⚠️ Catálogo de muestras cargando...');
     return;
   }
-  const matched = SAMPLES.filter(s => s[9] && s[9].includes('Expansions/' + expTitle));
+  
+  const titleClean = expTitle.toLowerCase().trim();
+  const tokens = titleClean.replace(/[\-_()]/g, ' ').split(/\s+/).filter(t => t.length > 2);
+
+  const matched = SAMPLES.filter(s => {
+    const rel = getSampleRelPath(s).toLowerCase();
+    const pack = getSamplePack(s).toLowerCase();
+    
+    if (rel.includes('expansions/')) {
+      if (rel.includes(titleClean) || pack.includes(titleClean)) return true;
+      if (tokens.length > 0 && tokens.every(tok => rel.includes(tok) || pack.includes(tok))) return true;
+    } else {
+      if (pack.includes(titleClean)) return true;
+      if (tokens.length > 0 && tokens.every(tok => pack.includes(tok))) return true;
+    }
+    return false;
+  });
+
   if (!matched.length) {
     showToast('⚠️ No se encontraron muestras para ' + expTitle);
     return;
   }
-  // Selección inteligente y armónica de 16 pads
-  const desired = ['KICK', 'KICK', 'SNARE', 'SNARE', 'CLAP', 'HIHAT', 'HIHAT', 'CYMBAL', 'PERCUSSION', 'PERCUSSION', 'BASS_808', 'BASS_808', 'KEYS_SYNTH', 'KEYS_SYNTH', 'MELODIC_LOOP', 'VOCAL'];
+
+  // Distribución inteligente de 16 pads estilo MPC Drum Kit estándar:
+  // Pads 1-4: Kicks y Snares principales
+  // Pads 5-8: Claps, HiHats cerrados/abiertos
+  // Pads 9-12: Percusión, Címbalos, Bass / 808
+  // Pads 13-16: Melódicos, Voces, FX y Loops
+  const desired = [
+    'KICK', 'SNARE', 'CLAP', 'HIHAT',
+    'KICK', 'SNARE', 'HIHAT', 'PERCUSSION',
+    'CYMBAL', 'PERCUSSION', 'BASS_808', 'KEYS_SYNTH',
+    'KEYS_SYNTH', 'VOCAL', 'FX', 'MELODIC_LOOP'
+  ];
+
   const pool = [...matched];
   const kit = [];
-  
+
   for (let t of desired) {
     const idx = pool.findIndex(s => s[1] === t);
-    if (idx !== -1) kit.push(pool.splice(idx, 1)[0]);
+    if (idx !== -1) {
+      kit.push(pool.splice(idx, 1)[0]);
+    }
   }
+
+  // Si faltan pads para completar los 16, rellenar con el resto de muestras de la expansión
   while (kit.length < 16 && pool.length > 0) {
     kit.push(pool.shift());
   }
+
   loadSamplesIntoPads(kit, 'Expansión ' + expTitle);
 }
 
@@ -3555,23 +3689,27 @@ function loadSamplesIntoPads(samplesList, label) {
   clearRack();
   for (let i = 0; i < samplesList.length && i < 16; i++) {
     const s = samplesList[i];
+    const relPath = getSampleRelPath(s);
+    const soundType = s[1] || detectSoundTypeFromFilename(s[0]);
     RACK_PADS[i] = {
       filename: s[0],
-      soundType: s[1],
-      relPath: s[9],
+      soundType: soundType,
+      relPath: relPath,
       volume: 0.707946,
       pan: 0.5,
       tune: 0,
-      muteGroup: (s[1] === 'HIHAT' || s[1] === 'BASS_808') ? 1 : 0,
+      muteGroup: (soundType === 'HIHAT' || soundType === 'BASS_808') ? 1 : 0,
       playMode: 'ONE_SHOT',
       reverse: false,
-      padColor: PAD_COLORS[s[1]] || '#00f0ff'
+      padColor: PAD_COLORS[soundType] || '#00f0ff'
     };
   }
   renderRackGrid();
   renderDockMatrix();
   updateRackCounts();
-  switchTab('tab-rack', document.getElementById('tabBtnRack'));
+
+  const rackBtn = document.getElementById('tabBtnRack') || Array.from(document.querySelectorAll('.tab-btn')).find(b => b.innerText && b.innerText.includes('Rack'));
+  switchTab('tab-rack', rackBtn);
   showToast('✔ ' + label + ' montado en Rack (' + Math.min(samplesList.length, 16) + '/16 pads)');
 }
 
