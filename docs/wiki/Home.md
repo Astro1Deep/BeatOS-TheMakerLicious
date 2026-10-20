@@ -1,5 +1,7 @@
-# 🎛️ Bienvenido a la Wiki de Akai MPC Sample Database
-### Welcome to Akai MPC Sample Database & Multi-Sampler Toolkit Wiki
+# 🎛️ BeatOS (The System)
+### Edition: The MakerLicious
+> **Universal Beatmaker Hub & Multi-Sampler Toolkit**  
+> *(Akai MPC · Roland SP-404MK2 · Teenage Engineering PO-33 / PO-20 · NI Maschine)*
 
 > **Idioma / Language**: [Español (ES)](#-español) | [English (EN)](#-english)
 
@@ -7,7 +9,7 @@
 
 ## 🇪🇸 Español
 
-**Akai MPC Sample Database & Multi-Sampler Toolkit** es un ecosistema abierto de alto rendimiento diseñado para maximizar la velocidad de navegación, la estabilidad y la creación de kits musicales en hardware **Akai MPC Standalone**, **Roland SP-404MK2 / DOOM OS**, **Native Instruments Maschine** y **Teenage Engineering Pocket Operator (PO-33 / PO-133)**.
+**BeatOS (The System)** — *Edition: The MakerLicious* es un ecosistema abierto de alto rendimiento (**Universal Beatmaker Hub & Multi-Sampler Toolkit**) diseñado para maximizar la velocidad de navegación, la estabilidad y la creación de kits musicales en hardware **Akai MPC Standalone**, **Roland SP-404MK2 / DOOM OS**, **Native Instruments Maschine** y **Teenage Engineering Pocket Operator (PO-33 / PO-20 / PO-133)**.
 
 ### 📌 ¿Por qué este proyecto?
 El hardware musical autónomo cuenta con recursos de memoria dedicados. Cuando conectamos tarjetas Micro SD con decenas de miles de samples desordenados o con residuos `._*` de macOS, surgen problemas críticos:
@@ -40,11 +42,11 @@ Este toolkit resuelve estos desafíos combinando **SQLite 3**, un indexador aut�
 ## 🇬🇧 English
 
 ### Overview
-**Akai MPC Sample Database & Multi-Sampler Toolkit** is a lightweight, zero-dependency open source ecosystem built with **Python 3, SQLite 3, and HTML5**. It provides instant local sample search, automatic sonic taxonomy, project integrity auditing, and a 16-pad **Universal Beatmaker Kit Rack** that exports programs and kits natively to:
+**BeatOS (The System)** — *Edition: The MakerLicious* is a lightweight, zero-dependency open source ecosystem (**Universal Beatmaker Hub & Multi-Sampler Toolkit**) built with **Python 3, SQLite 3, and HTML5**. It provides instant local sample search, automatic sonic taxonomy, project integrity auditing, and a 16-pad **Universal Beatmaker Kit Rack** that exports programs and kits natively to:
 * **Akai MPC Standalone** (`.xpm` Drum Programs & `.xpj` Projects)
 * **Native Instruments Maschine** (`.mxgrp` Groups & mapping)
 * **Roland SP-404MK2 & DOOM OS** (Bank A import folders)
-* **Teenage Engineering PO-33 / PO-133** (Calibrated 150ms Drum Reels & FSK modem backup tools)
+* **Teenage Engineering PO-33 / PO-20 / PO-133** (Calibrated 150ms Drum Reels & FSK modem backup tools)
 
 ---
 

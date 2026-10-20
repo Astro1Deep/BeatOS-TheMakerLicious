@@ -1,8 +1,10 @@
-# 🎛️ Universal Beatmaker Hub & Multi-Sampler Toolkit
-### Akai MPC · Roland SP-404MK2 · Teenage Engineering PO-33 / PO-20 · NI Maschine
+# 🎛️ BeatOS (The System)
+### Edition: The MakerLicious
+> **Universal Beatmaker Hub & Multi-Sampler Toolkit**  
+> *(Akai MPC · Roland SP-404MK2 · Teenage Engineering PO-33 / PO-20 · NI Maschine)*
 
 <p align="center">
-  <img src="docs/assets/branding/te_universal_beatmaker_banner.svg" alt="Teenage Engineering PO-20 Arcade Inspired Universal Beatmaker Station" width="100%">
+  <img src="docs/assets/branding/te_universal_beatmaker_banner.svg" alt="BeatOS (The System) - The MakerLicious Edition Hardware Blueprint" width="100%">
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

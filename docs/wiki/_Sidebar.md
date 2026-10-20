@@ -1,4 +1,5 @@
-### 🎛️ Navegación Wiki
+### 🎛️ BeatOS // The System
+*Edition: The MakerLicious*
 
 * **[🏠 Inicio / Home](Home.md)**
 * **[🚀 1. Instalación y Puesta en Marcha](01-Instalacion-y-Puesta-en-Marcha.md)**

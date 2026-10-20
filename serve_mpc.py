@@ -758,7 +758,8 @@ def run_server(custom_path: str | None = None, port: int | None = None, auto_ope
     url = f"http://localhost:{port}/" + (catalog_rel if catalog_rel else "")
 
     print("\n" + "=" * 70)
-    print("🔊 AKAI MPC & MULTI-SAMPLER DATABASE - SERVIDOR PROFESIONAL v3.5")
+    print("🔊 BeatOS (The System) // Edition: The MakerLicious")
+    print("   Universal Beatmaker Hub & Multi-Sampler Toolkit (v3.5)")
     print("=" * 70)
     print(f"  📁 Raíz de Medios / Repositorio: {target_root}")
     print(f"  🌐 URL del Catálogo Web:         {url}")
