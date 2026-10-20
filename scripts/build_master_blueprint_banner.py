@@ -2,7 +2,7 @@
 """
 Build Authentic Master Technical Blueprint Banner for BeatOS — The MakerLicious
 Using official Teenage Engineering manual style blueprints from /Users/ivan/Downloads/BEATMAKER HARDWARES REF
-100% faithful to the physical hardware, homogeneous styling, solid crisp contours, and Swiss modernist typography.
+100% faithful to the physical hardware, homogeneous styling, zero stray lines, zero artificial bounding boxes.
 """
 
 import os
@@ -15,51 +15,51 @@ def extract_and_prepare_devices(ref_dir, scratch_dir):
     
     # 1. PO-33 K.O.! (from po33_blueprint_te_style.jpg)
     # Includes full top wire hanger loop (y=62..140) and full PCB (y=140..1073, x=218..677)
+    # Zero artificial lines, natural PCB contours and components 100% preserved.
     im_po = Image.open(os.path.join(ref_dir, "po33_blueprint_te_style.jpg"))
     crop_po = im_po.crop((218, 62, 677, 1073)).convert("RGBA")
     arr_po = np.array(crop_po)
     bg_po = np.array([241, 240, 236])
     
-    # Clean space outside hanger loop above PCB (y < 78)
+    # Clear empty space outside hanger loop above PCB (y < 78)
     for y in range(78):
         for x in range(crop_po.width):
-            if x < 85 or x > 335:
+            if x < 85 or x > 335 or np.linalg.norm(arr_po[y, x, :3] - bg_po) < 15:
                 arr_po[y, x, 3] = 0
-            else:
-                if np.linalg.norm(arr_po[y, x, :3] - bg_po) < 15:
-                    arr_po[y, x, 3] = 0
-                    
-    # Clean edges outside PCB
+                
+    # Clear empty margin outside PCB borders
     arr_po[78:, :2, 3] = 0
     arr_po[78:, 457:, 3] = 0
     
-    # Clean outside bottom rounded corners
+    # Clear empty space outside bottom rounded corners
     for y in range(1000, crop_po.height):
         for x in list(range(20)) + list(range(crop_po.width - 20, crop_po.width)):
             if np.linalg.norm(arr_po[y, x, :3] - bg_po) < 15:
                 arr_po[y, x, 3] = 0
                 
     crop_po = Image.fromarray(arr_po)
-    draw_po = ImageDraw.Draw(crop_po)
-    draw_po.rectangle([(2, 78), (456, crop_po.height - 2)], outline=(20, 20, 24), width=2)
     po_path = os.path.join(scratch_dir, "blueprint_prep_po33.png")
     crop_po.save(po_path)
 
     # 2. Akai MPC Sample (from akai_mpc_sample_blueprint_topdown_te_style.jpg)
+    # Start at y=120 to eliminate the stray y=110 guideline completely (Image 0).
+    # Clear stray leader lines outside the chassis to the left of x=40 below bezel (Image 1).
+    # Zero artificial border rectangles.
     im_mpc = Image.open(os.path.join(ref_dir, "akai_mpc_sample_blueprint_topdown_te_style.jpg"))
-    crop_mpc = im_mpc.crop((254, 108, 827, 750)).convert("RGBA")
-    draw_mpc = ImageDraw.Draw(crop_mpc)
-    draw_mpc.rectangle([(0, 0), (crop_mpc.width - 1, crop_mpc.height - 1)], outline=(20, 20, 24), width=2)
+    crop_mpc = im_mpc.crop((246, 120, 827, 750)).convert("RGBA")
+    arr_mpc = np.array(crop_mpc)
+    arr_mpc[175:, :40, 3] = 0
+    crop_mpc = Image.fromarray(arr_mpc)
     mpc_path = os.path.join(scratch_dir, "blueprint_prep_mpc.png")
     crop_mpc.save(mpc_path)
 
     # 3. Roland SP-404MK2 (from roland_sp404mk2_blueprint_te_style.jpg)
+    # Natural blueprint linework with circular OLED screen centered horizontally.
+    # Clean outside the 4 rounded corners. Zero artificial drawn rectangles.
     im_sp = Image.open(os.path.join(ref_dir, "roland_sp404mk2_blueprint_te_style.jpg"))
     crop_sp = im_sp.crop((180, 208, 670, 1132)).convert("RGBA")
     arr_sp = np.array(crop_sp)
     bg_sp = np.array([242, 239, 226])
-    
-    # Clean outside 4 rounded corners
     for y in range(35):
         for x in range(35):
             if np.linalg.norm(arr_sp[y, x, :3] - bg_sp) < 18:
@@ -74,33 +74,29 @@ def extract_and_prepare_devices(ref_dir, scratch_dir):
         for x in range(crop_sp.width - 35, crop_sp.width):
             if np.linalg.norm(arr_sp[y, x, :3] - bg_sp) < 18:
                 arr_sp[y, x, 3] = 0
-                
     crop_sp = Image.fromarray(arr_sp)
-    draw_sp = ImageDraw.Draw(crop_sp)
-    # Solid, crisp, reinforced dark contour around SP-404 faceplate (eliminates faint contour error)
-    draw_sp.rounded_rectangle([(0, 0), (crop_sp.width - 1, crop_sp.height - 1)], radius=18, outline=(18, 18, 22), width=3)
     sp_path = os.path.join(scratch_dir, "blueprint_prep_sp404.png")
     crop_sp.save(sp_path)
 
     # 4. NI Maschine MK3 (from maschine_blueprint_te_style_from_user_photo.jpg)
+    # Natural blueprint linework with dual screens, 8 encoders, 4D encoder, 16 RGB pads.
+    # Zero artificial lines.
     im_mas = Image.open(os.path.join(ref_dir, "maschine_blueprint_te_style_from_user_photo.jpg"))
     crop_mas = im_mas.crop((137, 198, 885, 862)).convert("RGBA")
-    draw_mas = ImageDraw.Draw(crop_mas)
-    draw_mas.rectangle([(0, 0), (crop_mas.width - 1, crop_mas.height - 1)], outline=(20, 20, 24), width=2)
     mas_path = os.path.join(scratch_dir, "blueprint_prep_maschine.png")
     crop_mas.save(mas_path)
 
     # 5. Teenage Engineering EP-133 K.O. II (from ep133_blueprint_te_style.jpg)
+    # Authentic chassis, top tabs, calculator keys, fader, Knobs X/Y.
+    # Clear paper background between connector tabs at y < 32. Zero artificial lines.
     im_ep = Image.open(os.path.join(ref_dir, "ep133_blueprint_te_style.jpg"))
     crop_ep = im_ep.crop((67, 80, 828, 1076)).convert("RGBA")
     arr_ep = np.array(crop_ep)
     bg_ep = np.array([241, 241, 241])
-    for y in range(35):
+    for y in range(32):
         diff = np.linalg.norm(arr_ep[y, :, :3] - bg_ep, axis=1)
         arr_ep[y, diff < 12, 3] = 0
     crop_ep = Image.fromarray(arr_ep)
-    draw_ep = ImageDraw.Draw(crop_ep)
-    draw_ep.rectangle([(0, 32), (crop_ep.width - 1, crop_ep.height - 1)], outline=(20, 20, 24), width=2)
     ep_path = os.path.join(scratch_dir, "blueprint_prep_ep133.png")
     crop_ep.save(ep_path)
 
@@ -177,7 +173,7 @@ def build_master_blueprint_banner():
     # 2. Balanced Stations Layout (5 Hardware stations in strict exact order)
     stations = [
         {"name": "01 / pocket operator", "key": "po33", "target_w": 285, "target_h": 628},
-        {"name": "02 / akai mpc", "key": "mpc", "target_w": 445, "target_h": 498},
+        {"name": "02 / akai mpc", "key": "mpc", "target_w": 445, "target_h": 482},
         {"name": "03 / roland sp-404mk2", "key": "sp404", "target_w": 345, "target_h": 650},
         {"name": "04 / ni maschine", "key": "maschine", "target_w": 465, "target_h": 413},
         {"name": "05 / ep-133 k.o. ii", "key": "ep133", "target_w": 455, "target_h": 596}
@@ -214,7 +210,7 @@ def build_master_blueprint_banner():
         shadow = shadow.filter(ImageFilter.GaussianBlur(8))
         banner.paste(shadow, (cx - sh_w // 2, hardware_base_y - 12), shadow)
         
-        # Paste the 100% solid, homogeneous blueprint device
+        # Paste the pure, clean blueprint device
         banner.paste(scaled, (pos_x, pos_y), scaled)
         
         # Millimeter calibration crosshair under station
@@ -263,7 +259,7 @@ def build_master_blueprint_banner():
     banner.save(bp_png, format="PNG")
     print(f"Saved: {bp_png}")
 
-    # Also copy to artifacts brain directory
+    # Copy to artifacts brain directory
     shutil.copy2(master_jpg, os.path.join(brain_dir, "te_universal_beatmaker_banner.jpg"))
     shutil.copy2(preview_png, os.path.join(brain_dir, "te_universal_beatmaker_banner_preview.png"))
     shutil.copy2(bp_jpg, os.path.join(brain_dir, "banner_blueprint_edition.jpg"))
