@@ -1,0 +1,9 @@
+{
+  "default": "es",
+  "autoDetect": true,
+  "supported": ["es", "en"],
+  "labels": {
+    "es": "Español",
+    "en": "English"
+  }
+}

@@ -1,59 +1,52 @@
 # 🎛️ Bienvenido a la Wiki de Akai MPC Sample Database
+### Welcome to Akai MPC Sample Database & Multi-Sampler Toolkit Wiki
 
-**Akai MPC Sample Database & Finder Toolkit** es un ecosistema de código abierto diseñado para maximizar el rendimiento, la velocidad de navegación y la estabilidad de tu librería musical en el hardware **Akai MPC Standalone** (MPC Live, Live II, One, One+, X, X SE, Key 37, Key 61, MPC Studio y MPC Touch).
-
----
-
-## 📌 ¿Por qué este proyecto?
-
-El hardware Akai MPC en modo Standalone cuenta con una CPU ARM y memoria RAM dedicada (usualmente 2 GB a 4 GB según el modelo). Cuando conectamos tarjetas Micro SD o discos SSD con decenas de miles de samples desordenados o con millones de metadatos residuales del sistema operativo (como los archivos `._*` de macOS), nos encontramos habitualmente con tres problemas críticos:
-
-1. **Lentitud extrema en el Browser del MPC**: La pantalla táctil tarda varios segundos en renderizar carpetas masivas.
-2. **Pérdida de Samples en Proyectos (`Missing Samples`)**: Al mover carpetas sin control, los proyectos `.xpj` pierden sus referencias sonoras.
-3. **Imposibilidad de preescuchar y catalogar rápidamente**: No existe un buscador rápido en un ordenador portátil para encontrar un bombo específico a 90 BPM en escala Dm sin tener que abrir el DAW completo.
-
-Este toolkit resuelve estos desafíos combinando la potencia de **SQLite 3**, un indexador autónomo en **Python 3** sin librerías externas, y un **Catálogo Visual en HTML5** con preescucha de audio y buscador instantáneo de rutas.
+> **Idioma / Language**: [Español (ES)](#-español) | [English (EN)](#-english)
 
 ---
 
-## 🗺️ Índice de la Wiki
+## 🇪🇸 Español
 
-A continuación tienes acceso directo a todos los módulos y guías del toolkit:
+**Akai MPC Sample Database & Multi-Sampler Toolkit** es un ecosistema abierto de alto rendimiento diseñado para maximizar la velocidad de navegación, la estabilidad y la creación de kits musicales en hardware **Akai MPC Standalone**, **Roland SP-404MK2 / DOOM OS**, **Native Instruments Maschine** y **Teenage Engineering Pocket Operator (PO-33 / PO-133)**.
 
-| Módulo | Descripción |
+### 📌 ¿Por qué este proyecto?
+El hardware musical autónomo cuenta con recursos de memoria dedicados. Cuando conectamos tarjetas Micro SD con decenas de miles de samples desordenados o con residuos `._*` de macOS, surgen problemas críticos:
+1. **Lentitud extrema en el Browser del hardware**.
+2. **Pérdida de muestras en proyectos (`Missing Samples`)**.
+3. **Dificultad para ensamblar drum kits compatibles con múltiples samplers**.
+
+Este toolkit resuelve estos desafíos combinando **SQLite 3**, un indexador autónomo en **Python 3**, un **servidor de streaming RFC 7233 Range Requests** y un **Catálogo Web Bilingüe en HTML5** con Beatmaker Kit Rack interactivo de 16 pads.
+
+---
+
+## 🗺️ Índice de la Wiki / Wiki Chapters
+
+| Módulo / Chapter | Descripción / Description |
 | :--- | :--- |
-| **[🚀 1. Instalación y Puesta en Marcha](01-Instalacion-y-Puesta-en-Marcha.md)** | Requisitos mínimos, clonado del repositorio y ejecución del instalador interactivo en macOS, Linux y Windows. |
-| **[📁 2. Organización MicroSD para MPC](02-Organizacion-MicroSD-para-MPC.md)** | La arquitectura ergonómica recomendada de 7 macro-categorías, formato ExFAT y purga de archivos `._*`. |
-| **[🎹 3. Taxonomía y Detección de Audio](03-Taxonomia-y-Deteccion-de-Audio.md)** | Los 12 tipos de sonido, rangos de BPM (Lo-Fi a DnB), ruedas de armónicos Camelot y cálculo de energía. |
-| **[🔍 4. Auditoría de Proyectos (.xpj)](04-Auditoria-de-Proyectos-MPC-(xpj).md)** | Descompresión gzip, lectura de JSON interno, validación de carpetas `_[ProjectData]` y estados HEALTHY. |
-| **[📦 5. Expansiones Oficiales Akai](05-Expansiones-Oficiales-Akai.md)** | Parseo de `Expansion.xml`, programas `.xpm` / `.pgm`, carátulas gráficas y convivencia con kits de usuario. |
-| **[🌐 6. Catálogo Web y Audio Player](06-Catalogo-Web-y-Audio-Player.md)** | Funcionamiento del catálogo HTML5, solución al sandbox local con el servidor ligero y botón de copiado de rutas. |
-| **[📊 7. Consultas Avanzadas SQLite](07-Consultas-Avanzadas-SQLite.md)** | Consultas SQL prácticas para productores musicales, análisis estadístico y exportación a CSV/JSON. |
+| **[🚀 1. Instalación y Puesta en Marcha](01-Instalacion-y-Puesta-en-Marcha.md)** | Requisitos mínimos, instalador interactivo multiplataforma en macOS, Linux y Windows. |
+| **[📁 2. Organización MicroSD para MPC](02-Organizacion-MicroSD-para-MPC.md)** | Las 7 macro-categorías canónicas, formato ExFAT y purga de archivos `._*`. |
+| **[🎹 3. Taxonomía y Detección de Audio](03-Taxonomia-y-Deteccion-de-Audio.md)** | 12 tipos de sonido, rangos BPM (Lo-Fi a DnB), rueda armónica Camelot y energía. |
+| **[🔍 4. Auditoría de Proyectos (.xpj)](04-Auditoria-de-Proyectos-MPC-(xpj).md)** | Inspección interna JSON, verificación contra `_[ProjectData]` y estados HEALTHY. |
+| **[📦 5. Expansiones Oficiales Akai](05-Expansiones-Oficiales-Akai.md)** | Parseo de `Expansion.xml`, programas `.xpm` / `.pgm` y carátulas gráficas. |
+| **[🌐 6. Catálogo Web y Audio Player](06-Catalogo-Web-y-Audio-Player.md)** | Catálogo interactivo HTML5, streaming local y botón de copiado de rutas. |
+| **[📊 7. Consultas Avanzadas SQLite](07-Consultas-Avanzadas-SQLite.md)** | Consultas SQL prácticas para beatmakers y exportaciones a CSV/JSON. |
+| **[🎛️ 8. Universal Beatmaker Rack](08-Universal-Hardware-Beatmaker-Rack-(MPC-Maschine-SP404-PO33).md)** | Rack de 16 pads, afinación, choke groups, pad swap y exportación multi-sampler. |
+| **[🕹️ 9. Pocket Operator PO-33 Studio](09-Pocket-Operator-PO-33-KO-Studio-y-FSK-Modem.md)** | Drum Reels con silencios de 150 ms (≤ 40s) y verificación de copias FSK. |
+| **[🌐 10. Manual Bilingüe (ES / EN)](10-Manual-Bilingue-y-Selector-de-Idioma-(ES-EN).md)** | Selector dinámico de idioma, persistencia en localStorage y workflow internacional. |
+| **[🔌 11. Auto-Reconocimiento de Discos](11-Auto-Reconocimiento-y-Onboarding-de-Discos.md)** | Motor forense para diagnosticar y estructurar cualquier disco externo nuevo. |
 
 ---
 
-## 🏗️ Diagrama de Flujo del Ecosistema
+## 🇬🇧 English
 
-```mermaid
-flowchart TD
-    A["Tarjeta Micro SD / Disco SSD MPC"] --> B["index_mpc_library.py"]
-    B --> C["Limpieza de AppleDouble (._*)"]
-    B --> D["Auditoría .xpj y Proyectos"]
-    B --> E["Inspección Expansions (Expansion.xml)"]
-    B --> F["Indexación de Audio (.wav, .aif, .mp3)"]
-    
-    F --> G[("Base de Datos SQLite: mpc_sample.db")]
-    G --> H["mpc_sample_resumen.csv"]
-    G --> I["mpc_sample.json"]
-    G --> J["catalogo_mpc_sample.html (HTML5)"]
-    
-    J --> K["Browser Web Local"]
-    K --> L["▶ Reproductor Instantáneo"]
-    K --> M["📋 Copiar Ruta para Pads del MPC"]
-```
+### Overview
+**Akai MPC Sample Database & Multi-Sampler Toolkit** is a lightweight, zero-dependency open source ecosystem built with **Python 3, SQLite 3, and HTML5**. It provides instant local sample search, automatic sonic taxonomy, project integrity auditing, and a 16-pad **Universal Beatmaker Kit Rack** that exports programs and kits natively to:
+* **Akai MPC Standalone** (`.xpm` Drum Programs & `.xpj` Projects)
+* **Native Instruments Maschine** (`.mxgrp` Groups & mapping)
+* **Roland SP-404MK2 & DOOM OS** (Bank A import folders)
+* **Teenage Engineering PO-33 / PO-133** (Calibrated 150ms Drum Reels & FSK modem backup tools)
 
 ---
 
 ## 💡 Contribuir o Enviar Sugerencias
-
-Este proyecto está mantenido por **[Astro1Deep](https://github.com/Astro1Deep)** para la comunidad global de productores. Si tienes ideas sobre nuevas reglas de clasificación sonora, soporte para formatos adicionales o mejoras en la interfaz, por favor abre un [Issue o Pull Request en GitHub](https://github.com/Astro1Deep/mpc-sample-database/issues).
+Mantenido por **[Astro1Deep](https://github.com/Astro1Deep)**. Si tienes ideas sobre nuevas reglas de clasificación sonora, abre un [Issue o Pull Request en GitHub](https://github.com/Astro1Deep/mpc-sample-database/issues).

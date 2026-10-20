@@ -15,7 +15,10 @@ env/
 venv/
 .venv/
 
-# SQLite WAL and temp files
+# SQLite database and WAL files
+*.db
+*.sqlite
+SQLITE_DATABASE/
 *.db-journal
 *.db-wal
 *.db-shm
