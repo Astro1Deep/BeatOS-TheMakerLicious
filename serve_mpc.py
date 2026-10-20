@@ -760,7 +760,7 @@ def run_server(custom_path: str | None = None, port: int | None = None, auto_ope
     print("\n" + "=" * 70)
     print("🔊 BeatOS — The MakerLicious")
     print("   The system ★ [universal beatmaker station]")
-    print("   │ ref: mpc · sp-404 · po-20 · maschine // spec sheet 01 │")
+    print("   │ ref: mpc · sp-404 · pocket operator · maschine │")
     print("=" * 70)
     print(f"  📁 Raíz de Medios / Repositorio: {target_root}")
     print(f"  🌐 URL del Catálogo Web:         {url}")

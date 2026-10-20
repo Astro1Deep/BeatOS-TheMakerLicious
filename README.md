@@ -1,6 +1,6 @@
 # 🎛️ BeatOS — The MakerLicious
 ### The system ★ [universal beatmaker station]
-> `│ ref: mpc · sp-404 · po-20 · maschine // spec sheet 01 │`  
+> `│ ref: mpc · sp-404 · pocket operator · maschine │`  
 > **Universal Beatmaker Hub & Multi-Sampler Toolkit**
 
 <p align="center">

@@ -46,12 +46,12 @@
     <line x1="1020" y1="18" x2="1020" y2="25" /><line x1="1070" y1="18" x2="1070" y2="22" /><line x1="1120" y1="18" x2="1120" y2="25" />
   </g>
 
-  <!-- HEADER: Teenage Engineering Authentic Lowercase Swiss Serigraphy -->
+  <!-- HEADER: Technical Blueprint Serigraphy -->
   <g class="te-mono" font-size="9" letter-spacing="1.2">
-    <rect x="36" y="32" width="170" height="18" rx="2" class="te-accent-fill" />
-    <text x="44" y="44" fill="#ffffff" font-weight="800">teenage engineering</text>
+    <rect x="36" y="32" width="130" height="18" rx="2" class="te-accent-fill" />
+    <text x="44" y="44" fill="#ffffff" font-weight="800">beatos labs</text>
     
-    <text x="218" y="45" class="te-text-main" font-weight="700">// po-20 style guide</text>
+    <text x="178" y="45" class="te-text-main" font-weight="700">// hardware blueprint guide</text>
     <text x="410" y="45" class="te-text-muted">hardware reference manual / 4-way multi-sampler architecture</text>
     <text x="1060" y="45" class="te-text-main" text-anchor="end" font-weight="700">rev. 2026</text>
   </g>
@@ -65,7 +65,7 @@
       The system  ★  [universal beatmaker station]
     </text>
     <text x="600" y="109" class="te-mono te-text-muted" font-size="8.5" letter-spacing="1">
-      │  ref: mpc · sp-404 · po-20 · maschine // spec sheet 01  │
+      │  ref: mpc · sp-404 · pocket operator · maschine  │
     </text>
   </g>
 
@@ -75,7 +75,7 @@
   <!-- ==================== 1. TEENAGE ENGINEERING PO-20 ARCADE ==================== -->
   <g transform="translate(55, 132)">
     <!-- Sub-header -->
-    <text x="0" y="0" class="te-mono te-bold" font-size="11" class="te-text-main">01 / po-20 arcade</text>
+    <text x="0" y="0" class="te-mono te-bold" font-size="11" class="te-text-main">01 / pocket operator</text>
     <text x="130" y="0" class="te-mono te-accent-fill" font-size="9" font-weight="700">chiptune &amp; sample engine</text>
     
     <!-- Wire Hanger Loop -->
@@ -241,11 +241,11 @@
     <line x1="228" y1="176" x2="241" y2="176" stroke="var(--banner-accent, #ff6600)" stroke-width="1" />
   </g>
 
-  <!-- ==================== 3. ROLAND SP-404MK2 & DOOM OS ==================== -->
+  <!-- ==================== 3. ROLAND SP-404MK2 ==================== -->
   <g transform="translate(620, 132)">
     <!-- Sub-header -->
     <text x="0" y="0" class="te-mono te-bold" font-size="11" class="te-text-main">03 / roland sp-404mk2</text>
-    <text x="150" y="0" class="te-mono te-text-muted" font-size="9">doom os / vinyl sim</text>
+    <text x="150" y="0" class="te-mono te-text-muted" font-size="9">linear wave &amp; vinyl sim</text>
 
     <!-- Distinct SP-404 Faceplate with Curved Top Shoulders & Corner Screws -->
     <path d="M 0 30 C 0 22, 10 20, 20 20 L 190 20 C 200 20, 210 22, 210 30 L 210 287 C 210 294, 202 297, 190 297 L 20 297 C 8 297, 0 294, 0 287 Z" class="te-device-fill" stroke-width="1.8" />
@@ -273,8 +273,8 @@
     <!-- Circular Signature OLED Display with Outer Ring -->
     <circle cx="105" cy="98" r="28" class="te-device-fill" stroke="var(--banner-accent, #ff6600)" stroke-width="2" />
     <circle cx="105" cy="98" r="23" class="te-paper-fill" stroke-width="0.8" />
-    <text x="105" y="94" class="te-mono te-accent-fill te-bold" font-size="8" text-anchor="middle">SP-404MK2</text>
-    <text x="105" y="106" class="te-mono te-text-main te-bold" font-size="11" text-anchor="middle">DOOM OS</text>
+    <text x="105" y="93" class="te-mono te-accent-fill te-bold" font-size="8" text-anchor="middle">ROLAND</text>
+    <text x="105" y="105" class="te-mono te-text-main te-bold" font-size="11" text-anchor="middle">SP-404MK2</text>
 
     <!-- Bank Buttons Row (A-E, F-J) -->
     <g transform="translate(20, 138)">
@@ -448,8 +448,8 @@
   <!-- FOOTER: Authentic TE Blueprint Notation -->
   <g class="te-mono" font-size="9">
     <line x1="36" y1="435" x2="1164" y2="435" stroke="var(--banner-border, #2b3242)" stroke-width="1" />
-    <text x="36" y="452" font-weight="700" class="te-text-main">teenage engineering guide specification // sheet 01 of 01</text>
-    <text x="600" y="452" text-anchor="middle" class="te-accent-fill" font-weight="700">[A] po-20 arcade · [B] akai mpc standalone · [C] roland sp-404mk2 · [D] ni maschine</text>
+    <text x="36" y="452" font-weight="700" class="te-text-main">hardware guide specification // sheet 01 of 01</text>
+    <text x="600" y="452" text-anchor="middle" class="te-accent-fill" font-weight="700">[A] pocket operator · [B] akai mpc standalone · [C] roland sp-404mk2 · [D] ni maschine</text>
     <text x="1164" y="452" text-anchor="end" class="te-text-muted">16-pad unified fingerdrumming architecture</text>
   </g>
 </svg>
