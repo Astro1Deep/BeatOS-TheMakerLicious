@@ -1,6 +1,6 @@
 # 🎛️ BeatOS — The MakerLicious
 ### The system ★ [universal beatmaker station]
-> `│ ref: pocket operator · sp-404 · mpc one · mpc studio · maschine │`  
+> `│ ref: pocket operator · akai mpc · roland sp-404mk2 · ni maschine │`  
 > **Universal Beatmaker Hub & Multi-Sampler Toolkit**
 
 > **Idioma / Language**: [Español (ES)](#-español) | [English (EN)](#-english)
@@ -39,6 +39,14 @@ Este toolkit resuelve estos desafíos combinando **SQLite 3**, un indexador aut�
 
 ---
 
+## ☕ Apoyo al Desarrollo / Support the Project
+
+BeatOS es 100% independiente, autónomo y libre de telemetría. Puedes apoyar el proyecto mediante microdonaciones:
+* ☕ **[Invitar a un café en Ko-fi (1€)](https://ko-fi.com/astro1deep)**
+* 💖 **[Patrocinar en GitHub Sponsors](https://github.com/sponsors/Astro1Deep)**
+
+---
+
 ## 🇬🇧 English
 
 ### Overview
@@ -50,5 +58,7 @@ Este toolkit resuelve estos desafíos combinando **SQLite 3**, un indexador aut�
 
 ---
 
-## 💡 Contribuir o Enviar Sugerencias
-Mantenido por **[Astro1Deep](https://github.com/Astro1Deep)**. Si tienes ideas sobre nuevas reglas de clasificación sonora, abre un [Issue o Pull Request en GitHub](https://github.com/Astro1Deep/mpc-sample-database/issues).
+## 📄 Licencia / License
+
+Distribuido bajo licencia **Creative Commons Atribución-NoComercial-SinDerivadas 4.0 Internacional (CC BY-NC-ND 4.0)**.
+Mantenido por **[Astro1Deep](https://github.com/Astro1Deep)**.

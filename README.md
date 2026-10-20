@@ -1,17 +1,19 @@
 # 🎛️ BeatOS — The MakerLicious
 ### The system ★ [universal beatmaker station]
-> `│ ref: pocket operator · sp-404 · mpc one · mpc studio · maschine │`  
+> `│ ref: pocket operator · akai mpc · roland sp-404mk2 · ni maschine │`  
 > **Universal Beatmaker Hub & Multi-Sampler Toolkit**
 
 <p align="center">
   <img src="docs/assets/branding/te_universal_beatmaker_banner.svg" alt="BeatOS (The System) - The MakerLicious Edition Hardware Blueprint" width="100%">
 </p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC%20BY--NC--ND%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-nd/4.0/)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Astro1Deep-ff5e5b.svg?logo=ko-fi&logoColor=white)](https://ko-fi.com/astro1deep)
+[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa.svg?logo=github&logoColor=white)](https://github.com/sponsors/Astro1Deep)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![SQLite 3](https://img.shields.io/badge/database-SQLite_3-orange.svg)](https://www.sqlite.org/)
 [![Multi-Sampler](https://img.shields.io/badge/Hardware-MPC_·_SP404_·_Maschine_·_PO33-red.svg)](https://github.com/Astro1Deep/mpc-sample-database)
-[![Themes](https://img.shields.io/badge/Themes-TE_Arcade_|_Cerebro_|_MPC_|_SP404_|_Maschine-orange.svg)](#-temas-visuales-y-sincronizaci%C3%B3n-del-ecosistema)
+[![Themes](https://img.shields.io/badge/Themes-TE_Arcade_|_Cerebro_|_MPC_|_SP404_|_Maschine-orange.svg)](#-los-4-pilares-culturales-y-temas-visuales)
 [![Bilingual](https://img.shields.io/badge/Language-ES_|_EN-cyan.svg)](#-bilingual-support--soporte-bilingüe)
 [![Wiki](https://img.shields.io/badge/Docs-Official_Wiki-success.svg)](https://github.com/Astro1Deep/mpc-sample-database/wiki)
 
@@ -20,6 +22,19 @@ Un ecosistema universal, ultraligero y autónomo en **Python 3 + SQLite + HTML5*
 - **Roland SP-404MK2 / SP-404A / SX**
 - **Native Instruments Maschine** (MK3, Plus, Mikro)
 - **Teenage Engineering Pocket Operator** (PO-20 Arcade, PO-33 K.O.!, PO-133)
+
+---
+
+## ☕ Apoya el Proyecto / Support the Project
+
+BeatOS es un proyecto comunitario independiente desarrollado con pasión por el beatmaking y el diseño de hardware musical. Es **100% autónomo, libre de telemetría y sin dependencias externas pesadas**.
+
+Si BeatOS te ahorra tiempo organizando tus librerías de samples, diseñando drum kits o pasando audio a tu hardware, puedes apoyar su desarrollo continuo con una microdonación (1€ a 3€):
+
+* ☕ **[Ko-fi: Invitar a un café en Ko-fi (1€)](https://ko-fi.com/astro1deep)**
+* 💖 **[GitHub Sponsors: Astro1Deep](https://github.com/sponsors/Astro1Deep)**
+
+Cada aportación ayuda a costear el mantenimiento, la investigación en ingeniería inversa de formatos propietarios y el soporte de nuevas plataformas de sampling.
 
 ---
 
@@ -55,7 +70,7 @@ Visita la **[Wiki Oficial en GitHub](https://github.com/Astro1Deep/mpc-sample-da
 
 1. **Universal Beatmaker Kit Rack (16 Pads)**:
    - Cuadrícula táctil e interactiva disparable por ratón o teclado físico (`Z-V`, `A-F`, `Q-R`, `1-4`).
-   - **Pad Inspector Modal**: Volumen lineal, paneo estéreo, afinación (**-24 a +24 semitones**), **Choke / Mute Groups (1-8)** e intercambio de pads (Pad Swap).
+   - **Pad Inspector Modal**: Volumen lineal, paneo estéreo, afinación (**-24 a +24 semitonos**), **Choke / Mute Groups (1-8)** e intercambio de pads (Pad Swap).
    - Generación en 1 clic de programas nativos para Akai MPC (`.xpm`/`.xpj`), NI Maschine (`.mxgrp`), Roland SP-404MK2 y Pocket Operator PO-33.
 
 2. **Pocket Operator PO-33 / PO-133 Studio**:
@@ -73,14 +88,25 @@ Visita la **[Wiki Oficial en GitHub](https://github.com/Astro1Deep/mpc-sample-da
    - Reproducción sin bloqueos en Safari, Chrome, Firefox y WebKit.
    - API REST completa para tareas de reindexación, limpieza y creación de kits.
 
-5. **🎨 Temas Visuales y Sincronización del Ecosistema**:
-   - Alternancia en caliente entre **5 estéticas visuales de hardware**:
-     - 🕹️ **Teenage Engineering PO-20 Arcade**: Placa PCB negro mate, serigrafía técnica suiza blanca y acentos naranja arcade.
-     - ⚡ **Cerebro OS Neon**: Cian y magenta reactivo de alta energía sobre fondo medianoche.
-     - 🎛️ **Akai MPC Vintage**: MPC 60 / 2000XL con chasis gris piedra y acentos rojos legendarios.
-     - 🎚️ **Roland SP-404MK2**: Glow cálido ámbar sobre vinilo negro y acentos DJFX.
-     - 🎹 **NI Maschine Studio**: Carbón anodizado y retroiluminación RGB de pads.
-   - **Sincronización global bidireccional**: Vía API REST (`/api/theme`) y persistencia en `ecosystem_theme.json` para unificar el estilo visual en todo Cerebro OS y herramientas de producción.
+---
+
+## 🎨 Los 4 Pilares Culturales y Temas Visuales
+
+El diseño de BeatOS (*The MakerLicious*) rinde homenaje a los cuatro grandes movimientos del diseño industrial y la cultura beatmaker:
+
+1. **La Escuela Suiza & Funcionalismo Dieter Rams (Braun / Teenage Engineering)**:
+   - *Tema*: `🕹️ Teenage Engineering PO-20 Arcade` (Flagship).
+   - *ADN*: Retículas ortogonales milimétricas, serigrafía técnica en blanco hueso y negro mate con acentos naranja arcade (`#ff6600`).
+2. **La Estética Stones Throw & Cultura de Vinilo (Jeff Jank / Madlib / J Dilla)**:
+   - *Tema*: `🎚️ Roland SP-404MK2 (Vinyl Dark)`.
+   - *ADN*: Textura profunda de vinilo negro, resplandor ámbar cálido en diales OLED y modo DJFX.
+3. **Simbolismo Arcade & Chiptune (PO-Series / Playdate)**:
+   - *Tema*: `⚡ Cerebro OS Neon`.
+   - *ADN*: Neón reactivo cian (`#00f0ff`) y magenta (`#ff0055`) con tipografía pixel y contraste cibernético.
+4. **Cyber-Industrial Japonés de los 80/90 (Roger Linn Akai MPC / Roland TR / NI)**:
+   - *Temas*: `🎛️ Akai MPC Vintage` (1988 Roger Linn stone-gray y carmín) y `🎹 NI Maschine Studio` (carbón anodizado con retroiluminación RGB de pads).
+
+El sistema cuenta con **sincronización global bidireccional** vía `/api/theme` y persistencia en `ecosystem_theme.json`, alineando instantáneamente BeatOS con **Cerebro OS** y **DjProducerTool**.
 
 ---
 
@@ -109,6 +135,8 @@ El menú interactivo te permite:
 
 ```text
 mpc-sample-database/
+├── .github/
+│   └── FUNDING.yml           # Configuración de patrocinio (Ko-fi & GitHub Sponsors)
 ├── catalogo_universal.html   # Catálogo interactivo web HTML5 bilingüe (ES/EN)
 ├── hardware_kit_builder.py   # Motor multi-sampler universal (MPC, SP404, Maschine, PO-33)
 ├── serve_mpc.py              # Servidor HTTP RFC 7233 con API REST y streaming parcial
@@ -119,7 +147,14 @@ mpc-sample-database/
 ├── schema.sql                # Esquema relacional formal SQLite
 ├── language_config.json      # Configuración de localización bilingüe
 ├── docs/
+│   ├── assets/branding/      # Banners esquemáticos Teenage Engineering en SVG/PNG
 │   └── wiki/                 # Los 11 artículos técnicos completos de la Wiki
-├── LICENSE                   # Licencia MIT
+├── LICENSE                   # Licencia Creative Commons BY-NC-ND 4.0
 └── README.md                 # Documentación principal bilingüe
 ```
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la licencia **Creative Commons Atribución-NoComercial-SinDerivadas 4.0 Internacional (CC BY-NC-ND 4.0)**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
