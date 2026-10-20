@@ -353,6 +353,67 @@
     border-color: var(--mpc-red) !important;
     box-shadow: 0 0 16px rgba(255, 51, 68, 0.5) !important;
   }
+  .pad-cell.is-dragging {
+    opacity: 0.35 !important;
+    transform: scale(0.95) !important;
+    border: 2px dashed var(--mpc-gold) !important;
+    box-shadow: 0 0 24px rgba(255, 179, 0, 0.45) !important;
+    cursor: grabbing !important;
+  }
+  .pad-cell.drag-target-over {
+    border: 2px dashed var(--mpc-cyan) !important;
+    background: linear-gradient(145deg, #192a3a 0%, #101d2a 100%) !important;
+    box-shadow: 0 0 25px rgba(0, 240, 255, 0.7), inset 0 0 16px rgba(0, 240, 255, 0.3) !important;
+    transform: scale(1.03) !important;
+  }
+  .pad-cell.drag-target-over::after {
+    content: "⇄ Soltar para Intercambiar";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 240, 255, 0.95);
+    color: #080c14;
+    font-weight: 800;
+    font-size: 10px;
+    padding: 5px 9px;
+    border-radius: 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 20;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.7);
+    letter-spacing: 0.5px;
+  }
+  .pad-cell.empty.drag-target-over::after {
+    content: "⬇️ Soltar en este Pad";
+    background: rgba(0, 255, 136, 0.95);
+  }
+  .pad-drag-grip {
+    color: var(--text-muted);
+    opacity: 0.45;
+    font-size: 11px;
+    cursor: grab;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    transition: opacity 0.15s ease, color 0.15s ease;
+  }
+  .pad-cell:hover .pad-drag-grip {
+    opacity: 0.95;
+    color: var(--mpc-cyan);
+  }
+  body.is-pad-dragging .pad-cell * {
+    pointer-events: none;
+  }
+  .dock-pad-btn.is-dragging {
+    opacity: 0.35 !important;
+    border: 1px dashed var(--mpc-gold) !important;
+  }
+  .dock-pad-btn.drag-target-over {
+    border: 1px dashed var(--mpc-cyan) !important;
+    background: rgba(0, 240, 255, 0.2) !important;
+    box-shadow: 0 0 14px rgba(0, 240, 255, 0.8) !important;
+  }
   .pad-cell-header {
     display: flex;
     justify-content: space-between;
@@ -1774,7 +1835,7 @@
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
         <div>
           <h2 style="font-size:20px; font-weight:800; color:#fff;">🎛️ Universal Beatmaker Rack <span style="font-size:13px; color:var(--mpc-cyan); font-weight:600;">(Banco A: Pads 1 al 16)</span></h2>
-          <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Toca cualquier pad con tu ratón o con las teclas de tu teclado físico (Z-V, A-F, Q-R, 1-4) para disparar el ritmo en tiempo real.</p>
+          <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Toca cualquier pad con tu ratón o con las teclas de tu teclado físico (Z-V, A-F, Q-R, 1-4) para disparar el ritmo en tiempo real. <strong style="color:var(--mpc-gold);">💡 Arrastra y suelta cualquier pad con el ratón para intercambiar o reubicar posiciones para fingerdrumming personalizado.</strong></p>
         </div>
       </div>
 
@@ -2417,8 +2478,8 @@ function renderDockMatrix() {
     let actionsHtml = '';
     if (hasSample) {
       actionsHtml = '<div class="dock-pad-actions" onclick="event.stopPropagation();">' +
-        '<button class="btn-dock-play" onclick="triggerPadAudio(' + i + ')" title="Reproducir Sonido (' + escapeHtml(pItem.filename) + ')">▶</button>' +
-        '<button class="btn-dock-remove" onclick="removePad(' + i + ')" title="Vaciar Pad ' + i + '">✕</button>' +
+        '<button draggable="false" class="btn-dock-play" onclick="triggerPadAudio(' + i + ')" title="Reproducir Sonido (' + escapeHtml(pItem.filename) + ')">▶</button>' +
+        '<button draggable="false" class="btn-dock-remove" onclick="removePad(' + i + ')" title="Vaciar Pad ' + i + '">✕</button>' +
       '</div>';
     } else {
       actionsHtml = '<div class="dock-pad-actions">' +
@@ -2426,7 +2487,15 @@ function renderDockMatrix() {
       '</div>';
     }
     
-    html += '<div id="dock-pad-' + i + '" class="' + cls + '" onclick="handleDockPadClick(' + i + ')" title="' + (pItem ? pItem.filename + ' (Clic para fijar y escuchar)' : 'Pad ' + i + ' vacío (Clic para fijar como objetivo)') + '">' +
+    html += '<div id="dock-pad-' + i + '" class="' + cls + '"' +
+      (hasSample ? ' draggable="true"' : '') +
+      ' ondragstart="handlePadDragStart(event, ' + i + ')"' +
+      ' ondragover="handlePadDragOver(event, ' + i + ')"' +
+      ' ondragenter="handlePadDragEnter(event, ' + i + ')"' +
+      ' ondragleave="handlePadDragLeave(event, ' + i + ')"' +
+      ' ondrop="handlePadDrop(event, ' + i + ')"' +
+      ' ondragend="handlePadDragEnd(event)"' +
+      ' onclick="handleDockPadClick(' + i + ')" title="' + (pItem ? pItem.filename + ' (Arrastra para intercambiar, o clic para fijar)' : 'Pad ' + i + ' vacío (Arrastra muestra aquí o clic para fijar)') + '">' +
       '<div class="dock-pad-header">' +
         '<span class="dock-pad-num">PAD ' + i + '</span>' +
         '<span class="dock-pad-tag">' + padTag + '</span>' +
@@ -2901,7 +2970,7 @@ function renderTable() {
     
     const currentPadTag = 'A' + (currentTargetPad < 10 ? '0' : '') + currentTargetPad;
     
-    html += '<tr>' +
+    html += '<tr draggable="true" ondragstart="handleSampleRowDragStart(event, \'' + safeRel + '\', \'' + safeName + '\', \'' + stype + '\')" style="cursor:grab;" title="Arrastra esta muestra hacia cualquier Pad (1-16) del Rack o Dock para asignarla">' +
       '<td style="white-space: nowrap;">' +
         '<button class="btn-play" data-rel="' + safeRel + '" data-name="' + safeName + '">▶ Play</button>' +
         '<button class="btn-copy" data-copy="' + safeRel + '">📋 Ruta</button>' +
@@ -3196,11 +3265,22 @@ function renderRackGrid() {
     if (item) {
       const color = PAD_COLORS[item.soundType] || '#00f0ff';
       const borderStyle = isTarget ? 'border: 2px solid var(--mpc-red); box-shadow: 0 0 16px rgba(255, 51, 68, 0.5);' : ('border-color:' + color + ';');
-      html += '<div id="' + padId + '" class="pad-cell filled' + (isTarget ? ' target-selected' : '') + '" style="' + borderStyle + '" onclick="triggerPadAudio(' + pNum + ')">' +
+      html += '<div id="' + padId + '" class="pad-cell filled' + (isTarget ? ' target-selected' : '') + '" style="' + borderStyle + '"' +
+        ' draggable="true"' +
+        ' ondragstart="handlePadDragStart(event, ' + pNum + ')"' +
+        ' ondragover="handlePadDragOver(event, ' + pNum + ')"' +
+        ' ondragenter="handlePadDragEnter(event, ' + pNum + ')"' +
+        ' ondragleave="handlePadDragLeave(event, ' + pNum + ')"' +
+        ' ondrop="handlePadDrop(event, ' + pNum + ')"' +
+        ' ondragend="handlePadDragEnd(event)"' +
+        ' onclick="triggerPadAudio(' + pNum + ')" title="Arrastra para mover o intercambiar de posición (Fingerdrumming)">' +
         '<div class="pad-cell-header">' +
-          '<span class="pad-num-badge" style="color:' + color + ';">' + padTag + '</span>' +
+          '<div style="display:flex; align-items:center; gap:5px;">' +
+            '<span class="pad-drag-grip" title="Arrastra este pad para reordenar tu kit de fingerdrumming">⋮⋮</span>' +
+            '<span class="pad-num-badge" style="color:' + color + ';">' + padTag + '</span>' +
+          '</div>' +
           '<div style="display:flex; align-items:center; gap:4px;">' +
-            '<button class="btn-pad-target' + (isTarget ? ' active' : '') + '" onclick="event.stopPropagation(); setTargetPad(' + pNum + ', true);" title="Fijar pad objetivo">' + (isTarget ? '🎯' : '○') + '</button>' +
+            '<button draggable="false" class="btn-pad-target' + (isTarget ? ' active' : '') + '" onclick="event.stopPropagation(); setTargetPad(' + pNum + ', true);" title="Fijar pad objetivo">' + (isTarget ? '🎯' : '○') + '</button>' +
             '<span class="pad-key-shortcut">' + key + '</span>' +
           '</div>' +
         '</div>' +
@@ -3208,25 +3288,33 @@ function renderRackGrid() {
         '<div class="pad-actions" onclick="event.stopPropagation();">' +
           '<span class="pad-type-tag" style="background:' + color + '22; color:' + color + '; border:1px solid ' + color + '44;">' + item.soundType + '</span>' +
           '<div class="pad-btn-group">' +
-            '<button class="btn-pad-action btn-pad-play" onclick="triggerPadAudio(' + pNum + ');" title="Reproducir">▶</button>' +
-            '<button class="btn-pad-action" style="font-size:10px; padding:3px 5px; background:rgba(255,255,255,0.08); color:#ccc;" onclick="event.stopPropagation(); openPadEditor(' + pNum + ');" title="Editar parámetros del pad">⚙️</button>' +
-            '<button class="btn-pad-action btn-pad-remove" onclick="removePad(' + pNum + ');" title="Vaciar pad">✕</button>' +
+            '<button draggable="false" class="btn-pad-action btn-pad-play" onclick="triggerPadAudio(' + pNum + ');" title="Reproducir">▶</button>' +
+            '<button draggable="false" class="btn-pad-action" style="font-size:10px; padding:3px 5px; background:rgba(255,255,255,0.08); color:#ccc;" onclick="event.stopPropagation(); openPadEditor(' + pNum + ');" title="Editar parámetros del pad">⚙️</button>' +
+            '<button draggable="false" class="btn-pad-action btn-pad-remove" onclick="removePad(' + pNum + ');" title="Vaciar pad">✕</button>' +
           '</div>' +
         '</div>' +
       '</div>';
     } else {
       const borderStyle = isTarget ? 'border: 2px solid var(--mpc-red); box-shadow: 0 0 16px rgba(255, 51, 68, 0.5);' : '';
-      html += '<div id="' + padId + '" class="pad-cell empty' + (isTarget ? ' target-selected' : '') + '" style="' + borderStyle + '" onclick="triggerPadAudio(' + pNum + ')">' +
+      html += '<div id="' + padId + '" class="pad-cell empty' + (isTarget ? ' target-selected' : '') + '" style="' + borderStyle + '"' +
+        ' ondragover="handlePadDragOver(event, ' + pNum + ')"' +
+        ' ondragenter="handlePadDragEnter(event, ' + pNum + ')"' +
+        ' ondragleave="handlePadDragLeave(event, ' + pNum + ')"' +
+        ' ondrop="handlePadDrop(event, ' + pNum + ')"' +
+        ' onclick="triggerPadAudio(' + pNum + ')" title="Arrastra una muestra o pad aquí">' +
         '<div class="pad-cell-header">' +
-          '<span class="pad-num-badge">' + padTag + '</span>' +
+          '<div style="display:flex; align-items:center; gap:5px;">' +
+            '<span class="pad-drag-grip" style="opacity:0.2;">⋮⋮</span>' +
+            '<span class="pad-num-badge">' + padTag + '</span>' +
+          '</div>' +
           '<div style="display:flex; align-items:center; gap:4px;">' +
-            '<button class="btn-pad-target' + (isTarget ? ' active' : '') + '" onclick="event.stopPropagation(); setTargetPad(' + pNum + ', true);" title="Fijar pad objetivo">' + (isTarget ? '🎯' : '○') + '</button>' +
+            '<button draggable="false" class="btn-pad-target' + (isTarget ? ' active' : '') + '" onclick="event.stopPropagation(); setTargetPad(' + pNum + ', true);" title="Fijar pad objetivo">' + (isTarget ? '🎯' : '○') + '</button>' +
             '<span class="pad-key-shortcut">' + key + '</span>' +
           '</div>' +
         '</div>' +
         '<div class="pad-sample-name" style="color:#555e70; flex-direction:column; gap:2px;"><span style="font-size:18px; opacity:0.35;">➕</span><span style="font-size:10px; font-weight:600;">[Vacío]</span></div>' +
         '<div class="pad-actions" onclick="event.stopPropagation();">' +
-          '<span style="font-size:9px; color:var(--text-muted); opacity:0.6;">Sin asignar</span>' +
+          '<span style="font-size:9px; color:var(--text-muted); opacity:0.6;">Arrastra muestra aquí</span>' +
         '</div>' +
       '</div>';
     }
@@ -3320,7 +3408,161 @@ function playAudioQuick(relPath, filename = '', padLabel = '') {
   playUnifiedAudio(relPath, filename, padLabel, null);
 }
 
+// ==================== DRAG AND DROP REORDERING PARA FINGERDRUMMING ====================
+let draggedPadNum = null;
+let lastPadDragTimestamp = 0;
+
+function handleSampleRowDragStart(e, relPath, filename, soundType) {
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData('application/json', JSON.stringify({
+      type: 'sample',
+      rel: relPath,
+      name: filename,
+      stype: soundType
+    }));
+    e.dataTransfer.setData('text/plain', filename);
+  }
+}
+
+function handlePadDragStart(e, pNum) {
+  draggedPadNum = pNum;
+  lastPadDragTimestamp = Date.now();
+  
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(pNum));
+    const padItem = RACK_PADS[pNum - 1];
+    if (padItem) {
+      e.dataTransfer.setData('application/json', JSON.stringify({
+        type: 'pad',
+        padNum: pNum,
+        sample: padItem
+      }));
+    }
+  }
+  
+  document.body.classList.add('is-pad-dragging');
+  
+  const rackEl = document.getElementById('mpc-pad-' + pNum);
+  if (rackEl) rackEl.classList.add('is-dragging');
+  const dockEl = document.getElementById('dock-pad-' + pNum);
+  if (dockEl) dockEl.classList.add('is-dragging');
+}
+
+function handlePadDragOver(e, pNum) {
+  e.preventDefault();
+  if (e.dataTransfer) {
+    e.dataTransfer.dropEffect = 'move';
+  }
+  if (draggedPadNum && draggedPadNum !== pNum) {
+    const rackEl = document.getElementById('mpc-pad-' + pNum);
+    if (rackEl && !rackEl.classList.contains('drag-target-over')) {
+      rackEl.classList.add('drag-target-over');
+    }
+    const dockEl = document.getElementById('dock-pad-' + pNum);
+    if (dockEl && !dockEl.classList.contains('drag-target-over')) {
+      dockEl.classList.add('drag-target-over');
+    }
+  }
+}
+
+function handlePadDragEnter(e, pNum) {
+  e.preventDefault();
+}
+
+function handlePadDragLeave(e, pNum) {
+  if (e.currentTarget && e.relatedTarget && e.currentTarget.contains(e.relatedTarget)) {
+    return;
+  }
+  const rackEl = document.getElementById('mpc-pad-' + pNum);
+  if (rackEl) rackEl.classList.remove('drag-target-over');
+  const dockEl = document.getElementById('dock-pad-' + pNum);
+  if (dockEl) dockEl.classList.remove('drag-target-over');
+}
+
+function handlePadDrop(e, pNum) {
+  e.preventDefault();
+  lastPadDragTimestamp = Date.now();
+  
+  document.body.classList.remove('is-pad-dragging');
+  document.querySelectorAll('.is-dragging, .drag-target-over').forEach(el => {
+    el.classList.remove('is-dragging', 'drag-target-over');
+  });
+  
+  // 1. Muestra arrastrada desde la tabla del catálogo
+  if (e.dataTransfer) {
+    const jsonStr = e.dataTransfer.getData('application/json');
+    if (jsonStr) {
+      try {
+        const data = JSON.parse(jsonStr);
+        if (data.type === 'sample' && data.rel) {
+          addSampleToRack(data.rel, data.name, data.stype, pNum);
+          draggedPadNum = null;
+          return;
+        }
+      } catch(err) {}
+    }
+  }
+
+  // 2. Arrastre entre pads del rack / dock
+  let srcNum = draggedPadNum;
+  if (!srcNum && e.dataTransfer) {
+    const textData = e.dataTransfer.getData('text/plain');
+    if (textData) {
+      srcNum = parseInt(textData, 10);
+    }
+  }
+  
+  const tgtNum = pNum;
+  
+  if (srcNum && srcNum !== tgtNum && srcNum >= 1 && srcNum <= 16 && tgtNum >= 1 && tgtNum <= 16) {
+    const srcIdx = srcNum - 1;
+    const tgtIdx = tgtNum - 1;
+    
+    const srcItem = RACK_PADS[srcIdx];
+    const tgtItem = RACK_PADS[tgtIdx];
+    
+    // Intercambiar las posiciones en el array de pads
+    RACK_PADS[tgtIdx] = srcItem;
+    RACK_PADS[srcIdx] = tgtItem;
+    
+    renderRackGrid();
+    renderDockMatrix();
+    updateRackCounts();
+    if (typeof updatePo33StudioView === 'function') updatePo33StudioView();
+    
+    // Reproducir inmediatamente el pad en su nueva ubicación como confirmación auditiva
+    if (RACK_PADS[tgtIdx]) {
+      triggerPadAudio(tgtNum);
+    }
+    
+    const srcTag = 'A' + (srcNum < 10 ? '0' : '') + srcNum;
+    const tgtTag = 'A' + (tgtNum < 10 ? '0' : '') + tgtNum;
+    
+    if (tgtItem) {
+      showToast('🔀 Pads intercambiados: PAD ' + srcNum + ' [' + srcTag + '] ⇄ PAD ' + tgtNum + ' [' + tgtTag + ']');
+    } else {
+      showToast('🚚 Muestra movida a PAD ' + tgtNum + ' [' + tgtTag + ']');
+    }
+  }
+  
+  draggedPadNum = null;
+}
+
+function handlePadDragEnd(e) {
+  lastPadDragTimestamp = Date.now();
+  draggedPadNum = null;
+  document.body.classList.remove('is-pad-dragging');
+  document.querySelectorAll('.is-dragging, .drag-target-over').forEach(el => {
+    el.classList.remove('is-dragging', 'drag-target-over');
+  });
+}
+
 function triggerPadAudio(pNum) {
+  if (Date.now() - lastPadDragTimestamp < 180) {
+    return;
+  }
   const dockEl = document.getElementById('dock-pad-' + pNum);
   if (dockEl) {
     dockEl.classList.add('active-trigger');
