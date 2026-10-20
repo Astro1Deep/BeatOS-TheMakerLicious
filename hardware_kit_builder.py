@@ -44,16 +44,168 @@ DEFAULT_PO_DIR = Path("/Users/ivan/Documents/PO- POCKET OPERATORS")
 # 1. PARSERS: LECTURA DE PROYECTOS Y PROGRAMAS EXISTENTES
 # ==============================================================================
 
-def parse_xpm_program(xpm_path: str | Path) -> dict:
-    """Extrae instrumentos, samples vinculados, volumen, pan y afinación de un .xpm de MPC."""
-    tree = ET.parse(str(xpm_path))
+def detect_sound_type(filename: str) -> str:
+    """Clasifica el tipo de sonido por heurística de nombre de archivo."""
+    f = (filename or "").lower()
+    if any(k in f for k in ["kick", "bd_", "bassdrum", "bd-"]):
+        return "KICK"
+    if any(k in f for k in ["snare", "sd_", "snr", "sd-"]):
+        return "SNARE"
+    if any(k in f for k in ["clap", "cp_", "clp", "cp-"]):
+        return "CLAP"
+    if any(k in f for k in ["hat", "hh_", "cymbal", "ride", "crash", "hihat", "openhh", "closedhh"]):
+        return "HIHAT"
+    if any(k in f for k in ["bass", "808", "sub", "subbass", "reese"]):
+        return "BASS_808"
+    if any(k in f for k in ["perc", "shaker", "conga", "bongo", "rim", "cowbell", "timbale", "wood"]):
+        return "PERCUSSION"
+    if any(k in f for k in ["vox", "vocal", "chant", "acapella"]):
+        return "VOCAL"
+    if any(k in f for k in ["synth", "key", "piano", "chord", "rhodes", "pad", "lead", "arp", "pluck"]):
+        return "KEYS_SYNTH"
+    if any(k in f for k in ["fx", "sweep", "riser", "downlifter", "hit", "impact", "noise"]):
+        return "FX"
+    if any(k in f for k in ["loop", "break", "groove"]):
+        return "MELODIC_LOOP"
+    return "PERCUSSION"
+
+
+def _normalize_name(name: str) -> str:
+    """Normaliza un nombre eliminando espacios, guiones, puntos y caracteres especiales en minúsculas."""
+    return re.sub(r"[^a-zA-Z0-9]", "", name).lower()
+
+
+def _resolve_project_data_dir(xpj_path: Path) -> Optional[Path]:
+    """Localiza de forma robusta la carpeta [ProjectData] de un proyecto .xpj."""
+    parent = xpj_path.parent
+    stem = xpj_path.stem
+
+    # 1. Variantes directas
+    candidates = [
+        parent / f"{stem}_[ProjectData]",
+        parent / f"{stem}_ProjectData",
+        parent / f"{stem.replace('_', ' ')}_[ProjectData]",
+        parent / f"{stem.replace(' ', '_')}_[ProjectData]",
+        parent / f"{stem.replace('_', ' ')}_ProjectData",
+        parent / f"{stem.replace(' ', '_')}_ProjectData",
+    ]
+    for c in candidates:
+        if c.is_dir():
+            return c
+
+    # 2. Fuzzy match en el directorio padre
+    stem_norm = _normalize_name(stem)
+    for d in parent.iterdir():
+        if d.is_dir() and "projectdata" in d.name.lower():
+            d_norm = _normalize_name(
+                d.name.replace("ProjectData", "").replace("[", "").replace("]", "")
+            )
+            if stem_norm == d_norm or stem_norm in d_norm or d_norm in stem_norm:
+                return d
+    return None
+
+
+def _resolve_sample_file(
+    sample_ref: str,
+    search_dirs: List[Path],
+    source_root: Optional[Path] = None,
+) -> Tuple[Optional[Path], str]:
+    """
+    Busca físicamente un archivo de muestra en una lista de directorios con tolerancia a espacios y guiones.
+    Devuelve (Path_absoluto_o_None, rel_path_respecto_a_source_root).
+    """
+    clean_ref = Path(sample_ref).name
+    norm_ref = _normalize_name(clean_ref)
+
+    if source_root is None:
+        source_root = Path("/Volumes/MPCSMPL") if Path("/Volumes/MPCSMPL").is_dir() else Path.cwd()
+
+    for s_dir in search_dirs:
+        if not s_dir or not s_dir.is_dir():
+            continue
+
+        # 1. Coincidencia exacta
+        direct = s_dir / clean_ref
+        if direct.is_file():
+            try:
+                rel = direct.relative_to(source_root).as_posix()
+            except ValueError:
+                rel = direct.name
+            return direct, rel
+
+        # 2. Variantes comunes (espacio <-> guion bajo, trailing spaces)
+        variants = [
+            clean_ref.replace(" ", "_"),
+            clean_ref.replace("_", " "),
+            clean_ref.replace(" .wav", ".wav"),
+            clean_ref.strip(),
+        ]
+        for v in variants:
+            cand = s_dir / v
+            if cand.is_file():
+                try:
+                    rel = cand.relative_to(source_root).as_posix()
+                except ValueError:
+                    rel = cand.name
+                return cand, rel
+
+        # 3. Búsqueda normalizada en el directorio
+        for f in s_dir.iterdir():
+            if f.is_file() and _normalize_name(f.name) == norm_ref:
+                try:
+                    rel = f.relative_to(source_root).as_posix()
+                except ValueError:
+                    rel = f.name
+                return f, rel
+
+    # 4. Búsqueda recursiva en subdirectorios si es una expansión o carpeta de datos
+    for s_dir in search_dirs:
+        if s_dir and s_dir.is_dir():
+            cand_sub = list(s_dir.glob(f"**/{clean_ref}"))
+            if not cand_sub:
+                cand_sub = list(s_dir.glob(f"**/{clean_ref.replace(' ', '_')}"))
+            if not cand_sub:
+                cand_sub = list(s_dir.glob(f"**/{clean_ref.replace('_', ' ')}"))
+            if cand_sub:
+                f = cand_sub[0]
+                try:
+                    rel = f.relative_to(source_root).as_posix()
+                except ValueError:
+                    rel = f.name
+                return f, rel
+
+    # Fallback si no se encontró en disco
+    fallback_rel = sample_ref.replace("/Volumes/MPCSMPL/", "").lstrip("/")
+    return None, fallback_rel
+
+
+def parse_xpm_program(xpm_path: str | Path, source_root: Optional[str | Path] = None) -> dict:
+    """
+    Extrae instrumentos, samples vinculados, volumen, pan y afinación de un .xpm de MPC,
+    resolviendo las rutas relativas exactas a las muestras de audio en disco.
+    """
+    xpm_p = Path(xpm_path)
+    root_p = Path(source_root) if source_root else (
+        Path("/Volumes/MPCSMPL") if Path("/Volumes/MPCSMPL").is_dir() else xpm_p.parent
+    )
+
+    tree = ET.parse(str(xpm_p))
     root = tree.getroot()
     prog_elem = root.find("Program")
     prog_name = (
-        prog_elem.findtext("ProgramName", Path(xpm_path).stem)
+        prog_elem.findtext("ProgramName", xpm_p.stem)
         if prog_elem is not None
-        else Path(xpm_path).stem
+        else xpm_p.stem
     )
+    prog_type = prog_elem.get("type", "Drum") if prog_elem is not None else "Drum"
+
+    # Directorios de búsqueda para muestras
+    search_dirs = [xpm_p.parent]
+    # Si está dentro de una expansión, agregar la raíz de la expansión
+    for parent_cand in xpm_p.parents:
+        if parent_cand.parent.name == "Expansions":
+            search_dirs.append(parent_cand)
+            break
 
     pads = {}
     instruments = root.findall(".//Instrument")
@@ -74,31 +226,51 @@ def parse_xpm_program(xpm_path: str | Path) -> dict:
             sample_name = l1.findtext("SampleName", "")
             sample_file = l1.findtext("SampleFile", "")
 
+        found_path, rel_path = None, ""
+        stype = "PERCUSSION"
+        if sample_file or sample_name:
+            target_ref = sample_file or (sample_name + ".wav")
+            found_path, rel_path = _resolve_sample_file(target_ref, search_dirs, root_p)
+            stype = detect_sound_type(found_path.name if found_path else target_ref)
+
         pads[num] = {
             "pad_number": num,
-            "sample_name": sample_name,
-            "sample_file": sample_file,
+            "sample_name": sample_name or Path(sample_file).stem,
+            "sample_file": sample_file or (sample_name + ".wav"),
+            "full_path": str(found_path) if found_path else "",
+            "rel_path": rel_path,
             "volume": vol,
             "pan": pan,
             "tune": tune_coarse,
             "mute_group": mute_group,
+            "sound_type": stype,
         }
 
     return {
         "program_name": prog_name,
+        "program_type": prog_type,
         "format": "MPC_XPM",
-        "file_path": str(xpm_path),
+        "file_path": str(xpm_p),
+        "rel_path": xpm_p.relative_to(root_p).as_posix() if root_p in xpm_p.parents else xpm_p.name,
         "pads": pads,
     }
 
 
-def parse_xpj_project(xpj_path: str | Path) -> dict:
-    """Extrae metadatos y lista de samples de un proyecto MPC .xpj (Gzip JSON)."""
-    with gzip.open(str(xpj_path), "rt", encoding="utf-8", errors="ignore") as gz:
+def parse_xpj_project(xpj_path: str | Path, source_root: Optional[str | Path] = None) -> dict:
+    """
+    Extrae metadatos y lista de samples de un proyecto MPC .xpj (Gzip JSON),
+    resolviendo de forma robusta la carpeta de datos y las rutas reales de los samples.
+    """
+    xpj_p = Path(xpj_path)
+    root_p = Path(source_root) if source_root else (
+        Path("/Volumes/MPCSMPL") if Path("/Volumes/MPCSMPL").is_dir() else xpj_p.parent
+    )
+
+    with gzip.open(str(xpj_p), "rt", encoding="utf-8", errors="ignore") as gz:
         content = gz.read()
 
-    p_name = Path(xpj_path).stem
-    data_dir = Path(xpj_path).parent / f"{p_name}_[ProjectData]"
+    p_name = xpj_p.stem
+    data_dir = _resolve_project_data_dir(xpj_p)
 
     tempo = 120.0
     key = "C"
@@ -112,29 +284,119 @@ def parse_xpj_project(xpj_path: str | Path) -> dict:
     paths = re.findall(r'"path"\s*:\s*"([^"]+)"', content)
     unique_samples = [p for p in set(paths) if p and not p.startswith(".")]
 
+    search_dirs = []
+    if data_dir:
+        search_dirs.append(data_dir)
+    search_dirs.append(xpj_p.parent)
+
     pads = {}
     for idx, s in enumerate(unique_samples[:16], start=1):
-        s_path = str(data_dir / s) if data_dir.exists() else s
+        found_path, rel_path = _resolve_sample_file(s, search_dirs, root_p)
+        actual_name = found_path.name if found_path else Path(s).name
+        stype = detect_sound_type(actual_name)
+
         pads[idx] = {
             "pad_number": idx,
-            "sample_name": Path(s).stem,
-            "sample_file": s,
-            "full_path": s_path,
+            "sample_name": Path(actual_name).stem,
+            "sample_file": actual_name,
+            "full_path": str(found_path) if found_path else s,
+            "rel_path": rel_path,
             "volume": 0.707946,
             "pan": 0.5,
             "tune": 0,
-            "mute_group": 0,
+            "mute_group": 1 if stype in ("HIHAT", "BASS_808") else 0,
+            "sound_type": stype,
         }
 
     return {
         "project_name": p_name,
         "format": "MPC_XPJ",
-        "file_path": str(xpj_path),
+        "file_path": str(xpj_p),
+        "data_dir": str(data_dir) if data_dir else "",
         "tempo": tempo,
         "key": key,
         "total_samples": len(unique_samples),
         "pads": pads,
     }
+
+
+def list_expansion_kits(
+    expansion_name: str,
+    expansions_root: Optional[str | Path] = None,
+    source_root: Optional[str | Path] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Escanea y devuelve la lista completa de programas (.xpm) pertenecientes a una expansión oficial,
+    con metadatos como tipo de kit, cantidad de pads y primer sample de prueba.
+    """
+    card_root = Path(source_root) if source_root else (
+        Path("/Volumes/MPCSMPL") if Path("/Volumes/MPCSMPL").is_dir() else Path.cwd()
+    )
+    exp_base = Path(expansions_root) if expansions_root else card_root / "Expansions"
+
+    exp_dir = exp_base / expansion_name
+    if not exp_dir.is_dir():
+        # Probar coincidencias tolerantes
+        norm_exp = _normalize_name(expansion_name)
+        for cand in exp_base.iterdir():
+            if cand.is_dir() and _normalize_name(cand.name) == norm_exp:
+                exp_dir = cand
+                break
+
+    if not exp_dir.is_dir():
+        return []
+
+    kits = []
+    for x in sorted(exp_dir.glob("**/*.xpm")):
+        # Ignorar archivos ocultos o de preview
+        if any(part.startswith(".") or "[Previews]" in part for part in x.parts):
+            continue
+
+        try:
+            tree = ET.parse(str(x))
+            root = tree.getroot()
+            p_elem = root.find(".//Program")
+            p_name = p_elem.findtext("ProgramName", x.stem) if p_elem is not None else x.stem
+            p_type = p_elem.get("type", "Drum") if p_elem is not None else "Drum"
+
+            samples = []
+            for inst in root.findall(".//Instrument"):
+                num = int(inst.get("number", 0))
+                if 1 <= num <= 16:
+                    l1 = inst.find(".//Layer[@number='1']")
+                    if l1 is not None:
+                        sf = l1.findtext("SampleFile", "")
+                        if sf:
+                            samples.append(sf)
+
+            try:
+                rel_to_card = x.relative_to(card_root).as_posix()
+            except ValueError:
+                rel_to_card = x.name
+
+            # Resolver el primer sample para pre-escucha rápida si existe
+            first_sample_rel = ""
+            if samples:
+                _, first_sample_rel = _resolve_sample_file(samples[0], [x.parent, exp_dir], card_root)
+
+            sub_cat = x.parent.name if x.parent != exp_dir else None
+            kits.append({
+                "name": p_name,
+                "filename": x.name,
+                "rel_path": rel_to_card,
+                "program_type": p_type,
+                "pad_count": len(samples),
+                "first_sample": samples[0] if samples else "",
+                "first_sample_rel": first_sample_rel,
+                "sub_category": sub_cat,
+            })
+        except Exception as e:
+            logger.debug(f"Error parseando {x.name}: {e}")
+            continue
+
+    # Ordenar alfabéticamente por nombre de kit
+    kits.sort(key=lambda k: k["name"].lower())
+    return kits
 
 
 # ==============================================================================

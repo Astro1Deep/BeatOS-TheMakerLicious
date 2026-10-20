@@ -445,10 +445,76 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
 
                 kit_mod = get_hardware_kit_builder(self.server.root_dir)
                 if kit_mod and hasattr(kit_mod, "parse_xpj_project"):
-                    proj_info = kit_mod.parse_xpj_project(src_path)
+                    proj_info = kit_mod.parse_xpj_project(src_path, source_root=self.server.root_dir)
                     resp = {"success": True, "project": proj_info}
                 else:
                     raise RuntimeError("Función parse_xpj_project no disponible.")
+            except Exception as e:
+                resp = {"success": False, "error": str(e)}
+
+            self.send_response(200 if resp.get("success") else 500)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_cors_headers()
+            self.end_headers()
+            self.wfile.write(json.dumps(resp, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif clean_api == "/api/list_expansion_programs":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                payload = json.loads(body)
+                expansion_name = payload.get("expansion_name", "").strip()
+                if not expansion_name:
+                    raise ValueError("Falta parámetro 'expansion_name'")
+
+                kit_mod = get_hardware_kit_builder(self.server.root_dir)
+                if kit_mod and hasattr(kit_mod, "list_expansion_kits"):
+                    exp_root = Path(self.server.root_dir) / "Expansions"
+                    if not exp_root.is_dir():
+                        exp_root = Path("/Volumes/MPCSMPL/Expansions")
+                    kits = kit_mod.list_expansion_kits(expansion_name, expansions_root=exp_root, source_root=self.server.root_dir)
+                    resp = {"success": True, "expansion_name": expansion_name, "programs": kits, "total": len(kits)}
+                else:
+                    raise RuntimeError("Función list_expansion_kits no disponible.")
+            except Exception as e:
+                resp = {"success": False, "error": str(e), "programs": []}
+
+            self.send_response(200 if resp.get("success") else 500)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_cors_headers()
+            self.end_headers()
+            self.wfile.write(json.dumps(resp, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif clean_api == "/api/load_xpm_program":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                payload = json.loads(body)
+                rel_path = payload.get("rel_path", "").strip()
+                if not rel_path:
+                    exp_name = payload.get("expansion_name", "")
+                    prog_file = payload.get("program_file", "")
+                    if exp_name and prog_file:
+                        rel_path = f"Expansions/{exp_name}/{prog_file}"
+                if not rel_path:
+                    raise ValueError("Falta parámetro 'rel_path' o 'program_file'")
+
+                src_path = os.path.join(self.server.root_dir, rel_path)
+                if not os.path.isfile(src_path):
+                    alt_cand = Path("/Volumes/MPCSMPL") / rel_path
+                    if alt_cand.is_file():
+                        src_path = str(alt_cand)
+                    else:
+                        raise FileNotFoundError(f"Programa XPM no encontrado: {src_path}")
+
+                kit_mod = get_hardware_kit_builder(self.server.root_dir)
+                if kit_mod and hasattr(kit_mod, "parse_xpm_program"):
+                    prog_info = kit_mod.parse_xpm_program(src_path, source_root=self.server.root_dir)
+                    resp = {"success": True, "program": prog_info}
+                else:
+                    raise RuntimeError("Función parse_xpm_program no disponible.")
             except Exception as e:
                 resp = {"success": False, "error": str(e)}
 

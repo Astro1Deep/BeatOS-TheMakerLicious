@@ -1218,6 +1218,17 @@
   margin-top: 8px;
 }
 
+.expansion-program-card:hover {
+  border-color: var(--mpc-cyan) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 240, 255, 0.15);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 </style>
 </head>
 <body>
@@ -1953,7 +1964,10 @@
       <p>Peso: 748.76 MB</p>
       <p style="font-family:monospace; font-size:11px; color:#888;">/Volumes/MPCSMPL/Expansions/Backyard Jams (AKAINI)</p>
     
-      <button class="btn-rack-action" style="margin-top:10px; width:100%; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); loadExpansionToRack('Backyard Jams (AKAINI)')">🎛️ Cargar Kit de Expansión en Rack</button>
+      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+        <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('Backyard Jams (AKAINI)')">📂 Explorar 40 Programas (.xpm)</button>
+        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('Backyard Jams (AKAINI)')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+      </div>
     </div>
     <div class="card">
       <h3>Borough Chops (AKAINI) <span class="badge badge-groove">DRUM</span></h3>
@@ -1963,7 +1977,10 @@
       <p>Peso: 203.73 MB</p>
       <p style="font-family:monospace; font-size:11px; color:#888;">/Volumes/MPCSMPL/Expansions/Borough Chops (AKAINI)</p>
     
-      <button class="btn-rack-action" style="margin-top:10px; width:100%; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); loadExpansionToRack('Borough Chops (AKAINI)')">🎛️ Cargar Kit de Expansión en Rack</button>
+      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+        <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('Borough Chops (AKAINI)')">📂 Explorar 40 Programas (.xpm)</button>
+        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('Borough Chops (AKAINI)')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+      </div>
     </div>
     <div class="card">
       <h3>F9 Instruments Beats Edition <span class="badge badge-groove">DRUM</span></h3>
@@ -1973,7 +1990,10 @@
       <p>Peso: 1993.55 MB</p>
       <p style="font-family:monospace; font-size:11px; color:#888;">/Volumes/MPCSMPL/Expansions/F9 Instruments Beats Edition</p>
     
-      <button class="btn-rack-action" style="margin-top:10px; width:100%; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); loadExpansionToRack('F9 Instruments Beats Edition')">🎛️ Cargar Kit de Expansión en Rack</button>
+      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+        <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('F9 Instruments Beats Edition')">📂 Explorar 25 Programas (.xpm)</button>
+        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('F9 Instruments Beats Edition')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+      </div>
     </div>
     <div class="card">
       <h3>MPC Beats Demos and Templates <span class="badge badge-groove">DRUM</span></h3>
@@ -1983,7 +2003,10 @@
       <p>Peso: 1261.17 MB</p>
       <p style="font-family:monospace; font-size:11px; color:#888;">/Volumes/MPCSMPL/Expansions/MPC Beats Demos and Templates</p>
     
-      <button class="btn-rack-action" style="margin-top:10px; width:100%; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); loadExpansionToRack('MPC Beats Demos and Templates')">🎛️ Cargar Kit de Expansión en Rack</button>
+      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+        <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('MPC Beats Demos and Templates')">📂 Explorar 128 Programas (.xpm)</button>
+        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('MPC Beats Demos and Templates')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+      </div>
     </div>
     <div class="card">
       <h3>MPC Beats Producer Kits <span class="badge badge-groove">DRUM</span></h3>
@@ -1993,7 +2016,10 @@
       <p>Peso: 2138.63 MB</p>
       <p style="font-family:monospace; font-size:11px; color:#888;">/Volumes/MPCSMPL/Expansions/MPC Beats Producer Kits</p>
     
-      <button class="btn-rack-action" style="margin-top:10px; width:100%; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); loadExpansionToRack('MPC Beats Producer Kits')">🎛️ Cargar Kit de Expansión en Rack</button>
+      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+        <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('MPC Beats Producer Kits')">📂 Explorar 160 Programas (.xpm)</button>
+        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('MPC Beats Producer Kits')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+      </div>
     </div>
     <div class="card">
       <h3>Real Horns <span class="badge badge-groove">DRUM</span></h3>
@@ -2003,7 +2029,10 @@
       <p>Peso: 65.16 MB</p>
       <p style="font-family:monospace; font-size:11px; color:#888;">/Volumes/MPCSMPL/Expansions/MPC Samples - Real Horns</p>
     
-      <button class="btn-rack-action" style="margin-top:10px; width:100%; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); loadExpansionToRack('Real Horns')">🎛️ Cargar Kit de Expansión en Rack</button>
+      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+        <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('MPC Samples - Real Horns')">📂 Explorar 6 Programas (.xpm)</button>
+        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('MPC Samples - Real Horns')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+      </div>
     </div>
     <div class="card">
       <h3>Marco Polo - LoFi Boom Vol 1 <span class="badge badge-groove">DRUM</span></h3>
@@ -2013,7 +2042,10 @@
       <p>Peso: 2071.56 MB</p>
       <p style="font-family:monospace; font-size:11px; color:#888;">/Volumes/MPCSMPL/Expansions/Marco Polo - LoFi Boom Vol 1</p>
     
-      <button class="btn-rack-action" style="margin-top:10px; width:100%; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); loadExpansionToRack('Marco Polo - LoFi Boom Vol 1')">🎛️ Cargar Kit de Expansión en Rack</button>
+      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+        <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('Marco Polo - LoFi Boom Vol 1')">📂 Explorar 30 Programas (.xpm)</button>
+        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('Marco Polo - LoFi Boom Vol 1')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+      </div>
     </div>
     <div class="card">
       <h3>Rare Vibrations <span class="badge badge-groove">DRUM</span></h3>
@@ -2023,7 +2055,10 @@
       <p>Peso: 885.15 MB</p>
       <p style="font-family:monospace; font-size:11px; color:#888;">/Volumes/MPCSMPL/Expansions/Native Instruments - Rare Vibrations</p>
     
-      <button class="btn-rack-action" style="margin-top:10px; width:100%; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); loadExpansionToRack('Rare Vibrations')">🎛️ Cargar Kit de Expansión en Rack</button>
+      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+        <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('Native Instruments - Rare Vibrations')">📂 Explorar 56 Programas (.xpm)</button>
+        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('Native Instruments - Rare Vibrations')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+      </div>
     </div>
     <div class="card">
       <h3>Serato Studio - Artist Collection <span class="badge badge-groove">DRUM</span></h3>
@@ -2033,7 +2068,10 @@
       <p>Peso: 3074.84 MB</p>
       <p style="font-family:monospace; font-size:11px; color:#888;">/Volumes/MPCSMPL/Expansions/Serato Studio - Artist Collection</p>
     
-      <button class="btn-rack-action" style="margin-top:10px; width:100%; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); loadExpansionToRack('Serato Studio - Artist Collection')">🎛️ Cargar Kit de Expansión en Rack</button>
+      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+        <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('Serato Studio - Artist Collection')">📂 Explorar 203 Programas (.xpm)</button>
+        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('Serato Studio - Artist Collection')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3629,11 +3667,12 @@ function loadProjectToRack(projectName) {
         for (let pNum = 1; pNum <= 16; pNum++) {
           const pData = padsObj[pNum] || padsObj[String(pNum)];
           if (pData) {
-            const stype = detectSoundTypeFromFilename(pData.sample_file || pData.sample_name);
-            let relP = pData.full_path || pData.sample_file || '';
+            const stype = pData.sound_type || detectSoundTypeFromFilename(pData.sample_file || pData.sample_name);
+            let relP = pData.rel_path || pData.full_path || pData.sample_file || '';
             if (relP.includes('/Volumes/MPCSMPL/')) {
               relP = relP.replace('/Volumes/MPCSMPL/', '');
             }
+            relP = relP.replace(/^\/+/, '');
             RACK_PADS[pNum - 1] = {
               filename: pData.sample_file || (pData.sample_name + '.wav'),
               soundType: stype,
@@ -3690,6 +3729,199 @@ function loadProjectFromLocalSamples(projectName) {
   loadSamplesIntoPads(matched.slice(0, 16), 'Proyecto ' + projectName);
 }
 
+// ==================== EXPANSIONES & PROGRAMAS .XPM INSPECTOR ====================
+
+let currentExpansionPrograms = [];
+let currentExpansionName = '';
+
+function openExpansionBrowser(expansionName) {
+  currentExpansionName = expansionName;
+  const modal = document.getElementById('expansionBrowserModalOverlay');
+  const titleEl = document.getElementById('expansionModalTitle');
+  const countEl = document.getElementById('expansionModalCount');
+  const container = document.getElementById('expansionProgramsGrid');
+  const searchInput = document.getElementById('expansionSearchInput');
+  
+  if (titleEl) titleEl.innerText = expansionName;
+  if (countEl) countEl.innerText = 'Escaneando kits...';
+  if (searchInput) searchInput.value = '';
+  if (container) {
+    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-muted);"><span style="display:inline-block; animation:spin 1s infinite linear; font-size:24px; margin-bottom:10px;">⏳</span><br>Escaneando programas (.xpm) de la expansión...</div>';
+  }
+  if (modal) modal.style.display = 'flex';
+
+  fetch('/api/list_expansion_programs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ expansion_name: expansionName })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success && data.programs) {
+      currentExpansionPrograms = data.programs;
+      if (countEl) countEl.innerText = data.programs.length + ' programas de kits (.xpm)';
+      renderExpansionProgramsList(data.programs);
+    } else {
+      if (container) container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--mpc-red);">⚠️ No se pudieron listar los programas: ' + (data.error || 'Error desconocido') + '</div>';
+    }
+  })
+  .catch(err => {
+    if (container) container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--mpc-red);">⚠️ Error conectando al servidor: ' + err.message + '</div>';
+  });
+}
+
+function closeExpansionBrowser() {
+  const modal = document.getElementById('expansionBrowserModalOverlay');
+  if (modal) modal.style.display = 'none';
+}
+
+function onExpansionBackdropClick(e) {
+  if (e.target && e.target.id === 'expansionBrowserModalOverlay') {
+    closeExpansionBrowser();
+  }
+}
+
+function filterExpansionKits(term) {
+  const clean = (term || '').toLowerCase().trim();
+  if (!clean) {
+    renderExpansionProgramsList(currentExpansionPrograms);
+    return;
+  }
+  const filtered = currentExpansionPrograms.filter(k => 
+    (k.name && k.name.toLowerCase().includes(clean)) ||
+    (k.filename && k.filename.toLowerCase().includes(clean)) ||
+    (k.sub_category && k.sub_category.toLowerCase().includes(clean)) ||
+    (k.program_type && k.program_type.toLowerCase().includes(clean))
+  );
+  renderExpansionProgramsList(filtered);
+}
+
+function renderExpansionProgramsList(programs) {
+  const container = document.getElementById('expansionProgramsGrid');
+  if (!container) return;
+  
+  if (!programs.length) {
+    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-muted);">No se encontraron programas con ese criterio de búsqueda.</div>';
+    return;
+  }
+
+  let html = '';
+  programs.forEach(k => {
+    const isDrum = (k.program_type || '').toLowerCase() === 'drum';
+    const badgeColor = isDrum ? 'var(--mpc-cyan)' : 'var(--mpc-gold)';
+    const typeLabel = isDrum ? 'DRUM KIT' : (k.program_type || 'PROGRAM');
+    const padsInfo = k.pad_count ? `${k.pad_count} Pads asignados` : 'Programa de Pads';
+    const subCatInfo = k.sub_category ? `<span style="font-size:10px; color:var(--text-muted); display:block; margin-top:2px;">📁 ${escapeHtml(k.sub_category)}</span>` : '';
+
+    html += `
+      <div class="expansion-program-card" style="background:#161c28; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; transition:0.2s; position:relative; overflow:hidden;">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+            <h4 style="font-size:13px; font-weight:700; color:#fff; line-height:1.3; margin:0;">${escapeHtml(k.name)}</h4>
+            <span style="font-size:9px; font-weight:800; padding:2px 6px; border-radius:4px; background:rgba(0,240,255,0.1); border:1px solid ${badgeColor}; color:${badgeColor}; white-space:nowrap;">${typeLabel}</span>
+          </div>
+          ${subCatInfo}
+          <div style="font-size:11px; color:var(--text-muted); margin-top:6px; display:flex; align-items:center; gap:6px;">
+            <span>🎛️ ${padsInfo}</span>
+          </div>
+        </div>
+        
+        <div style="margin-top:14px; display:flex; gap:6px; flex-wrap:wrap;">
+          <button style="flex:1; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:7px 10px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 6px rgba(0,180,216,0.3);" onclick="loadXpmProgramToRack('${escapeHtml(k.rel_path)}', '${escapeHtml(k.name)}')">
+            🎛️ Cargar en Rack
+          </button>
+          ${k.first_sample_rel ? `
+            <button style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#fff; padding:7px 9px; border-radius:6px; font-size:11px; cursor:pointer;" onclick="playUnifiedAudio('${escapeHtml(k.first_sample_rel)}', '${escapeHtml(k.first_sample)}', 'Preview: ${escapeHtml(k.name)}', this)" title="Pre-escuchar muestra de prueba del kit">
+              ▶
+            </button>
+          ` : ''}
+          <button style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#888; padding:7px 9px; border-radius:6px; font-size:11px; cursor:pointer;" onclick="navigator.clipboard.writeText('/Volumes/MPCSMPL/${escapeHtml(k.rel_path)}'); showToast('📋 Ruta del programa copiada');" title="Copiar ruta absoluta para tu hardware MPC">
+            📋
+          </button>
+        </div>
+      </div>
+    `;
+  });
+  container.innerHTML = html;
+}
+
+function loadXpmProgramToRack(relPath, programName) {
+  showToast('⏳ Cargando kit ' + programName + ' en Rack...');
+  
+  fetch('/api/load_xpm_program', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rel_path: relPath })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success && data.program && data.program.pads) {
+      clearRack();
+      const padsObj = data.program.pads;
+      let loaded = 0;
+      for (let pNum = 1; pNum <= 16; pNum++) {
+        const pData = padsObj[pNum] || padsObj[String(pNum)];
+        if (pData && (pData.sample_file || pData.sample_name)) {
+          const stype = pData.sound_type || detectSoundTypeFromFilename(pData.sample_file || pData.sample_name);
+          let relP = pData.rel_path || pData.full_path || pData.sample_file || '';
+          if (relP.includes('/Volumes/MPCSMPL/')) {
+            relP = relP.replace('/Volumes/MPCSMPL/', '');
+          }
+          relP = relP.replace(/^\/+/, '');
+          
+          RACK_PADS[pNum - 1] = {
+            filename: pData.sample_file || (pData.sample_name + '.wav'),
+            soundType: stype,
+            relPath: relP,
+            volume: (pData.volume !== undefined) ? pData.volume : 0.707946,
+            pan: (pData.pan !== undefined) ? pData.pan : 0.5,
+            tune: pData.tune || 0,
+            muteGroup: pData.mute_group || ((stype === 'HIHAT' || stype === 'BASS_808') ? 1 : 0),
+            playMode: 'ONE_SHOT',
+            reverse: false,
+            padColor: PAD_COLORS[stype] || '#00f0ff'
+          };
+          loaded++;
+        }
+      }
+      renderRackGrid();
+      renderDockMatrix();
+      updateRackCounts();
+      closeExpansionBrowser();
+      
+      const rackBtn = document.getElementById('tabBtnRack') || Array.from(document.querySelectorAll('.tab-btn')).find(b => b.innerText && b.innerText.includes('Rack'));
+      switchTab('tab-rack', rackBtn);
+      showToast('✔ Kit ' + programName + ' montado en Rack (' + loaded + '/16 pads)');
+    } else {
+      showToast('⚠️ No se pudo cargar el programa: ' + (data.error || 'Error'));
+    }
+  })
+  .catch(err => {
+    showToast('⚠️ Error: ' + err.message);
+  });
+}
+
+function quickLoadExpansionFirstKit(expansionName) {
+  showToast('⚡ Cargando kit destacado de ' + expansionName + '...');
+  fetch('/api/list_expansion_programs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ expansion_name: expansionName })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success && data.programs && data.programs.length > 0) {
+      const kit = data.programs.find(p => (p.program_type || '').toLowerCase() === 'drum') || data.programs[0];
+      loadXpmProgramToRack(kit.rel_path, kit.name);
+    } else {
+      loadExpansionToRack(expansionName);
+    }
+  })
+  .catch(() => {
+    loadExpansionToRack(expansionName);
+  });
+}
+
 function loadExpansionToRack(expTitle) {
   if (!window.SAMPLES || !SAMPLES.length) {
     showToast('⚠️ Catálogo de muestras cargando...');
@@ -3718,11 +3950,6 @@ function loadExpansionToRack(expTitle) {
     return;
   }
 
-  // Distribución inteligente de 16 pads estilo MPC Drum Kit estándar:
-  // Pads 1-4: Kicks y Snares principales
-  // Pads 5-8: Claps, HiHats cerrados/abiertos
-  // Pads 9-12: Percusión, Címbalos, Bass / 808
-  // Pads 13-16: Melódicos, Voces, FX y Loops
   const desired = [
     'KICK', 'SNARE', 'CLAP', 'HIHAT',
     'KICK', 'SNARE', 'HIHAT', 'PERCUSSION',
@@ -3740,7 +3967,6 @@ function loadExpansionToRack(expTitle) {
     }
   }
 
-  // Si faltan pads para completar los 16, rellenar con el resto de muestras de la expansión
   while (kit.length < 16 && pool.length > 0) {
     kit.push(pool.shift());
   }
@@ -4213,6 +4439,51 @@ window.addEventListener('DOMContentLoaded', () => {
         <button class="po33-btn-secondary" onclick="closePadEditor()">Cancelar</button>
         <button class="po33-btn-action" onclick="savePadEditor()">Guardar Ajustes</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE EXPLORACIÓN DE PROGRAMAS DE EXPANSIÓN (.XPM) -->
+<div id="expansionBrowserModalOverlay" class="pad-editor-modal-overlay" onclick="onExpansionBackdropClick(event)">
+  <div class="pad-editor-modal" style="max-width:880px; width:92%; max-height:88vh; display:flex; flex-direction:column; background:#10141e; border:1px solid rgba(0, 240, 255, 0.35); box-shadow:0 0 50px rgba(0,0,0,0.8), 0 0 30px rgba(0,240,255,0.15);">
+    <!-- HEADER -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:14px;">
+      <div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:24px;">📂</span>
+          <div>
+            <h3 id="expansionModalTitle" style="font-size:18px; font-weight:800; color:#fff; margin:0; line-height:1.2;">Expansión Oficial MPC</h3>
+            <span id="expansionModalCount" style="font-size:12px; color:var(--mpc-cyan); font-weight:600;">Cargando programas...</span>
+          </div>
+        </div>
+        <p style="font-size:11px; color:var(--text-muted); margin:6px 0 0 0;">
+          Selecciona cualquier programa (.xpm) para cargarlo con sus 16 pads, afinaciones, mute groups y capas en el Universal Beatmaker Rack.
+        </p>
+      </div>
+      <button class="terminal-close" onclick="closeExpansionBrowser()" style="background:none; border:none; color:#888; font-size:20px; cursor:pointer; padding:4px 8px; border-radius:4px;">✕</button>
+    </div>
+
+    <!-- BUSCADOR / FILTRO REACTIVO -->
+    <div style="margin:14px 0 10px 0; display:flex; gap:10px; align-items:center;">
+      <div style="flex:1; position:relative;">
+        <input type="text" id="expansionSearchInput" placeholder="🔍 Filtrar programas por nombre (ej. Funk, Trap, 808, Kit, LoFi...)" oninput="filterExpansionKits(this.value)" style="width:100%; box-sizing:border-box; background:#161c28; border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:10px 14px; color:#fff; font-size:13px; outline:none; transition:0.2s;" onfocus="this.style.borderColor='var(--mpc-cyan)'" onblur="this.style.borderColor='rgba(255,255,255,0.15)'">
+      </div>
+      <button class="po33-btn-secondary" style="padding:10px 14px; font-size:12px; white-space:nowrap; display:flex; align-items:center; gap:6px;" onclick="quickLoadExpansionFirstKit(currentExpansionName)" title="Cargar inmediatamente el primer kit de pads">
+        ⚡ Cargar Primer Kit
+      </button>
+    </div>
+
+    <!-- GRID DE PROGRAMAS CON SCROLL INDEPENDIENTE -->
+    <div id="expansionProgramsGrid" style="flex:1; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px; padding:6px 2px 14px 2px; max-height:calc(88vh - 200px);">
+      <!-- Tarjetas renderizadas dinámicamente con JavaScript -->
+    </div>
+
+    <!-- FOOTER MODAL -->
+    <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--text-muted);">
+      <div>
+        💡 <em>Consejo: Puedes pulsar <strong>📋</strong> para copiar la ruta física y cargar el programa directamente en tu hardware Standalone MPC One / Live / X / Key.</em>
+      </div>
+      <button class="po33-btn-secondary" onclick="closeExpansionBrowser()" style="padding:6px 14px; font-size:12px;">Cerrar</button>
     </div>
   </div>
 </div>
