@@ -501,13 +501,19 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 if not rel_path:
                     raise ValueError("Falta parámetro 'rel_path' o 'program_file'")
 
-                src_path = os.path.join(self.server.root_dir, rel_path)
+                clean_rel = rel_path.lstrip("/")
+                src_path = os.path.join(self.server.root_dir, clean_rel)
                 if not os.path.isfile(src_path):
-                    alt_cand = Path("/Volumes/MPCSMPL") / rel_path
+                    alt_cand = Path("/Volumes/MPCSMPL") / clean_rel
                     if alt_cand.is_file():
                         src_path = str(alt_cand)
                     else:
-                        raise FileNotFoundError(f"Programa XPM no encontrado: {src_path}")
+                        # Buscar si está en el directorio del script
+                        script_cand = Path(__file__).parent / clean_rel
+                        if script_cand.is_file():
+                            src_path = str(script_cand)
+                        else:
+                            raise FileNotFoundError(f"Programa XPM no encontrado: {src_path}")
 
                 kit_mod = get_hardware_kit_builder(self.server.root_dir)
                 if kit_mod and hasattr(kit_mod, "parse_xpm_program"):
@@ -516,6 +522,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 else:
                     raise RuntimeError("Función parse_xpm_program no disponible.")
             except Exception as e:
+                sys.stderr.write(f"  [ERROR load_xpm_program] {e}\n")
                 resp = {"success": False, "error": str(e)}
 
             self.send_response(200 if resp.get("success") else 500)

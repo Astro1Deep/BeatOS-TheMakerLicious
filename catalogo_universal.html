@@ -1771,14 +1771,38 @@
 <div id="tab-rack" class="tab-pane">
   <div class="rack-layout">
     <div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
         <div>
           <h2 style="font-size:20px; font-weight:800; color:#fff;">🎛️ Universal Beatmaker Rack <span style="font-size:13px; color:var(--mpc-cyan); font-weight:600;">(Banco A: Pads 1 al 16)</span></h2>
-          <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">Toca cualquier pad con tu ratón o con las teclas de tu teclado físico (Z-V, A-F, Q-R, 1-4) para disparar el ritmo en tiempo real.</p>
+          <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Toca cualquier pad con tu ratón o con las teclas de tu teclado físico (Z-V, A-F, Q-R, 1-4) para disparar el ritmo en tiempo real.</p>
         </div>
-        <div style="display:flex; gap:8px;">
-          <button class="rack-btn-secondary" onclick="autoFillRandomRack()">🎲 AI Shuffle (16 Pads)</button>
-          <button class="rack-btn-secondary" onclick="clearRack()">🗑️ Vaciar</button>
+      </div>
+
+      <!-- BARRA DE CONTROL Y SELECTOR DIRECTO DE KITS EN EL RACK -->
+      <div class="rack-header-bar" style="background:#161c28; border:1px solid rgba(0,240,255,0.25); border-radius:10px; padding:10px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; box-shadow:0 4px 16px rgba(0,0,0,0.4);">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div>
+            <span style="font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); font-weight:700; display:block;">PROGRAMA / KIT ACTIVO:</span>
+            <strong id="rackCurrentKitTitle" style="font-size:15px; color:#fff; display:flex; align-items:center; gap:6px;">
+              <span id="rackKitActiveIcon">🎛️</span> <span id="rackKitActiveName">Kit Predeterminado (Vacío)</span>
+            </strong>
+          </div>
+          <span id="rackKitExpBadge" style="font-size:10px; font-weight:700; padding:2px 8px; border-radius:4px; background:rgba(0,240,255,0.1); border:1px solid rgba(0,240,255,0.3); color:var(--mpc-cyan); display:none;"></span>
+        </div>
+        
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:4px;">
+            <button class="rack-btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="prevExpansionProgram()" title="Cargar programa anterior de esta expansión">◀ Anterior</button>
+            <select id="rackQuickKitSelector" class="filter-select" style="max-width:240px; padding:6px 10px; font-size:12px; font-weight:600;" onchange="onRackKitSelectChange(this.value)">
+              <option value="">-- Cambiar Kit (.xpm) --</option>
+            </select>
+            <button class="rack-btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="nextExpansionProgram()" title="Cargar siguiente programa de esta expansión">Siguiente ▶</button>
+          </div>
+          <button class="po33-btn-action" style="padding:6px 12px; font-size:11px; display:flex; align-items:center; gap:5px;" onclick="openCurrentExpansionModal()" title="Abrir catálogo visual con los programas de esta expansión">
+            📂 Explorar Kits
+          </button>
+          <button class="rack-btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="autoFillRandomRack()">🎲 Shuffle</button>
+          <button class="rack-btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="clearRack()">🗑️ Vaciar</button>
         </div>
       </div>
       
@@ -3733,6 +3757,9 @@ function loadProjectFromLocalSamples(projectName) {
 
 let currentExpansionPrograms = [];
 let currentExpansionName = '';
+let currentLoadedKitRelPath = '';
+let currentLoadedKitName = '';
+let currentLoadedKitIdx = -1;
 
 function openExpansionBrowser(expansionName) {
   currentExpansionName = expansionName;
@@ -3761,6 +3788,7 @@ function openExpansionBrowser(expansionName) {
       currentExpansionPrograms = data.programs;
       if (countEl) countEl.innerText = data.programs.length + ' programas de kits (.xpm)';
       renderExpansionProgramsList(data.programs);
+      updateRackKitSelectorUI();
     } else {
       if (container) container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--mpc-red);">⚠️ No se pudieron listar los programas: ' + (data.error || 'Error desconocido') + '</div>';
     }
@@ -3807,14 +3835,23 @@ function renderExpansionProgramsList(programs) {
 
   let html = '';
   programs.forEach(k => {
+    // Buscar el índice real en currentExpansionPrograms
+    const realIdx = currentExpansionPrograms.findIndex(item => item.rel_path === k.rel_path);
+    const idxToUse = (realIdx !== -1) ? realIdx : 0;
+    
     const isDrum = (k.program_type || '').toLowerCase() === 'drum';
     const badgeColor = isDrum ? 'var(--mpc-cyan)' : 'var(--mpc-gold)';
     const typeLabel = isDrum ? 'DRUM KIT' : (k.program_type || 'PROGRAM');
     const padsInfo = k.pad_count ? `${k.pad_count} Pads asignados` : 'Programa de Pads';
     const subCatInfo = k.sub_category ? `<span style="font-size:10px; color:var(--text-muted); display:block; margin-top:2px;">📁 ${escapeHtml(k.sub_category)}</span>` : '';
+    
+    const isCurrentActive = (currentLoadedKitRelPath && currentLoadedKitRelPath === k.rel_path);
+    const borderStyle = isCurrentActive 
+      ? 'border: 2px solid var(--mpc-cyan); box-shadow: 0 0 18px rgba(0,240,255,0.4); background: #1a2336;' 
+      : 'background: #161c28; border: 1px solid rgba(255,255,255,0.08);';
 
     html += `
-      <div class="expansion-program-card" style="background:#161c28; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; transition:0.2s; position:relative; overflow:hidden;">
+      <div class="expansion-program-card ${isCurrentActive ? 'active-kit' : ''}" style="${borderStyle} border-radius:10px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; transition:0.2s; position:relative; overflow:hidden; cursor:pointer;" onclick="selectAndLoadExpansionKit(${idxToUse})">
         <div>
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
             <h4 style="font-size:13px; font-weight:700; color:#fff; line-height:1.3; margin:0;">${escapeHtml(k.name)}</h4>
@@ -3823,11 +3860,12 @@ function renderExpansionProgramsList(programs) {
           ${subCatInfo}
           <div style="font-size:11px; color:var(--text-muted); margin-top:6px; display:flex; align-items:center; gap:6px;">
             <span>🎛️ ${padsInfo}</span>
+            ${isCurrentActive ? '<span style="color:var(--mpc-green); font-weight:700; font-size:10px; margin-left:auto;">● EN EL RACK</span>' : ''}
           </div>
         </div>
         
-        <div style="margin-top:14px; display:flex; gap:6px; flex-wrap:wrap;">
-          <button style="flex:1; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:7px 10px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 6px rgba(0,180,216,0.3);" onclick="loadXpmProgramToRack('${escapeHtml(k.rel_path)}', '${escapeHtml(k.name)}')">
+        <div style="margin-top:14px; display:flex; gap:6px; flex-wrap:wrap;" onclick="event.stopPropagation();">
+          <button style="flex:1; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:7px 10px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 6px rgba(0,180,216,0.3);" onclick="selectAndLoadExpansionKit(${idxToUse})">
             🎛️ Cargar en Rack
           </button>
           ${k.first_sample_rel ? `
@@ -3845,7 +3883,13 @@ function renderExpansionProgramsList(programs) {
   container.innerHTML = html;
 }
 
-function loadXpmProgramToRack(relPath, programName) {
+function selectAndLoadExpansionKit(idx) {
+  if (!currentExpansionPrograms || !currentExpansionPrograms[idx]) return;
+  const kit = currentExpansionPrograms[idx];
+  loadXpmProgramToRack(kit.rel_path, kit.name, idx);
+}
+
+function loadXpmProgramToRack(relPath, programName, kitIdx = -1) {
   showToast('⏳ Cargando kit ' + programName + ' en Rack...');
   
   fetch('/api/load_xpm_program', {
@@ -3884,9 +3928,33 @@ function loadXpmProgramToRack(relPath, programName) {
           loaded++;
         }
       }
+      
+      // Actualizar estado de kit activo
+      currentLoadedKitRelPath = relPath;
+      currentLoadedKitName = programName;
+      if (kitIdx !== -1) {
+        currentLoadedKitIdx = kitIdx;
+      } else if (currentExpansionPrograms && currentExpansionPrograms.length > 0) {
+        currentLoadedKitIdx = currentExpansionPrograms.findIndex(p => p.rel_path === relPath);
+      }
+      
+      // Actualizar UI del Rack
+      const titleNameEl = document.getElementById('rackKitActiveName');
+      if (titleNameEl) titleNameEl.innerText = programName;
+      
+      const expBadgeEl = document.getElementById('rackKitExpBadge');
+      if (expBadgeEl && currentExpansionName) {
+        expBadgeEl.innerText = currentExpansionName;
+        expBadgeEl.style.display = 'inline-block';
+      }
+      
+      const rackKitInput = document.getElementById('rackKitName');
+      if (rackKitInput) rackKitInput.value = programName.replace(/[^a-zA-Z0-9_-]/g, '_');
+      
       renderRackGrid();
       renderDockMatrix();
       updateRackCounts();
+      updateRackKitSelectorUI();
       closeExpansionBrowser();
       
       const rackBtn = document.getElementById('tabBtnRack') || Array.from(document.querySelectorAll('.tab-btn')).find(b => b.innerText && b.innerText.includes('Rack'));
@@ -3901,6 +3969,68 @@ function loadXpmProgramToRack(relPath, programName) {
   });
 }
 
+function updateRackKitSelectorUI() {
+  const sel = document.getElementById('rackQuickKitSelector');
+  if (!sel) return;
+  
+  if (!currentExpansionPrograms || currentExpansionPrograms.length === 0) {
+    sel.innerHTML = '<option value="">-- Sin expansión activa --</option>';
+    return;
+  }
+  
+  let html = `<option value="">-- Cambiar Kit (${currentExpansionPrograms.length}) --</option>`;
+  currentExpansionPrograms.forEach((p, i) => {
+    const isSelected = (currentLoadedKitRelPath === p.rel_path);
+    html += `<option value="${p.rel_path}" data-idx="${i}" ${isSelected ? 'selected' : ''}>${i + 1}. ${escapeHtml(p.name)}</option>`;
+  });
+  sel.innerHTML = html;
+}
+
+function onRackKitSelectChange(relPath) {
+  if (!relPath) return;
+  const sel = document.getElementById('rackQuickKitSelector');
+  const opt = sel ? sel.options[sel.selectedIndex] : null;
+  const progName = opt ? opt.text.replace(/^[0-9]+\.\s*/, '') : '';
+  const idx = opt ? parseInt(opt.getAttribute('data-idx') || '-1', 10) : -1;
+  loadXpmProgramToRack(relPath, progName, idx);
+}
+
+function prevExpansionProgram() {
+  if (!currentExpansionPrograms || currentExpansionPrograms.length === 0) {
+    showToast('⚠️ Primero abre una expansión para navegar entre sus kits.');
+    return;
+  }
+  let newIdx = currentLoadedKitIdx - 1;
+  if (newIdx < 0) newIdx = currentExpansionPrograms.length - 1;
+  selectAndLoadExpansionKit(newIdx);
+}
+
+function nextExpansionProgram() {
+  if (!currentExpansionPrograms || currentExpansionPrograms.length === 0) {
+    showToast('⚠️ Primero abre una expansión para navegar entre sus kits.');
+    return;
+  }
+  let newIdx = currentLoadedKitIdx + 1;
+  if (newIdx >= currentExpansionPrograms.length) newIdx = 0;
+  selectAndLoadExpansionKit(newIdx);
+}
+
+function openCurrentExpansionModal() {
+  if (currentExpansionName) {
+    openExpansionBrowser(currentExpansionName);
+  } else {
+    // Si no hay ninguna seleccionada, ir a la pestaña de expansiones
+    const expBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.innerText && b.innerText.includes('Expansiones'));
+    switchTab('tab-expansions', expBtn);
+  }
+}
+
+function quickLoadExpansionRandomKit() {
+  if (!currentExpansionPrograms || currentExpansionPrograms.length === 0) return;
+  const randIdx = Math.floor(Math.random() * currentExpansionPrograms.length);
+  selectAndLoadExpansionKit(randIdx);
+}
+
 function quickLoadExpansionFirstKit(expansionName) {
   showToast('⚡ Cargando kit destacado de ' + expansionName + '...');
   fetch('/api/list_expansion_programs', {
@@ -3911,8 +4041,11 @@ function quickLoadExpansionFirstKit(expansionName) {
   .then(r => r.json())
   .then(data => {
     if (data.success && data.programs && data.programs.length > 0) {
+      currentExpansionName = expansionName;
+      currentExpansionPrograms = data.programs;
       const kit = data.programs.find(p => (p.program_type || '').toLowerCase() === 'drum') || data.programs[0];
-      loadXpmProgramToRack(kit.rel_path, kit.name);
+      const kitIdx = data.programs.indexOf(kit);
+      loadXpmProgramToRack(kit.rel_path, kit.name, kitIdx !== -1 ? kitIdx : 0);
     } else {
       loadExpansionToRack(expansionName);
     }
@@ -4468,8 +4601,8 @@ window.addEventListener('DOMContentLoaded', () => {
       <div style="flex:1; position:relative;">
         <input type="text" id="expansionSearchInput" placeholder="🔍 Filtrar programas por nombre (ej. Funk, Trap, 808, Kit, LoFi...)" oninput="filterExpansionKits(this.value)" style="width:100%; box-sizing:border-box; background:#161c28; border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:10px 14px; color:#fff; font-size:13px; outline:none; transition:0.2s;" onfocus="this.style.borderColor='var(--mpc-cyan)'" onblur="this.style.borderColor='rgba(255,255,255,0.15)'">
       </div>
-      <button class="po33-btn-secondary" style="padding:10px 14px; font-size:12px; white-space:nowrap; display:flex; align-items:center; gap:6px;" onclick="quickLoadExpansionFirstKit(currentExpansionName)" title="Cargar inmediatamente el primer kit de pads">
-        ⚡ Cargar Primer Kit
+      <button class="po33-btn-secondary" style="padding:10px 14px; font-size:12px; white-space:nowrap; display:flex; align-items:center; gap:6px;" onclick="quickLoadExpansionRandomKit()" title="Cargar un kit al azar de esta expansión">
+        🎲 Kit Sorpresa
       </button>
     </div>
 
