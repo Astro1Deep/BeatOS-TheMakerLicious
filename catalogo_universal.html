@@ -162,7 +162,34 @@
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
   body { background: var(--bg-dark); color: var(--text-primary); display: flex; flex-direction: column; min-height: 100vh; padding-bottom: 90px; }
   
-  .hero-banner {
+  
+  /* 6. THE MAKERLICIOUS (BONE GLITCH / SWISS LAB THEME) */
+  :root[data-theme="makerlicious-bone"], body[data-theme="makerlicious-bone"] {
+    --bg-dark: #ebebed;
+    --bg-card: #f4f4f6;
+    --bg-header: #dedee2;
+    --bg-hover: #e2e2e6;
+    --text-primary: #111111;
+    --text-muted: #55555e;
+    --mpc-red: #ff6600;
+    --mpc-gold: #d48b00;
+    --mpc-cyan: #0088aa;
+    --mpc-green: #1b8a47;
+    --border-color: #c8c8cf;
+    --theme-accent: #ff6600;
+    --banner-bg: #ebebed;
+    --banner-paper: #f4f4f6;
+    --banner-border: #c8c8cf;
+    --banner-line: #111111;
+    --banner-device-bg: #dedee2;
+    --banner-accent: #ff6600;
+    --banner-accent2: #1b8a47;
+    --banner-accent3: #d48b00;
+    --banner-text: #111111;
+    --banner-subtext: #55555e;
+  }
+
+.hero-banner {
     background: var(--banner-bg);
     position: relative;
     overflow: hidden;
@@ -2188,14 +2215,14 @@
           <!-- 1. Teenage Engineering -->
           <div class="theme-card-option" id="themeCard_te-arcade" onclick="setEcosystemTheme('te-arcade')" style="background:#111317; border:2px solid #ff6600; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:#f5f5f7; font-size:12px;">🕹️ TE PO-20 Arcade</strong>
+              <strong style="color:#f5f5f7; font-size:12px;">🕹️ TE PO-33 K.O.!</strong>
               <div style="display:flex; gap:3px;">
                 <span style="width:10px; height:10px; border-radius:50%; background:#ff6600;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#2fe070;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#ffd000;"></span>
               </div>
             </div>
-            <p style="font-size:10px; color:#8c93a3; line-height:1.4;">Estética suiza/nórdica: PCB negro mate, serigrafía técnica blanca y acentos naranja arcade.</p>
+            <p style="font-size:10px; color:#8c93a3; line-height:1.4;">Estética suiza/nórdica: PCB negro mate, micro-muestreo K.O.!, serigrafía técnica y acentos naranja arcade.</p>
           </div>
 
           <!-- 2. Cerebro OS Neon -->
@@ -2248,7 +2275,20 @@
               </div>
             </div>
             <p style="font-size:10px; color:#8b8f9c; line-height:1.4;">Estudio profesional: Chasis carbón anodizado, blanco puro y acentos de pads RGB.</p>
+          
+          <!-- 6. The MakerLicious Bone Glitch -->
+          <div class="theme-card-option" id="themeCard_makerlicious-bone" onclick="setEcosystemTheme('makerlicious-bone')" style="background:#f4f4f6; border:1px solid #c8c8cf; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="color:#111111; font-size:12px;">🦴 The MakerLicious (Bone Glitch)</strong>
+              <div style="display:flex; gap:3px;">
+                <span style="width:10px; height:10px; border-radius:50%; background:#ff6600;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#111111;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#0088aa;"></span>
+              </div>
+            </div>
+            <p style="font-size:10px; color:#55555e; line-height:1.4;">Funcionalismo Dieter Rams & Braun: fondo blanco hueso técnico, tinta de imprenta negra pura y naranja funcional.</p>
           </div>
+</div>
         </div>
       </div>
     </div>
@@ -4735,11 +4775,12 @@ function synthesizePo33ReelClientSide(isPlaybackOnly) {
 // SISTEMA DE TEMAS GLOBALES SINCRONIZADOS (Cerebro OS / TE / MPC / SP-404 / Maschine)
 // ==========================================
 const ECOSYSTEM_THEMES = [
-  { id: 'te-arcade', name: 'TE PO-20 Arcade', shortName: 'TE Arcade', icon: '🕹️', accent: '#ff6600', borderActive: '#ff6600' },
+  { id: 'te-arcade', name: 'TE PO-33 K.O.!', shortName: 'PO-33 K.O.!', icon: '🕹️', accent: '#ff6600', borderActive: '#ff6600' },
   { id: 'cerebro-neon', name: 'Cerebro OS Neon', shortName: 'Cerebro Neon', icon: '⚡', accent: '#00f0ff', borderActive: '#00f0ff' },
   { id: 'mpc-vintage', name: 'Akai MPC Vintage', shortName: 'MPC Vintage', icon: '🎛️', accent: '#d62828', borderActive: '#d62828' },
   { id: 'sp404-studio', name: 'Roland SP-404MK2', shortName: 'SP-404', icon: '🎚️', accent: '#ff9900', borderActive: '#ff9900' },
-  { id: 'maschine-studio', name: 'NI Maschine Studio', shortName: 'Maschine', icon: '🎹', accent: '#3a86ff', borderActive: '#3a86ff' }
+  { id: 'maschine-studio', name: 'NI Maschine Studio', shortName: 'Maschine', icon: '🎹', accent: '#3a86ff', borderActive: '#3a86ff' },
+  { id: 'makerlicious-bone', name: 'The MakerLicious (Bone Glitch)', shortName: 'Bone Glitch', icon: '🦴', accent: '#ff6600', borderActive: '#ff6600' }
 ];
 let currentThemeId = 'te-arcade';
 let isThemeSyncEnabled = true;
