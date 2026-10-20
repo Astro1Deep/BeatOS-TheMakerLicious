@@ -673,7 +673,7 @@ def export_ep133_ko2_kit(
         "version": 1,
         "device": "Teenage Engineering EP-133 K.O. II",
         "created_by": "BeatOS — The MakerLicious",
-        "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "package_name": clean_kit_name,
         "sample_count": 0,
         "sounds": []
