@@ -308,91 +308,153 @@
   .rack-grid-4x4 {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-    background: #0b0d13;
-    padding: 20px;
-    border-radius: 12px;
-    border: 2px solid var(--border-color);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 12px;
+    background: #090b10;
+    padding: 16px;
+    border-radius: 14px;
+    border: 2px solid #232938;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.8), 0 8px 24px rgba(0,0,0,0.4);
+    max-width: 600px;
+    width: 100%;
   }
 
   .pad-cell {
-    background: #151922;
+    aspect-ratio: 1 / 1;
+    box-sizing: border-box;
+    background: linear-gradient(145deg, #181d28 0%, #12151e 100%);
     border: 2px solid #272e3a;
-    border-radius: 10px;
-    padding: 14px 12px;
-    min-height: 110px;
+    border-radius: 8px;
+    padding: 8px 8px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     position: relative;
     cursor: pointer;
-    transition: 0.15s;
+    transition: transform 0.08s ease, filter 0.08s ease, box-shadow 0.08s ease, border-color 0.15s ease;
     user-select: none;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
   }
   .pad-cell:hover {
     border-color: var(--mpc-cyan);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 240, 255, 0.15);
+    box-shadow: 0 6px 16px rgba(0, 240, 255, 0.25), inset 0 1px 0 rgba(255,255,255,0.1);
   }
   .pad-cell.active-trigger {
-    transform: scale(0.97);
-    filter: brightness(1.3);
+    transform: scale(0.94);
+    filter: brightness(1.4);
+    box-shadow: 0 0 20px var(--mpc-cyan), inset 0 0 12px rgba(255,255,255,0.3);
   }
   .pad-cell.filled {
-    background: #181d28;
-    border-color: rgba(255, 255, 255, 0.2);
+    background: linear-gradient(145deg, #1b212f 0%, #131722 100%);
+  }
+  .pad-cell.target-selected {
+    border-color: var(--mpc-red) !important;
+    box-shadow: 0 0 16px rgba(255, 51, 68, 0.5) !important;
   }
   .pad-cell-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 800;
+    line-height: 1;
+    width: 100%;
+    flex-shrink: 0;
   }
   .pad-num-badge {
     background: rgba(255,255,255,0.08);
-    padding: 2px 6px;
+    padding: 2px 5px;
     border-radius: 4px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
     color: var(--text-muted);
   }
   .pad-key-shortcut {
     font-size: 10px;
     color: var(--mpc-gold);
-    font-weight: 700;
-    opacity: 0.8;
+    background: rgba(255, 170, 0, 0.12);
+    border: 1px solid rgba(255, 170, 0, 0.3);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 800;
+    line-height: 1;
   }
   .pad-sample-name {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     color: #fff;
-    margin: 8px 0;
-    line-height: 1.3;
+    margin: 4px 0;
+    line-height: 1.25;
+    text-align: center;
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+    word-break: break-word;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .pad-cell.empty .pad-sample-name {
-    color: var(--text-muted);
+    color: #555e70;
     font-size: 11px;
-    font-weight: normal;
-    font-style: italic;
+    font-weight: 600;
+    font-style: normal;
   }
   .pad-actions {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 6px;
+    width: 100%;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .pad-type-tag {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 2px 5px;
+    border-radius: 3px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 62px;
+  }
+  .pad-btn-group {
+    display: flex;
+    gap: 3px;
+    align-items: center;
   }
   .btn-pad-action {
-    padding: 4px 8px;
+    padding: 3px 5px;
     border-radius: 4px;
     border: none;
     font-size: 10px;
     font-weight: 700;
     cursor: pointer;
-    transition: 0.15s;
+    line-height: 1;
+    transition: 0.12s;
+  }
+  .btn-pad-target {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text-muted);
+    font-size: 9px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .btn-pad-target.active {
+    background: var(--mpc-red);
+    border-color: var(--mpc-red);
+    color: #fff;
   }
   .btn-pad-play { background: var(--mpc-red); color: #fff; }
   .btn-pad-play:hover { opacity: 0.9; }
@@ -3067,41 +3129,42 @@ function renderRackGrid() {
     const key = PAD_KEY_MAP[pNum] || '';
     const padId = 'mpc-pad-' + pNum;
     const isTarget = (pNum === currentTargetPad);
+    const padTag = 'A' + (pNum < 10 ? '0' : '') + pNum;
     
     if (item) {
       const color = PAD_COLORS[item.soundType] || '#00f0ff';
-      const borderStyle = isTarget ? 'border: 2px solid var(--mpc-red); box-shadow: 0 0 14px rgba(255, 51, 68, 0.4);' : ('border-color:' + color + ';');
+      const borderStyle = isTarget ? 'border: 2px solid var(--mpc-red); box-shadow: 0 0 16px rgba(255, 51, 68, 0.5);' : ('border-color:' + color + ';');
       html += '<div id="' + padId + '" class="pad-cell filled' + (isTarget ? ' target-selected' : '') + '" style="' + borderStyle + '" onclick="triggerPadAudio(' + pNum + ')">' +
         '<div class="pad-cell-header">' +
-          '<span class="pad-num-badge" style="color:' + color + ';">PAD ' + pNum + ' [A' + (pNum < 10 ? '0' : '') + pNum + ']</span>' +
-          '<div style="display:flex; align-items:center; gap:6px;">' +
-            '<button class="btn-pad-action" style="font-size:9px; padding:2px 6px; background:' + (isTarget ? 'var(--mpc-red)' : 'rgba(255,255,255,0.08)') + '; color:#fff;" onclick="event.stopPropagation(); setTargetPad(' + pNum + ', true);" title="Fijar como objetivo para montar muestras">' + (isTarget ? '🎯 Activo' : '🎯 Fijar') + '</button>' +
+          '<span class="pad-num-badge" style="color:' + color + ';">' + padTag + '</span>' +
+          '<div style="display:flex; align-items:center; gap:4px;">' +
+            '<button class="btn-pad-target' + (isTarget ? ' active' : '') + '" onclick="event.stopPropagation(); setTargetPad(' + pNum + ', true);" title="Fijar pad objetivo">' + (isTarget ? '🎯' : '○') + '</button>' +
             '<span class="pad-key-shortcut">' + key + '</span>' +
           '</div>' +
         '</div>' +
-        '<div class="pad-sample-name">' + escapeHtml(item.filename) + '</div>' +
+        '<div class="pad-sample-name" title="' + escapeHtml(item.filename) + '">' + escapeHtml(item.filename) + '</div>' +
         '<div class="pad-actions" onclick="event.stopPropagation();">' +
-          '<span class="badge" style="background:' + color + '22; color:' + color + '; font-size:10px;">' + item.soundType + '</span>' +
-          '<div>' +
-            '<button class="btn-pad-action btn-pad-play" onclick="triggerPadAudio(' + pNum + ');">▶</button>' +
-            '<button class="btn-pad-action" style="margin-left:4px; font-size:11px; padding:2px 6px;" onclick="event.stopPropagation(); openPadEditor(' + pNum + ');" title="Editar parámetros del pad">⚙️</button>' +
-            '<button class="btn-pad-action btn-pad-remove" style="margin-left:4px;" onclick="removePad(' + pNum + ');">✕</button>' +
+          '<span class="pad-type-tag" style="background:' + color + '22; color:' + color + '; border:1px solid ' + color + '44;">' + item.soundType + '</span>' +
+          '<div class="pad-btn-group">' +
+            '<button class="btn-pad-action btn-pad-play" onclick="triggerPadAudio(' + pNum + ');" title="Reproducir">▶</button>' +
+            '<button class="btn-pad-action" style="font-size:10px; padding:3px 5px; background:rgba(255,255,255,0.08); color:#ccc;" onclick="event.stopPropagation(); openPadEditor(' + pNum + ');" title="Editar parámetros del pad">⚙️</button>' +
+            '<button class="btn-pad-action btn-pad-remove" onclick="removePad(' + pNum + ');" title="Vaciar pad">✕</button>' +
           '</div>' +
         '</div>' +
       '</div>';
     } else {
-      const borderStyle = isTarget ? 'border: 2px solid var(--mpc-red); box-shadow: 0 0 14px rgba(255, 51, 68, 0.4);' : '';
+      const borderStyle = isTarget ? 'border: 2px solid var(--mpc-red); box-shadow: 0 0 16px rgba(255, 51, 68, 0.5);' : '';
       html += '<div id="' + padId + '" class="pad-cell empty' + (isTarget ? ' target-selected' : '') + '" style="' + borderStyle + '" onclick="triggerPadAudio(' + pNum + ')">' +
         '<div class="pad-cell-header">' +
-          '<span class="pad-num-badge">PAD ' + pNum + ' [A' + (pNum < 10 ? '0' : '') + pNum + ']</span>' +
-          '<div style="display:flex; align-items:center; gap:6px;">' +
-            '<button class="btn-pad-action" style="font-size:9px; padding:2px 6px; background:' + (isTarget ? 'var(--mpc-red)' : 'rgba(255,255,255,0.08)') + '; color:#fff;" onclick="event.stopPropagation(); setTargetPad(' + pNum + ', true);" title="Fijar como objetivo para montar muestras">' + (isTarget ? '🎯 Activo' : '🎯 Fijar') + '</button>' +
+          '<span class="pad-num-badge">' + padTag + '</span>' +
+          '<div style="display:flex; align-items:center; gap:4px;">' +
+            '<button class="btn-pad-target' + (isTarget ? ' active' : '') + '" onclick="event.stopPropagation(); setTargetPad(' + pNum + ', true);" title="Fijar pad objetivo">' + (isTarget ? '🎯' : '○') + '</button>' +
             '<span class="pad-key-shortcut">' + key + '</span>' +
           '</div>' +
         '</div>' +
-        '<div class="pad-sample-name">[Vacío - Pulsa ➕ Pad]</div>' +
-        '<div class="pad-actions">' +
-          '<span style="font-size:10px; color:var(--text-muted);">Sin sonido</span>' +
+        '<div class="pad-sample-name" style="color:#555e70; flex-direction:column; gap:2px;"><span style="font-size:18px; opacity:0.35;">➕</span><span style="font-size:10px; font-weight:600;">[Vacío]</span></div>' +
+        '<div class="pad-actions" onclick="event.stopPropagation();">' +
+          '<span style="font-size:9px; color:var(--text-muted); opacity:0.6;">Sin asignar</span>' +
         '</div>' +
       '</div>';
     }
