@@ -61,3 +61,8 @@ El motor autónomo [`hardware_kit_builder.py`](file:///Users/ivan/Documents/mpc-
 
 ### E. Teenage Engineering Pocket Operator (PO-33 & PO-133)
 * Genera una tira **Drum Reel** única con pausas calibradas de 150 ms para auto-slicing automático en los pads 9-16.
+
+### F. Teenage Engineering EP-133 K.O. II
+* Exporta paquetes de respaldo estándar **`.pak`** comprimidos en ZIP con manifiesto `meta.json` y carpeta de muestras `sounds/`.
+* Mapea los 16 pads divididos en Grupo A (pads 1-9) y Grupo B (pads 10-16) calibrados a **WAV 16-bit / 44.1 kHz**.
+* Compatible directamente con **EP Sample Tool** vía WebUSB / Drag-and-Drop y gestión nativa de proyectos en el hardware.

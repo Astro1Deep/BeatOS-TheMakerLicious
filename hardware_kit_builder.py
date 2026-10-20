@@ -20,6 +20,7 @@ Soporta de forma nativa, estable y sin dependencias externas:
 
 from __future__ import annotations
 
+import datetime
 import gzip
 import json
 import logging
@@ -31,6 +32,7 @@ import struct
 import sys
 import time
 import wave
+import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from xml.etree import ElementTree as ET
@@ -635,8 +637,131 @@ def export_ni_maschine_kit(
 
 
 # ==============================================================================
-# 3. TEENAGE ENGINEERING POCKET OPERATOR (PO-33 / PO-133) MODULE
+# 3. TEENAGE ENGINEERING (PO-33 / PO-133 & EP-133 K.O. II) MODULE
 # ==============================================================================
+
+def export_ep133_ko2_kit(
+    kit_name: str,
+    pads_data: dict,
+    output_dir: str | Path,
+) -> tuple[str, str]:
+    """
+    Genera un paquete de Drum Kit estructurado para Teenage Engineering EP-133 K.O. II.
+    Mapea hasta 16 pads con slots de sonido (001 a 016), grupos A y B, y genera:
+    1. Carpeta con samples .wav listos para arrastrar al EP Sample Tool (teenage.engineering/apps/ep-sample-tool)
+    2. Archivo meta.json con asignaciones de grupo, tecla, volumen, afinación y paneo.
+    3. Archivo .pak (ZIP) estándar de backup del EP-133 para restauración directa.
+    4. Guía técnica README_EP133_KO_II.txt con instrucciones de importación paso a paso.
+    
+    Retorna: (ruta_directorio_kit, ruta_archivo_pak)
+    """
+    clean_kit_name = re.sub(r"[^a-zA-Z0-9_\-]", "_", kit_name.strip()) or "EP133_Kit"
+    kit_dir = Path(output_dir) / clean_kit_name
+    sounds_dir = kit_dir / "sounds"
+    sounds_dir.mkdir(parents=True, exist_ok=True)
+
+    # Mapeo de teclas de hardware EP-133 (12 teclas por grupo: 1-9, ., 0, ENTER)
+    ep_keys = [
+        ("A", "1"), ("A", "2"), ("A", "3"),
+        ("A", "4"), ("A", "5"), ("A", "6"),
+        ("A", "7"), ("A", "8"), ("A", "9"),
+        ("A", "."), ("A", "0"), ("A", "ENTER"),
+        ("B", "1"), ("B", "2"), ("B", "3"), ("B", "4")
+    ]
+
+    manifest = {
+        "version": 1,
+        "device": "Teenage Engineering EP-133 K.O. II",
+        "created_by": "BeatOS — The MakerLicious",
+        "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+        "package_name": clean_kit_name,
+        "sample_count": 0,
+        "sounds": []
+    }
+
+    copied_count = 0
+    for pad_num in range(1, 17):
+        p_info = pads_data.get(pad_num, {})
+        src_path = p_info.get("source_path", "")
+        s_name = p_info.get("sample_name", f"Sound_{pad_num:02d}")
+        clean_name = re.sub(r"[^a-zA-Z0-9_\-\.]", "_", s_name)
+        slot_filename = f"{pad_num:03d}_PAD{pad_num:02d}_{clean_name}.wav"
+        dest_file = sounds_dir / slot_filename
+
+        grp, key = ep_keys[pad_num - 1] if pad_num - 1 < len(ep_keys) else ("B", str(pad_num))
+
+        if src_path and Path(src_path).exists():
+            shutil.copy2(src_path, dest_file)
+            copied_count += 1
+
+        manifest["sounds"].append({
+            "slot": pad_num,
+            "name": s_name,
+            "filename": f"sounds/{slot_filename}",
+            "group": grp,
+            "key": key,
+            "tune": p_info.get("tune", 0),
+            "pan": p_info.get("pan", 0.5),
+            "volume": p_info.get("volume", 0.707946),
+            "choke_group": p_info.get("mute_group", 0),
+            "sound_type": p_info.get("sound_type", "SAMPLE"),
+        })
+
+    manifest["sample_count"] = copied_count
+
+    meta_file = kit_dir / "meta.json"
+    with open(meta_file, "w", encoding="utf-8") as f:
+        json.dump(manifest, f, indent=2, ensure_ascii=False)
+
+    readme_content = f"""================================================================================
+TEENAGE ENGINEERING EP-133 K.O. II — KIT DE SAMPLES (BeatOS The MakerLicious)
+================================================================================
+Kit: {clean_kit_name}
+Total de Muestras: {copied_count} / 16
+
+INSTRUCCIONES DE IMPORTACIÓN:
+1. Conecta tu EP-133 K.O. II por USB-C a tu ordenador y enciéndelo.
+2. Abre en Google Chrome o navegador compatible:
+   https://teenage.engineering/apps/ep-sample-tool
+3. Método A (Arrastrar y Soltar):
+   - Abre la carpeta 'sounds/' y arrastra los archivos .wav directamente a los
+     slots de sonido deseados (001 - 016).
+4. Método B (Paquete de Backup .pak / .zip):
+   - En el EP Sample Tool, puedes cargar o restaurar el paquete '{clean_kit_name}.pak'
+     generado en este directorio.
+
+MAPEO DE PADS A TECLAS EP-133:
+- Pad 01 -> Grupo A, Tecla 1
+- Pad 02 -> Grupo A, Tecla 2
+- Pad 03 -> Grupo A, Tecla 3
+- Pad 04 -> Grupo A, Tecla 4
+- Pad 05 -> Grupo A, Tecla 5
+- Pad 06 -> Grupo A, Tecla 6
+- Pad 07 -> Grupo A, Tecla 7
+- Pad 08 -> Grupo A, Tecla 8
+- Pad 09 -> Grupo A, Tecla 9
+- Pad 10 -> Grupo A, Tecla . (punto)
+- Pad 11 -> Grupo A, Tecla 0
+- Pad 12 -> Grupo A, Tecla ENTER
+- Pad 13 -> Grupo B, Tecla 1
+- Pad 14 -> Grupo B, Tecla 2
+- Pad 15 -> Grupo B, Tecla 3
+- Pad 16 -> Grupo B, Tecla 4
+================================================================================
+"""
+    with open(kit_dir / "README_EP133_KO_II.txt", "w", encoding="utf-8") as f:
+        f.write(readme_content)
+
+    # Generar paquete .pak (formato ZIP estándar reconocido por Teenage Engineering)
+    pak_file = kit_dir.parent / f"{clean_kit_name}_EP133.pak"
+    with zipfile.ZipFile(pak_file, "w", compression=zipfile.ZIP_DEFLATED) as z:
+        z.write(meta_file, arcname="meta.json")
+        for s_file in sounds_dir.glob("*.wav"):
+            z.write(s_file, arcname=f"sounds/{s_file.name}")
+        z.write(kit_dir / "README_EP133_KO_II.txt", arcname="README_EP133_KO_II.txt")
+
+    return str(kit_dir), str(pak_file)
+
 
 def export_po33_drum_reel(
     kit_name: str,
@@ -1012,6 +1137,17 @@ def create_kit(
             "duration_sec": duration,
             "ram_limit_sec": 40.0,
             "slices_count": len(slices),
+        }
+
+    # 6. Teenage Engineering EP-133 K.O. II
+    if target_lower in ("universal", "ep133", "ep-133", "ko2", "ko-ii", "ko_ii"):
+        ep_dir = output_base_dir / "Teenage_Engineering_EP133"
+        ep_dir.mkdir(parents=True, exist_ok=True)
+        ep_folder, ep_pak = export_ep133_ko2_kit(clean_kit_name, pads_dict, ep_dir)
+        targets_result["ep133"] = {
+            "folder": ep_folder,
+            "pak_package": ep_pak,
+            "slots_count": len(pads_dict),
         }
 
     return {

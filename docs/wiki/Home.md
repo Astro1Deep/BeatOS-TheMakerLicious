@@ -1,6 +1,6 @@
 # 🎛️ BeatOS — The MakerLicious
 ### The system ★ [universal beatmaker station]
-> `│ ref: pocket operator · akai mpc · roland sp-404mk2 · ni maschine │`  
+> `│ ref: pocket operator · ep-133 · akai mpc sample · roland sp-404mk2 · ni maschine │`  
 > **Universal Beatmaker Hub & Multi-Sampler Toolkit**
 
 > **Idioma / Language**: [Español (ES)](#-español) | [English (EN)](#-english)
@@ -9,7 +9,7 @@
 
 ## 🇪🇸 Español
 
-**BeatOS — The MakerLicious** (*The system ★ [universal beatmaker station]*) es un ecosistema abierto de alto rendimiento diseñado para maximizar la velocidad de navegación, la estabilidad y la creación de kits musicales en hardware **Akai MPC Standalone & Studio**, **Roland SP-404MK2 / SP-404A**, **Native Instruments Maschine** y **Teenage Engineering Pocket Operator (PO-20 / PO-33 / PO-133)**.
+**BeatOS — The MakerLicious** (*The system ★ [universal beatmaker station]*) es un ecosistema abierto de alto rendimiento diseñado para maximizar la velocidad de navegación, la estabilidad y la creación de kits musicales en hardware **Teenage Engineering Pocket Operator (PO-20 / PO-33 / PO-133)** & **EP-133 K.O. II**, **Akai Professional MPC Sample & Standalone**, **Roland SP-404MK2 / SP-404A**, y **Native Instruments Maschine**.
 
 ### 📌 ¿Por qué este proyecto?
 El hardware musical autónomo cuenta con recursos de memoria dedicados. Cuando conectamos tarjetas Micro SD con decenas de miles de samples desordenados o con residuos `._*` de macOS, surgen problemas críticos:
@@ -32,7 +32,7 @@ Este toolkit resuelve estos desafíos combinando **SQLite 3**, un indexador aut�
 | **[📦 5. Expansiones Oficiales Akai](05-Expansiones-Oficiales-Akai.md)** | Parseo de `Expansion.xml`, programas `.xpm` / `.pgm` y carátulas gráficas. |
 | **[🌐 6. Catálogo Web y Audio Player](06-Catalogo-Web-y-Audio-Player.md)** | Catálogo interactivo HTML5, streaming local y botón de copiado de rutas. |
 | **[📊 7. Consultas Avanzadas SQLite](07-Consultas-Avanzadas-SQLite.md)** | Consultas SQL prácticas para beatmakers y exportaciones a CSV/JSON. |
-| **[🎛️ 8. Universal Beatmaker Rack](08-Universal-Hardware-Beatmaker-Rack-(MPC-Maschine-SP404-PO33).md)** | Rack de 16 pads, afinación, choke groups, pad swap y exportación multi-sampler. |
+| **[🎛️ 8. Universal Beatmaker Rack](08-Universal-Hardware-Beatmaker-Rack-(MPC-Maschine-SP404-PO33).md)** | Rack de 16 pads, afinación, choke groups, pad swap y exportación multi-sampler (MPC, EP-133, SP-404, Maschine, PO-33). |
 | **[🕹️ 9. Pocket Operator PO-33 Studio](09-Pocket-Operator-PO-33-KO-Studio-y-FSK-Modem.md)** | Drum Reels con silencios de 150 ms (≤ 40s) y verificación de copias FSK. |
 | **[🌐 10. Manual Bilingüe (ES / EN)](10-Manual-Bilingue-y-Selector-de-Idioma-(ES-EN).md)** | Selector dinámico de idioma, persistencia en localStorage y workflow internacional. |
 | **[🔌 11. Auto-Reconocimiento de Discos](11-Auto-Reconocimiento-y-Onboarding-de-Discos.md)** | Motor forense para diagnosticar y estructurar cualquier disco externo nuevo. |
@@ -51,9 +51,10 @@ BeatOS es 100% independiente, autónomo y libre de telemetría. Puedes apoyar el
 
 ### Overview
 **BeatOS (The System)** — *Edition: The MakerLicious* is a lightweight, zero-dependency open source ecosystem (**Universal Beatmaker Hub & Multi-Sampler Toolkit**) built with **Python 3, SQLite 3, and HTML5**. It provides instant local sample search, automatic sonic taxonomy, project integrity auditing, and a 16-pad **Universal Beatmaker Kit Rack** that exports programs and kits natively to:
-* **Akai MPC Standalone** (`.xpm` Drum Programs & `.xpj` Projects)
+* **Akai Professional MPC Sample & Standalone** (`.xpm` Drum Programs & `.xpj` Projects)
+* **Teenage Engineering EP-133 K.O. II** (`.pak` native backup packages & EP Sample Tool drag-and-drop kits)
 * **Native Instruments Maschine** (`.mxgrp` Groups & mapping)
-* **Roland SP-404MK2 & SP-404A / SX** (Bank A import folders)
+* **Roland SP-404MK2 & SP-404A / SX** (Bank A/B import folders)
 * **Teenage Engineering PO-33 / PO-20 / PO-133** (Calibrated 150ms Drum Reels & FSK modem backup tools)
 
 ---

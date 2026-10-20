@@ -1,6 +1,6 @@
 # 🎛️ BeatOS — The MakerLicious
 ### The system ★ [universal beatmaker station]
-> `│ ref: pocket operator · akai mpc · roland sp-404mk2 · ni maschine │`  
+> `│ ref: pocket operator · ep-133 · akai mpc sample · roland sp-404mk2 · ni maschine │`  
 > **Universal Beatmaker Hub & Multi-Sampler Toolkit**
 
 <p align="center">
@@ -12,16 +12,17 @@
 [![GitHub Sponsors](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa.svg?logo=github&logoColor=white)](https://github.com/sponsors/Astro1Deep)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![SQLite 3](https://img.shields.io/badge/database-SQLite_3-orange.svg)](https://www.sqlite.org/)
-[![Multi-Sampler](https://img.shields.io/badge/Hardware-MPC_·_SP404_·_Maschine_·_PO33-red.svg)](https://github.com/Astro1Deep/mpc-sample-database)
+[![Multi-Sampler](https://img.shields.io/badge/Hardware-MPC_·_EP133_·_SP404_·_Maschine_·_PO33-red.svg)](https://github.com/Astro1Deep/mpc-sample-database)
 [![Themes](https://img.shields.io/badge/Themes-TE_Arcade_|_Cerebro_|_MPC_|_SP404_|_Maschine-orange.svg)](#-los-4-pilares-culturales-y-temas-visuales)
 [![Bilingual](https://img.shields.io/badge/Language-ES_|_EN-cyan.svg)](#-bilingual-support--soporte-bilingüe)
 [![Wiki](https://img.shields.io/badge/Docs-Official_Wiki-success.svg)](https://github.com/Astro1Deep/mpc-sample-database/wiki)
 
 Un ecosistema universal, ultraligero y autónomo en **Python 3 + SQLite + HTML5** diseñado para beatmakers y productores musicales. Permite indexar, preescuchar, auditar y diseñar drum kits para:
-- **Akai MPC Standalone & Studio** (One, One+, Live, Live II, X, X SE, Key 37/61, Studio MK2)
-- **Roland SP-404MK2 / SP-404A / SX**
-- **Native Instruments Maschine** (MK3, Plus, Mikro)
+- **Akai MPC Standalone & Studio** (MPC Sample, One, One+, Live, Live II, X, X SE, Key 37/61, Studio MK2)
+- **Teenage Engineering EP-133 K.O. II** (128 MB Sampler Composer, paquetes `.pak` y `sounds/`)
+- **Roland SP-404MK2 / SP-404A / SX** (16 pads / 12 pads)
 - **Teenage Engineering Pocket Operator** (PO-20 Arcade, PO-33 K.O.!, PO-133)
+- **Native Instruments Maschine** (MK3, Plus, Mikro)
 
 ---
 
@@ -71,7 +72,7 @@ Visita la **[Wiki Oficial en GitHub](https://github.com/Astro1Deep/mpc-sample-da
 1. **Universal Beatmaker Kit Rack (16 Pads)**:
    - Cuadrícula táctil e interactiva disparable por ratón o teclado físico (`Z-V`, `A-F`, `Q-R`, `1-4`).
    - **Pad Inspector Modal**: Volumen lineal, paneo estéreo, afinación (**-24 a +24 semitonos**), **Choke / Mute Groups (1-8)** e intercambio de pads (Pad Swap).
-   - Generación en 1 clic de programas nativos para Akai MPC (`.xpm`/`.xpj`), NI Maschine (`.mxgrp`), Roland SP-404MK2 y Pocket Operator PO-33.
+   - Generación en 1 clic de programas nativos para Akai MPC (`.xpm`/`.xpj`), NI Maschine (`.mxgrp`), Roland SP-404MK2, Pocket Operator PO-33 y Teenage Engineering EP-133 K.O. II (`.pak` & `sounds/`).
 
 2. **Pocket Operator PO-33 / PO-133 Studio**:
    - Generador de **Drum Reel** con silencios de exactamente **150 ms** para el algoritmo de Auto-Slice en los pads 9-16.
