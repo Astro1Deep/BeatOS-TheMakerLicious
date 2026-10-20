@@ -1,6 +1,6 @@
 # 🎛️ BeatOS — The MakerLicious
 ### The system ★ [universal beatmaker station]
-> `│ ref: mpc · sp-404 · pocket operator · maschine │`  
+> `│ ref: pocket operator · sp-404 · mpc one · mpc studio · maschine │`  
 > **Universal Beatmaker Hub & Multi-Sampler Toolkit**
 
 <p align="center">
@@ -16,10 +16,10 @@
 [![Wiki](https://img.shields.io/badge/Docs-Official_Wiki-success.svg)](https://github.com/Astro1Deep/mpc-sample-database/wiki)
 
 Un ecosistema universal, ultraligero y autónomo en **Python 3 + SQLite + HTML5** diseñado para beatmakers y productores musicales. Permite indexar, preescuchar, auditar y diseñar drum kits para:
-- **Akai MPC Standalone** (Live, Live II, One, One+, X, X SE, Key 37, Key 61, Studio)
+- **Akai MPC Standalone & Studio** (One, One+, Live, Live II, X, X SE, Key 37/61, Studio MK2)
 - **Roland SP-404MK2 / SP-404A / SX**
 - **Native Instruments Maschine** (MK3, Plus, Mikro)
-- **Teenage Engineering Pocket Operator** (PO-33 K.O.! & PO-133 Street Fighter)
+- **Teenage Engineering Pocket Operator** (PO-20 Arcade, PO-33 K.O.!, PO-133)
 
 ---
 
