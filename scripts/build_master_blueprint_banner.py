@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Build Authentic Master Technical Blueprint Banner for BeatOS — The MakerLicious
-Using official Teenage Engineering manual style blueprints from /Users/ivan/Downloads/BEATMAKER HARDWARES REF
-100% faithful to the physical hardware, homogeneous styling, zero stray lines, zero artificial bounding boxes.
+Build Master Technical Blueprint Banner for BeatOS — The MakerLicious
+100% faithful to the physical hardware references, zero mutilated components,
+centered prominent header, zero unwanted Teenage Engineering PO sheet copies,
+and solid, homogeneous contours for all 5 stations.
 """
 
 import os
@@ -10,95 +11,87 @@ import shutil
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import numpy as np
 
-def extract_and_prepare_devices(ref_dir, scratch_dir):
+def clean_device_extractions(ref_dir, scratch_dir):
     os.makedirs(scratch_dir, exist_ok=True)
     
-    # 1. PO-33 K.O.! (from po33_blueprint_te_style.jpg)
-    # Includes full top wire hanger loop (y=62..140) and full PCB (y=140..1073, x=218..677)
-    # Zero artificial lines, natural PCB contours and components 100% preserved.
+    # 1. PO-33 K.O.! (po33_blueprint_te_style.jpg)
+    # Full hanger loop (y=48..140) and full PCB (y=140..1080)
+    # 100% intact, no chopped loop, no overlaps
     im_po = Image.open(os.path.join(ref_dir, "po33_blueprint_te_style.jpg"))
-    crop_po = im_po.crop((218, 62, 677, 1073)).convert("RGBA")
+    crop_po = im_po.crop((210, 48, 685, 1080)).convert("RGBA")
     arr_po = np.array(crop_po)
-    bg_po = np.array([241, 240, 236])
-    
-    # Clear empty space outside hanger loop above PCB (y < 78)
-    for y in range(78):
+    bg_po = np.array([241, 241, 237])
+    for y in range(80):
         for x in range(crop_po.width):
-            if x < 85 or x > 335 or np.linalg.norm(arr_po[y, x, :3] - bg_po) < 15:
+            if x < 85 or x > 385 or np.linalg.norm(arr_po[y, x, :3] - bg_po) < 20:
                 arr_po[y, x, 3] = 0
-                
-    # Clear empty margin outside PCB borders
-    arr_po[78:, :2, 3] = 0
-    arr_po[78:, 457:, 3] = 0
-    
-    # Clear empty space outside bottom rounded corners
-    for y in range(1000, crop_po.height):
-        for x in list(range(20)) + list(range(crop_po.width - 20, crop_po.width)):
-            if np.linalg.norm(arr_po[y, x, :3] - bg_po) < 15:
-                arr_po[y, x, 3] = 0
-                
-    crop_po = Image.fromarray(arr_po)
-    po_path = os.path.join(scratch_dir, "blueprint_prep_po33.png")
-    crop_po.save(po_path)
+    arr_po[80:, :10, 3] = 0
+    arr_po[80:, 464:, 3] = 0
+    arr_po[1022:, :, 3] = 0
+    clean_po = Image.fromarray(arr_po)
+    po_path = os.path.join(scratch_dir, "blueprint_clean_po33.png")
+    clean_po.save(po_path)
 
-    # 2. Akai MPC Sample (from akai_mpc_sample_blueprint_topdown_te_style.jpg)
-    # Start at y=120 to eliminate the stray y=110 guideline completely (Image 0).
-    # Clear stray leader lines outside the chassis to the left of x=40 below bezel (Image 1).
-    # Zero artificial border rectangles.
+    # 2. Akai MPC Sample (akai_mpc_sample_blueprint_topdown_te_style.jpg)
+    # Full chassis from x=220 to 832, y=102 to 756
+    # Complete volume knob, fader, display, pads, jog wheel, logos
     im_mpc = Image.open(os.path.join(ref_dir, "akai_mpc_sample_blueprint_topdown_te_style.jpg"))
-    crop_mpc = im_mpc.crop((246, 120, 827, 750)).convert("RGBA")
+    crop_mpc = im_mpc.crop((220, 102, 832, 756)).convert("RGBA")
     arr_mpc = np.array(crop_mpc)
-    arr_mpc[175:, :40, 3] = 0
-    crop_mpc = Image.fromarray(arr_mpc)
-    mpc_path = os.path.join(scratch_dir, "blueprint_prep_mpc.png")
-    crop_mpc.save(mpc_path)
+    arr_mpc[:, :8, 3] = 0
+    arr_mpc[:, 605:, 3] = 0
+    arr_mpc[:8, :, 3] = 0
+    arr_mpc[647:, :, 3] = 0
+    clean_mpc = Image.fromarray(arr_mpc)
+    mpc_path = os.path.join(scratch_dir, "blueprint_clean_mpc.png")
+    clean_mpc.save(mpc_path)
 
-    # 3. Roland SP-404MK2 (from roland_sp404mk2_blueprint_te_style.jpg)
-    # Natural blueprint linework with circular OLED screen centered horizontally.
-    # Clean outside the 4 rounded corners. Zero artificial drawn rectangles.
+    # 3. Roland SP-404MK2 (roland_sp404mk2_blueprint_te_style.jpg)
+    # Full chassis from x=178 to 672, y=162 to 1162
+    # All 4 top knobs (VOLUME, CTRL 1-3), logos, circular OLED, 16 pads, solid contour
     im_sp = Image.open(os.path.join(ref_dir, "roland_sp404mk2_blueprint_te_style.jpg"))
-    crop_sp = im_sp.crop((180, 208, 670, 1132)).convert("RGBA")
+    crop_sp = im_sp.crop((178, 162, 672, 1162)).convert("RGBA")
     arr_sp = np.array(crop_sp)
-    bg_sp = np.array([242, 239, 226])
-    for y in range(35):
-        for x in range(35):
-            if np.linalg.norm(arr_sp[y, x, :3] - bg_sp) < 18:
-                arr_sp[y, x, 3] = 0
-        for x in range(crop_sp.width - 35, crop_sp.width):
-            if np.linalg.norm(arr_sp[y, x, :3] - bg_sp) < 18:
-                arr_sp[y, x, 3] = 0
-    for y in range(crop_sp.height - 35, crop_sp.height):
-        for x in range(35):
-            if np.linalg.norm(arr_sp[y, x, :3] - bg_sp) < 18:
-                arr_sp[y, x, 3] = 0
-        for x in range(crop_sp.width - 35, crop_sp.width):
-            if np.linalg.norm(arr_sp[y, x, :3] - bg_sp) < 18:
-                arr_sp[y, x, 3] = 0
-    crop_sp = Image.fromarray(arr_sp)
-    sp_path = os.path.join(scratch_dir, "blueprint_prep_sp404.png")
-    crop_sp.save(sp_path)
+    arr_sp[:4, :, 3] = 0
+    arr_sp[996:, :, 3] = 0
+    arr_sp[:, :3, 3] = 0
+    arr_sp[:, 491:, 3] = 0
+    clean_sp = Image.fromarray(arr_sp)
+    sdraw = ImageDraw.Draw(clean_sp)
+    sdraw.rounded_rectangle([(3, 4), (clean_sp.width - 4, 995)], radius=14, outline=(22, 22, 24, 255), width=2)
+    sp_path = os.path.join(scratch_dir, "blueprint_clean_sp404.png")
+    clean_sp.save(sp_path)
 
-    # 4. NI Maschine MK3 (from maschine_blueprint_te_style_from_user_photo.jpg)
-    # Natural blueprint linework with dual screens, 8 encoders, 4D encoder, 16 RGB pads.
-    # Zero artificial lines.
+    # 4. NI Maschine MK3 (maschine_blueprint_te_style_from_user_photo.jpg)
+    # Full chassis from x=132 to 890, y=175 to 865
+    # All 8 buttons above dual screens, encoders, 16 pads, 4D dial
     im_mas = Image.open(os.path.join(ref_dir, "maschine_blueprint_te_style_from_user_photo.jpg"))
-    crop_mas = im_mas.crop((137, 198, 885, 862)).convert("RGBA")
-    mas_path = os.path.join(scratch_dir, "blueprint_prep_maschine.png")
-    crop_mas.save(mas_path)
+    crop_mas = im_mas.crop((132, 175, 890, 865)).convert("RGBA")
+    arr_mas = np.array(crop_mas)
+    arr_mas[:7, :, 3] = 0
+    arr_mas[683:, :, 3] = 0
+    arr_mas[:, :5, 3] = 0
+    arr_mas[:, 751:, 3] = 0
+    clean_mas = Image.fromarray(arr_mas)
+    mas_path = os.path.join(scratch_dir, "blueprint_clean_maschine.png")
+    clean_mas.save(mas_path)
 
-    # 5. Teenage Engineering EP-133 K.O. II (from ep133_blueprint_te_style.jpg)
-    # Authentic chassis, top tabs, calculator keys, fader, Knobs X/Y.
-    # Clear paper background between connector tabs at y < 32. Zero artificial lines.
+    # 5. Teenage Engineering EP-133 K.O. II (ep133_blueprint_te_style.jpg)
+    # Full chassis with top connector tabs from x=64 to 880, y=48 to 1152
     im_ep = Image.open(os.path.join(ref_dir, "ep133_blueprint_te_style.jpg"))
-    crop_ep = im_ep.crop((67, 80, 828, 1076)).convert("RGBA")
+    crop_ep = im_ep.crop((64, 48, 880, 1152)).convert("RGBA")
     arr_ep = np.array(crop_ep)
     bg_ep = np.array([241, 241, 241])
-    for y in range(32):
-        diff = np.linalg.norm(arr_ep[y, :, :3] - bg_ep, axis=1)
-        arr_ep[y, diff < 12, 3] = 0
-    crop_ep = Image.fromarray(arr_ep)
-    ep_path = os.path.join(scratch_dir, "blueprint_prep_ep133.png")
-    crop_ep.save(ep_path)
+    for y in range(12):
+        for x in range(crop_ep.width):
+            if np.linalg.norm(arr_ep[y, x, :3] - bg_ep) < 20:
+                arr_ep[y, x, 3] = 0
+    arr_ep[:, :4, 3] = 0
+    arr_ep[:, 812:, 3] = 0
+    arr_ep[1106:, :, 3] = 0
+    clean_ep = Image.fromarray(arr_ep)
+    ep_path = os.path.join(scratch_dir, "blueprint_clean_ep133.png")
+    clean_ep.save(ep_path)
 
     return {
         "po33": po_path,
@@ -113,12 +106,12 @@ def build_master_blueprint_banner():
     scratch_dir = "/Users/ivan/.gemini/antigravity/brain/8da64049-cb96-4c76-9d2a-381da30c7b9c/scratch"
     out_dir = "/Users/ivan/Documents/mpc-sample-database/docs/assets/branding"
     brain_dir = "/Users/ivan/.gemini/antigravity/brain/8da64049-cb96-4c76-9d2a-381da30c7b9c"
-    
-    print("Preparing 5 authentic blueprints from official reference sheets...")
-    paths = extract_and_prepare_devices(ref_dir, scratch_dir)
+
+    print("Preparing 5 authentic blueprints with ZERO cuts and solid contours...")
+    paths = clean_device_extractions(ref_dir, scratch_dir)
 
     W, H = 2560, 1440
-    bg_color = (244, 243, 240) # Authentic Teenage Engineering bone-white drafting paper
+    bg_color = (244, 243, 240)
 
     banner = Image.new("RGB", (W, H), bg_color)
     draw = ImageDraw.Draw(banner)
@@ -133,11 +126,11 @@ def build_master_blueprint_banner():
         c = major_grid if y % 200 == 0 else grid_color
         draw.line([(0, y), (W, y)], fill=c, width=1)
 
-    # Outer margin & border
+    # Outer margin & boundary
     margin = 44
     draw.rectangle([(margin, margin), (W - margin, H - margin)], outline=(200, 199, 194), width=1)
 
-    # Corner registration crosses (+)
+    # Corner registration marks (+)
     reg = 10
     corners = [
         (margin + 12, margin + 12),
@@ -149,108 +142,109 @@ def build_master_blueprint_banner():
         draw.line([(cx - reg, cy), (cx + reg, cy)], fill=(130, 130, 135), width=1)
         draw.line([(cx, cy - reg), (cx, cy + reg)], fill=(130, 130, 135), width=1)
 
-    # Typography (Swiss Modernist / Helvetica Neue)
+    # Swiss Modernist Typography (Helvetica Neue)
     ttc = "/System/Library/Fonts/HelveticaNeue.ttc"
-    font_main_title = ImageFont.truetype(ttc, 36, index=1)   # Bold
-    font_system = ImageFont.truetype(ttc, 20, index=10)       # Medium
-    font_ref = ImageFont.truetype(ttc, 16, index=7)          # Light / Mono
-    font_sheet = ImageFont.truetype(ttc, 20, index=1)        # Bold Orange
-    font_st_label = ImageFont.truetype(ttc, 22, index=1)     # Bold Station Label
-    font_footer_spec = ImageFont.truetype(ttc, 20, index=1)  # Bold
+    font_title = ImageFont.truetype(ttc, 44, index=1)       # Bold
+    font_system = ImageFont.truetype(ttc, 22, index=10)     # Medium
+    font_ref = ImageFont.truetype(ttc, 16, index=7)         # Light/Mono
+    font_st_label = ImageFont.truetype(ttc, 22, index=1)    # Bold
+    font_footer_spec = ImageFont.truetype(ttc, 20, index=1) # Bold
     font_footer_stations = ImageFont.truetype(ttc, 18, index=10) # Medium
-    font_footer_arch = ImageFont.truetype(ttc, 15, index=7)  # Light
+    font_footer_arch = ImageFont.truetype(ttc, 15, index=7) # Light
+    font_badge = ImageFont.truetype(ttc, 16, index=10)      # Medium
 
-    # 1. Header (User exact specifications)
-    draw.text((margin + 36, margin + 28), "BeatOS — The MakerLicious", fill=(18, 18, 20), font=font_main_title)
-    draw.text((margin + 36, margin + 74), "The system ★ [universal beatmaker station]", fill=(255, 102, 0), font=font_system)
-    draw.text((margin + 36, margin + 104), "│ ref: mpc · sp-404 · pocket operator · maschine │", fill=(110, 110, 118), font=font_ref)
+    # 1. HEADER (STRICTLY CENTERED AND PROMINENT, NO UNWANTED TOP-RIGHT COPYCAT BLOCK)
+    title_txt = "BeatOS — The MakerLicious"
+    bbox = font_title.getbbox(title_txt)
+    draw.text(((W - (bbox[2] - bbox[0])) // 2, margin + 26), title_txt, fill=(18, 18, 20), font=font_title)
 
-    draw.text((W - margin - 380, margin + 34), "beatos labs // specification", fill=(18, 18, 20), font=font_system)
-    draw.text((W - margin - 380, margin + 64), "sheet 01 of 01 // rev 2026", fill=(255, 102, 0), font=font_sheet)
+    sys_txt = "The system ★ [universal beatmaker station]"
+    bbox_sys = font_system.getbbox(sys_txt)
+    draw.text(((W - (bbox_sys[2] - bbox_sys[0])) // 2, margin + 82), sys_txt, fill=(255, 102, 0), font=font_system)
 
-    draw.line([(margin + 20, margin + 140), (W - margin - 20, margin + 140)], fill=(210, 210, 215), width=1)
+    ref_txt = "│ ref: mpc · sp-404 · pocket operator · maschine │"
+    bbox_ref = font_ref.getbbox(ref_txt)
+    draw.text(((W - (bbox_ref[2] - bbox_ref[0])) // 2, margin + 116), ref_txt, fill=(110, 110, 118), font=font_ref)
 
-    # 2. Balanced Stations Layout (5 Hardware stations in strict exact order)
+    # Dividing rule below header
+    draw.line([(margin + 20, margin + 154), (W - margin - 20, margin + 154)], fill=(210, 210, 215), width=1)
+
+    # 2. 5 HARDWARE STATIONS IN STRICT ORDER
     stations = [
-        {"name": "01 / pocket operator", "key": "po33", "target_w": 285, "target_h": 628},
-        {"name": "02 / akai mpc", "key": "mpc", "target_w": 445, "target_h": 482},
-        {"name": "03 / roland sp-404mk2", "key": "sp404", "target_w": 345, "target_h": 650},
-        {"name": "04 / ni maschine", "key": "maschine", "target_w": 465, "target_h": 413},
-        {"name": "05 / ep-133 k.o. ii", "key": "ep133", "target_w": 455, "target_h": 596}
+        {"name": "01 / pocket operator", "key": "po33", "target_w": 327, "target_h": 710},
+        {"name": "02 / akai mpc", "key": "mpc", "target_w": 450, "target_h": 481},
+        {"name": "03 / roland sp-404mk2", "key": "sp404", "target_w": 361, "target_h": 730},
+        {"name": "04 / ni maschine", "key": "maschine", "target_w": 470, "target_h": 428},
+        {"name": "05 / ep-133 k.o. ii", "key": "ep133", "target_w": 517, "target_h": 700}
     ]
 
     col_width = (W - 2 * margin - 80) / 5
     col_centers = [int(margin + 40 + (i + 0.5) * col_width) for i in range(5)]
-    hardware_base_y = 1170
-    label_y = margin + 175
+    hardware_base_y = 1200
+    label_y = margin + 185
 
     for i, st in enumerate(stations):
         cx = col_centers[i]
         
-        # Station label (Clean and direct, NO subtitles)
-        bbox = font_st_label.getbbox(st["name"])
-        tw = bbox[2] - bbox[0]
+        # Station label with ample clearance (over 200px above hardware)
+        bbox_l = font_st_label.getbbox(st["name"])
+        tw = bbox_l[2] - bbox_l[0]
         draw.text((cx - tw // 2, label_y), st["name"], fill=(18, 18, 20), font=font_st_label)
-        draw.line([(cx - 18, label_y - 10), (cx + 18, label_y - 10)], fill=(255, 102, 0), width=2)
+        draw.line([(cx - 18, label_y - 8), (cx + 18, label_y - 8)], fill=(255, 102, 0), width=2)
         
-        # Load and scale blueprint device
-        img_p = paths[st["key"]]
-        img = Image.open(img_p).convert("RGBA")
-        nw, nh = st["target_w"], st["target_h"]
-        scaled = img.resize((nw, nh), Image.Resampling.LANCZOS)
+        # Load and scale clean device
+        dev_path = paths[st["key"]]
+        dev_img = Image.open(dev_path).convert("RGBA")
+        scaled = dev_img.resize((st["target_w"], st["target_h"]), Image.Resampling.LANCZOS)
         
-        pos_x = cx - nw // 2
-        pos_y = hardware_base_y - nh
+        pos_x = cx - st["target_w"] // 2
+        pos_y = hardware_base_y - st["target_h"]
         
-        # Technical soft contact shadow
-        sh_w, sh_h = int(nw * 0.95), 24
+        # Technical soft contact shadow at baseline
+        sh_w, sh_h = int(st["target_w"] * 0.94), 22
         shadow = Image.new("RGBA", (sh_w, sh_h), (0, 0, 0, 0))
         sdraw = ImageDraw.Draw(shadow)
-        sdraw.ellipse([(0, 0), (sh_w, sh_h)], fill=(0, 0, 0, 48))
-        shadow = shadow.filter(ImageFilter.GaussianBlur(8))
-        banner.paste(shadow, (cx - sh_w // 2, hardware_base_y - 12), shadow)
+        sdraw.ellipse([(0, 0), (sh_w, sh_h)], fill=(0, 0, 0, 42))
+        shadow = shadow.filter(ImageFilter.GaussianBlur(7))
+        banner.paste(shadow, (cx - sh_w // 2, hardware_base_y - 10), shadow)
         
-        # Paste the pure, clean blueprint device
+        # Paste clean, uncut device
         banner.paste(scaled, (pos_x, pos_y), scaled)
         
         # Millimeter calibration crosshair under station
-        draw.line([(cx - 20, hardware_base_y + 20), (cx + 20, hardware_base_y + 20)], fill=(180, 180, 185), width=1)
-        draw.line([(cx, hardware_base_y + 12), (cx, hardware_base_y + 28)], fill=(180, 180, 185), width=1)
+        draw.line([(cx - 20, hardware_base_y + 18), (cx + 20, hardware_base_y + 18)], fill=(180, 180, 185), width=1)
+        draw.line([(cx, hardware_base_y + 10), (cx, hardware_base_y + 26)], fill=(180, 180, 185), width=1)
 
-    # 3. Footer (Exact user specification)
-    footer_y = H - margin - 130
+    # 3. FOOTER
+    footer_y = H - margin - 120
     draw.line([(margin + 20, footer_y), (W - margin - 20, footer_y)], fill=(210, 210, 215), width=1)
 
-    draw.text((margin + 36, footer_y + 18), "hardware guide specification // sheet 01 of 01", fill=(18, 18, 20), font=font_footer_spec)
+    draw.text((margin + 36, footer_y + 16), "hardware guide specification // universal beatmaker station", fill=(18, 18, 20), font=font_footer_spec)
     stations_footer = "[A] pocket operator · [B] akai mpc · [C] roland sp-404mk2 · [D] ni maschine · [E] ep-133 k.o. ii"
-    draw.text((margin + 36, footer_y + 48), stations_footer, fill=(255, 102, 0), font=font_footer_stations)
-    draw.text((margin + 36, footer_y + 78), "16-pad unified fingerdrumming architecture", fill=(110, 110, 118), font=font_footer_arch)
+    draw.text((margin + 36, footer_y + 44), stations_footer, fill=(255, 102, 0), font=font_footer_stations)
+    draw.text((margin + 36, footer_y + 72), "16-pad unified fingerdrumming architecture", fill=(110, 110, 118), font=font_footer_arch)
 
     # Right tech spec badge
-    rx1 = W - margin - 460
-    draw.rectangle([(rx1, footer_y + 25), (W - margin - 36, footer_y + 72)], outline=(255, 102, 0), width=1)
-    draw.text((rx1 + 18, footer_y + 38), "[ 44.1 kHz / 16-BIT PCM · HARDWARE MATRIX ]", fill=(255, 102, 0), font=font_system)
+    rx1 = W - margin - 470
+    draw.rectangle([(rx1, footer_y + 22), (W - margin - 36, footer_y + 68)], outline=(255, 102, 0), width=1)
+    draw.text((rx1 + 18, footer_y + 35), "[ 44.1 kHz / 16-BIT PCM · HARDWARE MATRIX ]", fill=(255, 102, 0), font=font_badge)
 
-    # 4. Save to official destinations
+    # 4. SAVE TO ALL OFFICIAL BRANDING ASSETS
     os.makedirs(out_dir, exist_ok=True)
     os.makedirs(brain_dir, exist_ok=True)
-    
-    # Save Master Technical Blueprint Banner
+
     master_jpg = os.path.join(out_dir, "te_universal_beatmaker_banner.jpg")
     banner.save(master_jpg, quality=98)
     print(f"Saved: {master_jpg}")
-    
-    # Variant 01 (MPC Sample)
+
     var01_jpg = os.path.join(out_dir, "banner_variant_01_mpc_sample.jpg")
     banner.save(var01_jpg, quality=98)
     print(f"Saved: {var01_jpg}")
 
-    # Blueprint edition alias
     bp_jpg = os.path.join(out_dir, "banner_blueprint_edition.jpg")
     banner.save(bp_jpg, quality=98)
     print(f"Saved: {bp_jpg}")
 
-    # Preview PNG
     preview_png = os.path.join(out_dir, "te_universal_beatmaker_banner_preview.png")
     banner.save(preview_png, format="PNG")
     print(f"Saved: {preview_png}")
