@@ -333,6 +333,8 @@
     cursor: pointer;
     transition: transform 0.08s ease, filter 0.08s ease, box-shadow 0.08s ease, border-color 0.15s ease;
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: element !important;
     overflow: hidden;
     box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
   }
@@ -348,16 +350,24 @@
   }
   .pad-cell.filled {
     background: linear-gradient(145deg, #1b212f 0%, #131722 100%);
+    cursor: -webkit-grab;
+    cursor: grab;
   }
   .pad-cell.target-selected {
     border-color: var(--mpc-red) !important;
     box-shadow: 0 0 16px rgba(255, 51, 68, 0.5) !important;
   }
+  .pad-cell.swap-source-selected {
+    border-color: var(--mpc-gold) !important;
+    box-shadow: 0 0 22px rgba(255, 179, 0, 0.85), inset 0 0 12px rgba(255, 179, 0, 0.35) !important;
+    animation: pulse 1s infinite alternate;
+  }
   .pad-cell.is-dragging {
-    opacity: 0.35 !important;
-    transform: scale(0.95) !important;
+    opacity: 0.45 !important;
+    transform: scale(0.96) !important;
     border: 2px dashed var(--mpc-gold) !important;
-    box-shadow: 0 0 24px rgba(255, 179, 0, 0.45) !important;
+    box-shadow: 0 0 24px rgba(255, 179, 0, 0.55) !important;
+    cursor: -webkit-grabbing !important;
     cursor: grabbing !important;
   }
   .pad-cell.drag-target-over {
@@ -392,8 +402,10 @@
     color: var(--text-muted);
     opacity: 0.45;
     font-size: 11px;
+    cursor: -webkit-grab;
     cursor: grab;
     user-select: none;
+    -webkit-user-select: none;
     display: inline-flex;
     align-items: center;
     transition: opacity 0.15s ease, color 0.15s ease;
@@ -402,16 +414,16 @@
     opacity: 0.95;
     color: var(--mpc-cyan);
   }
-  body.is-pad-dragging .pad-cell * {
-    pointer-events: none;
+  .dock-pad-btn {
+    -webkit-user-drag: element !important;
   }
   .dock-pad-btn.is-dragging {
-    opacity: 0.35 !important;
+    opacity: 0.45 !important;
     border: 1px dashed var(--mpc-gold) !important;
   }
   .dock-pad-btn.drag-target-over {
     border: 1px dashed var(--mpc-cyan) !important;
-    background: rgba(0, 240, 255, 0.2) !important;
+    background: rgba(0, 240, 255, 0.25) !important;
     box-shadow: 0 0 14px rgba(0, 240, 255, 0.8) !important;
   }
   .pad-cell-header {
@@ -1862,6 +1874,7 @@
           <button class="po33-btn-action" style="padding:6px 12px; font-size:11px; display:flex; align-items:center; gap:5px;" onclick="openCurrentExpansionModal()" title="Abrir catálogo visual con los programas de esta expansión">
             📂 Explorar Kits
           </button>
+          <button id="btnQuickSwapMode" class="rack-btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="togglePadSwapMode()" title="Modo Mover: Haz clic en dos pads consecutivamente para intercambiarlos de sitio de forma rápida">🔀 Modo Mover</button>
           <button class="rack-btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="autoFillRandomRack()">🎲 Shuffle</button>
           <button class="rack-btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="clearRack()">🗑️ Vaciar</button>
         </div>
@@ -3559,7 +3572,82 @@ function handlePadDragEnd(e) {
   });
 }
 
+// MODO MOVER / INTERCAMBIO DIRECTO POR CLIC (OPCIÓN RÁPIDA FINGERDRUMMING)
+let swapModeActive = false;
+let swapSourcePadNum = null;
+
+function togglePadSwapMode() {
+  swapModeActive = !swapModeActive;
+  swapSourcePadNum = null;
+  const btn = document.getElementById('btnQuickSwapMode');
+  document.querySelectorAll('.pad-cell.swap-source-selected').forEach(el => el.classList.remove('swap-source-selected'));
+  
+  if (swapModeActive) {
+    if (btn) {
+      btn.style.background = 'var(--mpc-gold)';
+      btn.style.color = '#000';
+      btn.style.fontWeight = '800';
+      btn.innerText = '🔀 Modo Mover ACTIVO';
+    }
+    showToast('🔀 Modo Mover activo: Haz clic en el 1er pad y luego en el 2do pad para intercambiarlos.');
+  } else {
+    if (btn) {
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.fontWeight = '';
+      btn.innerText = '🔀 Modo Mover';
+    }
+    showToast('Modo Mover desactivado.');
+  }
+}
+
+function handlePadSwapClick(pNum) {
+  if (!swapSourcePadNum) {
+    swapSourcePadNum = pNum;
+    const rackEl = document.getElementById('mpc-pad-' + pNum);
+    if (rackEl) rackEl.classList.add('swap-source-selected');
+    const pTag = 'A' + (pNum < 10 ? '0' : '') + pNum;
+    showToast('🎯 Pad ' + pNum + ' [' + pTag + '] seleccionado. Ahora haz clic en el pad de destino.');
+  } else {
+    const src = swapSourcePadNum;
+    const tgt = pNum;
+    swapSourcePadNum = null;
+    document.querySelectorAll('.pad-cell.swap-source-selected').forEach(el => el.classList.remove('swap-source-selected'));
+    
+    if (src !== tgt) {
+      const srcIdx = src - 1;
+      const tgtIdx = tgt - 1;
+      const srcItem = RACK_PADS[srcIdx];
+      const tgtItem = RACK_PADS[tgtIdx];
+      
+      RACK_PADS[tgtIdx] = srcItem;
+      RACK_PADS[srcIdx] = tgtItem;
+      
+      renderRackGrid();
+      renderDockMatrix();
+      updateRackCounts();
+      if (typeof updatePo33StudioView === 'function') updatePo33StudioView();
+      
+      if (RACK_PADS[tgtIdx]) {
+        triggerPadAudio(tgt);
+      }
+      
+      const sTag = 'A' + (src < 10 ? '0' : '') + src;
+      const tTag = 'A' + (tgt < 10 ? '0' : '') + tgt;
+      if (srcItem && tgtItem) {
+        showToast('🔀 Pads intercambiados: PAD ' + src + ' [' + sTag + '] ⇄ PAD ' + tgt + ' [' + tTag + ']');
+      } else {
+        showToast('🚚 Muestra movida a PAD ' + tgt + ' [' + tTag + ']');
+      }
+    }
+  }
+}
+
 function triggerPadAudio(pNum) {
+  if (swapModeActive) {
+    handlePadSwapClick(pNum);
+    return;
+  }
   if (Date.now() - lastPadDragTimestamp < 180) {
     return;
   }
@@ -4084,7 +4172,7 @@ function renderExpansionProgramsList(programs) {
     const isDrum = (k.program_type || '').toLowerCase() === 'drum';
     const badgeColor = isDrum ? 'var(--mpc-cyan)' : 'var(--mpc-gold)';
     const typeLabel = isDrum ? 'DRUM KIT' : (k.program_type || 'PROGRAM');
-    const padsInfo = k.pad_count ? `${k.pad_count} Pads asignados` : 'Programa de Pads';
+    const padsInfo = k.pad_count ? `${k.pad_count} Pads asignados` : '16 Pads asignados';
     const subCatInfo = k.sub_category ? `<span style="font-size:10px; color:var(--text-muted); display:block; margin-top:2px;">📁 ${escapeHtml(k.sub_category)}</span>` : '';
     
     const isCurrentActive = (currentLoadedKitRelPath && currentLoadedKitRelPath === k.rel_path);
@@ -4093,29 +4181,29 @@ function renderExpansionProgramsList(programs) {
       : 'background: #161c28; border: 1px solid rgba(255,255,255,0.08);';
 
     html += `
-      <div class="expansion-program-card ${isCurrentActive ? 'active-kit' : ''}" style="${borderStyle} border-radius:10px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; transition:0.2s; position:relative; overflow:hidden; cursor:pointer;" onclick="selectAndLoadExpansionKit(${idxToUse})">
+      <div class="expansion-program-card ${isCurrentActive ? 'active-kit' : ''}" style="${borderStyle} border-radius:10px; padding:14px 16px; min-height:148px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between; transition:0.2s; position:relative; cursor:pointer;" onclick="selectAndLoadExpansionKit(${idxToUse})">
         <div>
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-            <h4 style="font-size:13px; font-weight:700; color:#fff; line-height:1.3; margin:0;">${escapeHtml(k.name)}</h4>
-            <span style="font-size:9px; font-weight:800; padding:2px 6px; border-radius:4px; background:rgba(0,240,255,0.1); border:1px solid ${badgeColor}; color:${badgeColor}; white-space:nowrap;">${typeLabel}</span>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:4px;">
+            <h4 style="font-size:13.5px; font-weight:700; color:#fff; line-height:1.35; margin:0; word-break:break-word;">${escapeHtml(k.name)}</h4>
+            <span style="font-size:9px; font-weight:800; padding:3px 7px; border-radius:4px; background:rgba(0,240,255,0.1); border:1px solid ${badgeColor}; color:${badgeColor}; white-space:nowrap; flex-shrink:0;">${typeLabel}</span>
           </div>
           ${subCatInfo}
-          <div style="font-size:11px; color:var(--text-muted); margin-top:6px; display:flex; align-items:center; gap:6px;">
+          <div style="font-size:11px; color:var(--text-muted); margin-top:6px; display:flex; align-items:center; justify-content:space-between;">
             <span>🎛️ ${padsInfo}</span>
-            ${isCurrentActive ? '<span style="color:var(--mpc-green); font-weight:700; font-size:10px; margin-left:auto;">● EN EL RACK</span>' : ''}
+            ${isCurrentActive ? '<span style="color:var(--mpc-cyan); font-weight:800; font-size:10px; background:rgba(0,240,255,0.15); padding:2px 6px; border-radius:4px; border:1px solid var(--mpc-cyan);">● EN EL RACK</span>' : ''}
           </div>
         </div>
         
-        <div style="margin-top:14px; display:flex; gap:6px; flex-wrap:wrap;" onclick="event.stopPropagation();">
-          <button style="flex:1; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:7px 10px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 6px rgba(0,180,216,0.3);" onclick="selectAndLoadExpansionKit(${idxToUse})">
+        <div style="margin-top:14px; display:flex; gap:6px; align-items:center;" onclick="event.stopPropagation();">
+          <button style="flex:1; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:8px 10px; border-radius:6px; font-weight:bold; font-size:11.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; box-shadow:0 2px 6px rgba(0,180,216,0.3); white-space:nowrap;" onclick="selectAndLoadExpansionKit(${idxToUse})">
             🎛️ Cargar en Rack
           </button>
           ${k.first_sample_rel ? `
-            <button style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#fff; padding:7px 9px; border-radius:6px; font-size:11px; cursor:pointer;" onclick="playUnifiedAudio('${escapeHtml(k.first_sample_rel)}', '${escapeHtml(k.first_sample)}', 'Preview: ${escapeHtml(k.name)}', this)" title="Pre-escuchar muestra de prueba del kit">
+            <button style="width:34px; height:32px; flex-shrink:0; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:6px; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center;" onclick="playUnifiedAudio('${escapeHtml(k.first_sample_rel)}', '${escapeHtml(k.first_sample)}', 'Preview: ${escapeHtml(k.name)}', this)" title="Pre-escuchar muestra de prueba del kit">
               ▶
             </button>
           ` : ''}
-          <button style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#888; padding:7px 9px; border-radius:6px; font-size:11px; cursor:pointer;" onclick="navigator.clipboard.writeText('/Volumes/MPCSMPL/${escapeHtml(k.rel_path)}'); showToast('📋 Ruta del programa copiada');" title="Copiar ruta absoluta para tu hardware MPC">
+          <button style="width:34px; height:32px; flex-shrink:0; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#888; border-radius:6px; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center;" onclick="navigator.clipboard.writeText('/Volumes/MPCSMPL/${escapeHtml(k.rel_path)}'); showToast('📋 Ruta del programa copiada');" title="Copiar ruta absoluta para tu hardware MPC">
             📋
           </button>
         </div>
@@ -4820,9 +4908,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
 <!-- MODAL DE EXPLORACIÓN DE PROGRAMAS DE EXPANSIÓN (.XPM) -->
 <div id="expansionBrowserModalOverlay" class="pad-editor-modal-overlay" onclick="onExpansionBackdropClick(event)">
-  <div class="pad-editor-modal" style="max-width:880px; width:92%; max-height:88vh; display:flex; flex-direction:column; background:#10141e; border:1px solid rgba(0, 240, 255, 0.35); box-shadow:0 0 50px rgba(0,0,0,0.8), 0 0 30px rgba(0,240,255,0.15);">
+  <div class="pad-editor-modal" style="max-width:980px; width:95%; height:88vh; max-height:88vh; display:flex; flex-direction:column; background:#10141e; border:1px solid rgba(0, 240, 255, 0.35); box-shadow:0 0 50px rgba(0,0,0,0.8), 0 0 30px rgba(0,240,255,0.15); padding:20px 24px; overflow:hidden;">
     <!-- HEADER -->
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:14px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:14px; flex-shrink:0;">
       <div>
         <div style="display:flex; align-items:center; gap:10px;">
           <span style="font-size:24px;">📂</span>
@@ -4839,7 +4927,7 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 
     <!-- BUSCADOR / FILTRO REACTIVO -->
-    <div style="margin:14px 0 10px 0; display:flex; gap:10px; align-items:center;">
+    <div style="margin:14px 0 12px 0; display:flex; gap:10px; align-items:center; flex-shrink:0;">
       <div style="flex:1; position:relative;">
         <input type="text" id="expansionSearchInput" placeholder="🔍 Filtrar programas por nombre (ej. Funk, Trap, 808, Kit, LoFi...)" oninput="filterExpansionKits(this.value)" style="width:100%; box-sizing:border-box; background:#161c28; border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:10px 14px; color:#fff; font-size:13px; outline:none; transition:0.2s;" onfocus="this.style.borderColor='var(--mpc-cyan)'" onblur="this.style.borderColor='rgba(255,255,255,0.15)'">
       </div>
@@ -4849,12 +4937,12 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 
     <!-- GRID DE PROGRAMAS CON SCROLL INDEPENDIENTE -->
-    <div id="expansionProgramsGrid" style="flex:1; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px; padding:6px 2px 14px 2px; max-height:calc(88vh - 200px);">
+    <div id="expansionProgramsGrid" style="flex:1 1 auto; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(285px, 1fr)); gap:14px; padding:6px 4px 26px 2px; min-height:0;">
       <!-- Tarjetas renderizadas dinámicamente con JavaScript -->
     </div>
 
     <!-- FOOTER MODAL -->
-    <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--text-muted);">
+    <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--text-muted); flex-shrink:0;">
       <div>
         💡 <em>Consejo: Puedes pulsar <strong>📋</strong> para copiar la ruta física y cargar el programa directamente en tu hardware Standalone MPC One / Live / X / Key.</em>
       </div>
