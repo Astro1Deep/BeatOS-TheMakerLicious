@@ -46,16 +46,19 @@
 
   <!-- MAIN MANUAL TITLE -->
   <g class="te-text" text-anchor="middle">
-    <text x="600" y="86" font-size="26" font-weight="900" fill="#111111" letter-spacing="2">
-      beatos // the system
+    <text x="600" y="80" font-size="26" font-weight="900" fill="#111111" letter-spacing="1">
+      BeatOS — The MakerLicious
     </text>
-    <text x="600" y="104" class="te-mono" font-size="9.5" fill="#ff6600" font-weight="700" letter-spacing="1.5">
-      edition: the makerlicious · universal beatmaker hub &amp; multi-sampler toolkit
+    <text x="600" y="97" class="te-mono" font-size="10.5" fill="#ff6600" font-weight="700" letter-spacing="1.5">
+      The system  ★  [universal beatmaker station]
+    </text>
+    <text x="600" y="111" class="te-mono" font-size="8.5" fill="#555555" letter-spacing="1">
+      │  ref: mpc · sp-404 · po-20 · maschine // spec sheet 01  │
     </text>
   </g>
 
   <!-- DIVIDER LINE -->
-  <line x1="40" y1="116" x2="1160" y2="116" stroke="#111111" stroke-width="1" />
+  <line x1="40" y1="120" x2="1160" y2="120" stroke="#111111" stroke-width="1" />
 
   <!-- ==================== 1. TEENAGE ENGINEERING PO-20 ARCADE ==================== -->
   <g transform="translate(60, 136)">

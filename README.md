@@ -1,7 +1,7 @@
-# 🎛️ BeatOS (The System)
-### Edition: The MakerLicious
-> **Universal Beatmaker Hub & Multi-Sampler Toolkit**  
-> *(Akai MPC · Roland SP-404MK2 · Teenage Engineering PO-33 / PO-20 · NI Maschine)*
+# 🎛️ BeatOS — The MakerLicious
+### The system ★ [universal beatmaker station]
+> `│ ref: mpc · sp-404 · po-20 · maschine // spec sheet 01 │`  
+> **Universal Beatmaker Hub & Multi-Sampler Toolkit**
 
 <p align="center">
   <img src="docs/assets/branding/te_universal_beatmaker_banner.svg" alt="BeatOS (The System) - The MakerLicious Edition Hardware Blueprint" width="100%">

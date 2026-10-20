@@ -1,7 +1,7 @@
-# 🎛️ BeatOS (The System)
-### Edition: The MakerLicious
-> **Universal Beatmaker Hub & Multi-Sampler Toolkit**  
-> *(Akai MPC · Roland SP-404MK2 · Teenage Engineering PO-33 / PO-20 · NI Maschine)*
+# 🎛️ BeatOS — The MakerLicious
+### The system ★ [universal beatmaker station]
+> `│ ref: mpc · sp-404 · po-20 · maschine // spec sheet 01 │`  
+> **Universal Beatmaker Hub & Multi-Sampler Toolkit**
 
 > **Idioma / Language**: [Español (ES)](#-español) | [English (EN)](#-english)
 
@@ -9,7 +9,7 @@
 
 ## 🇪🇸 Español
 
-**BeatOS (The System)** — *Edition: The MakerLicious* es un ecosistema abierto de alto rendimiento (**Universal Beatmaker Hub & Multi-Sampler Toolkit**) diseñado para maximizar la velocidad de navegación, la estabilidad y la creación de kits musicales en hardware **Akai MPC Standalone**, **Roland SP-404MK2 / DOOM OS**, **Native Instruments Maschine** y **Teenage Engineering Pocket Operator (PO-33 / PO-20 / PO-133)**.
+**BeatOS — The MakerLicious** (*The system ★ [universal beatmaker station]*) es un ecosistema abierto de alto rendimiento diseñado para maximizar la velocidad de navegación, la estabilidad y la creación de kits musicales en hardware **Akai MPC Standalone**, **Roland SP-404MK2 / DOOM OS**, **Native Instruments Maschine** y **Teenage Engineering Pocket Operator (PO-33 / PO-20 / PO-133)**.
 
 ### 📌 ¿Por qué este proyecto?
 El hardware musical autónomo cuenta con recursos de memoria dedicados. Cuando conectamos tarjetas Micro SD con decenas de miles de samples desordenados o con residuos `._*` de macOS, surgen problemas críticos:
