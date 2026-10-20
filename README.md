@@ -1,5 +1,5 @@
-# 🎛️ POLYCHOP OS / Universal Beatmaker Station
-### Akai MPC · Roland SP-404MK2 · Teenage Engineering PO-33 · NI Maschine
+# 🎛️ Universal Beatmaker Hub & Multi-Sampler Toolkit
+### Akai MPC · Roland SP-404MK2 · Teenage Engineering PO-33 / PO-20 · NI Maschine
 
 <p align="center">
   <img src="docs/assets/branding/te_universal_beatmaker_banner.svg" alt="Teenage Engineering PO-20 Arcade Inspired Universal Beatmaker Station" width="100%">
