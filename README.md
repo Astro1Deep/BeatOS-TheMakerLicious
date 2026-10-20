@@ -4,7 +4,7 @@
 > **Universal Beatmaker Hub & Multi-Sampler Toolkit**
 
 <p align="center">
-  <img src="docs/assets/branding/te_universal_beatmaker_banner.jpg" alt="BeatOS (The System) - The MakerLicious Edition Hardware Blueprint" width="100%">
+  <img src="docs/assets/branding/banner_variant_01_mpc_sample.jpg?v=20261020" alt="BeatOS (The System) - The MakerLicious Edition Hardware Blueprint" width="100%">
   <br>
   <sub><b>Hardware Suite Specifications (3 Variantes Oficiales):</b> <a href="docs/assets/branding/banner_variant_01_mpc_sample.jpg">01 / MPC Sample Edition</a> · <a href="docs/assets/branding/banner_variant_02_mpc_one.jpg">02 / MPC One Edition</a> · <a href="docs/assets/branding/banner_variant_03_mpc_live3.jpg">03 / MPC Live III Edition</a></sub>
 </p>
