@@ -1,0 +1,269 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" width="100%" height="100%">
+  <defs>
+    <!-- Background Grid Pattern -->
+    <pattern id="pcbGrid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#1c212a" stroke-width="0.75" />
+      <circle cx="12" cy="12" r="0.8" fill="#2d3442" />
+    </pattern>
+    
+    <!-- Linear Gradients -->
+    <linearGradient id="amberGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff8800" />
+      <stop offset="100%" stop-color="#ff5500" />
+    </linearGradient>
+
+    <linearGradient id="cyanGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f0ff" />
+      <stop offset="100%" stop-color="#0077b6" />
+    </linearGradient>
+
+    <linearGradient id="lcdBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#14181f" />
+      <stop offset="100%" stop-color="#0b0e14" />
+    </linearGradient>
+
+    <filter id="subtleGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- BACKGROUND: Matte Black PCB Finish -->
+  <rect width="1200" height="420" fill="#0d0f14" />
+  <rect width="1200" height="420" fill="url(#pcbGrid)" opacity="0.8" />
+  
+  <!-- Outer Engineering Border Frame -->
+  <rect x="15" y="15" width="1170" height="390" fill="none" stroke="#252b38" stroke-width="1.5" />
+  <rect x="20" y="20" width="1160" height="380" fill="none" stroke="#1c212a" stroke-width="0.8" />
+  
+  <!-- Corner Technical Markers -->
+  <path d="M 15 35 L 35 15 M 1185 35 L 1165 15 M 15 385 L 35 405 M 1185 385 L 1165 405" stroke="#ff6600" stroke-width="1.5" />
+  <circle cx="28" cy="28" r="2.5" fill="#ff6600" />
+  <circle cx="1172" cy="28" r="2.5" fill="#ff6600" />
+  <circle cx="28" cy="392" r="2.5" fill="#ff6600" />
+  <circle cx="1172" cy="392" r="2.5" fill="#ff6600" />
+
+  <!-- Technical Millimeter Ruler Scale (Top & Bottom) -->
+  <g stroke="#323a4b" stroke-width="1">
+    <line x1="80" y1="15" x2="80" y2="23" /><line x1="120" y1="15" x2="120" y2="20" /><line x1="160" y1="15" x2="160" y2="20" /><line x1="200" y1="15" x2="200" y2="23" />
+    <line x1="240" y1="15" x2="240" y2="20" /><line x1="280" y1="15" x2="280" y2="20" /><line x1="320" y1="15" x2="320" y2="23" />
+    <line x1="880" y1="15" x2="880" y2="23" /><line x1="920" y1="15" x2="920" y2="20" /><line x1="960" y1="15" x2="960" y2="20" /><line x1="1000" y1="15" x2="1000" y2="23" />
+    <line x1="1040" y1="15" x2="1040" y2="20" /><line x1="1080" y1="15" x2="1080" y2="20" /><line x1="1120" y1="15" x2="1120" y2="23" />
+  </g>
+
+  <!-- Copper Circuit PCB Traces in Background -->
+  <g stroke="#262f3e" stroke-width="1.2" fill="none">
+    <path d="M 50 120 L 120 120 L 160 160 L 280 160" />
+    <circle cx="280" cy="160" r="2" fill="#ff6600" />
+    <path d="M 1150 120 L 1080 120 L 1040 160 L 920 160" />
+    <circle cx="920" cy="160" r="2" fill="#00f0ff" />
+    <path d="M 50 300 L 140 300 L 180 260 L 260 260" />
+    <circle cx="260" cy="260" r="2" fill="#2fe070" />
+    <path d="M 1150 300 L 1060 300 L 1020 260 L 940 260" />
+    <circle cx="940" cy="260" r="2" fill="#ff6600" />
+  </g>
+
+  <!-- HEADER SERIGRAPHY STAMPS (Teenage Engineering Style) -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'SF Mono', 'Courier New', monospace" font-size="9" font-weight="700" letter-spacing="1.5">
+    <rect x="42" y="32" width="130" height="18" fill="#181d26" stroke="#323a4b" rx="3" />
+    <text x="50" y="44" fill="#ff8800">TE-GUIDE // PO-20-REF</text>
+    
+    <rect x="180" y="32" width="150" height="18" fill="#181d26" stroke="#323a4b" rx="3" />
+    <text x="188" y="44" fill="#a4abb8">SYS.REV 2026.10 // 4-WAY</text>
+
+    <text x="890" y="44" fill="#758195">SAMPLER HARDWARE MATRIX ARCHITECTURE</text>
+  </g>
+
+  <!-- CENTER MAIN TITLE (Swiss Typography & Technical Serigraphy) -->
+  <g text-anchor="middle">
+    <text x="600" y="65" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Arial', sans-serif" font-size="11" font-weight="800" fill="#ff6600" letter-spacing="4">
+      [ UNIVERSAL BEATMAKER HARDWARE ECOSYSTEM ]
+    </text>
+    <text x="600" y="102" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Arial', sans-serif" font-size="34" font-weight="900" fill="#ffffff" letter-spacing="2">
+      POLYCHOP <tspan fill="#ff8800">OS</tspan> · MULTISAMPLEX
+    </text>
+    <text x="600" y="124" font-family="-apple-system, BlinkMacSystemFont, 'SF Mono', monospace" font-size="11" font-weight="600" fill="#8892a4" letter-spacing="2">
+      AKAI MPC · ROLAND SP-404MK2 · TE POCKET OPERATOR PO-33 · NI MASCHINE
+    </text>
+  </g>
+
+  <!-- ==================== THE 4 LEGENDARY SAMPLER BLUEPRINTS ==================== -->
+
+  <!-- 1. AKAI MPC STANDALONE (Left-Center Blueprint) -->
+  <g transform="translate(60, 150)">
+    <!-- Chassis -->
+    <rect x="0" y="0" width="240" height="210" rx="8" fill="#131720" stroke="#373e4f" stroke-width="1.8" />
+    <!-- Header Display -->
+    <rect x="14" y="14" width="212" height="48" rx="4" fill="url(#lcdBg)" stroke="#232938" />
+    <text x="24" y="32" font-family="monospace" font-size="9" fill="#ff3344" font-weight="bold">AKAI MPC // ONE · LIVE</text>
+    <text x="24" y="48" font-family="monospace" font-size="8" fill="#8892a4">PROG: BOOMBAP_90 [16 PADS]</text>
+    <!-- Jog Dial & Encoders -->
+    <circle cx="195" cy="38" r="12" fill="#202634" stroke="#48536a" stroke-width="1.5" />
+    <line x1="195" y1="38" x2="202" y2="33" stroke="#ff3344" stroke-width="2" />
+    <!-- 4x4 Rubber Pads Matrix -->
+    <g transform="translate(14, 72)">
+      <!-- Row 4 -->
+      <rect x="0" y="0" width="46" height="28" rx="4" fill="#1b212d" stroke="#ff3344" stroke-width="1" />
+      <rect x="55" y="0" width="46" height="28" rx="4" fill="#1b212d" stroke="#ff3344" stroke-width="1" />
+      <rect x="110" y="0" width="46" height="28" rx="4" fill="#1b212d" stroke="#373e4f" stroke-width="1" />
+      <rect x="165" y="0" width="46" height="28" rx="4" fill="#1b212d" stroke="#373e4f" stroke-width="1" />
+      <!-- Row 3 -->
+      <rect x="0" y="34" width="46" height="28" rx="4" fill="#1b212d" stroke="#00f0ff" stroke-width="1" />
+      <rect x="55" y="34" width="46" height="28" rx="4" fill="#1b212d" stroke="#00f0ff" stroke-width="1" />
+      <rect x="110" y="34" width="46" height="28" rx="4" fill="#1b212d" stroke="#00f0ff" stroke-width="1" />
+      <rect x="165" y="34" width="46" height="28" rx="4" fill="#1b212d" stroke="#00f0ff" stroke-width="1" />
+      <!-- Row 2 -->
+      <rect x="0" y="68" width="46" height="28" rx="4" fill="#1b212d" stroke="#373e4f" stroke-width="1" />
+      <rect x="55" y="68" width="46" height="28" rx="4" fill="#1b212d" stroke="#373e4f" stroke-width="1" />
+      <rect x="110" y="68" width="46" height="28" rx="4" fill="#1b212d" stroke="#373e4f" stroke-width="1" />
+      <rect x="165" y="68" width="46" height="28" rx="4" fill="#1b212d" stroke="#373e4f" stroke-width="1" />
+      <!-- Row 1 -->
+      <rect x="0" y="102" width="46" height="28" rx="4" fill="#1b212d" stroke="#ff8800" stroke-width="1.4" />
+      <rect x="55" y="102" width="46" height="28" rx="4" fill="#1b212d" stroke="#ff8800" stroke-width="1.4" />
+      <rect x="110" y="102" width="46" height="28" rx="4" fill="#1b212d" stroke="#ff8800" stroke-width="1.4" />
+      <rect x="165" y="102" width="46" height="28" rx="4" fill="#1b212d" stroke="#ff8800" stroke-width="1.4" />
+    </g>
+    <!-- Label -->
+    <text x="120" y="222" font-family="monospace" font-size="8.5" fill="#a4abb8" text-anchor="middle">.XPM STANDALONE BUNDLE</text>
+  </g>
+
+  <!-- 2. TEENAGE ENGINEERING PO-33 / PO-20 (Center-Left: The Heart of the Visual) -->
+  <g transform="translate(340, 138)">
+    <!-- Naked PCB Board with Top Hanger -->
+    <path d="M 40 12 C 40 5, 50 0, 85 0 C 120 0, 130 5, 130 12 L 130 22 L 170 22 C 176 22, 180 26, 180 32 L 180 230 C 180 236, 176 240, 170 240 L 0 240 C -6 240, -10 236, -10 230 L -10 32 C -10 26, -6 22, 0 22 L 40 22 Z" fill="#11141a" stroke="#ff8800" stroke-width="1.8" />
+    <!-- Hanger Wire Cutout -->
+    <circle cx="85" cy="11" r="5" fill="#0d0f14" stroke="#ff8800" stroke-width="1.2" />
+    
+    <!-- Custom TE LCD Screen (Amber & Pixel Art) -->
+    <rect x="4" y="32" width="162" height="74" rx="3" fill="#0a0c10" stroke="#323a4b" />
+    <!-- 8-Bit Pixel Character (Arcade Chiptune) -->
+    <g fill="#ff8800" transform="translate(16, 42)">
+      <!-- Mini Arcade Ghost / Bot -->
+      <rect x="6" y="0" width="8" height="2" />
+      <rect x="4" y="2" width="12" height="2" />
+      <rect x="2" y="4" width="16" height="8" />
+      <rect x="4" y="6" width="3" height="3" fill="#0a0c10" />
+      <rect x="13" y="6" width="3" height="3" fill="#0a0c10" />
+      <rect x="2" y="12" width="4" height="3" />
+      <rect x="8" y="12" width="4" height="3" />
+      <rect x="14" y="12" width="4" height="3" />
+    </g>
+    <!-- Waveform & Digits -->
+    <text x="50" y="56" font-family="monospace" font-size="14" font-weight="bold" fill="#ffaa00">120<tspan font-size="8">BPM</tspan></text>
+    <path d="M 100 52 L 110 44 L 118 60 L 126 48 L 134 54 L 142 42 L 150 56" fill="none" stroke="#2fe070" stroke-width="1.8" />
+    <text x="16" y="92" font-family="monospace" font-size="8" fill="#6c778c">[PO-33 K.O.] 40s SLICE REEL</text>
+    <rect x="120" y="82" width="40" height="14" rx="2" fill="#ff6600" />
+    <text x="140" y="92" font-family="monospace" font-size="7.5" font-weight="bold" fill="#000" text-anchor="middle">RECORD</text>
+    
+    <!-- Dual Knobs A & B -->
+    <circle cx="28" cy="120" r="10" fill="#1e2430" stroke="#ff8800" stroke-width="1.2" />
+    <circle cx="28" cy="120" r="4" fill="#ff8800" />
+    <text x="28" y="138" font-family="monospace" font-size="6.5" fill="#8892a4" text-anchor="middle">PARAM A</text>
+
+    <circle cx="142" cy="120" r="10" fill="#1e2430" stroke="#ff8800" stroke-width="1.2" />
+    <circle cx="142" cy="120" r="4" fill="#ff8800" />
+    <text x="142" y="138" font-family="monospace" font-size="6.5" fill="#8892a4" text-anchor="middle">PARAM B</text>
+
+    <!-- 16 Micro Tactile Switches Grid -->
+    <g transform="translate(10, 148)" fill="#232936" stroke="#48536a" stroke-width="1">
+      <circle cx="10" cy="10" r="7" /><circle cx="48" cy="10" r="7" /><circle cx="86" cy="10" r="7" /><circle cx="124" cy="10" r="7" />
+      <circle cx="10" cy="32" r="7" /><circle cx="48" cy="32" r="7" /><circle cx="86" cy="32" r="7" /><circle cx="124" cy="32" r="7" />
+      <circle cx="10" cy="54" r="7" /><circle cx="48" cy="54" r="7" /><circle cx="86" cy="54" r="7" /><circle cx="124" cy="54" r="7" fill="#ff8800" />
+      <circle cx="10" cy="76" r="7" /><circle cx="48" cy="76" r="7" /><circle cx="86" cy="76" r="7" /><circle cx="124" cy="76" r="7" />
+    </g>
+    <!-- Label -->
+    <text x="85" y="252" font-family="monospace" font-size="8.5" fill="#ff8800" font-weight="bold" text-anchor="middle">FSK MODEM AUDIO SYNC</text>
+  </g>
+
+  <!-- 3. ROLAND SP-404MK2 & DOOM OS (Center-Right Blueprint) -->
+  <g transform="translate(600, 144)">
+    <!-- Chassis with Chamfered Shoulders -->
+    <path d="M 0 16 C 0 6, 8 0, 18 0 L 192 0 C 202 0, 210 6, 210 16 L 210 200 C 210 210, 202 216, 192 216 L 18 216 C 8 216, 0 210, 0 200 Z" fill="#13151b" stroke="#00f0ff" stroke-width="1.8" />
+    
+    <!-- 3 Aluminum Control Knobs -->
+    <circle cx="45" cy="24" r="9" fill="#1e222c" stroke="#6b778d" stroke-width="1.2" />
+    <circle cx="105" cy="24" r="9" fill="#1e222c" stroke="#6b778d" stroke-width="1.2" />
+    <circle cx="165" cy="24" r="9" fill="#1e222c" stroke="#6b778d" stroke-width="1.2" />
+
+    <!-- Circular Signature OLED Display -->
+    <circle cx="105" cy="72" r="28" fill="#080a0e" stroke="#00f0ff" stroke-width="2" />
+    <circle cx="105" cy="72" r="23" fill="#111622" />
+    <text x="105" y="68" font-family="monospace" font-size="7.5" font-weight="bold" fill="#00f0ff" text-anchor="middle">SP-404MK2</text>
+    <text x="105" y="80" font-family="monospace" font-size="12" font-weight="bold" fill="#fff" text-anchor="middle">DOOM OS</text>
+    
+    <!-- 12 Performance Rubber Pads + 4 Bank Pads -->
+    <g transform="translate(18, 114)">
+      <!-- Bank Buttons -->
+      <rect x="0" y="0" width="38" height="12" rx="2" fill="#202633" stroke="#394254" />
+      <rect x="45" y="0" width="38" height="12" rx="2" fill="#202633" stroke="#394254" />
+      <rect x="91" y="0" width="38" height="12" rx="2" fill="#202633" stroke="#394254" />
+      <rect x="136" y="0" width="38" height="12" rx="2" fill="#202633" stroke="#394254" />
+
+      <!-- Row 3 Pads (9-12) -->
+      <rect x="0" y="20" width="40" height="22" rx="3" fill="#1c202a" stroke="#00f0ff" stroke-width="1" />
+      <rect x="45" y="20" width="40" height="22" rx="3" fill="#1c202a" stroke="#00f0ff" stroke-width="1" />
+      <rect x="91" y="20" width="40" height="22" rx="3" fill="#1c202a" stroke="#00f0ff" stroke-width="1" />
+      <rect x="136" y="20" width="40" height="22" rx="3" fill="#1c202a" stroke="#00f0ff" stroke-width="1" />
+      
+      <!-- Row 2 Pads (5-8) -->
+      <rect x="0" y="47" width="40" height="22" rx="3" fill="#1c202a" stroke="#ff8800" stroke-width="1" />
+      <rect x="45" y="47" width="40" height="22" rx="3" fill="#1c202a" stroke="#ff8800" stroke-width="1" />
+      <rect x="91" y="47" width="40" height="22" rx="3" fill="#1c202a" stroke="#ff8800" stroke-width="1" />
+      <rect x="136" y="47" width="40" height="22" rx="3" fill="#1c202a" stroke="#ff8800" stroke-width="1" />
+      
+      <!-- Row 1 Pads (1-4) -->
+      <rect x="0" y="74" width="40" height="22" rx="3" fill="#1c202a" stroke="#394254" />
+      <rect x="45" y="74" width="40" height="22" rx="3" fill="#1c202a" stroke="#394254" />
+      <rect x="91" y="74" width="40" height="22" rx="3" fill="#1c202a" stroke="#394254" />
+      <rect x="136" y="74" width="40" height="22" rx="3" fill="#1c202a" stroke="#394254" />
+    </g>
+    <!-- Label -->
+    <text x="105" y="228" font-family="monospace" font-size="8.5" fill="#00f0ff" text-anchor="middle">SD CARD IMPORT AUTO-MAPPING</text>
+  </g>
+
+  <!-- 4. NATIVE INSTRUMENTS MASCHINE (Right Blueprint) -->
+  <g transform="translate(880, 150)">
+    <!-- Chassis -->
+    <rect x="0" y="0" width="240" height="210" rx="6" fill="#12151b" stroke="#373e4f" stroke-width="1.8" />
+    <!-- Dual Displays -->
+    <rect x="14" y="14" width="98" height="42" rx="3" fill="#0b0e14" stroke="#252d3d" />
+    <text x="24" y="32" font-family="monospace" font-size="8" fill="#fff" font-weight="bold">GROUP A1</text>
+    <text x="24" y="46" font-family="monospace" font-size="7" fill="#8892a4">KIT: ASTRO_01</text>
+
+    <rect x="128" y="14" width="98" height="42" rx="3" fill="#0b0e14" stroke="#252d3d" />
+    <text x="138" y="32" font-family="monospace" font-size="8" fill="#3a86ff" font-weight="bold">AUDIO ROUTING</text>
+    <text x="138" y="46" font-family="monospace" font-size="7" fill="#8892a4">16 SLOTS ASSIGNED</text>
+
+    <!-- 16 RGB Pads Grid -->
+    <g transform="translate(14, 68)">
+      <rect x="0" y="0" width="46" height="30" rx="3" fill="#1b1f29" stroke="#3a86ff" stroke-width="1.2" />
+      <rect x="55" y="0" width="46" height="30" rx="3" fill="#1b1f29" stroke="#3a86ff" stroke-width="1.2" />
+      <rect x="110" y="0" width="46" height="30" rx="3" fill="#1b1f29" stroke="#3a86ff" stroke-width="1.2" />
+      <rect x="165" y="0" width="46" height="30" rx="3" fill="#1b1f29" stroke="#3a86ff" stroke-width="1.2" />
+
+      <rect x="0" y="36" width="46" height="30" rx="3" fill="#1b1f29" stroke="#ff0055" stroke-width="1.2" />
+      <rect x="55" y="36" width="46" height="30" rx="3" fill="#1b1f29" stroke="#ff0055" stroke-width="1.2" />
+      <rect x="110" y="36" width="46" height="30" rx="3" fill="#1b1f29" stroke="#ff0055" stroke-width="1.2" />
+      <rect x="165" y="36" width="46" height="30" rx="3" fill="#1b1f29" stroke="#ff0055" stroke-width="1.2" />
+
+      <rect x="0" y="72" width="46" height="30" rx="3" fill="#1b1f29" stroke="#2fe070" stroke-width="1.2" />
+      <rect x="55" y="72" width="46" height="30" rx="3" fill="#1b1f29" stroke="#2fe070" stroke-width="1.2" />
+      <rect x="110" y="72" width="46" height="30" rx="3" fill="#1b1f29" stroke="#2fe070" stroke-width="1.2" />
+      <rect x="165" y="72" width="46" height="30" rx="3" fill="#1b1f29" stroke="#2fe070" stroke-width="1.2" />
+
+      <rect x="0" y="108" width="46" height="30" rx="3" fill="#1b1f29" stroke="#ffd000" stroke-width="1.2" />
+      <rect x="55" y="108" width="46" height="30" rx="3" fill="#1b1f29" stroke="#ffd000" stroke-width="1.2" />
+      <rect x="110" y="108" width="46" height="30" rx="3" fill="#1b1f29" stroke="#ffd000" stroke-width="1.2" />
+      <rect x="165" y="108" width="46" height="30" rx="3" fill="#1b1f29" stroke="#ffd000" stroke-width="1.2" />
+    </g>
+    <!-- Label -->
+    <text x="120" y="222" font-family="monospace" font-size="8.5" fill="#a4abb8" text-anchor="middle">.MXGRP GROUP SPECIFICATION</text>
+  </g>
+
+  <!-- FOOTER ENGINEERING SERIGRAPHY -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'SF Mono', monospace" font-size="8.5" fill="#525d73">
+    <text x="45" y="392">ASTRO1DEEP LABS · WAXSPACESHIP AUDIO</text>
+    <text x="600" y="392" text-anchor="middle" fill="#ff6600">ENGINEERED FOR UNIVERSAL STANDALONE PERFORMANCE</text>
+    <text x="1155" y="392" text-anchor="end">FINGERDRUMMING DRAG &amp; DROP MATRIX</text>
+  </g>
+</svg>

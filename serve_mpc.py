@@ -22,6 +22,7 @@ Servidor HTTP de alto rendimiento con:
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
 import mimetypes
 import os
@@ -279,6 +280,23 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_cors_headers()
             self.end_headers()
             self.wfile.write(json.dumps(TASK_STATE, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif clean_path == "/api/theme":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_cors_headers()
+            self.end_headers()
+            theme_file = os.path.expanduser("~/.gemini/antigravity/scratch/ecosystem_theme.json")
+            current_theme = "te-arcade"
+            if os.path.isfile(theme_file):
+                try:
+                    with open(theme_file, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                        current_theme = data.get("theme", "te-arcade")
+                except Exception:
+                    pass
+            self.wfile.write(json.dumps({"success": True, "theme": current_theme}, ensure_ascii=False).encode("utf-8"))
             return
 
         elif clean_path == "/api/po33_backups":
@@ -575,6 +593,41 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 err_resp = {"success": False, "error": str(e)}
                 self.wfile.write(json.dumps(err_resp).encode("utf-8"))
+            return
+
+        elif clean_api == "/api/theme":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                payload = json.loads(body)
+                theme_name = payload.get("theme", "te-arcade")
+                
+                theme_file = os.path.expanduser("~/.gemini/antigravity/scratch/ecosystem_theme.json")
+                os.makedirs(os.path.dirname(theme_file), exist_ok=True)
+                theme_data = {
+                    "theme": theme_name,
+                    "updated_at": datetime.datetime.now().isoformat(),
+                    "source": "mpc_sample_database",
+                    "synchronized_ecosystem": ["cerebro_os", "djproduccertool", "open_webui", "audiotheque"]
+                }
+                with open(theme_file, "w", encoding="utf-8") as f:
+                    json.dump(theme_data, f, indent=2)
+                
+                local_theme = os.path.join(self.server.root_dir, "theme_config.json")
+                with open(local_theme, "w", encoding="utf-8") as f:
+                    json.dump(theme_data, f, indent=2)
+
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": True, "theme": theme_name}, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode("utf-8"))
             return
 
         self.send_response(404)

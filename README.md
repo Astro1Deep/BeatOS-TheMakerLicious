@@ -1,9 +1,15 @@
-# 🎛️ Akai MPC Sample Database & Multi-Sampler Toolkit
+# 🎛️ POLYCHOP OS / Universal Beatmaker Station
+### Akai MPC · Roland SP-404MK2 · Teenage Engineering PO-33 · NI Maschine
+
+<p align="center">
+  <img src="docs/assets/branding/te_universal_beatmaker_banner.svg" alt="Teenage Engineering PO-20 Arcade Inspired Universal Beatmaker Station" width="100%">
+</p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![SQLite 3](https://img.shields.io/badge/database-SQLite_3-orange.svg)](https://www.sqlite.org/)
 [![Multi-Sampler](https://img.shields.io/badge/Hardware-MPC_·_SP404_·_Maschine_·_PO33-red.svg)](https://github.com/Astro1Deep/mpc-sample-database)
+[![Themes](https://img.shields.io/badge/Themes-TE_Arcade_|_Cerebro_|_MPC_|_SP404_|_Maschine-orange.svg)](#-temas-visuales-y-sincronizaci%C3%B3n-del-ecosistema)
 [![Bilingual](https://img.shields.io/badge/Language-ES_|_EN-cyan.svg)](#-bilingual-support--soporte-bilingüe)
 [![Wiki](https://img.shields.io/badge/Docs-Official_Wiki-success.svg)](https://github.com/Astro1Deep/mpc-sample-database/wiki)
 
@@ -64,6 +70,15 @@ Visita la **[Wiki Oficial en GitHub](https://github.com/Astro1Deep/mpc-sample-da
    - Soporte completo para **RFC 7233 Range Requests (HTTP 206 Partial Content)** y CORS.
    - Reproducción sin bloqueos en Safari, Chrome, Firefox y WebKit.
    - API REST completa para tareas de reindexación, limpieza y creación de kits.
+
+5. **🎨 Temas Visuales y Sincronización del Ecosistema**:
+   - Alternancia en caliente entre **5 estéticas visuales de hardware**:
+     - 🕹️ **Teenage Engineering PO-20 Arcade**: Placa PCB negro mate, serigrafía técnica suiza blanca y acentos naranja arcade.
+     - ⚡ **Cerebro OS Neon**: Cian y magenta reactivo de alta energía sobre fondo medianoche.
+     - 🎛️ **Akai MPC Vintage**: MPC 60 / 2000XL con chasis gris piedra y acentos rojos legendarios.
+     - 🎚️ **Roland SP-404MK2**: Glow cálido ámbar sobre vinilo negro y acentos DJFX.
+     - 🎹 **NI Maschine Studio**: Carbón anodizado y retroiluminación RGB de pads.
+   - **Sincronización global bidireccional**: Vía API REST (`/api/theme`) y persistencia en `ecosystem_theme.json` para unificar el estilo visual en todo Cerebro OS y herramientas de producción.
 
 ---
 
