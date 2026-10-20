@@ -139,25 +139,49 @@ El menú interactivo te permite:
 ```text
 mpc-sample-database/
 ├── .github/
-│   └── FUNDING.yml           # Configuración de patrocinio (Ko-fi & GitHub Sponsors)
+│   └── FUNDING.yml           # Configuración de patrocinio (Ko-fi, PayPal & GitHub Sponsors)
 ├── catalogo_universal.html   # Catálogo interactivo web HTML5 bilingüe (ES/EN)
 ├── hardware_kit_builder.py   # Motor multi-sampler universal (MPC, SP404, Maschine, PO-33)
 ├── serve_mpc.py              # Servidor HTTP RFC 7233 con API REST y streaming parcial
 ├── index_mpc_library.py      # Motor autónomo de indexación en Python 3 puro
+├── scripts/
+│   ├── autodoctor.py         # Guardián autónomo de salud, puertos y saneamiento continuo
+│   └── generate_master_banners.py # Generador de variantes del banner maestro
+├── tests/
+│   └── test_hardware_kit_builder.py # Suite de tests unitarios multi-sampler (7/7 OK)
 ├── install.sh                # Instalador interactivo para macOS y Linux
 ├── installer.py              # Instalador multiplataforma (Windows / Mac / Linux)
 ├── sync_wiki.sh              # Sincronizador automatizado con GitHub Wiki
 ├── schema.sql                # Esquema relacional formal SQLite
 ├── language_config.json      # Configuración de localización bilingüe
 ├── docs/
-│   ├── assets/branding/      # Banners esquemáticos Teenage Engineering en SVG/PNG
+│   ├── assets/branding/      # Suite de 5 planos técnicos 1:1 y variantes del banner
 │   └── wiki/                 # Los 11 artículos técnicos completos de la Wiki
-├── LICENSE                   # Licencia Creative Commons BY-NC-ND 4.0
+├── LICENSE                   # Licencia CC BY-NC-ND 4.0 con Cláusula de Aprobación
+├── LICENSE.md                # Licencia en formato Markdown
 └── README.md                 # Documentación principal bilingüe
 ```
 
 ---
 
-## 📄 Licencia
+## 🤝 Apoyo Comunitario & Donaciones (Club 1€)
 
-Este proyecto está bajo la licencia **Creative Commons Atribución-NoComercial-SinDerivadas 4.0 Internacional (CC BY-NC-ND 4.0)**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+**BeatOS — The MakerLicious** es un desarrollo independiente creado con dedicación y rigurosidad técnica para potenciar a la comunidad beatmaker.
+
+Si este sistema te ahorra horas de organización, protege tu tarjeta SD o potencia tu flujo creativo, puedes respaldar el proyecto con una micro-donación simbólica: **con que 1.000 productores aporten 1€, el sostenimiento y desarrollo continuo están asegurados**.
+
+- ☕ **Ko-fi**: [ko-fi.com/astro1deep](https://ko-fi.com/astro1deep)
+- 💖 **GitHub Sponsors**: [github.com/sponsors/Astro1Deep](https://github.com/sponsors/Astro1Deep)
+- 💳 **PayPal**: [paypal.me/Astro1Deep](https://paypal.me/Astro1Deep)
+
+---
+
+## 📄 Licencia y Cláusula de Atribución
+
+Este proyecto está protegido bajo la licencia **Creative Commons Atribución-NoComercial-SinDerivadas 4.0 Internacional (CC BY-NC-ND 4.0)** con estipulaciones de autoría por **Iván (Astro1Deep)**:
+
+1. **Atribución Obligatoria**: Todo uso debe conservar de manera visible el crédito original a Iván (Astro1Deep) y el enlace al repositorio oficial.
+2. **Aprobación Expresa para Derivadas**: Queda expresamente prohibida la publicación, distribución o bifurcación alterada sin la autorización previa por escrito del autor.
+3. **Uso No Comercial**: Libre y gratuito para uso personal, artístico y educativo en producción musical.
+
+Consulta el texto íntegro en [LICENSE](LICENSE) o [LICENSE.md](LICENSE.md).

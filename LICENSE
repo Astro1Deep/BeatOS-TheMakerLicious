@@ -1,11 +1,40 @@
-Creative Commons Legal Code
-
-Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)
-
-Copyright (c) 2026 Ivan (Astro1Deep) & BeatOS Contributors.
+# BEATOS — "THE MAKERLICIOUS" PUBLIC LICENSE & ATTRIBUTION NOTICE
+Copyright (c) 2026 Iván (Astro1Deep) — All Rights Reserved.
+Repository: https://github.com/Astro1Deep/mpc-sample-database
 
 =======================================================================
-Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International Public License
+CLÁUSULAS ESPECIALES DE AUTORÍA, ATRIBUCIÓN Y APROBACIÓN PREVIA (ESPAÑOL)
+=======================================================================
+
+1. AUTORÍA Y ATRIBUCIÓN MORAL:
+   El diseño conceptual, arquitectónico, código fuente, esquemas técnicos,
+   bases de datos y documentación de este sistema ("BeatOS — The MakerLicious")
+   son creación y propiedad intelectual de Iván (Astro1Deep).
+   Cualquier uso, referencia o mención pública debe conservar obligatoria e
+   intacta la atribución visible a "Iván (Astro1Deep)" y enlazar al repositorio original.
+
+2. REQUISITO DE APROBACIÓN EXPRESA PARA DERIVADAS O MODIFICACIONES:
+   Ninguna persona física o jurídica está autorizada a crear versiones alteradas,
+   bifurcaciones (forks) redistribuidas públicamente, derivados o paquetes modificados
+   de este sistema sin la previa aprobación EXPRESA y por ESCRITO del autor (Astro1Deep).
+   Queda terminantemente prohibido atribuirse como propia cualquier parte de este sistema.
+
+3. USO ESTRICTAMENTE NO COMERCIAL:
+   Este proyecto es de libre acceso para la comunidad de beatmakers, productores musicales
+   y desarrolladores con fines artísticos, educativos y personales. Queda prohibida
+   la venta directa, distribución de pago, cobro por descarga o inclusión en servicios
+   comerciales cerrados sin un acuerdo de licencia comercial formal con el autor.
+
+4. MODELO DE SOSTENIMIENTO Y DONACIONES COMUNITARIAS:
+   Para garantizar la independencia, mantenimiento y continuidad de este proyecto libre,
+   se establece un canal directo de micro-contribuciones voluntarias de la comunidad
+   (meta: 1.000 productores a 1€/mes):
+   - GitHub Sponsors: https://github.com/sponsors/Astro1Deep
+   - Ko-fi: https://ko-fi.com/astro1deep
+   - PayPal: https://paypal.me/Astro1Deep
+
+=======================================================================
+LEGAL CODE: Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)
 =======================================================================
 
 By exercising the Licensed Rights (defined below), You accept and agree to be bound by the terms and conditions of this Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International Public License ("Public License"). To the extent this Public License may be interpreted as a contract, You are granted the Licensed Rights in consideration of Your acceptance of these terms and conditions, and the Licensor grants You such rights in consideration of benefits the Licensor receives from making the Licensed Material available under these terms and conditions.

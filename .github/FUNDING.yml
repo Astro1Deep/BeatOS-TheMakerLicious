@@ -3,4 +3,6 @@
 
 github: Astro1Deep
 ko_fi: Astro1Deep
-custom: ['https://ko-fi.com/astro1deep']
+custom:
+  - 'https://ko-fi.com/astro1deep'
+  - 'https://paypal.me/Astro1Deep'
