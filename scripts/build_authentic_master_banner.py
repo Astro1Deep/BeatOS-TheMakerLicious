@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Build 100% Authentic BeatOS Hardware Banners (Variants 01, 02, 03)
-Strictly using official, real-world high-resolution top-down photograph cutouts.
-Zero synthetic or invented hardware.
+Build 100% Authentic, Solid, High-Contrast Master Banners
+Using official, real-world photographs from /Users/ivan/Downloads/BEATMAKER HARDWARES REF
+Clean, homogeneous, 100% visible contours, zero eroded/transparent faceplates.
 """
 
 import os
@@ -67,7 +67,7 @@ def build_single_variant(mpc_key, mpc_name_label, mpc_footer_tag, sheet_num, out
 
     # 2. Hardware Stations in EXACT ORDER:
     # 01 / pocket operator
-    # 02 / akai mpc (or variant)
+    # 02 / akai mpc
     # 03 / roland sp-404mk2
     # 04 / ni maschine
     # 05 / ep-133 k.o. ii
@@ -92,33 +92,36 @@ def build_single_variant(mpc_key, mpc_name_label, mpc_footer_tag, sheet_num, out
         bbox = font_st_label.getbbox(st["num"])
         tw = bbox[2] - bbox[0]
         draw.text((cx - tw // 2, label_y), st["num"], fill=(18, 18, 20), font=font_st_label)
-        
-        # Small orange accent tick above label
         draw.line([(cx - 16, label_y - 10), (cx + 16, label_y - 10)], fill=(255, 102, 0), width=2)
         
-        # Load authentic photo cutout
+        # Load the 100% SOLID photo cutout
         st_key = st["key"]
-        cut_path = f"{cuts_dir}/perfect_cut_{st_key}.png"
-        if not os.path.exists(cut_path):
-            print(f"ERROR: missing {cut_path}")
-            continue
-        img = Image.open(cut_path).convert("RGBA")
+        cut_p = f"{cuts_dir}/perfect_cut_{st_key}.png"
+        img = Image.open(cut_p).convert("RGBA")
         ow, oh = img.size
         scale = min(st["max_w"] / ow, st["max_h"] / oh)
         nw, nh = int(ow * scale), int(oh * scale)
         scaled = img.resize((nw, nh), Image.Resampling.LANCZOS)
         
-        # Soft realistic contact shadow under real hardware
+        pos_x = cx - nw // 2
+        pos_y = hardware_base_y - nh
+        
+        # 1. Realistic contact shadow under unit on baseline
         sh_w, sh_h = int(nw * 0.94), 28
         shadow = Image.new("RGBA", (sh_w, sh_h), (0, 0, 0, 0))
         sdraw = ImageDraw.Draw(shadow)
-        sdraw.ellipse([(0, 0), (sh_w, sh_h)], fill=(0, 0, 0, 50))
-        shadow = shadow.filter(ImageFilter.GaussianBlur(12))
+        sdraw.ellipse([(0, 0), (sh_w, sh_h)], fill=(0, 0, 0, 65))
+        shadow = shadow.filter(ImageFilter.GaussianBlur(10))
         banner.paste(shadow, (cx - sh_w // 2, hardware_base_y - 14), shadow)
         
-        # Paste actual hardware photo
-        pos_x = cx - nw // 2
-        pos_y = hardware_base_y - nh
+        # 2. Subtle crisp hairline contour around unit (makes edges 100% defined and visible against paper)
+        silhouette = Image.new("RGBA", (nw, nh), (25, 25, 30, 85))
+        banner.paste(silhouette, (pos_x - 1, pos_y), scaled)
+        banner.paste(silhouette, (pos_x + 1, pos_y), scaled)
+        banner.paste(silhouette, (pos_x, pos_y - 1), scaled)
+        banner.paste(silhouette, (pos_x, pos_y + 1), scaled)
+        
+        # 3. Paste the 100% SOLID, HOMOGENEOUS hardware photograph
         banner.paste(scaled, (pos_x, pos_y), scaled)
         
         # Millimeter calibration crosshair under station
@@ -149,10 +152,13 @@ def build_single_variant(mpc_key, mpc_name_label, mpc_footer_tag, sheet_num, out
     if is_master:
         banner.save(f"{out_dir}/te_universal_beatmaker_banner.jpg", quality=98)
         banner.save(f"{out_dir}/te_universal_beatmaker_banner_preview.png")
+        banner.save(f"{out_dir}/banner_bone_glitch_edition.jpg", quality=98)
+        banner.save(f"{out_dir}/te_universal_beatmaker_banner_bone_glitch.png")
         banner.save("/Users/ivan/.gemini/antigravity/brain/8da64049-cb96-4c76-9d2a-381da30c7b9c/te_universal_beatmaker_banner_preview.png")
-        banner.save("/Users/ivan/.gemini/antigravity/brain/8da64049-cb96-4c76-9d2a-381da30c7b9c/te_universal_beatmaker_banner.jpg")
+        banner.save("/Users/ivan/.gemini/antigravity/brain/8da64049-cb96-4c76-9d2a-381da30c7b9c/te_universal_beatmaker_banner.jpg", quality=98)
+        banner.save("/Users/ivan/.gemini/antigravity/brain/8da64049-cb96-4c76-9d2a-381da30c7b9c/banner_bone_glitch_edition.jpg", quality=98)
 
-    print(f"✅ Generated authentic hardware banner: {out_filename}")
+    print(f"✅ Generated authentic solid banner: {out_filename}")
 
 def main():
     # 1. Master & Variant 1: Akai MPC Sample
