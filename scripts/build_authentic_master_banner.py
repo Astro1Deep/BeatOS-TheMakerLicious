@@ -86,7 +86,7 @@ def render_banner(mpc_key, sheet_num, is_dark=False):
     # Top-Left:
     draw.text((margin + 54, margin + 42), "BeatOS — The MakerLicious", fill=text_primary, font=font_main_title)
     draw.text((margin + 54, margin + 112), "[universal beatmaker station]", fill=accent_orange, font=font_subtitle)
-    draw.text((margin + 54, margin + 158), "│ ref: mpc · sp-404 · pocket operator · maschine │", fill=text_muted, font=font_ref)
+    draw.text((margin + 54, margin + 158), "│ ref: mpc · sp-404 · pocket operator · maschine · ep-133 k.o. ii │", fill=text_muted, font=font_ref)
 
     # Top-Right Specification Block:
     tr_x = W - margin - 580
