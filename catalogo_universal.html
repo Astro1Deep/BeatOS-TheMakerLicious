@@ -1516,7 +1516,7 @@
 <body>
 
 <div class="hero-banner" style="position:relative; width:100%; max-width:1600px; margin:0 auto; padding:0; overflow:hidden; background:var(--banner-bg, #0d0f14);">
-  <img id="heroBannerImg" src="docs/assets/branding/banner_theme_te_arcade.jpg" alt="BeatOS Banner" style="width:100%; height:auto; display:block; border-radius:4px;">
+  <img id="heroBannerImg" src="docs/assets/branding/banner_variant_01_mpc_sample.jpg" alt="BeatOS Banner" style="width:100%; height:auto; display:block; border-radius:4px;">
   <div class="banner-variant-tabs" style="position:absolute; top:12px; right:16px; display:flex; gap:6px; z-index:10; align-items:center;">
     <button type="button" onclick="setBannerVariant('sample')" class="b-tab active" id="btn-var-sample" style="background:rgba(0,0,0,0.85); border:1px solid #ff6600; color:#fff; padding:5px 12px; font-size:11px; font-weight:700; border-radius:4px; cursor:pointer; font-family:'SF Mono', Monaco, monospace; transition:all 0.2s;">01 · MPC Sample</button>
     <button type="button" onclick="setBannerVariant('one')" class="b-tab" id="btn-var-one" style="background:rgba(0,0,0,0.6); border:1px solid #444; color:#aaa; padding:5px 12px; font-size:11px; font-weight:700; border-radius:4px; cursor:pointer; font-family:'SF Mono', Monaco, monospace; transition:all 0.2s;">02 · MPC One</button>
@@ -4809,19 +4809,6 @@ function setEcosystemTheme(themeKey, syncWithServer = true) {
   if (pillIcon) pillIcon.textContent = themeObj.icon;
   if (pillLabel) pillLabel.textContent = themeObj.shortName;
 
-  // Sincronizar banner con el tema visual activo
-  const bannerThemeMap = {
-    'te-arcade': 'docs/assets/branding/banner_theme_te_arcade.jpg',
-    'cerebro-neon': 'docs/assets/branding/banner_theme_cerebro_neon.jpg',
-    'mpc-vintage': 'docs/assets/branding/banner_theme_mpc_vintage.jpg',
-    'sp404-studio': 'docs/assets/branding/banner_theme_sp404_studio.jpg',
-    'maschine-studio': 'docs/assets/branding/banner_theme_maschine_studio.jpg',
-    'makerlicious-bone': 'docs/assets/branding/banner_blueprint_edition.jpg'
-  };
-  const heroImg = document.getElementById('heroBannerImg');
-  if (heroImg && bannerThemeMap[themeObj.id]) {
-    heroImg.src = bannerThemeMap[themeObj.id];
-  }
 
   // Actualizar cards en pestaña de Mantenimiento / Ajustes
   ECOSYSTEM_THEMES.forEach(t => {
