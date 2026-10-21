@@ -4808,14 +4808,18 @@ function setEcosystemTheme(themeKey, syncWithServer = true) {
     localStorage.setItem('ecosystem_theme', themeObj.id);
   } catch(e) {}
 
-  // Sincronizar Banner 4K reactivo al tema
+  // Sincronizar Banner 4K reactivo al tema manteniendo la variante activa (Sheet 01, 02 o 03)
   const heroImg = document.getElementById('heroBannerImg');
   const heroContainer = document.querySelector('.hero-banner');
   if (heroImg) {
-    if (themeObj.id === 'makerlicious-bone') {
-      heroImg.src = 'docs/assets/branding/beatos_makerlicious_blueprint_banner_bone.jpg';
+    const isBone = (themeObj.id === 'makerlicious-bone');
+    const v = typeof currentBannerVariant !== 'undefined' ? currentBannerVariant : 'sample';
+    if (v === 'one') {
+      heroImg.src = isBone ? 'docs/assets/branding/banner_variant_02_mpc_one_bone.jpg' : 'docs/assets/branding/banner_variant_02_mpc_one_dark.jpg';
+    } else if (v === 'live3') {
+      heroImg.src = isBone ? 'docs/assets/branding/banner_variant_03_mpc_live3_bone.jpg' : 'docs/assets/branding/banner_variant_03_mpc_live3_dark.jpg';
     } else {
-      heroImg.src = 'docs/assets/branding/beatos_makerlicious_dark_blueprint_banner.jpg';
+      heroImg.src = isBone ? 'docs/assets/branding/banner_variant_01_mpc_sample_bone.jpg' : 'docs/assets/branding/banner_variant_01_mpc_sample.jpg';
     }
   }
   if (heroContainer) {
