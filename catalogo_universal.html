@@ -210,7 +210,7 @@
   }
   
   .header-metrics-bar {
-    background: #0f131c;
+    background: var(--bg-header);
     padding: 16px 28px;
     border-bottom: 2px solid var(--border-color);
     display: flex;
@@ -238,7 +238,7 @@
   .header-main-title {
     font-size: 18px;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--text-primary);
     letter-spacing: 0.5px;
     display: flex;
     align-items: center;
@@ -307,7 +307,7 @@
   .tab-pane.active { display: block; }
   
   .search-container { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-  .search-bar { flex: 1; min-width: 280px; padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: #fff; font-size: 14px; outline: none; }
+  .search-bar { flex: 1; min-width: 280px; padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); font-size: 14px; outline: none; }
   .search-bar:focus { border-color: var(--mpc-red); }
   
   .sound-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -317,7 +317,7 @@
   
   .filters-bar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
   .filter-select { padding: 9px 14px; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 13px; outline: none; }
-  .btn-reset-filters { background: #1b2029; color: #f0f3f6; border: 1px solid #3e4859; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-reset-filters { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color); padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; }
   .btn-reset-filters:hover { background: var(--mpc-red); border-color: var(--mpc-red); color: #fff; box-shadow: 0 0 10px rgba(255, 51, 68, 0.4); }
   
   .sort-bar {
@@ -371,7 +371,7 @@
   
   .table-box { overflow-x: auto; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { background: #1c222c; padding: 12px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; }
+  th { background: var(--bg-header); padding: 12px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; }
   th.th-sortable {
     cursor: pointer;
     user-select: none;
@@ -419,7 +419,7 @@
   .card h3 { font-size: 16px; margin-bottom: 8px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
   .card p { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
   
-  .audio-player-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #151922; border-top: 2px solid var(--mpc-red); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.6); gap: 15px; flex-wrap: wrap; }
+  .audio-player-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-header); border-top: 2px solid var(--mpc-red); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.6); gap: 15px; flex-wrap: wrap; }
   .player-track-info { display: flex; flex-direction: column; min-width: 240px; }
   .player-track-title { font-size: 13px; color: #fff; font-weight: 700; display: flex; align-items: center; gap: 8px; }
   .player-track-path { font-size: 11px; color: var(--text-muted); font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 500px; }
@@ -1529,7 +1529,7 @@
   <div class="header-title-box">
     <div style="display:flex; align-items:center; gap:8px;">
       <span class="logo-mpc-badge" style="background:var(--theme-accent, var(--mpc-red)); font-weight:900; letter-spacing:1px;">BeatOS</span>
-      <span class="header-main-title" style="font-size:16px; font-weight:800; color:#fff; letter-spacing:0.5px;">The MakerLicious</span>
+      <span class="header-main-title" style="font-size:16px; font-weight:800; color:var(--text-primary); letter-spacing:0.5px;">The MakerLicious</span>
     </div>
     <div style="font-size:10.5px; color:var(--text-muted); font-family:'SF Mono', Monaco, monospace; margin-top:3px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
       <span style="color:var(--theme-accent, #ff6600); font-weight:700;">The system ★ [universal beatmaker station]</span>
@@ -1914,7 +1914,7 @@
     
       <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
         <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('Backyard Jams (AKAINI)')">📂 Explorar 40 Programas (.xpm)</button>
-        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('Backyard Jams (AKAINI)')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+        <button class="btn-rack-action" style="background:var(--bg-card); border:1px solid var(--theme-accent); color:var(--text-primary); padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('Backyard Jams (AKAINI)')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
       </div>
     </div>
     <div class="card">
@@ -1927,7 +1927,7 @@
     
       <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
         <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('Borough Chops (AKAINI)')">📂 Explorar 40 Programas (.xpm)</button>
-        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('Borough Chops (AKAINI)')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+        <button class="btn-rack-action" style="background:var(--bg-card); border:1px solid var(--theme-accent); color:var(--text-primary); padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('Borough Chops (AKAINI)')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
       </div>
     </div>
     <div class="card">
@@ -1940,7 +1940,7 @@
     
       <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
         <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('F9 Instruments Beats Edition')">📂 Explorar 25 Programas (.xpm)</button>
-        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('F9 Instruments Beats Edition')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+        <button class="btn-rack-action" style="background:var(--bg-card); border:1px solid var(--theme-accent); color:var(--text-primary); padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('F9 Instruments Beats Edition')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
       </div>
     </div>
     <div class="card">
@@ -1953,7 +1953,7 @@
     
       <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
         <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('MPC Beats Demos and Templates')">📂 Explorar 128 Programas (.xpm)</button>
-        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('MPC Beats Demos and Templates')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+        <button class="btn-rack-action" style="background:var(--bg-card); border:1px solid var(--theme-accent); color:var(--text-primary); padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('MPC Beats Demos and Templates')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
       </div>
     </div>
     <div class="card">
@@ -1966,7 +1966,7 @@
     
       <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
         <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('MPC Beats Producer Kits')">📂 Explorar 160 Programas (.xpm)</button>
-        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('MPC Beats Producer Kits')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+        <button class="btn-rack-action" style="background:var(--bg-card); border:1px solid var(--theme-accent); color:var(--text-primary); padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('MPC Beats Producer Kits')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
       </div>
     </div>
     <div class="card">
@@ -1979,7 +1979,7 @@
     
       <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
         <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('MPC Samples - Real Horns')">📂 Explorar 6 Programas (.xpm)</button>
-        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('MPC Samples - Real Horns')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+        <button class="btn-rack-action" style="background:var(--bg-card); border:1px solid var(--theme-accent); color:var(--text-primary); padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('MPC Samples - Real Horns')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
       </div>
     </div>
     <div class="card">
@@ -1992,7 +1992,7 @@
     
       <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
         <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('Marco Polo - LoFi Boom Vol 1')">📂 Explorar 30 Programas (.xpm)</button>
-        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('Marco Polo - LoFi Boom Vol 1')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+        <button class="btn-rack-action" style="background:var(--bg-card); border:1px solid var(--theme-accent); color:var(--text-primary); padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('Marco Polo - LoFi Boom Vol 1')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
       </div>
     </div>
     <div class="card">
@@ -2005,7 +2005,7 @@
     
       <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
         <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('Native Instruments - Rare Vibrations')">📂 Explorar 56 Programas (.xpm)</button>
-        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('Native Instruments - Rare Vibrations')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+        <button class="btn-rack-action" style="background:var(--bg-card); border:1px solid var(--theme-accent); color:var(--text-primary); padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('Native Instruments - Rare Vibrations')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
       </div>
     </div>
     <div class="card">
@@ -2018,7 +2018,7 @@
     
       <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
         <button class="btn-rack-action" style="flex:1; min-width:160px; background:linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color:#fff; border:none; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(0,180,216,0.3);" onclick="event.stopPropagation(); openExpansionBrowser('Serato Studio - Artist Collection')">📂 Explorar 203 Programas (.xpm)</button>
-        <button class="btn-rack-action" style="background:#222836; border:1px solid #00f0ff; color:#00f0ff; padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('Serato Studio - Artist Collection')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
+        <button class="btn-rack-action" style="background:var(--bg-card); border:1px solid var(--theme-accent); color:var(--text-primary); padding:9px 12px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="event.stopPropagation(); quickLoadExpansionFirstKit('Serato Studio - Artist Collection')" title="Cargar inmediatamente el primer kit de pads de esta expansión">⚡ Kit Rápido</button>
       </div>
     </div>
   </div>
@@ -2191,7 +2191,7 @@
 
   <div class="maint-container">
     <!-- Tarjeta: Selector de Temas Visuales del Ecosistema -->
-    <div class="maint-card accent-cyan" style="grid-column: 1 / -1; background: linear-gradient(145deg, #131722 0%, #0d1017 100%); border: 1px solid var(--theme-accent, var(--mpc-cyan));">
+    <div class="maint-card accent-cyan" style="grid-column: 1 / -1; background: var(--bg-card); border: 1px solid var(--theme-accent, var(--border-color));">
       <div>
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
           <div>
@@ -2275,7 +2275,8 @@
               </div>
             </div>
             <p style="font-size:10px; color:#8b8f9c; line-height:1.4;">Estudio profesional: Chasis carbón anodizado, blanco puro y acentos de pads RGB.</p>
-          
+          </div>
+
           <!-- 6. The MakerLicious Bone Glitch -->
           <div class="theme-card-option" id="themeCard_makerlicious-bone" onclick="setEcosystemTheme('makerlicious-bone')" style="background:#f4f4f6; border:1px solid #c8c8cf; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -2411,8 +2412,12 @@ function setBannerVariant(v) {
   });
   
   if(v === 'sample') {
-    img.src = 'docs/assets/branding/banner_variant_01_mpc_sample.jpg';
-    if(btnSample) { btnSample.style.borderColor = '#ff6600'; btnSample.style.color = '#fff'; btnSample.style.background = 'rgba(0,0,0,0.85)'; }
+    if (currentThemeId === 'makerlicious-bone') {
+      img.src = 'docs/assets/branding/beatos_makerlicious_blueprint_banner_bone.jpg';
+    } else {
+      img.src = 'docs/assets/branding/beatos_makerlicious_dark_blueprint_banner.jpg';
+    }
+    if(btnSample) { btnSample.style.borderColor = 'var(--theme-accent, #ff6600)'; btnSample.style.color = '#fff'; btnSample.style.background = 'rgba(0,0,0,0.85)'; }
   } else if(v === 'one') {
     img.src = 'docs/assets/branding/banner_variant_02_mpc_one.jpg';
     if(btnOne) { btnOne.style.borderColor = '#0066cc'; btnOne.style.color = '#fff'; btnOne.style.background = 'rgba(0,0,0,0.85)'; }
@@ -4803,12 +4808,26 @@ function setEcosystemTheme(themeKey, syncWithServer = true) {
     localStorage.setItem('ecosystem_theme', themeObj.id);
   } catch(e) {}
 
+  // Sincronizar Banner 4K reactivo al tema
+  const heroImg = document.getElementById('heroBannerImg');
+  const heroContainer = document.querySelector('.hero-banner');
+  if (heroImg) {
+    if (themeObj.id === 'makerlicious-bone') {
+      heroImg.src = 'docs/assets/branding/beatos_makerlicious_blueprint_banner_bone.jpg';
+    } else {
+      heroImg.src = 'docs/assets/branding/beatos_makerlicious_dark_blueprint_banner.jpg';
+    }
+  }
+  if (heroContainer) {
+    heroContainer.style.borderBottomColor = themeObj.accent;
+    heroContainer.style.background = 'var(--banner-bg)';
+  }
+
   // Actualizar pill en header
   const pillIcon = document.getElementById('themePillIcon');
   const pillLabel = document.getElementById('themePillLabel');
   if (pillIcon) pillIcon.textContent = themeObj.icon;
   if (pillLabel) pillLabel.textContent = themeObj.shortName;
-
 
   // Actualizar cards en pestaña de Mantenimiento / Ajustes
   ECOSYSTEM_THEMES.forEach(t => {
@@ -4818,7 +4837,7 @@ function setEcosystemTheme(themeKey, syncWithServer = true) {
         card.style.border = '2px solid ' + t.borderActive;
         card.style.boxShadow = '0 0 16px ' + t.accent + '44';
       } else {
-        card.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+        card.style.border = '1px solid var(--border-color)';
         card.style.boxShadow = 'none';
       }
     }
