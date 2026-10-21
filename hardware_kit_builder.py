@@ -763,6 +763,72 @@ MAPEO DE PADS A TECLAS EP-133:
     return str(kit_dir), str(pak_file)
 
 
+def _read_wav_mono_16bit_44k(file_path: str | Path) -> list[int]:
+    """
+    Lee y decodifica eficientemente cualquier archivo WAV (16-bit, 24-bit, 32-bit, mono/estéreo,
+    cualquier frecuencia de muestreo) convirtiéndolo a mono 16-bit PCM 44.1kHz.
+    """
+    with wave.open(str(file_path), "rb") as wf:
+        n_ch = wf.getnchannels()
+        sw = wf.getsampwidth()
+        fr = wf.getframerate()
+        n_frames = wf.getnframes()
+        raw = wf.readframes(n_frames)
+
+    if n_frames == 0:
+        return []
+
+    # 1. Normalización de profundidad de bits a 16-bit little-endian
+    if sw == 2:
+        raw_16 = raw[: (len(raw) // 2) * 2]
+    elif sw == 3:
+        # 24-bit PCM: extraer los dos bytes más significativos (MSB)
+        num_samples = len(raw) // 3
+        b1 = raw[1 : num_samples * 3 : 3]
+        b2 = raw[2 : num_samples * 3 : 3]
+        b = bytearray(num_samples * 2)
+        b[0::2] = b1
+        b[1::2] = b2
+        raw_16 = bytes(b)
+    elif sw == 4:
+        # 32-bit PCM: extraer los dos bytes superiores
+        num_samples = len(raw) // 4
+        b2 = raw[2 : num_samples * 4 : 4]
+        b3 = raw[3 : num_samples * 4 : 4]
+        b = bytearray(num_samples * 2)
+        b[0::2] = b2
+        b[1::2] = b3
+        raw_16 = bytes(b)
+    elif sw == 1:
+        # 8-bit unsigned PCM a 16-bit con signo
+        b = bytearray(len(raw) * 2)
+        for i in range(len(raw)):
+            val = (raw[i] - 128) << 8
+            b[i*2 : i*2+2] = struct.pack("<h", val)
+        raw_16 = bytes(b)
+    else:
+        raw_16 = raw[: (len(raw) // 2) * 2]
+
+    total_samples = len(raw_16) // 2
+    unpacked = struct.unpack(f"<{total_samples}h", raw_16)
+
+    # 2. Mezcla de canales a Mono
+    usable_frames = total_samples // n_ch
+    if n_ch == 2:
+        mono = [(unpacked[i * 2] + unpacked[i * 2 + 1]) // 2 for i in range(usable_frames)]
+    elif n_ch > 2:
+        mono = [sum(unpacked[i * n_ch : (i + 1) * n_ch]) // n_ch for i in range(usable_frames)]
+    else:
+        mono = list(unpacked[:usable_frames])
+
+    # 3. Resampleo a 44.1 kHz si la fuente es 48kHz, 96kHz, etc.
+    if fr != 44100 and fr > 0:
+        new_len = int(len(mono) * 44100 / fr)
+        mono = [mono[int(i * fr / 44100)] for i in range(new_len)]
+
+    return mono
+
+
 def export_po33_drum_reel(
     kit_name: str,
     pads_data: dict,
@@ -772,7 +838,8 @@ def export_po33_drum_reel(
     """
     Genera un archivo WAV 'Drum Reel' de hasta 16 golpes espaciados por pausas de silencio (150ms)
     calibradas exactamente para el algoritmo de división automática (Auto-Slice) de la PO-33.
-    Garantiza que la duración total no supere los 40.0 segundos de memoria de la PO-33.
+    Garantiza rigurosamente que la duración total nunca supere los 40.00 segundos de memoria física
+    de la PO-33 aplicando recorte inteligente (Smart Trim) con fade-out a transitorios excesivos.
     Retorna (ruta_wav, duracion_segundos, lista_slices_con_timestamps).
     """
     out_dir = Path(output_dir)
@@ -783,11 +850,8 @@ def export_po33_drum_reel(
     gap_samples = int(sample_rate * (gap_ms / 1000.0))
     zero_frame = struct.pack("<h", 0)
 
-    collected_audio = bytearray()
-    total_audio_frames = 0
-    slices_meta = []
-
-    # Recorrer pads 1 a 16
+    # 1. Leer y decodificar cada pad activo con el lector universal multi-formato
+    parsed_pads = []
     for pad_num in range(1, 17):
         p_info = pads_data.get(pad_num, {})
         src_path = p_info.get("source_path", "")
@@ -798,59 +862,107 @@ def export_po33_drum_reel(
             continue
 
         try:
-            with wave.open(str(src_path), "rb") as wf:
-                n_ch = wf.getnchannels()
-                sw = wf.getsampwidth()
-                fr = wf.getframerate()
-                n_frames = wf.getnframes()
-                raw_data = wf.readframes(n_frames)
+            mono_samples = _read_wav_mono_16bit_44k(src_path)
+            if not mono_samples:
+                continue
 
-                # Convertir a mono 16-bit 44.1kHz
-                if sw == 2 and fr == sample_rate:
-                    if n_ch == 2:
-                        samples = struct.unpack(f"<{n_frames * 2}h", raw_data)
-                        mono_samples = [
-                            (samples[i * 2] + samples[i * 2 + 1]) // 2
-                            for i in range(n_frames)
-                        ]
-                        raw_mono = struct.pack(f"<{n_frames}h", *mono_samples)
-                    else:
-                        raw_mono = raw_data
-                else:
-                    raw_mono = raw_data[: n_frames * 2]
-
-                start_frame = total_audio_frames
-                start_sec = start_frame / sample_rate
-
-                collected_audio.extend(raw_mono)
-                added_frames = len(raw_mono) // 2
-                total_audio_frames += added_frames
-
-                end_frame = total_audio_frames
-                end_sec = end_frame / sample_rate
-
-                slices_meta.append({
-                    "slice_number": pad_num,
-                    "name": s_name,
-                    "type": s_type,
-                    "start_sec": round(start_sec, 3),
-                    "end_sec": round(end_sec, 3),
-                    "duration_sec": round(end_sec - start_sec, 3),
-                    "start_frame": start_frame,
-                    "end_frame": end_frame,
-                })
-
-                # Añadir silencio entre transitorios (gap para auto-slice)
-                collected_audio.extend(zero_frame * gap_samples)
-                total_audio_frames += gap_samples
-
+            parsed_pads.append({
+                "pad_num": pad_num,
+                "name": s_name,
+                "type": s_type,
+                "samples": mono_samples,
+                "raw_dur": len(mono_samples) / sample_rate,
+                "original_raw_dur": len(mono_samples) / sample_rate
+            })
         except Exception as e:
             logger.warning("Fallo al procesar audio para PO-33 Pad %d: %s", pad_num, e)
             continue
 
+    if not parsed_pads:
+        with wave.open(str(out_file), "wb") as out_wf:
+            out_wf.setnchannels(1)
+            out_wf.setsampwidth(2)
+            out_wf.setframerate(sample_rate)
+            out_wf.writeframes(b"")
+        return str(out_file), 0.0, []
+
+    # 2. Control riguroso de presupuesto hardware (40.00 segundos máx)
+    MAX_TOTAL_SEC = 40.0
+    num_pads = len(parsed_pads)
+    total_gap_sec = num_pads * (gap_ms / 1000.0)
+    max_audio_sec = max(1.0, MAX_TOTAL_SEC - total_gap_sec)
+
+    total_raw_audio_sec = sum(p["raw_dur"] for p in parsed_pads)
+    is_trimmed = False
+
+    # Si excede el presupuesto disponible de audio, calcular límite por corte (water-filling)
+    if total_raw_audio_sec > max_audio_sec:
+        is_trimmed = True
+        low = 0.05
+        high = max(p["raw_dur"] for p in parsed_pads)
+        for _ in range(40):
+            mid = (low + high) / 2.0
+            cur_sum = sum(min(p["raw_dur"], mid) for p in parsed_pads)
+            if cur_sum > max_audio_sec:
+                high = mid
+            else:
+                low = mid
+        cap_sec = low
+
+        # Aplicar recorte y fade-out suave (50ms) a las muestras que sobrepasen el cap
+        fade_len = int(0.050 * sample_rate)
+        for p in parsed_pads:
+            if p["raw_dur"] > cap_sec:
+                max_frames = max(fade_len, int(cap_sec * sample_rate))
+                trimmed = p["samples"][:max_frames]
+                actual_fade = min(fade_len, len(trimmed))
+                for fi in range(actual_fade):
+                    fade_factor = (actual_fade - fi) / float(actual_fade)
+                    idx = len(trimmed) - 1 - fi
+                    trimmed[idx] = int(trimmed[idx] * fade_factor)
+                p["samples"] = trimmed
+                p["raw_dur"] = len(trimmed) / sample_rate
+
+    # 3. Concatenar muestras intercalando los 150ms exactos de silencio
+    collected_audio = bytearray()
+    total_audio_frames = 0
+    slices_meta = []
+
+    for p in parsed_pads:
+        pad_num = p["pad_num"]
+        s_name = p["name"]
+        s_type = p["type"]
+        s_data = struct.pack(f"<{len(p['samples'])}h", *p["samples"])
+
+        start_frame = total_audio_frames
+        start_sec = start_frame / sample_rate
+
+        collected_audio.extend(s_data)
+        added_frames = len(p["samples"])
+        total_audio_frames += added_frames
+
+        end_frame = total_audio_frames
+        end_sec = end_frame / sample_rate
+
+        slices_meta.append({
+            "slice_number": pad_num,
+            "name": s_name,
+            "type": s_type,
+            "start_sec": round(start_sec, 3),
+            "end_sec": round(end_sec, 3),
+            "duration_sec": round(end_sec - start_sec, 3),
+            "start_frame": start_frame,
+            "end_frame": end_frame,
+            "trimmed": is_trimmed and (end_sec - start_sec < p.get("original_raw_dur", end_sec - start_sec))
+        })
+
+        # Silencio exacto entre transitorios (Auto-Slice trigger)
+        collected_audio.extend(zero_frame * gap_samples)
+        total_audio_frames += gap_samples
+
     total_duration_sec = total_audio_frames / sample_rate
 
-    # Normalización del audio a -0.5 dBFS para evitar distorsión en la entrada de la PO-33
+    # 4. Normalización a -0.5 dBFS para entrada limpia sin recorte
     if collected_audio:
         int16_samples = list(struct.unpack(f"<{len(collected_audio)//2}h", collected_audio))
         peak = max(abs(s) for s in int16_samples) if int16_samples else 0
@@ -864,14 +976,14 @@ def export_po33_drum_reel(
                 ]
                 collected_audio = bytearray(struct.pack(f"<{len(int16_samples)}h", *int16_samples))
 
-    # Escribir archivo final mono 16-bit 44.1kHz
+    # Escribir archivo WAV mono 16-bit 44.1kHz garantizado <= 40.00s
     with wave.open(str(out_file), "wb") as out_wf:
         out_wf.setnchannels(1)
         out_wf.setsampwidth(2)
         out_wf.setframerate(sample_rate)
         out_wf.writeframes(collected_audio)
 
-    # Generar manifiesto de slices en JSON y guía de bolsillo en TXT
+    # Manifiesto JSON
     slice_json_path = out_dir / f"{kit_name}_PO33_Slices.json"
     with open(slice_json_path, "w", encoding="utf-8") as f:
         json.dump(
@@ -879,6 +991,7 @@ def export_po33_drum_reel(
                 "kit_name": kit_name,
                 "total_duration_sec": round(total_duration_sec, 2),
                 "ram_limit_sec": 40.0,
+                "smart_trim_applied": is_trimmed,
                 "budget_used_pct": round((total_duration_sec / 40.0) * 100, 1),
                 "slices": slices_meta,
             },
@@ -892,6 +1005,7 @@ def export_po33_drum_reel(
     guide_text = f"""========================================================================
 TEENAGE ENGINEERING POCKET OPERATOR PO-33 K.O.! - GUÍA DE CARGA RÁPIDA
 Kit: {kit_name} | Duración: {total_duration_sec:.2f}s / 40.00s máx.
+Smart Trim Aplicado: {'SÍ (Ajustado a RAM 40s)' if is_trimmed else 'NO (Audio original < 40s)'}
 ========================================================================
 
 1. Conecta un cable minijack 3.5mm estéreo desde la salida de tu Mac a la entrada LINE IN (izquierda) de la PO-33.

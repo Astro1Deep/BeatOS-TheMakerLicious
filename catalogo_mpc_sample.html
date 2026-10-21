@@ -2221,7 +2221,7 @@
 <div id="tab-po33" class="tab-pane">
   <div style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
     <div>
-      <h2 style="font-size: 24px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px;">
+      <h2 style="font-size: 24px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
         🕹️ Pocket Operator Studio &amp; Backup Hub <span style="font-size:12px; color:var(--mpc-gold); font-weight:600;">(PO-33 K.O.! &amp; PO-133)</span>
       </h2>
       <p style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">
@@ -2235,11 +2235,11 @@
   </div>
 
   <!-- RESUMEN DE HARDWARE & PRESUPUESTO -->
-  <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08); padding:16px 20px; border-radius:10px; margin-bottom:20px;">
+  <div style="background:var(--bg-card); border:1px solid var(--border-color); padding:16px 20px; border-radius:10px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.06);">
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
       <div>
         <strong style="color:var(--mpc-cyan); font-size:14px;">⏱️ Presupuesto de Memoria PO-33 (Slots 9-16 Drum Kit):</strong>
-        <span style="font-size:13px; color:#fff; margin-left:8px;" id="po33BudgetText">0.00s / 40.00s (0% utilizado)</span>
+        <span style="font-size:13px; color:var(--text-primary); margin-left:8px;" id="po33BudgetText">0.00s / 40.00s (0% utilizado)</span>
       </div>
       <div style="font-size:12px; color:var(--text-muted);">
         Espacio libre en RAM: <strong id="po33FreeTime" style="color:var(--mpc-green);">40.00s</strong>
@@ -2253,7 +2253,7 @@
       <span>10s</span>
       <span>20s</span>
       <span>30s (Zona Óptima)</span>
-      <span style="color:var(--mpc-red);">40s (Límite Máximo Hardware)</span>
+      <span style="color:var(--mpc-red); font-weight:700;">40.00s (Límite Máximo Físico Hardware)</span>
     </div>
   </div>
 
@@ -2261,13 +2261,13 @@
     <!-- COLUMNA IZQUIERDA: GENERADOR DE DRUM REEL AUTO-SLICE -->
     <div class="po33-card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="color:#fff; font-size:17px; display:flex; align-items:center; gap:8px;">
+        <h3 style="color:var(--text-primary); font-size:17px; display:flex; align-items:center; gap:8px;">
           🥁 Auto-Slice Drum Reel
         </h3>
-        <span class="po33-header-badge drum">Pads 9 al 16</span>
+        <span class="po33-header-badge drum">Pads 9 al 16 (≤ 40s)</span>
       </div>
       <p style="font-size:12px; color:var(--text-muted); line-height:1.5;">
-        Concatena los 16 pads del Beatmaker Rack en una tira de audio continua con <strong>150 ms de silencio exacto</strong> entre transitorios para que el algoritmo de la PO-33 auto-divida los 16 cortes al instante.
+        Concatena los 16 pads del Beatmaker Rack en una tira de audio continua con <strong>150 ms de silencio exacto</strong> entre transitorios para que el algoritmo de la PO-33 auto-divida los 16 cortes al instante. Si los sonidos suman más de 40s, el motor aplica <strong>Smart Trim con fade-out suave</strong> para garantizar que nunca se desborde la memoria RAM de tu Pocket Operator.
       </p>
 
       <div style="margin: 16px 0; display:flex; gap:10px; flex-wrap:wrap;">
@@ -2282,13 +2282,13 @@
       <!-- VISUALIZADOR DE REPRODUCCIÓN / CUENTA ATRÁS -->
       <div id="po33CountdownBox" style="display:none; background:rgba(0, 240, 255, 0.1); border:1px solid var(--mpc-cyan); padding:14px; border-radius:8px; text-align:center; margin-bottom:14px;">
         <div style="font-size:22px; font-weight:800; color:var(--mpc-cyan);" id="po33CountdownText">Preparando... 3</div>
-        <div style="font-size:11px; color:#fff; margin-top:4px;">En tu PO-33 mantén pulsado <strong>RECORD + SOUND + [Pad 9 al 16]</strong></div>
+        <div style="font-size:11px; color:var(--text-primary); margin-top:4px;">En tu PO-33 mantén pulsado <strong>RECORD + SOUND + [Pad 9 al 16]</strong></div>
       </div>
 
-      <div style="font-size:12px; font-weight:700; color:#fff; margin-top:16px;">
+      <div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-top:16px;">
         📋 Manifiesto de Cortes en el Reel (<span id="po33PadCount">0</span>/16 Sonidos):
       </div>
-      <div style="max-height:260px; overflow-y:auto; border:1px solid rgba(255,255,255,0.06); border-radius:6px; margin-top:8px;">
+      <div style="max-height:260px; overflow-y:auto; border:1px solid var(--border-color); border-radius:6px; margin-top:8px;">
         <table class="po33-slice-table">
           <thead>
             <tr>
@@ -2305,7 +2305,7 @@
         </table>
       </div>
 
-      <div style="margin-top:14px; font-size:11px; color:var(--text-muted); line-height:1.6; background:rgba(255,255,255,0.02); padding:10px; border-radius:6px;">
+      <div style="margin-top:14px; font-size:11px; color:var(--text-muted); line-height:1.6; background:var(--modal-box-bg, rgba(255,255,255,0.02)); border:1px solid var(--border-color); padding:10px; border-radius:6px;">
         💡 <strong>Modo Melódico (Pads 1 al 8):</strong> Si deseas cargar un sintetizador o bajo cromático en los slots 1-8, abre el <em>Inspector de Pads (⚙️)</em> y selecciona la muestra para reproducirla a lo largo de las 16 notas de la escala.
       </div>
     </div>
@@ -2313,31 +2313,31 @@
     <!-- COLUMNA DERECHA: GESTOR DE BACKUPS FSK -->
     <div class="po33-card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="color:#fff; font-size:17px; display:flex; align-items:center; gap:8px;">
+        <h3 style="color:var(--text-primary); font-size:17px; display:flex; align-items:center; gap:8px;">
           📻 Módem FSK &amp; Restauración de Backups
         </h3>
         <span class="po33-header-badge fsk">~73.6s Estéreo</span>
       </div>
       <p style="font-size:12px; color:var(--text-muted); line-height:1.5;">
-        Los volcados de Teenage Engineering transmiten patrones, muestras y parámetros codificados en tonos de audio de alta frecuencia a través de ambos canales simultáneamente.
+        Los volcados de Teenage Engineering transmiten patrones, muestras y parámetros codificados en tonos de audio de alta frecuencia a través de ambos canales simultáneamente. Su duración estándar es de <strong>~73.6 segundos</strong> (no confundir con los 40s de RAM de samples).
       </p>
 
       <div style="margin-top:16px;">
-        <strong style="font-size:12px; color:#fff;">📁 Backups Detectados en tu Mac:</strong>
+        <strong style="font-size:12px; color:var(--text-primary);">📁 Backups Detectados en tu Mac:</strong>
         <div id="po33BackupsList" style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
           <!-- Tarjetas de backup renderizadas en JS -->
-          <div style="padding:14px; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid rgba(255,255,255,0.08); font-size:12px; color:var(--text-muted);">
+          <div style="padding:14px; background:var(--modal-box-bg, rgba(255,255,255,0.03)); border-radius:8px; border:1px solid var(--border-color); font-size:12px; color:var(--text-muted);">
             Cargando inventario de backups...
           </div>
         </div>
       </div>
 
-      <div style="margin-top:20px; background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.08); padding:14px; border-radius:8px;">
+      <div style="margin-top:20px; background:var(--modal-box-bg, rgba(0,0,0,0.25)); border:1px solid var(--border-color); padding:14px; border-radius:8px;">
         <h4 style="font-size:13px; color:var(--mpc-gold); margin-bottom:6px;">🕹️ Protocolo Físico de Botones PO-33:</h4>
         <ul style="font-size:11px; color:var(--text-muted); line-height:1.8; margin-left:16px;">
-          <li><strong>Restaurar Backup Completo:</strong> Conecta cable 3.5mm de Mac a LINE IN. En la PO-33 mantén <code>WRITE + SOUND + RECORD</code> y reproduce el audio del backup.</li>
+          <li><strong>Restaurar Backup Completo (~73.6s):</strong> Conecta cable 3.5mm de Mac a LINE IN. En la PO-33 mantén <code>WRITE + SOUND + RECORD</code> y reproduce el audio del backup.</li>
           <li><strong>Crear Nuevo Backup:</strong> Conecta cable 3.5mm de LINE OUT a la entrada de audio del Mac. Mantén <code>WRITE + SOUND</code> y presiona <code>PLAY</code>.</li>
-          <li><strong>Auto-Slice Drum Kit:</strong> Mantén <code>RECORD + SOUND + [Pad 9 al 16]</code> y reproduce la tira Drum Reel.</li>
+          <li><strong>Auto-Slice Drum Kit (≤ 40.0s):</strong> Mantén <code>RECORD + SOUND + [Pad 9 al 16]</code> y reproduce la tira Drum Reel.</li>
         </ul>
       </div>
     </div>
@@ -2901,8 +2901,12 @@ const PAGE_SIZE = 60;
 function switchTab(tabId, el) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(tabId).classList.add('active');
-  el.classList.add('active');
+  const pane = document.getElementById(tabId);
+  if (pane) pane.classList.add('active');
+  if (el) el.classList.add('active');
+  if (tabId === 'tab-po33') {
+    updatePo33StudioView();
+  }
 }
 
 function selectChip(type, el) {
@@ -3497,10 +3501,17 @@ function addSampleToRack(relPath, filename, soundType, specificPad = null) {
   const padNum = targetIdx + 1;
   const padTag = 'A' + (padNum < 10 ? '0' : '') + padNum;
   
-  RACK_PADS[targetIdx] = { relPath, filename, soundType };
+  let sampleDur = 0.8;
+  if (window.SAMPLES && SAMPLES.length) {
+    const f = SAMPLES.find(s => s[10] === relPath || s[0] === filename);
+    if (f && typeof f[9] === 'number') sampleDur = f[9];
+  }
+
+  RACK_PADS[targetIdx] = { relPath, filename, soundType, durationSec: sampleDur };
   renderRackGrid();
   renderDockMatrix();
   updateRackCounts();
+  updatePo33StudioView();
   triggerPadAudio(padNum);
   
   showToast('✔ PAD ' + padNum + ' [' + padTag + '] asignado: ' + filename);
@@ -3527,6 +3538,7 @@ function removePad(pNum) {
   renderRackGrid();
   renderDockMatrix();
   updateRackCounts();
+  updatePo33StudioView();
   showToast('🗑️ PAD ' + pNum + ' vaciado');
 }
 
@@ -3535,6 +3547,7 @@ function clearRack() {
   renderRackGrid();
   renderDockMatrix();
   updateRackCounts();
+  updatePo33StudioView();
   showToast('🗑️ Rack de 16 pads vaciado');
 }
 
@@ -3556,7 +3569,8 @@ function autoFillRandomRack() {
       RACK_PADS[padNum - 1] = {
         relPath: rand[10],
         filename: rand[0],
-        soundType: rand[1]
+        soundType: rand[1],
+        durationSec: rand[9] || 0.8
       };
     }
   });
@@ -3564,6 +3578,7 @@ function autoFillRandomRack() {
   renderRackGrid();
   renderDockMatrix();
   updateRackCounts();
+  updatePo33StudioView();
   showToast('🎲 ¡16 Pads configurados automáticamente!');
 }
 
@@ -4196,6 +4211,7 @@ function loadProjectToRack(projectName) {
         renderRackGrid();
         renderDockMatrix();
         updateRackCounts();
+        updatePo33StudioView();
         switchTab('tab-rack', document.getElementById('tabBtnRack'));
         showToast('✔ Proyecto ' + projectName + ' montado en Rack (' + loaded + '/16 pads)');
       } else {
@@ -4435,6 +4451,7 @@ function loadXpmProgramToRack(relPath, programName, kitIdx = -1) {
       renderRackGrid();
       renderDockMatrix();
       updateRackCounts();
+      updatePo33StudioView();
       updateRackKitSelectorUI();
       closeExpansionBrowser();
       
@@ -4741,6 +4758,20 @@ function testPlayCurrentPad() {
 
 // ==================== PO-33 STUDIO & AUDIO MÓDEM LOGIC ====================
 
+function getPadDurationSec(p) {
+  if (!p) return 0;
+  if (typeof p.durationSec === 'number' && p.durationSec > 0) return p.durationSec;
+  if (typeof p.duration === 'number' && p.duration > 0) return p.duration;
+  if (window.SAMPLES && SAMPLES.length) {
+    const found = SAMPLES.find(s => s[10] === p.relPath || s[0] === p.filename);
+    if (found && typeof found[9] === 'number' && found[9] > 0) {
+      p.durationSec = found[9];
+      return found[9];
+    }
+  }
+  return 0.8;
+}
+
 function updatePo33StudioView() {
   const tableBody = document.getElementById('po33SlicesTableBody');
   const budgetBar = document.getElementById('po33BudgetBar');
@@ -4750,26 +4781,60 @@ function updatePo33StudioView() {
 
   if (!tableBody || !budgetBar) return;
 
-  let totalSec = 0;
-  let html = '';
-  let activeCount = 0;
+  let activePadsList = [];
+  let totalRawSoundSec = 0;
 
   for (let i = 0; i < 16; i++) {
     const p = RACK_PADS[i];
     if (p) {
-      activeCount++;
-      // Estimar 1.8 segundos por sonido de batería One-Shot si no hay audio cargado
-      const dur = 1.8;
-      totalSec += dur + 0.15; // sample + 150ms gap
-      html += '<tr>' +
-        '<td><strong style="color:var(--mpc-cyan);">Pad ' + (i + 1) + '</strong></td>' +
-        '<td>' + escapeHtml(p.filename) + '</td>' +
-        '<td><span class="badge" style="font-size:10px;">' + p.soundType + '</span></td>' +
-        '<td>150 ms</td>' +
-        '<td>' + dur.toFixed(2) + ' s</td>' +
-      '</tr>';
+      const dur = getPadDurationSec(p);
+      totalRawSoundSec += dur;
+      activePadsList.push({ padNum: i + 1, item: p, dur: dur });
     }
   }
+
+  const activeCount = activePadsList.length;
+  const gapPerPad = 0.15;
+  const totalGapSec = activeCount * gapPerPad;
+  const rawTotalSec = totalRawSoundSec + totalGapSec;
+  const totalCap = 40.0;
+  const maxAvailableSoundSec = Math.max(0.5, totalCap - totalGapSec);
+  const exceedsCapacity = rawTotalSec > totalCap;
+
+  // Algoritmo Water-Filling idéntico a hardware_kit_builder.py
+  let capSec = 999.0;
+  if (exceedsCapacity && activePadsList.length > 0) {
+    let low = 0.05;
+    let high = Math.max(...activePadsList.map(x => x.dur));
+    for (let it = 0; it < 35; it++) {
+      let mid = (low + high) / 2.0;
+      let s = activePadsList.reduce((acc, x) => acc + Math.min(x.dur, mid), 0);
+      if (s > maxAvailableSoundSec) high = mid;
+      else low = mid;
+    }
+    capSec = low;
+  }
+
+  let finalReelSec = 0;
+  let html = '';
+
+  activePadsList.forEach(obj => {
+    const isTrimmed = exceedsCapacity && (obj.dur > capSec);
+    const effDur = isTrimmed ? capSec : obj.dur;
+    finalReelSec += effDur + gapPerPad;
+
+    const durLabel = isTrimmed 
+      ? `<span style="color:var(--mpc-gold); font-weight:700;">${effDur.toFixed(2)}s</span> <span style="font-size:9.5px; color:var(--text-muted);">(recorte de ${obj.dur.toFixed(2)}s)</span>`
+      : `<span style="color:var(--text-primary);">${effDur.toFixed(2)}s</span>`;
+
+    html += '<tr>' +
+      '<td><strong style="color:var(--mpc-cyan);">Pad ' + obj.padNum + '</strong></td>' +
+      '<td>' + escapeHtml(obj.item.filename) + '</td>' +
+      '<td><span class="badge" style="font-size:10px;">' + (obj.item.soundType || 'SAMPLE') + '</span></td>' +
+      '<td>150 ms</td>' +
+      '<td>' + durLabel + '</td>' +
+    '</tr>';
+  });
 
   if (activeCount === 0) {
     html = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">El rack está vacío. Monta sonidos desde el Explorador o Carga un Proyecto.</td></tr>';
@@ -4778,14 +4843,28 @@ function updatePo33StudioView() {
   tableBody.innerHTML = html;
   if (countBadge) countBadge.innerText = activeCount;
 
-  const totalCap = 40.0;
-  const pct = Math.min(100, (totalSec / totalCap) * 100);
+  // Actualizar barra de presupuesto
+  const displayTotalSec = Math.min(totalCap, finalReelSec);
+  const pct = Math.min(100, (displayTotalSec / totalCap) * 100);
   budgetBar.style.width = pct + '%';
-  if (budgetText) budgetText.innerText = totalSec.toFixed(2) + 's / ' + totalCap.toFixed(2) + 's (' + pct.toFixed(0) + '% utilizado)';
-  if (freeTimeText) {
-    const freeSec = Math.max(0, totalCap - totalSec);
-    freeTimeText.innerText = freeSec.toFixed(2) + 's';
-    freeTimeText.style.color = freeSec < 5.0 ? 'var(--mpc-red)' : 'var(--mpc-green)';
+
+  if (exceedsCapacity) {
+    budgetBar.style.background = 'var(--mpc-gold)';
+    if (budgetText) {
+      budgetText.innerHTML = `<span style="color:var(--mpc-gold); font-weight:800;">${displayTotalSec.toFixed(2)}s / ${totalCap.toFixed(2)}s (${pct.toFixed(0)}% RAM)</span> <span style="font-size:11px; color:var(--text-muted);">[Audio original ${rawTotalSec.toFixed(2)}s ajustado con Smart Trim para caber en 40s]</span>`;
+    }
+    if (freeTimeText) {
+      freeTimeText.innerHTML = `<strong style="color:var(--mpc-gold);">${(totalCap - displayTotalSec).toFixed(2)}s libre</strong>`;
+    }
+  } else {
+    budgetBar.style.background = 'linear-gradient(90deg, var(--mpc-green), var(--mpc-cyan))';
+    if (budgetText) {
+      budgetText.innerHTML = `<strong>${displayTotalSec.toFixed(2)}s / ${totalCap.toFixed(2)}s (${pct.toFixed(0)}% utilizado)</strong>`;
+    }
+    if (freeTimeText) {
+      const freeSec = Math.max(0, totalCap - displayTotalSec);
+      freeTimeText.innerHTML = `<strong style="color:${freeSec < 5.0 ? 'var(--mpc-red)' : 'var(--mpc-green)'};">${freeSec.toFixed(2)}s libre</strong>`;
+    }
   }
 }
 
@@ -4814,17 +4893,20 @@ function renderPo33BackupsCards(backups) {
   const container = document.getElementById('po33BackupsList');
   let html = '';
   backups.forEach(b => {
-    html += '<div style="padding:14px; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid rgba(0,240,255,0.2);">' +
+    html += '<div style="padding:14px; background:var(--modal-box-bg, var(--bg-card)); border-radius:8px; border:1px solid var(--border-color);">' +
       '<div style="display:flex; justify-content:space-between; align-items:center;">' +
-        '<strong style="color:#fff; font-size:13px;">' + escapeHtml(b.filename) + '</strong>' +
+        '<strong style="color:var(--text-primary); font-size:13px;">' + escapeHtml(b.filename) + '</strong>' +
         '<span class="badge badge-healthy" style="font-size:10px;">✓ FSK VERIFICADO</span>' +
       '</div>' +
       '<div style="font-size:11px; color:var(--text-muted); margin:6px 0; display:flex; gap:12px; flex-wrap:wrap;">' +
-        '<span>⏱️ ' + b.duration_sec + 's</span>' +
+        '<span>⏱️ ' + b.duration_sec + 's (~1m 14s módem)</span>' +
         '<span>🔊 ' + b.channels + ' Canales Estéreo</span>' +
         '<span>🎚️ Peak: ' + b.peak_dbfs + ' dBFS</span>' +
         '<span>💾 ' + b.size_mb + ' MB</span>' +
       '</div>' +
+      '<p style="font-size:10.5px; color:var(--text-muted); margin:4px 0 8px 0;">' +
+        '<em>ℹ️ Los volcados módem FSK duran ~73.6s porque transmiten todos los patrones y sonidos codificados en frecuencias audibles de alta velocidad.</em>' +
+      '</p>' +
       '<div style="margin-top:10px; display:flex; gap:8px;">' +
         '<button class="po33-btn-action" style="padding:6px 12px; font-size:11px;" onclick="playPo33BackupAudio(\'' + escapeHtml(b.filename) + '\')">⚡ Restaurar en PO-33</button>' +
         '<a href="/api/po33_backup_audio?file=' + encodeURIComponent(b.filename) + '" download="' + escapeHtml(b.filename) + '" class="po33-btn-secondary" style="padding:6px 12px; font-size:11px; text-decoration:none;">📥 Descargar WAV</a>' +
@@ -4836,17 +4918,20 @@ function renderPo33BackupsCards(backups) {
 
 function renderFallbackPo33BackupCard() {
   const container = document.getElementById('po33BackupsList');
-  container.innerHTML = '<div style="padding:14px; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid rgba(0,240,255,0.2);">' +
+  container.innerHTML = '<div style="padding:14px; background:var(--modal-box-bg, var(--bg-card)); border-radius:8px; border:1px solid var(--border-color);">' +
     '<div style="display:flex; justify-content:space-between; align-items:center;">' +
-      '<strong style="color:#fff; font-size:13px;">boombap.wav</strong>' +
+      '<strong style="color:var(--text-primary); font-size:13px;">boombap.wav</strong>' +
       '<span class="badge badge-healthy" style="font-size:10px;">✓ FSK VERIFICADO</span>' +
     '</div>' +
     '<div style="font-size:11px; color:var(--text-muted); margin:6px 0; display:flex; gap:12px; flex-wrap:wrap;">' +
-      '<span>⏱️ 73.61s</span>' +
+      '<span>⏱️ 73.61s (~1m 14s módem)</span>' +
       '<span>🔊 2 Canales Estéreo</span>' +
       '<span>🎚️ Peak: -14.1 dBFS</span>' +
       '<span>💾 14.28 MB</span>' +
     '</div>' +
+    '<p style="font-size:10.5px; color:var(--text-muted); margin:4px 0 8px 0;">' +
+      '<em>ℹ️ Los volcados módem FSK duran ~73.6s porque transmiten todos los patrones y sonidos codificados en frecuencias audibles de alta velocidad.</em>' +
+    '</p>' +
     '<div style="margin-top:10px; display:flex; gap:8px;">' +
       '<button class="po33-btn-action" style="padding:6px 12px; font-size:11px;" onclick="playPo33BackupAudio(\'boombap.wav\')">⚡ Restaurar en PO-33</button>' +
       '<a href="http://127.0.0.1:8888/api/po33_backup_audio?file=boombap.wav" download="boombap.wav" class="po33-btn-secondary" style="padding:6px 12px; font-size:11px; text-decoration:none;">📥 Descargar WAV</a>' +

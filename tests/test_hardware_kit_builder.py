@@ -136,6 +136,7 @@ class TestHardwareKitBuilder(unittest.TestCase):
         reel_path, total_dur, slices = export_po33_drum_reel("TestReel_PO33", self.pads_data, out_dir)
         self.assertTrue(Path(reel_path).exists())
         self.assertGreater(total_dur, 0.0)
+        self.assertLessEqual(total_dur, 40.0)
         self.assertEqual(len(slices), 4)
         
         # Check audio properties of concatenated strip
@@ -143,6 +144,28 @@ class TestHardwareKitBuilder(unittest.TestCase):
             self.assertEqual(wf.getnchannels(), 1)
             self.assertEqual(wf.getsampwidth(), 2)
             self.assertEqual(wf.getframerate(), 44100)
+
+    def test_08_po33_smart_trim_guarantee_40s(self):
+        # Create long 15s audio files that would sum to 60s
+        long_pads = {}
+        for i in range(1, 5):
+            p = self.test_dir / f"long_sample_{i}.wav"
+            with wave.open(str(p), "wb") as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)
+                wf.setframerate(44100)
+                # 12 seconds each -> 4 * 12s = 48s + gaps > 40s
+                frames = [struct.pack("<h", 500) for _ in range(44100 * 12)]
+                wf.writeframes(b"".join(frames))
+            long_pads[i] = {"source_path": str(p), "sample_name": f"Long_{i}", "sound_type": "DRONE"}
+
+        out_dir = self.test_dir / "out_po33_trimmed"
+        reel_path, total_dur, slices = export_po33_drum_reel("TestReel_Over40s", long_pads, out_dir)
+        self.assertTrue(Path(reel_path).exists())
+        self.assertLessEqual(total_dur, 40.0, f"Drum Reel duró {total_dur}s, debe ser <= 40.0s!")
+        self.assertEqual(len(slices), 4)
+        for s in slices:
+            self.assertTrue(s["trimmed"])
 
 if __name__ == "__main__":
     unittest.main()
