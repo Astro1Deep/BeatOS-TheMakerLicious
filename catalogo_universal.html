@@ -1857,10 +1857,17 @@
 <body>
 
 <div class="hero-banner" style="position:relative; width:100%; max-width:1600px; margin:0 auto; padding:0; overflow:hidden; background:var(--bg-dark); display:flex; justify-content:center; align-items:center; border-bottom:2px solid var(--theme-accent, #8b5cf6);">
-  <img id="heroBannerImg" src="docs/assets/branding/blueprint_sheet_te-arcade.jpg" alt="BeatOS Blueprint (6 Hardwares)" style="width:100%; max-height:480px; object-fit:contain; display:block; cursor:pointer;" onclick="toggleBannerExpand()" title="Haz clic para expandir o ajustar el Blueprint">
+  <!-- Mosaico Analógico de Fondo: Studio Patchbay & Cables Matrix -->
+  <div class="hero-backdrop" id="heroBackdrop" style="position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; display:flex; justify-content:center; align-items:center; transition:opacity 0.35s ease;">
+    <img id="heroBackdropImg" src="docs/assets/branding/studio_patchbay_cable_mosaic_matrix.jpg" alt="Analog Studio Patchbay & Cable Mosaic" style="width:100%; height:100%; object-fit:cover; opacity:0.85; filter:contrast(1.08) brightness(0.95); transition:all 0.35s ease;">
+    <div class="hero-backdrop-vignette" id="heroBackdropVignette" style="position:absolute; inset:0; background:radial-gradient(ellipse at center, rgba(8,9,14,0.25) 20%, transparent 65%);"></div>
+  </div>
+
+  <img id="heroBannerImg" src="docs/assets/branding/blueprint_sheet_te-arcade.jpg" alt="BeatOS Blueprint (6 Hardwares)" style="position:relative; z-index:2; width:100%; max-height:480px; object-fit:contain; display:block; cursor:pointer;" onclick="toggleBannerExpand()" title="Haz clic para expandir o ajustar el Blueprint">
   <script>(function(){ try{ const t = new URLSearchParams(window.location.search).get('theme') || localStorage.getItem('ecosystem_theme') || 'te-arcade'; document.getElementById('heroBannerImg').src = 'docs/assets/branding/blueprint_sheet_' + t + '.jpg'; }catch(e){} })();</script>
   <div class="banner-variant-tabs" style="position:absolute; top:12px; right:16px; display:flex; gap:6px; z-index:10; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
     <span class="b-tab active" id="btn-var-master" style="background:rgba(0,0,0,0.85); border:1px solid var(--theme-accent, #ff6600); color:#fff; padding:5px 12px; font-size:11px; font-weight:700; border-radius:4px; cursor:default; font-family:'SF Mono', Monaco, monospace; transition:all 0.2s;">📐 Blueprint Maestro (6 Hardwares)</span>
+    <button type="button" onclick="cycleBackdropStyle()" id="btnBackdropToggle" style="background:rgba(0,0,0,0.75); border:1px solid rgba(255,255,255,0.25); color:#fff; padding:5px 10px; font-size:11px; font-weight:700; border-radius:4px; cursor:pointer; font-family:'SF Mono', Monaco, monospace; transition:all 0.2s;" title="Alternar diseño de mosaico analógico de fondo (Matriz Patchbay / Racks & Cables / Desactivado)">🔌 Mosaico Patchbay</button>
     <button type="button" onclick="toggleBannerExpand()" id="btnToggleBannerExpand" style="background:rgba(0,0,0,0.7); border:1px solid #666; color:#ddd; padding:5px 10px; font-size:11px; font-weight:700; border-radius:4px; cursor:pointer; font-family:'SF Mono', Monaco, monospace; transition:all 0.2s;" title="Alternar entre vista contenida y resolución completa">⛶ Expandir</button>
     <a href="https://ko-fi.com/astro1deep" target="_blank" rel="noopener noreferrer" style="background:linear-gradient(135deg, #ff5e5b, #ff416c); color:#fff; text-decoration:none; padding:5px 12px; border-radius:4px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:5px; font-family:'SF Mono', Monaco, monospace; border:1px solid rgba(255,255,255,0.25); box-shadow:0 2px 8px rgba(255,65,108,0.35); transition:all 0.2s;" title="Apoyar el desarrollo independiente de BeatOS (1€)">☕ Apoyar (1€)</a>
   </div>
@@ -2764,6 +2771,50 @@
 <script>
 let currentBannerVariant = 'master';
 let isBannerExpanded = false;
+
+
+const BACKDROP_STYLES = [
+  { id: 'matrix', name: '🔌 Mosaico Patchbay', file: 'docs/assets/branding/studio_patchbay_cable_mosaic_matrix.jpg', opacity: '0.85' },
+  { id: 'rack', name: '🎛️ Mosaico Cables', file: 'docs/assets/branding/studio_patchbay_cable_mosaic_rack.jpg', opacity: '0.85' },
+  { id: 'off', name: '⏹️ Fondo Liso', file: '', opacity: '0' }
+];
+let currentBackdropIdx = 0;
+
+function cycleBackdropStyle() {
+  currentBackdropIdx = (currentBackdropIdx + 1) % BACKDROP_STYLES.length;
+  applyBackdropStyle(BACKDROP_STYLES[currentBackdropIdx]);
+}
+
+function applyBackdropStyle(styleObj) {
+  const backdrop = document.getElementById('heroBackdrop');
+  const img = document.getElementById('heroBackdropImg');
+  const btn = document.getElementById('btnBackdropToggle');
+  if (!backdrop || !img) return;
+  if (styleObj.id === 'off') {
+    backdrop.style.opacity = '0';
+  } else {
+    backdrop.style.opacity = '1';
+    img.src = styleObj.file;
+    img.style.opacity = styleObj.opacity;
+  }
+  if (btn) btn.textContent = styleObj.name;
+  try {
+    localStorage.setItem('hero_backdrop_style', styleObj.id);
+  } catch(e) {}
+}
+
+function initBackdropPreference() {
+  try {
+    const saved = localStorage.getItem('hero_backdrop_style');
+    if (saved) {
+      const idx = BACKDROP_STYLES.findIndex(s => s.id === saved);
+      if (idx !== -1) {
+        currentBackdropIdx = idx;
+        applyBackdropStyle(BACKDROP_STYLES[idx]);
+      }
+    }
+  } catch(e) {}
+}
 
 function toggleBannerExpand() {
   isBannerExpanded = !isBannerExpanded;
@@ -5287,6 +5338,15 @@ function setEcosystemTheme(themeKey, syncWithServer = true) {
     localStorage.setItem('ecosystem_theme', themeObj.id);
   } catch(e) {}
 
+  // Sincronizar Mosaico de fondo con el tema
+  const heroBackdrop = document.getElementById('heroBackdrop');
+  if (heroBackdrop) {
+    if (themeObj.id === 'makerlicious-bone' || themeObj.id === 'mpc-vintage') {
+      heroBackdrop.style.display = 'none';
+    } else {
+      heroBackdrop.style.display = 'flex';
+    }
+  }
   // Sincronizar Banner y entorno del sistema con el mismo fondo y paleta
   const heroImg = document.getElementById('heroBannerImg');
   const heroContainer = document.querySelector('.hero-banner');
