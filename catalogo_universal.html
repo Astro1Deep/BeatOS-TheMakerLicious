@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BeatOS (The System) • Edition: The MakerLicious</title>
+<script>
+  (function() {
+    try {
+      const p = new URLSearchParams(window.location.search).get('theme');
+      const s = localStorage.getItem('ecosystem_theme');
+      const t = p || s || 'te-arcade';
+      document.documentElement.setAttribute('data-theme', t);
+    } catch(e) {}
+  })();
+</script>
 <style>
   :root {
     --bg-dark: #0f1115;
@@ -30,8 +40,51 @@
     --banner-subtext: #8c93a3;
   }
 
-  /* 1. TEENAGE ENGINEERING PO-20 ARCADE THEME (DEFAULT / FLAGSHIP) */
+  body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  /* 1. TEENAGE ENGINEERING PO-20 ARCADE (PURPLE CHIPTUNE & MARENGO) */
   :root[data-theme="te-arcade"], body[data-theme="te-arcade"] {
+    --bg-dark: #1c1f26;
+    --bg-card: #232730;
+    --bg-header: #2a2f3a;
+    --bg-hover: #323846;
+    --text-primary: #f8fafc;
+    --text-muted: #94a3b8;
+    --mpc-red: #8b5cf6;
+    --mpc-gold: #facc15;
+    --mpc-cyan: #06b6d4;
+    --mpc-green: #2fe070;
+    --border-color: #333a48;
+    --theme-accent: #8b5cf6;
+    --pad-cell-bg: linear-gradient(145deg, #252a35 0%, #1c1f26 100%);
+    --pad-cell-filled-bg: linear-gradient(145deg, #2d3340 0%, #20242d 100%);
+    --pad-cell-empty-bg: #1c1f26;
+    --pad-border: #383f4e;
+    --dock-pad-bg: #232730;
+    --dock-pad-hover: #2e3442;
+    --modal-bg: #232730;
+    --modal-box-bg: rgba(139, 92, 246, 0.05);
+    --banner-bg: #1c1f26;
+    --banner-paper: #232730;
+    --banner-border: #333a48;
+    --banner-line: #f8fafc;
+    --banner-device-bg: #181b21;
+    --banner-accent: #8b5cf6;
+    --banner-accent2: #facc15;
+    --banner-accent3: #06b6d4;
+    --banner-text: #f8fafc;
+    --banner-subtext: #94a3b8;
+  }
+
+  /* 2. TEENAGE ENGINEERING PO-33 K.O.! (SAFETY ORANGE & GRAPHITE) */
+  :root[data-theme="te-ko"], body[data-theme="te-ko"] {
     --bg-dark: #0d0f14;
     --bg-card: #141720;
     --bg-header: #191d28;
@@ -51,7 +104,7 @@
     --dock-pad-bg: #181d28;
     --dock-pad-hover: #1f2636;
     --modal-bg: #141720;
-    --modal-box-bg: rgba(255, 255, 255, 0.04);
+    --modal-box-bg: rgba(255, 102, 0, 0.05);
     --banner-bg: #0d0f14;
     --banner-paper: #141720;
     --banner-border: #2b3242;
@@ -98,88 +151,122 @@
     --banner-subtext: #7e8b9b;
   }
 
-  /* 3. AKAI MPC VINTAGE (1988 LEGACY) */
+  /* 3. AKAI MPC VINTAGE (ROGER LINN 1988 MPC 60 / 2000XL CLASSIC BEIGE) */
   :root[data-theme="mpc-vintage"], body[data-theme="mpc-vintage"] {
-    --bg-dark: #16171a;
-    --bg-card: #202227;
-    --bg-header: #282a30;
-    --bg-hover: #32353d;
-    --text-primary: #f0ece1;
-    --text-muted: #9c9a92;
-    --mpc-red: #d62828;
-    --mpc-gold: #e9c46a;
-    --mpc-cyan: #457b9d;
-    --mpc-green: #2a9d8f;
-    --border-color: #383b44;
-    --theme-accent: #d62828;
-    --pad-cell-bg: linear-gradient(145deg, #24262c 0%, #1a1b1f 100%);
-    --pad-cell-filled-bg: linear-gradient(145deg, #2c2e36 0%, #202227 100%);
-    --pad-cell-empty-bg: #1a1b1f;
-    --pad-border: #383b44;
-    --dock-pad-bg: #202227;
-    --dock-pad-hover: #32353d;
-    --modal-bg: #202227;
-    --modal-box-bg: rgba(255, 255, 255, 0.04);
-    --banner-bg: #16171a;
-    --banner-paper: #1e2025;
-    --banner-border: #383b44;
-    --banner-line: #f0ece1;
-    --banner-device-bg: #131417;
-    --banner-accent: #d62828;
-    --banner-accent2: #e9c46a;
-    --banner-accent3: #457b9d;
-    --banner-text: #f0ece1;
-    --banner-subtext: #9c9a92;
+    --bg-dark: #ded9ce;
+    --bg-card: #eae6df;
+    --bg-header: #ded9ce;
+    --bg-hover: #d5d0c4;
+    --text-primary: #1a1a1a;
+    --text-muted: #525866;
+    --mpc-red: #c8102e;
+    --mpc-gold: #ca8a04;
+    --mpc-cyan: #22c55e;
+    --mpc-green: #15803d;
+    --border-color: #bebcb4;
+    --theme-accent: #c8102e;
+    --pad-cell-bg: linear-gradient(145deg, #eae5da 0%, #ded9ce 100%);
+    --pad-cell-filled-bg: linear-gradient(145deg, #f4efe4 0%, #e2ddd2 100%);
+    --pad-cell-empty-bg: #d8d3c8;
+    --pad-border: #6b7280;
+    --dock-pad-bg: #eae5da;
+    --dock-pad-hover: #ded9ce;
+    --modal-bg: #eae5da;
+    --modal-box-bg: #f4efe4;
+    --banner-bg: #ded9ce;
+    --banner-paper: #ded9ce;
+    --banner-border: #bebcb4;
+    --banner-line: #1a1a1a;
+    --banner-device-bg: #ded9ce;
+    --banner-accent: #c8102e;
+    --banner-accent2: #22c55e;
+    --banner-accent3: #ca8a04;
+    --banner-text: #1a1a1a;
+    --banner-subtext: #525866;
   }
 
-  /* 4. ROLAND SP-404MK2 (VINYL DARK) */
+  /* 4. AKAI MPC 2000XL BLUE LE (COBALT BLUE SPECIAL EDITION) */
+  :root[data-theme="mpc-blue-le"], body[data-theme="mpc-blue-le"] {
+    --bg-dark: #0f172a;
+    --bg-card: #1e293b;
+    --bg-header: #1e3a5f;
+    --bg-hover: #283548;
+    --text-primary: #f8fafc;
+    --text-muted: #94a3b8;
+    --mpc-red: #dc2626;
+    --mpc-gold: #cbd5e1;
+    --mpc-cyan: #38bdf8;
+    --mpc-green: #22c55e;
+    --border-color: #334155;
+    --theme-accent: #3b82f6;
+    --pad-cell-bg: linear-gradient(145deg, #1e293b 0%, #151f30 100%);
+    --pad-cell-filled-bg: linear-gradient(145deg, #24334a 0%, #182335 100%);
+    --pad-cell-empty-bg: #151f30;
+    --pad-border: #475569;
+    --dock-pad-bg: #1e293b;
+    --dock-pad-hover: #29384f;
+    --modal-bg: #1e293b;
+    --modal-box-bg: rgba(59, 130, 246, 0.05);
+    --banner-bg: #0f172a;
+    --banner-paper: #1e293b;
+    --banner-border: #334155;
+    --banner-line: #cbd5e1;
+    --banner-device-bg: #172554;
+    --banner-accent: #dc2626;
+    --banner-accent2: #cbd5e1;
+    --banner-accent3: #38bdf8;
+    --banner-text: #f8fafc;
+    --banner-subtext: #94a3b8;
+  }
+
+  /* 5. ROLAND SP-404MK2 (VINYL GRAPHITE & WARM AMBER OLED) */
   :root[data-theme="sp404-studio"], body[data-theme="sp404-studio"] {
-    --bg-dark: #08090c;
-    --bg-card: #12131a;
-    --bg-header: #181a24;
-    --bg-hover: #202330;
+    --bg-dark: #0a0a0d;
+    --bg-card: #121318;
+    --bg-header: #171821;
+    --bg-hover: #1e202a;
     --text-primary: #edf2f4;
     --text-muted: #7d8290;
-    --mpc-red: #ff5500;
-    --mpc-gold: #ffaa00;
-    --mpc-cyan: #00e5ff;
-    --mpc-green: #06d6a0;
-    --border-color: #222533;
-    --theme-accent: #ff9900;
-    --pad-cell-bg: linear-gradient(145deg, #161720 0%, #0e0f14 100%);
-    --pad-cell-filled-bg: linear-gradient(145deg, #1e202c 0%, #14151e 100%);
-    --pad-cell-empty-bg: #0e0f14;
-    --pad-border: #222533;
-    --dock-pad-bg: #12131a;
-    --dock-pad-hover: #202330;
-    --modal-bg: #12131a;
-    --modal-box-bg: rgba(255, 153, 0, 0.05);
-    --banner-bg: #08090c;
-    --banner-paper: #101117;
-    --banner-border: #222533;
-    --banner-line: #ffaa00;
+    --mpc-red: #ef4444;
+    --mpc-gold: #f59e0b;
+    --mpc-cyan: #ea580c;
+    --mpc-green: #10b981;
+    --border-color: #262733;
+    --theme-accent: #f59e0b;
+    --pad-cell-bg: linear-gradient(145deg, #15161f 0%, #0c0d12 100%);
+    --pad-cell-filled-bg: linear-gradient(145deg, #1c1d28 0%, #111218 100%);
+    --pad-cell-empty-bg: #0c0d12;
+    --pad-border: #262733;
+    --dock-pad-bg: #121318;
+    --dock-pad-hover: #1c1d26;
+    --modal-bg: #121318;
+    --modal-box-bg: rgba(245, 158, 11, 0.05);
+    --banner-bg: #0a0a0d;
+    --banner-paper: #121318;
+    --banner-border: #262733;
+    --banner-line: #f59e0b;
     --banner-device-bg: #0d0e13;
-    --banner-accent: #ff9900;
-    --banner-accent2: #00e5ff;
-    --banner-accent3: #06d6a0;
+    --banner-accent: #f59e0b;
+    --banner-accent2: #10b981;
+    --banner-accent3: #ea580c;
     --banner-text: #edf2f4;
     --banner-subtext: #7d8290;
   }
 
-  /* 5. NI MASCHINE (STUDIO PRO) */
+  /* 6. NI MASCHINE STUDIO (ANODIZED CARBON & SMART BLUE) */
   :root[data-theme="maschine-studio"], body[data-theme="maschine-studio"] {
-    --bg-dark: #101114;
+    --bg-dark: #111215;
     --bg-card: #181920;
     --bg-header: #21232b;
     --bg-hover: #2b2e38;
     --text-primary: #ffffff;
     --text-muted: #8b8f9c;
-    --mpc-red: #ff0055;
-    --mpc-gold: #ffcc00;
-    --mpc-cyan: #3a86ff;
-    --mpc-green: #00f5d4;
+    --mpc-red: #ec4899;
+    --mpc-gold: #eab308;
+    --mpc-cyan: #3b82f6;
+    --mpc-green: #14b8a6;
     --border-color: #2d313d;
-    --theme-accent: #3a86ff;
+    --theme-accent: #3b82f6;
     --pad-cell-bg: linear-gradient(145deg, #1e2028 0%, #14151a 100%);
     --pad-cell-filled-bg: linear-gradient(145deg, #262833 0%, #1c1d24 100%);
     --pad-cell-empty-bg: #14151a;
@@ -187,15 +274,15 @@
     --dock-pad-bg: #181920;
     --dock-pad-hover: #2b2e38;
     --modal-bg: #181920;
-    --modal-box-bg: rgba(58, 134, 255, 0.05);
-    --banner-bg: #101114;
+    --modal-box-bg: rgba(59, 130, 246, 0.05);
+    --banner-bg: #111215;
     --banner-paper: #17181f;
     --banner-border: #2d313d;
     --banner-line: #ffffff;
     --banner-device-bg: #0c0d10;
-    --banner-accent: #3a86ff;
-    --banner-accent2: #ff0055;
-    --banner-accent3: #00f5d4;
+    --banner-accent: #3b82f6;
+    --banner-accent2: #ec4899;
+    --banner-accent3: #14b8a6;
     --banner-text: #ffffff;
     --banner-subtext: #8b8f9c;
   }
@@ -234,7 +321,7 @@
     --banner-subtext: #4e505a;
   }
 
-  /* REGLAS EXCLUSIVAS DE CONTRASTE Y LEGIBILIDAD PARA EL TEMA BONE WHITE */
+  /* REGLAS EXCLUSIVAS DE CONTRASTE Y LEGIBILIDAD PARA TEMAS CLAROS (BONE WHITE Y MPC VINTAGE BEIGE) */
   [data-theme="makerlicious-bone"] h1,
   [data-theme="makerlicious-bone"] h2,
   [data-theme="makerlicious-bone"] h3,
@@ -243,36 +330,53 @@
   [data-theme="makerlicious-bone"] .pad-sample-name,
   [data-theme="makerlicious-bone"] .dock-pad-num,
   [data-theme="makerlicious-bone"] .player-track-title,
-  [data-theme="makerlicious-bone"] strong {
+  [data-theme="makerlicious-bone"] strong,
+  [data-theme="mpc-vintage"] h1,
+  [data-theme="mpc-vintage"] h2,
+  [data-theme="mpc-vintage"] h3,
+  [data-theme="mpc-vintage"] h4,
+  [data-theme="mpc-vintage"] .card h3,
+  [data-theme="mpc-vintage"] .pad-sample-name,
+  [data-theme="mpc-vintage"] .dock-pad-num,
+  [data-theme="mpc-vintage"] .player-track-title,
+  [data-theme="mpc-vintage"] strong {
     color: var(--text-primary) !important;
   }
 
-  [data-theme="makerlicious-bone"] .pad-cell {
+  [data-theme="makerlicious-bone"] .pad-cell,
+  [data-theme="mpc-vintage"] .pad-cell {
     background: var(--pad-cell-bg) !important;
     border-color: var(--pad-border) !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9) !important;
   }
-  [data-theme="makerlicious-bone"] .pad-cell.filled {
+  [data-theme="makerlicious-bone"] .pad-cell.filled,
+  [data-theme="mpc-vintage"] .pad-cell.filled {
     background: var(--pad-cell-filled-bg) !important;
   }
-  [data-theme="makerlicious-bone"] .pad-cell.empty {
+  [data-theme="makerlicious-bone"] .pad-cell.empty,
+  [data-theme="mpc-vintage"] .pad-cell.empty {
     background: var(--pad-cell-empty-bg) !important;
   }
-  [data-theme="makerlicious-bone"] .pad-cell.empty .pad-sample-name {
+  [data-theme="makerlicious-bone"] .pad-cell.empty .pad-sample-name,
+  [data-theme="mpc-vintage"] .pad-cell.empty .pad-sample-name {
     color: var(--text-muted) !important;
   }
-  [data-theme="makerlicious-bone"] .pad-num-badge {
+  [data-theme="makerlicious-bone"] .pad-num-badge,
+  [data-theme="mpc-vintage"] .pad-num-badge {
     background: rgba(0, 0, 0, 0.07) !important;
-    color: #111114 !important;
+    color: var(--text-primary) !important;
   }
-  [data-theme="makerlicious-bone"] .dock-pad-btn {
+  [data-theme="makerlicious-bone"] .dock-pad-btn,
+  [data-theme="mpc-vintage"] .dock-pad-btn {
     background: var(--dock-pad-bg) !important;
     border-color: var(--border-color) !important;
   }
-  [data-theme="makerlicious-bone"] .dock-pad-btn:hover {
+  [data-theme="makerlicious-bone"] .dock-pad-btn:hover,
+  [data-theme="mpc-vintage"] .dock-pad-btn:hover {
     background: var(--bg-hover) !important;
   }
-  [data-theme="makerlicious-bone"] .dock-pad-num {
+  [data-theme="makerlicious-bone"] .dock-pad-num,
+  [data-theme="mpc-vintage"] .dock-pad-num {
     color: var(--text-primary) !important;
   }
   [data-theme="makerlicious-bone"] .rack-grid-4x4 {
@@ -280,26 +384,54 @@
     border-color: #bebcb4 !important;
     box-shadow: inset 0 2px 8px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.06) !important;
   }
+  [data-theme="mpc-vintage"] .rack-grid-4x4 {
+    background: #d8d3c8 !important;
+    border-color: #bebcb4 !important;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.06) !important;
+  }
   [data-theme="makerlicious-bone"] .rack-assignment-dock {
     background: #e8e7e2 !important;
+    border-color: var(--border-color) !important;
+  }
+  [data-theme="mpc-vintage"] .rack-assignment-dock {
+    background: #e2ddd2 !important;
     border-color: var(--border-color) !important;
   }
   [data-theme="makerlicious-bone"] .table-box table {
     background: #ffffff !important;
   }
+  [data-theme="mpc-vintage"] .table-box table {
+    background: #f4efe4 !important;
+  }
   [data-theme="makerlicious-bone"] th {
     background: #dedee2 !important;
     color: #111114 !important;
+  }
+  [data-theme="mpc-vintage"] th {
+    background: #ded9ce !important;
+    color: #1a1a1a !important;
   }
   [data-theme="makerlicious-bone"] td {
     color: #111114 !important;
     border-bottom-color: #e2e2e8 !important;
   }
+  [data-theme="mpc-vintage"] td {
+    color: #1a1a1a !important;
+    border-bottom-color: #d8d3c8 !important;
+  }
   [data-theme="makerlicious-bone"] tr:hover {
     background: rgba(255, 102, 0, 0.08) !important;
   }
+  [data-theme="mpc-vintage"] tr:hover {
+    background: rgba(200, 16, 46, 0.08) !important;
+  }
   [data-theme="makerlicious-bone"] .card {
     background: #ffffff !important;
+    border-color: var(--border-color) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+  }
+  [data-theme="mpc-vintage"] .card {
+    background: #eae6df !important;
     border-color: var(--border-color) !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
   }
@@ -308,8 +440,17 @@
     color: #111114 !important;
     box-shadow: 0 -4px 16px rgba(0,0,0,0.1) !important;
   }
+  [data-theme="mpc-vintage"] .audio-player-bar {
+    background: #ded9ce !important;
+    color: #1a1a1a !important;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.1) !important;
+  }
   [data-theme="makerlicious-bone"] .po33-card {
     background: #ffffff !important;
+    border-color: var(--border-color) !important;
+  }
+  [data-theme="mpc-vintage"] .po33-card {
+    background: #eae6df !important;
     border-color: var(--border-color) !important;
   }
   [data-theme="makerlicious-bone"] .pad-editor-modal,
@@ -318,33 +459,60 @@
     border-color: var(--border-color) !important;
     color: #111114 !important;
   }
+  [data-theme="mpc-vintage"] .pad-editor-modal,
+  [data-theme="mpc-vintage"] .expansion-program-card {
+    background: #eae6df !important;
+    border-color: var(--border-color) !important;
+    color: #1a1a1a !important;
+  }
   [data-theme="makerlicious-bone"] .pad-editor-box {
     background: #f4f4f7 !important;
     border-color: #dcdce2 !important;
+  }
+  [data-theme="mpc-vintage"] .pad-editor-box {
+    background: #f4efe4 !important;
+    border-color: #dcd7cc !important;
   }
   [data-theme="makerlicious-bone"] .rack-btn-secondary {
     background: #e5e5eb !important;
     color: #111114 !important;
     border-color: #c4c4cc !important;
   }
-  [data-theme="makerlicious-bone"] .btn-pad-remove {
-    background: rgba(0,0,0,0.06) !important;
-    color: #4e505a !important;
+  [data-theme="mpc-vintage"] .rack-btn-secondary {
+    background: #ded9ce !important;
+    color: #1a1a1a !important;
+    border-color: #bebcb4 !important;
   }
-  [data-theme="makerlicious-bone"] .btn-pad-target {
+  [data-theme="makerlicious-bone"] .btn-pad-remove,
+  [data-theme="mpc-vintage"] .btn-pad-remove {
+    background: rgba(0,0,0,0.06) !important;
+    color: var(--text-muted) !important;
+  }
+  [data-theme="makerlicious-bone"] .btn-pad-target,
+  [data-theme="mpc-vintage"] .btn-pad-target {
     background: rgba(0,0,0,0.06) !important;
     border-color: #bebcb4 !important;
-    color: #4e505a !important;
+    color: var(--text-muted) !important;
   }
   [data-theme="makerlicious-bone"] .btn-copy {
     background: #e5e5eb !important;
     color: #111114 !important;
     border-color: #c4c4cc !important;
   }
+  [data-theme="mpc-vintage"] .btn-copy {
+    background: #ded9ce !important;
+    color: #1a1a1a !important;
+    border-color: #bebcb4 !important;
+  }
   [data-theme="makerlicious-bone"] .btn-page {
     background: #ffffff !important;
     color: #111114 !important;
     border-color: #c4c4cc !important;
+  }
+  [data-theme="mpc-vintage"] .btn-page {
+    background: #eae6df !important;
+    color: #1a1a1a !important;
+    border-color: #bebcb4 !important;
   }
 
 .hero-banner {
@@ -2387,20 +2555,98 @@
         </div>
 
         <div class="theme-selector-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-top:16px;">
-          <!-- 1. Teenage Engineering -->
-          <div class="theme-card-option" id="themeCard_te-arcade" onclick="setEcosystemTheme('te-arcade')" style="background:#111317; border:2px solid #ff6600; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
+          <!-- 1. Teenage Engineering PO-20 Arcade -->
+          <div class="theme-card-option" id="themeCard_te-arcade" onclick="setEcosystemTheme('te-arcade')" style="background:#1c1f26; border:2px solid #8b5cf6; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:#f5f5f7; font-size:12px;">🕹️ TE PO-33 K.O.!</strong>
+              <strong style="color:#f8fafc; font-size:12px;">🕹️ TE PO-20 Arcade</strong>
               <div style="display:flex; gap:3px;">
-                <span style="width:10px; height:10px; border-radius:50%; background:#ff6600;"></span>
-                <span style="width:10px; height:10px; border-radius:50%; background:#2fe070;"></span>
-                <span style="width:10px; height:10px; border-radius:50%; background:#ffd000;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#8b5cf6;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#facc15;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#06b6d4;"></span>
               </div>
             </div>
-            <p style="font-size:10px; color:#8c93a3; line-height:1.4;">Estética suiza/nórdica: PCB negro mate, micro-muestreo K.O.!, serigrafía técnica y acentos naranja arcade.</p>
+            <p style="font-size:10px; color:#94a3b8; line-height:1.4;">Chiptune 8-bit arcade: Chasis gris marengo, serigrafía en blanco tiza, sprites violeta arcade y acento amarillo moneda.</p>
           </div>
 
-          <!-- 2. Cerebro OS Neon -->
+          <!-- 2. Teenage Engineering PO-33 K.O.! -->
+          <div class="theme-card-option" id="themeCard_te-ko" onclick="setEcosystemTheme('te-ko')" style="background:#0d0f14; border:1px solid #2b3242; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="color:#f5f5f7; font-size:12px;">🥊 TE PO-33 K.O.!</strong>
+              <div style="display:flex; gap:3px;">
+                <span style="width:10px; height:10px; border-radius:50%; background:#ff6600;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#ffd000;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#2fe070;"></span>
+              </div>
+            </div>
+            <p style="font-size:10px; color:#8c93a3; line-height:1.4;">Micro-muestreo nórdico: PCB negro grafito mate, serigrafía técnica y el emblemático naranja de seguridad (#ff6600).</p>
+          </div>
+
+          <!-- 3. Akai MPC Vintage Classic -->
+          <div class="theme-card-option" id="themeCard_mpc-vintage" onclick="setEcosystemTheme('mpc-vintage')" style="background:#ded9ce; border:1px solid #bebcb4; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="color:#1a1a1a; font-size:12px;">🎛️ Akai MPC 60 / 2000XL</strong>
+              <div style="display:flex; gap:3px;">
+                <span style="width:10px; height:10px; border-radius:50%; background:#c8102e;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#22c55e;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#6b7280;"></span>
+              </div>
+            </div>
+            <p style="font-size:10px; color:#525866; line-height:1.4;">Roger Linn 1988: Chasis blanco hueso / beige marfil industrial Roger Linn, pads de caucho gris y botón rojo Carmesí.</p>
+          </div>
+
+          <!-- 4. Akai MPC 2000XL Blue LE -->
+          <div class="theme-card-option" id="themeCard_mpc-blue-le" onclick="setEcosystemTheme('mpc-blue-le')" style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="color:#f8fafc; font-size:12px;">🔷 Akai MPC 2000XL Blue LE</strong>
+              <div style="display:flex; gap:3px;">
+                <span style="width:10px; height:10px; border-radius:50%; background:#1e3a5f;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#dc2626;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#cbd5e1;"></span>
+              </div>
+            </div>
+            <p style="font-size:10px; color:#94a3b8; line-height:1.4;">Special Edition 1999: Chasis azul cobalto profundo metálico sobre noche, detalles en plata serigráfica y botón rojo Akai.</p>
+          </div>
+
+          <!-- 5. Roland SP-404MK2 Studio -->
+          <div class="theme-card-option" id="themeCard_sp404-studio" onclick="setEcosystemTheme('sp404-studio')" style="background:#0a0a0d; border:1px solid #262733; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="color:#edf2f4; font-size:12px;">🎚️ Roland SP-404MK2</strong>
+              <div style="display:flex; gap:3px;">
+                <span style="width:10px; height:10px; border-radius:50%; background:#f59e0b;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#10b981;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#ef4444;"></span>
+              </div>
+            </div>
+            <p style="font-size:10px; color:#7d8290; line-height:1.4;">Vinyl Studio: Chasis negro grafito, anillo OLED porthole en ámbar cálido (#f59e0b) y acentos verdes de DJFX Looper.</p>
+          </div>
+
+          <!-- 6. NI Maschine Studio -->
+          <div class="theme-card-option" id="themeCard_maschine-studio" onclick="setEcosystemTheme('maschine-studio')" style="background:#111215; border:1px solid #2d313d; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="color:#ffffff; font-size:12px;">🎹 NI Maschine Studio</strong>
+              <div style="display:flex; gap:3px;">
+                <span style="width:10px; height:10px; border-radius:50%; background:#3b82f6;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#ec4899;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#14b8a6;"></span>
+              </div>
+            </div>
+            <p style="font-size:10px; color:#8b8f9c; line-height:1.4;">Precisión alemana: Chasis carbón anodizado mate (#111215), Smart Strip azul, blanco puro y matriz de pads RGB.</p>
+          </div>
+
+          <!-- 7. The MakerLicious Bone -->
+          <div class="theme-card-option" id="themeCard_makerlicious-bone" onclick="setEcosystemTheme('makerlicious-bone')" style="background:#f4f4f6; border:1px solid #c8c8cf; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="color:#111111; font-size:12px;">🦴 The MakerLicious Bone</strong>
+              <div style="display:flex; gap:3px;">
+                <span style="width:10px; height:10px; border-radius:50%; background:#ff6600;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#111111;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#d1d1d6;"></span>
+              </div>
+            </div>
+            <p style="font-size:10px; color:#55555e; line-height:1.4;">Dieter Rams & Braun: Papel de dibujo técnico milimetrado claro (#ebebed), tinta negra pura y señalética funcional naranja.</p>
+          </div>
+
+          <!-- 8. Cerebro OS Neon -->
           <div class="theme-card-option" id="themeCard_cerebro-neon" onclick="setEcosystemTheme('cerebro-neon')" style="background:#090c12; border:1px solid #242c3d; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
               <strong style="color:#ffffff; font-size:12px;">⚡ Cerebro OS Neon</strong>
@@ -2410,59 +2656,7 @@
                 <span style="width:10px; height:10px; border-radius:50%; background:#00ff88;"></span>
               </div>
             </div>
-            <p style="font-size:10px; color:#7e8b9b; line-height:1.4;">Cyberpunk Astro1Deep: cian y magenta neón de alta energía sobre fondo medianoche.</p>
-          </div>
-
-          <!-- 3. Akai MPC Vintage -->
-          <div class="theme-card-option" id="themeCard_mpc-vintage" onclick="setEcosystemTheme('mpc-vintage')" style="background:#16171a; border:1px solid #383b44; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:#f0ece1; font-size:12px;">🎛️ Akai MPC Vintage</strong>
-              <div style="display:flex; gap:3px;">
-                <span style="width:10px; height:10px; border-radius:50%; background:#d62828;"></span>
-                <span style="width:10px; height:10px; border-radius:50%; background:#e9c46a;"></span>
-                <span style="width:10px; height:10px; border-radius:50%; background:#457b9d;"></span>
-              </div>
-            </div>
-            <p style="font-size:10px; color:#9c9a92; line-height:1.4;">MPC 60 / 2000XL: Carcasa industrial gris piedra y el legendario botón rojo Akai.</p>
-          </div>
-
-          <!-- 4. Roland SP-404MK2 Studio -->
-          <div class="theme-card-option" id="themeCard_sp404-studio" onclick="setEcosystemTheme('sp404-studio')" style="background:#08090c; border:1px solid #222533; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:#edf2f4; font-size:12px;">🎚️ Roland SP-404MK2</strong>
-              <div style="display:flex; gap:3px;">
-                <span style="width:10px; height:10px; border-radius:50%; background:#ff9900;"></span>
-                <span style="width:10px; height:10px; border-radius:50%; background:#00e5ff;"></span>
-                <span style="width:10px; height:10px; border-radius:50%; background:#06d6a0;"></span>
-              </div>
-            </div>
-            <p style="font-size:10px; color:#7d8290; line-height:1.4;">Glow analógico cálido ámbar, negro vinilo profundo y acentos de filtro DJFX.</p>
-          </div>
-
-          <!-- 5. NI Maschine Studio -->
-          <div class="theme-card-option" id="themeCard_maschine-studio" onclick="setEcosystemTheme('maschine-studio')" style="background:#101114; border:1px solid #2d313d; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:#ffffff; font-size:12px;">🎹 NI Maschine Studio</strong>
-              <div style="display:flex; gap:3px;">
-                <span style="width:10px; height:10px; border-radius:50%; background:#3a86ff;"></span>
-                <span style="width:10px; height:10px; border-radius:50%; background:#ff0055;"></span>
-                <span style="width:10px; height:10px; border-radius:50%; background:#00f5d4;"></span>
-              </div>
-            </div>
-            <p style="font-size:10px; color:#8b8f9c; line-height:1.4;">Estudio profesional: Chasis carbón anodizado, blanco puro y acentos de pads RGB.</p>
-          </div>
-
-          <!-- 6. The MakerLicious Bone Glitch -->
-          <div class="theme-card-option" id="themeCard_makerlicious-bone" onclick="setEcosystemTheme('makerlicious-bone')" style="background:#f4f4f6; border:1px solid #c8c8cf; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:#111111; font-size:12px;">🦴 The MakerLicious (Bone Glitch)</strong>
-              <div style="display:flex; gap:3px;">
-                <span style="width:10px; height:10px; border-radius:50%; background:#ff6600;"></span>
-                <span style="width:10px; height:10px; border-radius:50%; background:#111111;"></span>
-                <span style="width:10px; height:10px; border-radius:50%; background:#0088aa;"></span>
-              </div>
-            </div>
-            <p style="font-size:10px; color:#55555e; line-height:1.4;">Funcionalismo Dieter Rams & Braun: fondo blanco hueso técnico, tinta de imprenta negra pura y naranja funcional.</p>
+            <p style="font-size:10px; color:#7e8b9b; line-height:1.4;">Astro1Deep Host: Cian eléctrico (#00f0ff) y magenta neón (#ff0055) de alta energía sobre fondo medianoche.</p>
           </div>
         </div>
       </div>
@@ -2605,18 +2799,18 @@ function setBannerVariant(v) {
     }
   });
   
-  const isBone = (typeof currentThemeId !== 'undefined' && currentThemeId === 'makerlicious-bone');
+  const isLight = (typeof currentThemeId !== 'undefined' && (currentThemeId === 'makerlicious-bone' || currentThemeId === 'mpc-vintage'));
   if(v === 'master') {
-    img.src = isBone ? 'docs/assets/branding/user_blueprint_sheet_bone_hd.jpg' : 'docs/assets/branding/user_blueprint_sheet_dark_hd.jpg';
+    img.src = isLight ? 'docs/assets/branding/user_blueprint_sheet_bone_hd.jpg' : 'docs/assets/branding/user_blueprint_sheet_dark_hd.jpg';
     if(btnMaster) { btnMaster.style.borderColor = 'var(--theme-accent, #ff6600)'; btnMaster.style.color = '#fff'; btnMaster.style.background = 'rgba(0,0,0,0.85)'; }
   } else if(v === 'sample') {
-    img.src = isBone ? 'docs/assets/branding/banner_variant_01_mpc_sample_bone.jpg' : 'docs/assets/branding/banner_variant_01_mpc_sample.jpg';
+    img.src = isLight ? 'docs/assets/branding/banner_variant_01_mpc_sample_bone.jpg' : 'docs/assets/branding/banner_variant_01_mpc_sample.jpg';
     if(btnSample) { btnSample.style.borderColor = 'var(--theme-accent, #ff6600)'; btnSample.style.color = '#fff'; btnSample.style.background = 'rgba(0,0,0,0.85)'; }
   } else if(v === 'one') {
-    img.src = isBone ? 'docs/assets/branding/banner_variant_02_mpc_one_bone.jpg' : 'docs/assets/branding/banner_variant_02_mpc_one_dark.jpg';
+    img.src = isLight ? 'docs/assets/branding/banner_variant_02_mpc_one_bone.jpg' : 'docs/assets/branding/banner_variant_02_mpc_one_dark.jpg';
     if(btnOne) { btnOne.style.borderColor = '#0066cc'; btnOne.style.color = '#fff'; btnOne.style.background = 'rgba(0,0,0,0.85)'; }
   } else if(v === 'live3') {
-    img.src = isBone ? 'docs/assets/branding/banner_variant_03_mpc_live3_bone.jpg' : 'docs/assets/branding/banner_variant_03_mpc_live3_dark.jpg';
+    img.src = isLight ? 'docs/assets/branding/banner_variant_03_mpc_live3_bone.jpg' : 'docs/assets/branding/banner_variant_03_mpc_live3_dark.jpg';
     if(btnLive) { btnLive.style.borderColor = '#e52b2b'; btnLive.style.color = '#fff'; btnLive.style.background = 'rgba(0,0,0,0.85)'; }
   }
 }
@@ -5081,12 +5275,14 @@ function synthesizePo33ReelClientSide(isPlaybackOnly) {
 // SISTEMA DE TEMAS GLOBALES SINCRONIZADOS (Cerebro OS / TE / MPC / SP-404 / Maschine)
 // ==========================================
 const ECOSYSTEM_THEMES = [
-  { id: 'te-arcade', name: 'TE PO-33 K.O.!', shortName: 'PO-33 K.O.!', icon: '🕹️', accent: '#ff6600', borderActive: '#ff6600' },
-  { id: 'cerebro-neon', name: 'Cerebro OS Neon', shortName: 'Cerebro Neon', icon: '⚡', accent: '#00f0ff', borderActive: '#00f0ff' },
-  { id: 'mpc-vintage', name: 'Akai MPC Vintage', shortName: 'MPC Vintage', icon: '🎛️', accent: '#d62828', borderActive: '#d62828' },
-  { id: 'sp404-studio', name: 'Roland SP-404MK2', shortName: 'SP-404', icon: '🎚️', accent: '#ff9900', borderActive: '#ff9900' },
-  { id: 'maschine-studio', name: 'NI Maschine Studio', shortName: 'Maschine', icon: '🎹', accent: '#3a86ff', borderActive: '#3a86ff' },
-  { id: 'makerlicious-bone', name: 'The MakerLicious (Bone Glitch)', shortName: 'Bone Glitch', icon: '🦴', accent: '#ff6600', borderActive: '#ff6600' }
+  { id: 'te-arcade', name: 'TE PO-20 Arcade', shortName: 'PO-20 Arcade', icon: '🕹️', accent: '#8b5cf6', borderActive: '#8b5cf6' },
+  { id: 'te-ko', name: 'TE PO-33 K.O.!', shortName: 'PO-33 K.O.!', icon: '🥊', accent: '#ff6600', borderActive: '#ff6600' },
+  { id: 'mpc-vintage', name: 'Akai MPC 60 / 2000XL', shortName: 'MPC Vintage', icon: '🎛️', accent: '#c8102e', borderActive: '#c8102e' },
+  { id: 'mpc-blue-le', name: 'Akai MPC 2000XL Blue LE', shortName: 'MPC Blue LE', icon: '🔷', accent: '#38bdf8', borderActive: '#38bdf8' },
+  { id: 'sp404-studio', name: 'Roland SP-404MK2', shortName: 'SP-404MK2', icon: '🎚️', accent: '#f59e0b', borderActive: '#f59e0b' },
+  { id: 'maschine-studio', name: 'NI Maschine Studio', shortName: 'Maschine', icon: '🎹', accent: '#3b82f6', borderActive: '#3b82f6' },
+  { id: 'makerlicious-bone', name: 'The MakerLicious Bone', shortName: 'Bone Glitch', icon: '🦴', accent: '#ff6600', borderActive: '#ff6600' },
+  { id: 'cerebro-neon', name: 'Cerebro OS Neon', shortName: 'Cerebro Neon', icon: '⚡', accent: '#00f0ff', borderActive: '#00f0ff' }
 ];
 let currentThemeId = 'te-arcade';
 let isThemeSyncEnabled = true;
@@ -5117,22 +5313,22 @@ function setEcosystemTheme(themeKey, syncWithServer = true) {
   // Sincronizar Banner reactivo al tema manteniendo la variante activa (Master Blueprint, Sheet 01, 02 o 03)
   const heroImg = document.getElementById('heroBannerImg');
   const heroContainer = document.querySelector('.hero-banner');
+  const isLight = (themeObj.id === 'makerlicious-bone' || themeObj.id === 'mpc-vintage');
   if (heroImg) {
-    const isBone = (themeObj.id === 'makerlicious-bone');
     const v = typeof currentBannerVariant !== 'undefined' ? currentBannerVariant : 'master';
     if (v === 'master') {
-      heroImg.src = isBone ? 'docs/assets/branding/user_blueprint_sheet_bone_hd.jpg' : 'docs/assets/branding/user_blueprint_sheet_dark_hd.jpg';
+      heroImg.src = isLight ? 'docs/assets/branding/user_blueprint_sheet_bone_hd.jpg' : 'docs/assets/branding/user_blueprint_sheet_dark_hd.jpg';
     } else if (v === 'one') {
-      heroImg.src = isBone ? 'docs/assets/branding/banner_variant_02_mpc_one_bone.jpg' : 'docs/assets/branding/banner_variant_02_mpc_one_dark.jpg';
+      heroImg.src = isLight ? 'docs/assets/branding/banner_variant_02_mpc_one_bone.jpg' : 'docs/assets/branding/banner_variant_02_mpc_one_dark.jpg';
     } else if (v === 'live3') {
-      heroImg.src = isBone ? 'docs/assets/branding/banner_variant_03_mpc_live3_bone.jpg' : 'docs/assets/branding/banner_variant_03_mpc_live3_dark.jpg';
+      heroImg.src = isLight ? 'docs/assets/branding/banner_variant_03_mpc_live3_bone.jpg' : 'docs/assets/branding/banner_variant_03_mpc_live3_dark.jpg';
     } else {
-      heroImg.src = isBone ? 'docs/assets/branding/banner_variant_01_mpc_sample_bone.jpg' : 'docs/assets/branding/banner_variant_01_mpc_sample.jpg';
+      heroImg.src = isLight ? 'docs/assets/branding/banner_variant_01_mpc_sample_bone.jpg' : 'docs/assets/branding/banner_variant_01_mpc_sample.jpg';
     }
   }
   if (heroContainer) {
     heroContainer.style.borderBottomColor = themeObj.accent;
-    heroContainer.style.background = (themeObj.id === 'makerlicious-bone') ? '#dedee0' : '#141519';
+    heroContainer.style.background = (themeObj.id === 'makerlicious-bone') ? '#dedee0' : (themeObj.id === 'mpc-vintage' ? '#ded9ce' : '#141519');
   }
 
   // Actualizar pill en header
