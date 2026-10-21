@@ -1076,8 +1076,8 @@ def inspect_po33_backup(wav_path: str | Path) -> dict:
             sample_frames_to_read = min(n_frames, fr * 4)  # primeros 4 segundos
             raw_sample = wf.readframes(sample_frames_to_read)
 
-        # Duración estándar de backup PO-33: 73.6s (~70s a 78s en función de silencios de entrada/salida)
-        is_duration_valid = 68.0 <= duration <= 80.0
+        # Duración de backup PO-33: Dinámica (típicamente entre 1 y 4 minutos, ~30s a 260s según samples y patrones en RAM)
+        is_duration_valid = 15.0 <= duration <= 300.0
         is_stereo = n_ch == 2
         is_16bit = sw == 2
 

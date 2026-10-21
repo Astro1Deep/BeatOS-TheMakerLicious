@@ -2491,10 +2491,10 @@
         <h3 style="color:var(--text-primary); font-size:17px; display:flex; align-items:center; gap:8px;">
           📻 Módem FSK &amp; Restauración de Backups
         </h3>
-        <span class="po33-header-badge fsk">~73.6s Estéreo</span>
+        <span class="po33-header-badge fsk">Módem FSK (1~4 min)</span>
       </div>
       <p style="font-size:12px; color:var(--text-muted); line-height:1.5;">
-        Los volcados de Teenage Engineering transmiten patrones, muestras y parámetros codificados en tonos de audio de alta frecuencia a través de ambos canales simultáneamente. Su duración estándar es de <strong>~73.6 segundos</strong> (no confundir con los 40s de RAM de samples).
+        Los volcados FSK transmiten muestras, patrones y parámetros codificados en tonos de audio de alta frecuencia. Su duración es <strong>dinámica (típicamente entre 1 y 4 minutos)</strong> según la cantidad de memoria y secuencias ocupadas (ej. <code>boombap.wav</code>: 73.6s). <em>Nota: En EP-133 K.O. II el volcado es digital directo por USB-C vía EP Sample Tool, sin audio módem.</em>
       </p>
 
       <div style="margin-top:16px;">
@@ -2510,7 +2510,7 @@
       <div style="margin-top:20px; background:var(--modal-box-bg, rgba(0,0,0,0.25)); border:1px solid var(--border-color); padding:14px; border-radius:8px;">
         <h4 style="font-size:13px; color:var(--mpc-gold); margin-bottom:6px;">🕹️ Protocolo Físico de Botones PO-33:</h4>
         <ul style="font-size:11px; color:var(--text-muted); line-height:1.8; margin-left:16px;">
-          <li><strong>Restaurar Backup Completo (~73.6s):</strong> Conecta cable 3.5mm de Mac a LINE IN. En la PO-33 mantén <code>WRITE + SOUND + RECORD</code> y reproduce el audio del backup.</li>
+          <li><strong>Restaurar Backup Completo FSK:</strong> Conecta cable 3.5mm de Mac a LINE IN. En la PO-33 mantén <code>WRITE + SOUND + RECORD</code> y reproduce el audio del backup (duración variable 1~4 min).</li>
           <li><strong>Crear Nuevo Backup:</strong> Conecta cable 3.5mm de LINE OUT a la entrada de audio del Mac. Mantén <code>WRITE + SOUND</code> y presiona <code>PLAY</code>.</li>
           <li><strong>Auto-Slice Drum Kit (≤ 40.0s):</strong> Mantén <code>RECORD + SOUND + [Pad 9 al 16]</code> y reproduce la tira Drum Reel.</li>
         </ul>
@@ -5120,13 +5120,13 @@ function renderPo33BackupsCards(backups) {
         '<span class="badge badge-healthy" style="font-size:10px;">✓ FSK VERIFICADO</span>' +
       '</div>' +
       '<div style="font-size:11px; color:var(--text-muted); margin:6px 0; display:flex; gap:12px; flex-wrap:wrap;">' +
-        '<span>⏱️ ' + b.duration_sec + 's (~1m 14s módem)</span>' +
+        '<span>⏱️ ' + b.duration_sec + 's</span>' +
         '<span>🔊 ' + b.channels + ' Canales Estéreo</span>' +
         '<span>🎚️ Peak: ' + b.peak_dbfs + ' dBFS</span>' +
         '<span>💾 ' + b.size_mb + ' MB</span>' +
       '</div>' +
       '<p style="font-size:10.5px; color:var(--text-muted); margin:4px 0 8px 0;">' +
-        '<em>ℹ️ Los volcados módem FSK duran ~73.6s porque transmiten todos los patrones y sonidos codificados en frecuencias audibles de alta velocidad.</em>' +
+        '<em>ℹ️ Los volcados módem FSK de PO-33 varían entre 1 y 4 min según memoria y patrones. En EP-133 K.O. II el volcado es digital directo por USB-C vía EP Sample Tool.</em>' +
       '</p>' +
       '<div style="margin-top:10px; display:flex; gap:8px;">' +
         '<button class="po33-btn-action" style="padding:6px 12px; font-size:11px;" onclick="playPo33BackupAudio(\'' + escapeHtml(b.filename) + '\')">⚡ Restaurar en PO-33</button>' +
@@ -5145,13 +5145,13 @@ function renderFallbackPo33BackupCard() {
       '<span class="badge badge-healthy" style="font-size:10px;">✓ FSK VERIFICADO</span>' +
     '</div>' +
     '<div style="font-size:11px; color:var(--text-muted); margin:6px 0; display:flex; gap:12px; flex-wrap:wrap;">' +
-      '<span>⏱️ 73.61s (~1m 14s módem)</span>' +
+      '<span>⏱️ 73.61s (boombap.wav)</span>' +
       '<span>🔊 2 Canales Estéreo</span>' +
       '<span>🎚️ Peak: -14.1 dBFS</span>' +
       '<span>💾 14.28 MB</span>' +
     '</div>' +
     '<p style="font-size:10.5px; color:var(--text-muted); margin:4px 0 8px 0;">' +
-      '<em>ℹ️ Los volcados módem FSK duran ~73.6s porque transmiten todos los patrones y sonidos codificados en frecuencias audibles de alta velocidad.</em>' +
+      '<em>ℹ️ Los volcados módem FSK de PO-33 varían entre 1 y 4 min según memoria y patrones. En EP-133 K.O. II el volcado es digital directo por USB-C vía EP Sample Tool.</em>' +
     '</p>' +
     '<div style="margin-top:10px; display:flex; gap:8px;">' +
       '<button class="po33-btn-action" style="padding:6px 12px; font-size:11px;" onclick="playPo33BackupAudio(\'boombap.wav\')">⚡ Restaurar en PO-33</button>' +

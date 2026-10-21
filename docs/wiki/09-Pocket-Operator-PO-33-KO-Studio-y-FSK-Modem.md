@@ -27,13 +27,26 @@ El módulo [`hardware_kit_builder.py`](file:///Users/ivan/Documents/mpc-sample-d
 
 ---
 
-## 📡 3. Protocolo de Respaldo por Audio Módem FSK (~73.6 s)
+## 📡 3. Protocolo de Respaldo por Audio Módem FSK (1 a 4 min)
 
-El PO-33 permite realizar copias de seguridad completas de sus patrones, kits y sonidos mediante un flujo de modulación por desplazamiento de frecuencia (**FSK - Frequency Shift Keying**), transmitido a través del conector jack de 3.5 mm.
+El PO-33 permite realizar copias de seguridad completas de sus patrones, kits y sonidos mediante un flujo de modulación por desplazamiento de frecuencia (**FSK - Frequency Shift Keying**), transmitido a través del conector jack estéreo de 3.5 mm.
 
-### Especificaciones del Archivo de Backup
-* **Duración Típica**: Aproximadamente **73.6 segundos** a 44.1 kHz estéreo (Canal Izquierdo: Datos binarios modulados en FSK; Canal Derecho: Pista de audio de sincronización o click).
+### Especificaciones del Archivo de Backup PO-33
+* **Duración Dinámica**: La duración **no es fija**; depende directamente del volumen de datos ocupados en la memoria de muestreo (40s RAM) y de los patrones secuenciados. Un volcado suele durar **entre 1 y 4 minutos** (típicamente ~3 a 3.5 minutos cuando la memoria está al 100%; archivos de demostración o ligeros como `boombap.wav` duran ~73.6 segundos).
+* **Estructura Estéreo**: 44.1 kHz / 16-bit PCM (Canal Izquierdo: Datos binarios modulados en FSK; Canal Derecho: Pista de audio de sincronización / clock o portadora complementaria).
 * **Verificación Forense**:
-  El analizador examina la cabecera del archivo WAV, la frecuencia de muestreo y la presencia de tonos de portadora de audio de alta frecuencia característicos del módem FSK.
+  El analizador examina la cabecera del archivo WAV, la frecuencia de muestreo, estructura estéreo y la presencia de tonos de portadora de audio de alta frecuencia característicos del módem FSK.
 * **Carga en los Pads Web**:
   Desde la pestaña **`🕹️ Pocket Operator (PO-33)`** del catálogo, puedes preescuchar y verificar cualquier archivo de backup existente en tu carpeta de usuario (ej. `boombap.wav`, `backup_po33.wav`), y cargarlo de vuelta a la interfaz web para editar o intercambiar sus sonidos.
+
+---
+
+## ⚡ 4. Comparativa Arquitectónica: PO-33 vs. EP-133 K.O. II
+
+| Parámetro | Teenage Engineering PO-33 / PO-133 | Teenage Engineering EP-133 K.O. II |
+| :--- | :--- | :--- |
+| **Memoria de Muestreo** | 40.0 segundos totales (Mono, ~8/12-bit interno) | 64 MB / 128 MB (Estéreo/Mono, 999 slots) |
+| **Carga de Drum Kits** | Tira de audio Drum Reel con auto-slice (pausas 150ms) | Transferencia digital directa o grabación estéreo |
+| **Protocolo de Backup** | **Módem de audio FSK (analógico por jack 3.5mm)** | **USB-C Digital (WebMIDI / SysEx / EP Sample Tool)** |
+| **Duración de Transferencia** | 1 a 4 minutos (audio audible en tiempo real) | Segundos / transferencia digital por cable USB |
+| **Conectividad** | Jack 3.5mm LINE IN / LINE OUT | USB-C (Audio/MIDI/Alimentación) + MIDI DIN + Sync 3.5mm |
