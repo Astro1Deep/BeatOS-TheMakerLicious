@@ -44,6 +44,14 @@
     --mpc-green: #2fe070;
     --border-color: #2b3242;
     --theme-accent: #ff6600;
+    --pad-cell-bg: linear-gradient(145deg, #181d28 0%, #12151e 100%);
+    --pad-cell-filled-bg: linear-gradient(145deg, #1b212f 0%, #131722 100%);
+    --pad-cell-empty-bg: #12151e;
+    --pad-border: #272e3a;
+    --dock-pad-bg: #181d28;
+    --dock-pad-hover: #1f2636;
+    --modal-bg: #141720;
+    --modal-box-bg: rgba(255, 255, 255, 0.04);
     --banner-bg: #0d0f14;
     --banner-paper: #141720;
     --banner-border: #2b3242;
@@ -58,10 +66,10 @@
 
   /* 2. CYBERPUNK ASTRO1DEEP (CEREBRO OS) */
   :root[data-theme="cerebro-neon"], body[data-theme="cerebro-neon"] {
-    --bg-dark: #090c12;
-    --bg-card: #121622;
-    --bg-header: #171d2b;
-    --bg-hover: #1e2638;
+    --bg-dark: #07090e;
+    --bg-card: #0f131c;
+    --bg-header: #141926;
+    --bg-hover: #1b2234;
     --text-primary: #ffffff;
     --text-muted: #7e8b9b;
     --mpc-red: #ff0055;
@@ -70,6 +78,14 @@
     --mpc-green: #00ff88;
     --border-color: #242c3d;
     --theme-accent: #00f0ff;
+    --pad-cell-bg: linear-gradient(145deg, #121622 0%, #0c1018 100%);
+    --pad-cell-filled-bg: linear-gradient(145deg, #161c2c 0%, #101420 100%);
+    --pad-cell-empty-bg: #0c1018;
+    --pad-border: #202738;
+    --dock-pad-bg: #121622;
+    --dock-pad-hover: #1b2234;
+    --modal-bg: #0f131c;
+    --modal-box-bg: rgba(0, 240, 255, 0.05);
     --banner-bg: #090c12;
     --banner-paper: #0e121a;
     --banner-border: #242c3d;
@@ -96,6 +112,14 @@
     --mpc-green: #2a9d8f;
     --border-color: #383b44;
     --theme-accent: #d62828;
+    --pad-cell-bg: linear-gradient(145deg, #24262c 0%, #1a1b1f 100%);
+    --pad-cell-filled-bg: linear-gradient(145deg, #2c2e36 0%, #202227 100%);
+    --pad-cell-empty-bg: #1a1b1f;
+    --pad-border: #383b44;
+    --dock-pad-bg: #202227;
+    --dock-pad-hover: #32353d;
+    --modal-bg: #202227;
+    --modal-box-bg: rgba(255, 255, 255, 0.04);
     --banner-bg: #16171a;
     --banner-paper: #1e2025;
     --banner-border: #383b44;
@@ -122,6 +146,14 @@
     --mpc-green: #06d6a0;
     --border-color: #222533;
     --theme-accent: #ff9900;
+    --pad-cell-bg: linear-gradient(145deg, #161720 0%, #0e0f14 100%);
+    --pad-cell-filled-bg: linear-gradient(145deg, #1e202c 0%, #14151e 100%);
+    --pad-cell-empty-bg: #0e0f14;
+    --pad-border: #222533;
+    --dock-pad-bg: #12131a;
+    --dock-pad-hover: #202330;
+    --modal-bg: #12131a;
+    --modal-box-bg: rgba(255, 153, 0, 0.05);
     --banner-bg: #08090c;
     --banner-paper: #101117;
     --banner-border: #222533;
@@ -137,7 +169,7 @@
   /* 5. NI MASCHINE (STUDIO PRO) */
   :root[data-theme="maschine-studio"], body[data-theme="maschine-studio"] {
     --bg-dark: #101114;
-    --bg-card: #191a20;
+    --bg-card: #181920;
     --bg-header: #21232b;
     --bg-hover: #2b2e38;
     --text-primary: #ffffff;
@@ -148,6 +180,14 @@
     --mpc-green: #00f5d4;
     --border-color: #2d313d;
     --theme-accent: #3a86ff;
+    --pad-cell-bg: linear-gradient(145deg, #1e2028 0%, #14151a 100%);
+    --pad-cell-filled-bg: linear-gradient(145deg, #262833 0%, #1c1d24 100%);
+    --pad-cell-empty-bg: #14151a;
+    --pad-border: #2d313d;
+    --dock-pad-bg: #181920;
+    --dock-pad-hover: #2b2e38;
+    --modal-bg: #181920;
+    --modal-box-bg: rgba(58, 134, 255, 0.05);
     --banner-bg: #101114;
     --banner-paper: #17181f;
     --banner-border: #2d313d;
@@ -159,26 +199,31 @@
     --banner-text: #ffffff;
     --banner-subtext: #8b8f9c;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
-  body { background: var(--bg-dark); color: var(--text-primary); display: flex; flex-direction: column; min-height: 100vh; padding-bottom: 90px; }
-  
-  
+
   /* 6. THE MAKERLICIOUS (BONE GLITCH / SWISS LAB THEME) */
   :root[data-theme="makerlicious-bone"], body[data-theme="makerlicious-bone"] {
     --bg-dark: #ebebed;
-    --bg-card: #f4f4f6;
+    --bg-card: #ffffff;
     --bg-header: #dedee2;
-    --bg-hover: #e2e2e6;
-    --text-primary: #111111;
-    --text-muted: #55555e;
+    --bg-hover: #e5e5ea;
+    --text-primary: #111114;
+    --text-muted: #4e505a;
     --mpc-red: #ff6600;
     --mpc-gold: #d48b00;
     --mpc-cyan: #0088aa;
     --mpc-green: #1b8a47;
-    --border-color: #c8c8cf;
+    --border-color: #c5c5cd;
     --theme-accent: #ff6600;
+    --pad-cell-bg: linear-gradient(145deg, #ffffff 0%, #eeeee9 100%);
+    --pad-cell-filled-bg: linear-gradient(145deg, #f7f6f2 0%, #e8e7e1 100%);
+    --pad-cell-empty-bg: #f4f3ee;
+    --pad-border: #bbbab2;
+    --dock-pad-bg: #ffffff;
+    --dock-pad-hover: #ebeaee;
+    --modal-bg: #ffffff;
+    --modal-box-bg: #f5f5f7;
     --banner-bg: #ebebed;
-    --banner-paper: #f4f4f6;
+    --banner-paper: #ffffff;
     --banner-border: #c8c8cf;
     --banner-line: #111111;
     --banner-device-bg: #dedee2;
@@ -186,7 +231,120 @@
     --banner-accent2: #1b8a47;
     --banner-accent3: #d48b00;
     --banner-text: #111111;
-    --banner-subtext: #55555e;
+    --banner-subtext: #4e505a;
+  }
+
+  /* REGLAS EXCLUSIVAS DE CONTRASTE Y LEGIBILIDAD PARA EL TEMA BONE WHITE */
+  [data-theme="makerlicious-bone"] h1,
+  [data-theme="makerlicious-bone"] h2,
+  [data-theme="makerlicious-bone"] h3,
+  [data-theme="makerlicious-bone"] h4,
+  [data-theme="makerlicious-bone"] .card h3,
+  [data-theme="makerlicious-bone"] .pad-sample-name,
+  [data-theme="makerlicious-bone"] .dock-pad-num,
+  [data-theme="makerlicious-bone"] .player-track-title,
+  [data-theme="makerlicious-bone"] strong {
+    color: var(--text-primary) !important;
+  }
+
+  [data-theme="makerlicious-bone"] .pad-cell {
+    background: var(--pad-cell-bg) !important;
+    border-color: var(--pad-border) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+  }
+  [data-theme="makerlicious-bone"] .pad-cell.filled {
+    background: var(--pad-cell-filled-bg) !important;
+  }
+  [data-theme="makerlicious-bone"] .pad-cell.empty {
+    background: var(--pad-cell-empty-bg) !important;
+  }
+  [data-theme="makerlicious-bone"] .pad-cell.empty .pad-sample-name {
+    color: var(--text-muted) !important;
+  }
+  [data-theme="makerlicious-bone"] .pad-num-badge {
+    background: rgba(0, 0, 0, 0.07) !important;
+    color: #111114 !important;
+  }
+  [data-theme="makerlicious-bone"] .dock-pad-btn {
+    background: var(--dock-pad-bg) !important;
+    border-color: var(--border-color) !important;
+  }
+  [data-theme="makerlicious-bone"] .dock-pad-btn:hover {
+    background: var(--bg-hover) !important;
+  }
+  [data-theme="makerlicious-bone"] .dock-pad-num {
+    color: var(--text-primary) !important;
+  }
+  [data-theme="makerlicious-bone"] .rack-grid-4x4 {
+    background: #e2e1db !important;
+    border-color: #bebcb4 !important;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.06) !important;
+  }
+  [data-theme="makerlicious-bone"] .rack-assignment-dock {
+    background: #e8e7e2 !important;
+    border-color: var(--border-color) !important;
+  }
+  [data-theme="makerlicious-bone"] .table-box table {
+    background: #ffffff !important;
+  }
+  [data-theme="makerlicious-bone"] th {
+    background: #dedee2 !important;
+    color: #111114 !important;
+  }
+  [data-theme="makerlicious-bone"] td {
+    color: #111114 !important;
+    border-bottom-color: #e2e2e8 !important;
+  }
+  [data-theme="makerlicious-bone"] tr:hover {
+    background: rgba(255, 102, 0, 0.08) !important;
+  }
+  [data-theme="makerlicious-bone"] .card {
+    background: #ffffff !important;
+    border-color: var(--border-color) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+  }
+  [data-theme="makerlicious-bone"] .audio-player-bar {
+    background: #dedee2 !important;
+    color: #111114 !important;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.1) !important;
+  }
+  [data-theme="makerlicious-bone"] .po33-card {
+    background: #ffffff !important;
+    border-color: var(--border-color) !important;
+  }
+  [data-theme="makerlicious-bone"] .pad-editor-modal,
+  [data-theme="makerlicious-bone"] .expansion-program-card {
+    background: #ffffff !important;
+    border-color: var(--border-color) !important;
+    color: #111114 !important;
+  }
+  [data-theme="makerlicious-bone"] .pad-editor-box {
+    background: #f4f4f7 !important;
+    border-color: #dcdce2 !important;
+  }
+  [data-theme="makerlicious-bone"] .rack-btn-secondary {
+    background: #e5e5eb !important;
+    color: #111114 !important;
+    border-color: #c4c4cc !important;
+  }
+  [data-theme="makerlicious-bone"] .btn-pad-remove {
+    background: rgba(0,0,0,0.06) !important;
+    color: #4e505a !important;
+  }
+  [data-theme="makerlicious-bone"] .btn-pad-target {
+    background: rgba(0,0,0,0.06) !important;
+    border-color: #bebcb4 !important;
+    color: #4e505a !important;
+  }
+  [data-theme="makerlicious-bone"] .btn-copy {
+    background: #e5e5eb !important;
+    color: #111114 !important;
+    border-color: #c4c4cc !important;
+  }
+  [data-theme="makerlicious-bone"] .btn-page {
+    background: #ffffff !important;
+    color: #111114 !important;
+    border-color: #c4c4cc !important;
   }
 
 .hero-banner {
@@ -410,18 +568,18 @@
   .btn-copy:hover { color: #fff; border-color: var(--mpc-cyan); }
   
   .pagination { display: flex; justify-content: space-between; align-items: center; padding: 16px 4px; font-size: 13px; color: var(--text-muted); }
-  .btn-page { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-card); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .btn-page { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); font-size: 12px; font-weight: 600; cursor: pointer; }
   .btn-page:disabled { opacity: 0.4; cursor: not-allowed; }
   
   .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
   .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; transition: 0.2s; }
   .card:hover { border-color: var(--mpc-red); transform: translateY(-2px); }
-  .card h3 { font-size: 16px; margin-bottom: 8px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+  .card h3 { font-size: 16px; margin-bottom: 8px; color: var(--text-primary); display: flex; justify-content: space-between; align-items: center; }
   .card p { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
   
   .audio-player-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-header); border-top: 2px solid var(--mpc-red); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.6); gap: 15px; flex-wrap: wrap; }
   .player-track-info { display: flex; flex-direction: column; min-width: 240px; }
-  .player-track-title { font-size: 13px; color: #fff; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .player-track-title { font-size: 13px; color: var(--text-primary); font-weight: 700; display: flex; align-items: center; gap: 8px; }
   .player-track-path { font-size: 11px; color: var(--text-muted); font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 500px; }
   .player-controls { display: flex; align-items: center; gap: 15px; }
   audio { height: 34px; outline: none; }
@@ -452,13 +610,13 @@
     position: fixed;
     bottom: 80px;
     left: 24px;
-    background: #141923;
-    border: 2px solid var(--mpc-red);
+    background: var(--bg-card);
+    border: 2px solid var(--theme-accent);
     padding: 10px 18px;
     border-radius: 30px;
     font-size: 13px;
     font-weight: 800;
-    color: #fff;
+    color: var(--text-primary);
     cursor: pointer;
     z-index: 99;
     box-shadow: 0 4px 18px rgba(255, 0, 85, 0.35);
@@ -469,7 +627,7 @@
   }
   .rack-floating-badge:hover {
     transform: translateY(-2px);
-    background: #1c2230;
+    background: var(--bg-hover);
     box-shadow: 0 6px 24px rgba(255, 0, 85, 0.5);
   }
   .rack-floating-badge .count-tag {
@@ -511,8 +669,8 @@
     width: 100%;
     height: 100%;
     box-sizing: border-box;
-    background: linear-gradient(145deg, #181d28 0%, #12151e 100%);
-    border: 2px solid #272e3a;
+    background: var(--pad-cell-bg);
+    border: 2px solid var(--pad-border);
     border-radius: 8px;
     padding: 8px 8px;
     display: flex;
@@ -538,9 +696,12 @@
     box-shadow: 0 0 20px var(--mpc-cyan), inset 0 0 12px rgba(255,255,255,0.3);
   }
   .pad-cell.filled {
-    background: linear-gradient(145deg, #1b212f 0%, #131722 100%);
+    background: var(--pad-cell-filled-bg);
     cursor: -webkit-grab;
     cursor: grab;
+  }
+  .pad-cell.empty {
+    background: var(--pad-cell-empty-bg);
   }
   .pad-cell.target-selected {
     border-color: var(--mpc-red) !important;
@@ -647,7 +808,7 @@
   .pad-sample-name {
     font-size: 11px;
     font-weight: 700;
-    color: #fff;
+    color: var(--text-primary);
     margin: 4px 0;
     line-height: 1.25;
     text-align: center;
@@ -915,7 +1076,7 @@
     .dock-pads-matrix { grid-template-columns: repeat(4, 1fr); }
   }
   .dock-pad-btn {
-    background: #181d28;
+    background: var(--dock-pad-bg);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 6px 4px 6px 4px;
@@ -932,7 +1093,7 @@
   }
   .dock-pad-btn:hover {
     border-color: var(--mpc-cyan);
-    background: #1f2636;
+    background: var(--dock-pad-hover);
     transform: translateY(-2px);
   }
   .dock-pad-btn.active {
@@ -959,7 +1120,7 @@
   .dock-pad-num {
     font-size: 11px;
     font-weight: 800;
-    color: #fff;
+    color: var(--text-primary);
   }
   .dock-pad-btn.active .dock-pad-num {
     color: var(--mpc-red);
@@ -1110,7 +1271,7 @@
   /* Mini Popover de Pad Selector */
   .pad-popover {
     position: fixed;
-    background: #141824;
+    background: var(--modal-bg, #141824);
     border: 1px solid var(--mpc-cyan);
     border-radius: 10px;
     padding: 12px;
@@ -1136,13 +1297,13 @@
     gap: 6px;
   }
   .pad-popover-btn {
-    background: #1c2230;
-    border: 1px solid rgba(255,255,255,0.1);
+    background: var(--dock-pad-bg, #1c2230);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 8px 4px;
     font-size: 10px;
     font-weight: 800;
-    color: #fff;
+    color: var(--text-primary);
     cursor: pointer;
     transition: 0.1s;
     text-align: center;
@@ -1470,14 +1631,14 @@
   z-index: 10000;
 }
 .pad-editor-modal {
-  background: #121620;
-  border: 1px solid rgba(0, 240, 255, 0.4);
-  box-shadow: 0 0 40px rgba(0, 240, 255, 0.2);
+  background: var(--modal-bg, #121620);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
   border-radius: 14px;
   width: 90%;
   max-width: 680px;
   padding: 24px;
-  color: #fff;
+  color: var(--text-primary);
   max-height: 90vh;
   overflow-y: auto;
 }
@@ -1488,10 +1649,10 @@
   margin-top: 14px;
 }
 .pad-editor-box {
-  background: rgba(255,255,255,0.03);
+  background: var(--modal-box-bg, rgba(255,255,255,0.03));
   padding: 12px 14px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-color);
 }
 .pad-editor-box label {
   font-size: 11px;
@@ -1699,17 +1860,17 @@
     <div>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
         <div>
-          <h2 style="font-size:20px; font-weight:800; color:#fff;">🎛️ BeatOS Rack <span style="color:var(--theme-accent, #ff6600); font-weight:700;">★ The MakerLicious</span> <span style="font-size:13px; color:var(--mpc-cyan); font-weight:600;">(Banco A: Pads 1 al 16)</span></h2>
+          <h2 style="font-size:20px; font-weight:800; color:var(--text-primary);">🎛️ BeatOS Rack <span style="color:var(--theme-accent, #ff6600); font-weight:700;">★ The MakerLicious</span> <span style="font-size:13px; color:var(--mpc-cyan); font-weight:600;">(Banco A: Pads 1 al 16)</span></h2>
           <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Toca cualquier pad con tu ratón o con las teclas de tu teclado físico (Z-V, A-F, Q-R, 1-4) para disparar el ritmo en tiempo real. <strong style="color:var(--mpc-gold);">💡 Arrastra y suelta cualquier pad con el ratón para intercambiar o reubicar posiciones para fingerdrumming personalizado.</strong></p>
         </div>
       </div>
 
       <!-- BARRA DE CONTROL Y SELECTOR DIRECTO DE KITS EN EL RACK -->
-      <div class="rack-header-bar" style="background:#161c28; border:1px solid rgba(0,240,255,0.25); border-radius:10px; padding:10px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; box-shadow:0 4px 16px rgba(0,0,0,0.4);">
+      <div class="rack-header-bar" style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; padding:10px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; box-shadow:0 4px 16px rgba(0,0,0,0.15);">
         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
           <div>
             <span style="font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); font-weight:700; display:block;">PROGRAMA / KIT ACTIVO:</span>
-            <strong id="rackCurrentKitTitle" style="font-size:15px; color:#fff; display:flex; align-items:center; gap:6px;">
+            <strong id="rackCurrentKitTitle" style="font-size:15px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
               <span id="rackKitActiveIcon">🎛️</span> <span id="rackKitActiveName">Kit Predeterminado (Vacío)</span>
             </strong>
           </div>
@@ -2400,7 +2561,10 @@
 <div id="toast" class="toast">✔ Ruta copiada al portapapeles</div>
 
 <script>
+let currentBannerVariant = 'sample';
+
 function setBannerVariant(v) {
+  currentBannerVariant = v;
   const img = document.getElementById('heroBannerImg');
   if(!img) return;
   const btnSample = document.getElementById('btn-var-sample');
@@ -2415,18 +2579,15 @@ function setBannerVariant(v) {
     }
   });
   
+  const isBone = (typeof currentThemeId !== 'undefined' && currentThemeId === 'makerlicious-bone');
   if(v === 'sample') {
-    if (currentThemeId === 'makerlicious-bone') {
-      img.src = 'docs/assets/branding/beatos_makerlicious_blueprint_banner_bone.jpg';
-    } else {
-      img.src = 'docs/assets/branding/beatos_makerlicious_dark_blueprint_banner.jpg';
-    }
+    img.src = isBone ? 'docs/assets/branding/banner_variant_01_mpc_sample_bone.jpg' : 'docs/assets/branding/banner_variant_01_mpc_sample.jpg';
     if(btnSample) { btnSample.style.borderColor = 'var(--theme-accent, #ff6600)'; btnSample.style.color = '#fff'; btnSample.style.background = 'rgba(0,0,0,0.85)'; }
   } else if(v === 'one') {
-    img.src = 'docs/assets/branding/banner_variant_02_mpc_one.jpg';
+    img.src = isBone ? 'docs/assets/branding/banner_variant_02_mpc_one_bone.jpg' : 'docs/assets/branding/banner_variant_02_mpc_one_dark.jpg';
     if(btnOne) { btnOne.style.borderColor = '#0066cc'; btnOne.style.color = '#fff'; btnOne.style.background = 'rgba(0,0,0,0.85)'; }
   } else if(v === 'live3') {
-    img.src = 'docs/assets/branding/banner_variant_03_mpc_live3.jpg';
+    img.src = isBone ? 'docs/assets/branding/banner_variant_03_mpc_live3_bone.jpg' : 'docs/assets/branding/banner_variant_03_mpc_live3_dark.jpg';
     if(btnLive) { btnLive.style.borderColor = '#e52b2b'; btnLive.style.color = '#fff'; btnLive.style.background = 'rgba(0,0,0,0.85)'; }
   }
 }
@@ -4167,14 +4328,14 @@ function renderExpansionProgramsList(programs) {
     
     const isCurrentActive = (currentLoadedKitRelPath && currentLoadedKitRelPath === k.rel_path);
     const borderStyle = isCurrentActive 
-      ? 'border: 2px solid var(--mpc-cyan); box-shadow: 0 0 18px rgba(0,240,255,0.4); background: #1a2336;' 
-      : 'background: #161c28; border: 1px solid rgba(255,255,255,0.08);';
+      ? 'border: 2px solid var(--mpc-cyan); box-shadow: 0 0 18px rgba(0,240,255,0.4); background: var(--bg-hover);' 
+      : 'background: var(--bg-card); border: 1px solid var(--border-color);';
 
     html += `
       <div class="expansion-program-card ${isCurrentActive ? 'active-kit' : ''}" style="${borderStyle} border-radius:10px; padding:14px 16px; min-height:148px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between; transition:0.2s; position:relative; cursor:pointer;" onclick="selectAndLoadExpansionKit(${idxToUse})">
         <div>
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:4px;">
-            <h4 style="font-size:13.5px; font-weight:700; color:#fff; line-height:1.35; margin:0; word-break:break-word;">${escapeHtml(k.name)}</h4>
+            <h4 style="font-size:13.5px; font-weight:700; color:var(--text-primary); line-height:1.35; margin:0; word-break:break-word;">${escapeHtml(k.name)}</h4>
             <span style="font-size:9px; font-weight:800; padding:3px 7px; border-radius:4px; background:rgba(0,240,255,0.1); border:1px solid ${badgeColor}; color:${badgeColor}; white-space:nowrap; flex-shrink:0;">${typeLabel}</span>
           </div>
           ${subCatInfo}
@@ -4189,11 +4350,11 @@ function renderExpansionProgramsList(programs) {
             🎛️ Cargar en Rack
           </button>
           ${k.first_sample_rel ? `
-            <button style="width:34px; height:32px; flex-shrink:0; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:6px; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center;" onclick="playUnifiedAudio('${escapeHtml(k.first_sample_rel)}', '${escapeHtml(k.first_sample)}', 'Preview: ${escapeHtml(k.name)}', this)" title="Pre-escuchar muestra de prueba del kit">
+            <button style="width:34px; height:32px; flex-shrink:0; background:var(--modal-box-bg, rgba(255,255,255,0.06)); border:1px solid var(--border-color); color:var(--text-primary); border-radius:6px; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center;" onclick="playUnifiedAudio('${escapeHtml(k.first_sample_rel)}', '${escapeHtml(k.first_sample)}', 'Preview: ${escapeHtml(k.name)}', this)" title="Pre-escuchar muestra de prueba del kit">
               ▶
             </button>
           ` : ''}
-          <button style="width:34px; height:32px; flex-shrink:0; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#888; border-radius:6px; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center;" onclick="navigator.clipboard.writeText('/Volumes/MPCSMPL/${escapeHtml(k.rel_path)}'); showToast('📋 Ruta del programa copiada');" title="Copiar ruta absoluta para tu hardware MPC">
+          <button style="width:34px; height:32px; flex-shrink:0; background:var(--modal-box-bg, rgba(255,255,255,0.06)); border:1px solid var(--border-color); color:var(--text-muted); border-radius:6px; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center;" onclick="navigator.clipboard.writeText('/Volumes/MPCSMPL/${escapeHtml(k.rel_path)}'); showToast('📋 Ruta del programa copiada');" title="Copiar ruta absoluta para tu hardware MPC">
             📋
           </button>
         </div>
@@ -5039,14 +5200,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
 <!-- MODAL DE EXPLORACIÓN DE PROGRAMAS DE EXPANSIÓN (.XPM) -->
 <div id="expansionBrowserModalOverlay" class="pad-editor-modal-overlay" onclick="onExpansionBackdropClick(event)">
-  <div class="pad-editor-modal" style="max-width:980px; width:95%; height:88vh; max-height:88vh; display:flex; flex-direction:column; background:#10141e; border:1px solid rgba(0, 240, 255, 0.35); box-shadow:0 0 50px rgba(0,0,0,0.8), 0 0 30px rgba(0,240,255,0.15); padding:20px 24px; overflow:hidden;">
+  <div class="pad-editor-modal" style="max-width:980px; width:95%; height:88vh; max-height:88vh; display:flex; flex-direction:column; background:var(--modal-bg, #10141e); border:1px solid var(--border-color); box-shadow:0 0 50px rgba(0,0,0,0.8), 0 0 30px rgba(0,240,255,0.15); padding:20px 24px; overflow:hidden;">
     <!-- HEADER -->
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:14px; flex-shrink:0;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--border-color); padding-bottom:14px; flex-shrink:0;">
       <div>
         <div style="display:flex; align-items:center; gap:10px;">
           <span style="font-size:24px;">📂</span>
           <div>
-            <h3 id="expansionModalTitle" style="font-size:18px; font-weight:800; color:#fff; margin:0; line-height:1.2;">Expansión Oficial MPC</h3>
+            <h3 id="expansionModalTitle" style="font-size:18px; font-weight:800; color:var(--text-primary); margin:0; line-height:1.2;">Expansión Oficial MPC</h3>
             <span id="expansionModalCount" style="font-size:12px; color:var(--mpc-cyan); font-weight:600;">Cargando programas...</span>
           </div>
         </div>
@@ -5054,13 +5215,13 @@ window.addEventListener('DOMContentLoaded', () => {
           Selecciona cualquier programa (.xpm) para cargarlo con sus 16 pads, afinaciones, mute groups y capas en el Universal Beatmaker Rack.
         </p>
       </div>
-      <button class="terminal-close" onclick="closeExpansionBrowser()" style="background:none; border:none; color:#888; font-size:20px; cursor:pointer; padding:4px 8px; border-radius:4px;">✕</button>
+      <button class="terminal-close" onclick="closeExpansionBrowser()" style="background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; padding:4px 8px; border-radius:4px;">✕</button>
     </div>
 
     <!-- BUSCADOR / FILTRO REACTIVO -->
     <div style="margin:14px 0 12px 0; display:flex; gap:10px; align-items:center; flex-shrink:0;">
       <div style="flex:1; position:relative;">
-        <input type="text" id="expansionSearchInput" placeholder="🔍 Filtrar programas por nombre (ej. Funk, Trap, 808, Kit, LoFi...)" oninput="filterExpansionKits(this.value)" style="width:100%; box-sizing:border-box; background:#161c28; border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:10px 14px; color:#fff; font-size:13px; outline:none; transition:0.2s;" onfocus="this.style.borderColor='var(--mpc-cyan)'" onblur="this.style.borderColor='rgba(255,255,255,0.15)'">
+        <input type="text" id="expansionSearchInput" placeholder="🔍 Filtrar programas por nombre (ej. Funk, Trap, 808, Kit, LoFi...)" oninput="filterExpansionKits(this.value)" style="width:100%; box-sizing:border-box; background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:10px 14px; color:var(--text-primary); font-size:13px; outline:none; transition:0.2s;" onfocus="this.style.borderColor='var(--mpc-cyan)'" onblur="this.style.borderColor='var(--border-color)'">
       </div>
       <button class="po33-btn-secondary" style="padding:10px 14px; font-size:12px; white-space:nowrap; display:flex; align-items:center; gap:6px;" onclick="quickLoadExpansionRandomKit()" title="Cargar un kit al azar de esta expansión">
         🎲 Kit Sorpresa

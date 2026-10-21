@@ -31,3 +31,6 @@ SQLITE_DATABASE/
 *.flac
 *.zip
 *.xpn
+
+# Local safety snapshots
+backups_seguridad/
