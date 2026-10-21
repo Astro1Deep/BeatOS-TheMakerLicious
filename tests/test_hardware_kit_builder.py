@@ -26,6 +26,7 @@ from hardware_kit_builder import (
     export_ni_maschine_kit,
     export_ep133_ko2_kit,
     export_po33_drum_reel,
+    parse_xpm_program,
 )
 
 class TestHardwareKitBuilder(unittest.TestCase):
@@ -166,6 +167,43 @@ class TestHardwareKitBuilder(unittest.TestCase):
         self.assertEqual(len(slices), 4)
         for s in slices:
             self.assertTrue(s["trimmed"])
+
+    def test_09_parse_xpm_program_avoids_ghost_pads(self):
+        # Generar un XPM con 4 pads asignados (los otros 124 instrumentos vacíos en XML)
+        out_dir = self.test_dir / "out_mpc_parse"
+        xpm_path = export_mpc_program("TestKit_4Pads", self.pads_data, out_dir, copy_samples=False)
+        self.assertTrue(Path(xpm_path).exists())
+
+        prog = parse_xpm_program(xpm_path, source_root=self.test_dir)
+        self.assertEqual(prog["program_name"], "TestKit_4Pads")
+        pads = prog["pads"]
+
+        # Debe tener exactamente 4 pads asignados
+        self.assertEqual(len(pads), 4, f"Se esperaban 4 pads asignados, pero se obtuvieron {len(pads)}")
+        self.assertEqual(sorted(pads.keys()), [1, 2, 3, 4])
+
+        # Verificar que ningún pad tiene '.wav' como nombre de archivo ni nombres vacíos
+        for p_num, p_data in pads.items():
+            self.assertNotEqual(p_data["sample_file"], ".wav", f"Pad {p_num} tiene sample_file vacío/erróneo: '.wav'")
+            self.assertTrue(len(p_data["sample_name"]) > 0, f"Pad {p_num} tiene sample_name vacío")
+            self.assertIn(p_num, [1, 2, 3, 4])
+
+        # Los pads 5 a 128 NO deben estar en el diccionario (evitando pads fantasma)
+        for unassigned in range(5, 17):
+            self.assertNotIn(unassigned, pads, f"El pad desasignado {unassigned} no debe estar en pads!")
+
+    def test_10_parse_xpm_program_resolves_all_real_samples(self):
+        # Comprobar que los samples asignados resuelven sus rutas completas y tipos sonoros
+        out_dir = self.test_dir / "out_mpc_parse_res"
+        xpm_path = export_mpc_program("TestKit_Resolve", self.pads_data, out_dir, copy_samples=True)
+        prog = parse_xpm_program(xpm_path, source_root=self.test_dir)
+        pads = prog["pads"]
+
+        self.assertEqual(pads[1]["sound_type"], "KICK")
+        self.assertEqual(pads[2]["sound_type"], "SNARE")
+        self.assertEqual(pads[3]["sound_type"], "HIHAT")
+        self.assertEqual(pads[4]["sound_type"], "HIHAT")
+        self.assertTrue(pads[1]["full_path"].endswith("test_sample_1.wav"))
 
 if __name__ == "__main__":
     unittest.main()

@@ -221,24 +221,34 @@ def parse_xpm_program(xpm_path: str | Path, source_root: Optional[str | Path] = 
         mute_group = int(inst.findtext("MuteGroup", "0"))
         tune_coarse = int(inst.findtext("TuneCoarse", "0"))
 
-        l1 = inst.find(".//Layer[@number='1']")
         sample_name = ""
         sample_file = ""
-        if l1 is not None:
-            sample_name = l1.findtext("SampleName", "")
-            sample_file = l1.findtext("SampleFile", "")
+        for layer in inst.findall(".//Layer"):
+            sn = layer.findtext("SampleName", "").strip()
+            sf = layer.findtext("SampleFile", "").strip()
+            if sf or sn:
+                sample_name = sn
+                sample_file = sf
+                break
 
-        found_path, rel_path = None, ""
-        stype = "PERCUSSION"
-        if sample_file or sample_name:
-            target_ref = sample_file or (sample_name + ".wav")
-            found_path, rel_path = _resolve_sample_file(target_ref, search_dirs, root_p)
-            stype = detect_sound_type(found_path.name if found_path else target_ref)
+        if not sample_file and not sample_name:
+            continue  # Pad sin muestra asignada: evitar pads fantasma vacíos
+
+        target_ref = sample_file if sample_file else (
+            sample_name if sample_name.lower().endswith(".wav") else f"{sample_name}.wav"
+        )
+        if target_ref == ".wav":
+            continue
+
+        found_path, rel_path = _resolve_sample_file(target_ref, search_dirs, root_p)
+        actual_filename = found_path.name if found_path else target_ref
+        actual_stem = found_path.stem if found_path else (sample_name or Path(target_ref).stem)
+        stype = detect_sound_type(f"{actual_filename} {actual_stem} {sample_name}")
 
         pads[num] = {
             "pad_number": num,
-            "sample_name": sample_name or Path(sample_file).stem,
-            "sample_file": sample_file or (sample_name + ".wav"),
+            "sample_name": actual_stem,
+            "sample_file": actual_filename,
             "full_path": str(found_path) if found_path else "",
             "rel_path": rel_path,
             "volume": vol,
@@ -365,11 +375,14 @@ def list_expansion_kits(
             for inst in root.findall(".//Instrument"):
                 num = int(inst.get("number", 0))
                 if 1 <= num <= 16:
-                    l1 = inst.find(".//Layer[@number='1']")
-                    if l1 is not None:
-                        sf = l1.findtext("SampleFile", "")
-                        if sf:
-                            samples.append(sf)
+                    for layer in inst.findall(".//Layer"):
+                        sf = layer.findtext("SampleFile", "").strip()
+                        sn = layer.findtext("SampleName", "").strip()
+                        if sf or sn:
+                            t_file = sf if sf else (sn if sn.lower().endswith(".wav") else f"{sn}.wav")
+                            if t_file != ".wav":
+                                samples.append(t_file)
+                            break
 
             try:
                 rel_to_card = x.relative_to(card_root).as_posix()
@@ -429,7 +442,12 @@ def export_mpc_program(
     for pad_num in range(1, 129):
         p_info = pads_data.get(pad_num, {})
         s_name = p_info.get("sample_name", "")
-        s_file = p_info.get("sample_file", "")
+        s_file = (
+            p_info.get("sample_file")
+            or p_info.get("sample_path")
+            or p_info.get("source_path")
+            or (f"{s_name}.wav" if s_name else "")
+        )
         vol = p_info.get("volume", 0.707946)
         pan = p_info.get("pan", 0.500000)
         tune = p_info.get("tune", 0)
@@ -447,9 +465,11 @@ def export_mpc_program(
         layers = ET.SubElement(inst, "Layers")
         for layer_idx in range(1, 5):
             layer = ET.SubElement(layers, "Layer", number=str(layer_idx))
-            if layer_idx == 1 and s_file:
-                ET.SubElement(layer, "SampleName").text = s_name or Path(s_file).stem
-                ET.SubElement(layer, "SampleFile").text = Path(s_file).name
+            if layer_idx == 1 and (s_file or s_name):
+                file_name = Path(s_file).name if s_file else (f"{s_name}.wav" if not s_name.endswith(".wav") else s_name)
+                name_stem = s_name or Path(file_name).stem
+                ET.SubElement(layer, "SampleName").text = name_stem
+                ET.SubElement(layer, "SampleFile").text = file_name
                 ET.SubElement(layer, "SliceIndex").text = "0"
                 ET.SubElement(layer, "VelStart").text = "0"
                 ET.SubElement(layer, "VelEnd").text = "127"

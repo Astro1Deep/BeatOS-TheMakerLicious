@@ -4186,15 +4186,24 @@ function loadProjectToRack(projectName) {
         let loaded = 0;
         for (let pNum = 1; pNum <= 16; pNum++) {
           const pData = padsObj[pNum] || padsObj[String(pNum)];
-          if (pData) {
-            const stype = pData.sound_type || detectSoundTypeFromFilename(pData.sample_file || pData.sample_name);
-            let relP = pData.rel_path || pData.full_path || pData.sample_file || '';
+          if (pData && (pData.sample_file || pData.sample_name)) {
+            const sampleFilename = (pData.sample_file && pData.sample_file !== '.wav')
+              ? pData.sample_file
+              : (pData.sample_name ? (pData.sample_name.endsWith('.wav') ? pData.sample_name : pData.sample_name + '.wav') : '');
+            
+            if (!sampleFilename || sampleFilename === '.wav') {
+              RACK_PADS[pNum - 1] = null;
+              continue;
+            }
+
+            const stype = pData.sound_type || detectSoundTypeFromFilename(sampleFilename);
+            let relP = pData.rel_path || pData.full_path || sampleFilename || '';
             if (relP.includes('/Volumes/MPCSMPL/')) {
               relP = relP.replace('/Volumes/MPCSMPL/', '');
             }
             relP = relP.replace(/^\/+/, '');
             RACK_PADS[pNum - 1] = {
-              filename: pData.sample_file || (pData.sample_name + '.wav'),
+              filename: sampleFilename,
               soundType: stype,
               relPath: relP,
               volume: (pData.volume !== undefined) ? pData.volume : 0.707946,
@@ -4206,6 +4215,8 @@ function loadProjectToRack(projectName) {
               padColor: PAD_COLORS[stype] || '#00f0ff'
             };
             loaded++;
+          } else {
+            RACK_PADS[pNum - 1] = null;
           }
         }
         renderRackGrid();
@@ -4339,7 +4350,7 @@ function renderExpansionProgramsList(programs) {
     const isDrum = (k.program_type || '').toLowerCase() === 'drum';
     const badgeColor = isDrum ? 'var(--mpc-cyan)' : 'var(--mpc-gold)';
     const typeLabel = isDrum ? 'DRUM KIT' : (k.program_type || 'PROGRAM');
-    const padsInfo = k.pad_count ? `${k.pad_count} Pads asignados` : '16 Pads asignados';
+    const padsInfo = k.pad_count ? `${k.pad_count}/16 Pads asignados` : '16 Pads asignados';
     const subCatInfo = k.sub_category ? `<span style="font-size:10px; color:var(--text-muted); display:block; margin-top:2px;">📁 ${escapeHtml(k.sub_category)}</span>` : '';
     
     const isCurrentActive = (currentLoadedKitRelPath && currentLoadedKitRelPath === k.rel_path);
@@ -4403,15 +4414,24 @@ function loadXpmProgramToRack(relPath, programName, kitIdx = -1) {
       for (let pNum = 1; pNum <= 16; pNum++) {
         const pData = padsObj[pNum] || padsObj[String(pNum)];
         if (pData && (pData.sample_file || pData.sample_name)) {
-          const stype = pData.sound_type || detectSoundTypeFromFilename(pData.sample_file || pData.sample_name);
-          let relP = pData.rel_path || pData.full_path || pData.sample_file || '';
+          const sampleFilename = (pData.sample_file && pData.sample_file !== '.wav')
+            ? pData.sample_file
+            : (pData.sample_name ? (pData.sample_name.endsWith('.wav') ? pData.sample_name : pData.sample_name + '.wav') : '');
+          
+          if (!sampleFilename || sampleFilename === '.wav') {
+            RACK_PADS[pNum - 1] = null;
+            continue;
+          }
+
+          const stype = pData.sound_type || detectSoundTypeFromFilename(sampleFilename);
+          let relP = pData.rel_path || pData.full_path || sampleFilename || '';
           if (relP.includes('/Volumes/MPCSMPL/')) {
             relP = relP.replace('/Volumes/MPCSMPL/', '');
           }
           relP = relP.replace(/^\/+/, '');
           
           RACK_PADS[pNum - 1] = {
-            filename: pData.sample_file || (pData.sample_name + '.wav'),
+            filename: sampleFilename,
             soundType: stype,
             relPath: relP,
             volume: (pData.volume !== undefined) ? pData.volume : 0.707946,
@@ -4423,6 +4443,8 @@ function loadXpmProgramToRack(relPath, programName, kitIdx = -1) {
             padColor: PAD_COLORS[stype] || '#00f0ff'
           };
           loaded++;
+        } else {
+          RACK_PADS[pNum - 1] = null;
         }
       }
       
