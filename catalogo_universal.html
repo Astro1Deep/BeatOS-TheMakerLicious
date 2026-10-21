@@ -18,7 +18,7 @@
     --mpc-green: #2ecc71;
     --border-color: #272e3a;
     --theme-accent: #ff6600;
-    --banner-bg: #0d0f14;
+    --banner-bg: #141519;
     --banner-paper: #141720;
     --banner-border: #2b3242;
     --banner-line: #f4f4f6;
@@ -222,7 +222,7 @@
     --dock-pad-hover: #ebeaee;
     --modal-bg: #ffffff;
     --modal-box-bg: #f5f5f7;
-    --banner-bg: #ebebed;
+    --banner-bg: #dedee0;
     --banner-paper: #ffffff;
     --banner-border: #c8c8cf;
     --banner-line: #111111;
@@ -365,6 +365,14 @@
     max-width: 1600px;
     margin: 0 auto;
     transition: all 0.3s ease;
+  }
+  #heroBannerImg {
+    width: 100%;
+    max-height: 480px;
+    object-fit: contain;
+    display: block;
+    border-radius: 4px;
+    transition: max-height 0.35s cubic-bezier(0.2, 0, 0, 1);
   }
   
   .header-metrics-bar {
@@ -1680,12 +1688,14 @@
 </head>
 <body>
 
-<div class="hero-banner" style="position:relative; width:100%; max-width:1600px; margin:0 auto; padding:0; overflow:hidden; background:var(--banner-bg, #0d0f14);">
-  <img id="heroBannerImg" src="docs/assets/branding/banner_variant_01_mpc_sample.jpg" alt="BeatOS Banner" style="width:100%; height:auto; display:block; border-radius:4px;">
-  <div class="banner-variant-tabs" style="position:absolute; top:12px; right:16px; display:flex; gap:6px; z-index:10; align-items:center;">
-    <button type="button" onclick="setBannerVariant('sample')" class="b-tab active" id="btn-var-sample" style="background:rgba(0,0,0,0.85); border:1px solid #ff6600; color:#fff; padding:5px 12px; font-size:11px; font-weight:700; border-radius:4px; cursor:pointer; font-family:'SF Mono', Monaco, monospace; transition:all 0.2s;">01 · MPC Sample</button>
+<div class="hero-banner" style="position:relative; width:100%; max-width:1600px; margin:0 auto; padding:0; overflow:hidden; background:var(--banner-bg, #141519); display:flex; justify-content:center; align-items:center;">
+  <img id="heroBannerImg" src="docs/assets/branding/user_blueprint_sheet_dark_hd.jpg" alt="BeatOS Blueprint (6 Hardwares)" style="width:100%; max-height:480px; object-fit:contain; display:block; border-radius:4px; cursor:pointer;" onclick="toggleBannerExpand()" title="Haz clic para expandir o ajustar el Blueprint">
+  <div class="banner-variant-tabs" style="position:absolute; top:12px; right:16px; display:flex; gap:6px; z-index:10; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+    <button type="button" onclick="setBannerVariant('master')" class="b-tab active" id="btn-var-master" style="background:rgba(0,0,0,0.85); border:1px solid var(--theme-accent, #ff6600); color:#fff; padding:5px 12px; font-size:11px; font-weight:700; border-radius:4px; cursor:pointer; font-family:'SF Mono', Monaco, monospace; transition:all 0.2s;">📐 Blueprint (6 Hardwares)</button>
+    <button type="button" onclick="setBannerVariant('sample')" class="b-tab" id="btn-var-sample" style="background:rgba(0,0,0,0.6); border:1px solid #444; color:#aaa; padding:5px 12px; font-size:11px; font-weight:700; border-radius:4px; cursor:pointer; font-family:'SF Mono', Monaco, monospace; transition:all 0.2s;">01 · MPC Sample</button>
     <button type="button" onclick="setBannerVariant('one')" class="b-tab" id="btn-var-one" style="background:rgba(0,0,0,0.6); border:1px solid #444; color:#aaa; padding:5px 12px; font-size:11px; font-weight:700; border-radius:4px; cursor:pointer; font-family:'SF Mono', Monaco, monospace; transition:all 0.2s;">02 · MPC One</button>
     <button type="button" onclick="setBannerVariant('live3')" class="b-tab" id="btn-var-live3" style="background:rgba(0,0,0,0.6); border:1px solid #444; color:#aaa; padding:5px 12px; font-size:11px; font-weight:700; border-radius:4px; cursor:pointer; font-family:'SF Mono', Monaco, monospace; transition:all 0.2s;">03 · MPC Live III</button>
+    <button type="button" onclick="toggleBannerExpand()" id="btnToggleBannerExpand" style="background:rgba(0,0,0,0.7); border:1px solid #666; color:#ddd; padding:5px 10px; font-size:11px; font-weight:700; border-radius:4px; cursor:pointer; font-family:'SF Mono', Monaco, monospace; transition:all 0.2s;" title="Alternar entre vista contenida y resolución completa">⛶ Expandir</button>
     <a href="https://ko-fi.com/astro1deep" target="_blank" rel="noopener noreferrer" style="background:linear-gradient(135deg, #ff5e5b, #ff416c); color:#fff; text-decoration:none; padding:5px 12px; border-radius:4px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:5px; font-family:'SF Mono', Monaco, monospace; border:1px solid rgba(255,255,255,0.25); box-shadow:0 2px 8px rgba(255,65,108,0.35); transition:all 0.2s;" title="Apoyar el desarrollo independiente de BeatOS (1€)">☕ Apoyar (1€)</a>
   </div>
 </div>
@@ -2560,17 +2570,34 @@
 <div id="toast" class="toast">✔ Ruta copiada al portapapeles</div>
 
 <script>
-let currentBannerVariant = 'sample';
+let currentBannerVariant = 'master';
+let isBannerExpanded = false;
+
+function toggleBannerExpand() {
+  isBannerExpanded = !isBannerExpanded;
+  const img = document.getElementById('heroBannerImg');
+  const btn = document.getElementById('btnToggleBannerExpand');
+  if (img) {
+    if (isBannerExpanded) {
+      img.style.maxHeight = 'none';
+      if (btn) btn.innerHTML = '🗗 Reducir';
+    } else {
+      img.style.maxHeight = '480px';
+      if (btn) btn.innerHTML = '⛶ Expandir';
+    }
+  }
+}
 
 function setBannerVariant(v) {
   currentBannerVariant = v;
   const img = document.getElementById('heroBannerImg');
   if(!img) return;
+  const btnMaster = document.getElementById('btn-var-master');
   const btnSample = document.getElementById('btn-var-sample');
   const btnOne = document.getElementById('btn-var-one');
   const btnLive = document.getElementById('btn-var-live3');
   
-  [btnSample, btnOne, btnLive].forEach(b => {
+  [btnMaster, btnSample, btnOne, btnLive].forEach(b => {
     if(b) {
       b.style.borderColor = '#444';
       b.style.color = '#aaa';
@@ -2579,7 +2606,10 @@ function setBannerVariant(v) {
   });
   
   const isBone = (typeof currentThemeId !== 'undefined' && currentThemeId === 'makerlicious-bone');
-  if(v === 'sample') {
+  if(v === 'master') {
+    img.src = isBone ? 'docs/assets/branding/user_blueprint_sheet_bone_hd.jpg' : 'docs/assets/branding/user_blueprint_sheet_dark_hd.jpg';
+    if(btnMaster) { btnMaster.style.borderColor = 'var(--theme-accent, #ff6600)'; btnMaster.style.color = '#fff'; btnMaster.style.background = 'rgba(0,0,0,0.85)'; }
+  } else if(v === 'sample') {
     img.src = isBone ? 'docs/assets/branding/banner_variant_01_mpc_sample_bone.jpg' : 'docs/assets/branding/banner_variant_01_mpc_sample.jpg';
     if(btnSample) { btnSample.style.borderColor = 'var(--theme-accent, #ff6600)'; btnSample.style.color = '#fff'; btnSample.style.background = 'rgba(0,0,0,0.85)'; }
   } else if(v === 'one') {
@@ -5084,13 +5114,15 @@ function setEcosystemTheme(themeKey, syncWithServer = true) {
     localStorage.setItem('ecosystem_theme', themeObj.id);
   } catch(e) {}
 
-  // Sincronizar Banner 4K reactivo al tema manteniendo la variante activa (Sheet 01, 02 o 03)
+  // Sincronizar Banner reactivo al tema manteniendo la variante activa (Master Blueprint, Sheet 01, 02 o 03)
   const heroImg = document.getElementById('heroBannerImg');
   const heroContainer = document.querySelector('.hero-banner');
   if (heroImg) {
     const isBone = (themeObj.id === 'makerlicious-bone');
-    const v = typeof currentBannerVariant !== 'undefined' ? currentBannerVariant : 'sample';
-    if (v === 'one') {
+    const v = typeof currentBannerVariant !== 'undefined' ? currentBannerVariant : 'master';
+    if (v === 'master') {
+      heroImg.src = isBone ? 'docs/assets/branding/user_blueprint_sheet_bone_hd.jpg' : 'docs/assets/branding/user_blueprint_sheet_dark_hd.jpg';
+    } else if (v === 'one') {
       heroImg.src = isBone ? 'docs/assets/branding/banner_variant_02_mpc_one_bone.jpg' : 'docs/assets/branding/banner_variant_02_mpc_one_dark.jpg';
     } else if (v === 'live3') {
       heroImg.src = isBone ? 'docs/assets/branding/banner_variant_03_mpc_live3_bone.jpg' : 'docs/assets/branding/banner_variant_03_mpc_live3_dark.jpg';
@@ -5100,7 +5132,7 @@ function setEcosystemTheme(themeKey, syncWithServer = true) {
   }
   if (heroContainer) {
     heroContainer.style.borderBottomColor = themeObj.accent;
-    heroContainer.style.background = 'var(--banner-bg)';
+    heroContainer.style.background = (themeObj.id === 'makerlicious-bone') ? '#dedee0' : '#141519';
   }
 
   // Actualizar pill en header
@@ -5158,6 +5190,12 @@ function cycleEcosystemTheme() {
 
 function initEcosystemTheme() {
   try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramTheme = urlParams.get('theme');
+    if (paramTheme && ECOSYSTEM_THEMES.some(t => t.id === paramTheme)) {
+      setEcosystemTheme(paramTheme, false);
+      return;
+    }
     const storedSync = localStorage.getItem('ecosystem_theme_sync');
     if (storedSync !== null) {
       isThemeSyncEnabled = (storedSync === '1');
