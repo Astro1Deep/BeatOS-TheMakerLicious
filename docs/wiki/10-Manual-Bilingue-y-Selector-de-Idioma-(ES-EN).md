@@ -33,7 +33,7 @@ Clicking the **`🌐 ES | EN`** button in the top metrics bar instantly switches
 ### Persistence & Configuration
 The chosen language is automatically stored in the browser's `localStorage` (`mpc_lang`). Subsequent visits will remember your preferred language.
 
-For CLI and custom integrations, [`language_config.json`](file:///Users/ivan/Documents/mpc-sample-database/language_config.json) defines the default system localization:
+The web catalog uses its embedded translation dictionary and stores the selected language in localStorage. The repository also keeps the historical [`language_config.json`](../../language_config.json) reference:
 
 ```json
 {

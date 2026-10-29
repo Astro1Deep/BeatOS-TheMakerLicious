@@ -24,7 +24,7 @@ echo "  ██║ ╚═╝ ██║██║     ╚██████╗    �
 echo "  ╚═╝     ╚═╝╚═╝      ╚═════╝    ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝     ╚══════╝╚══════╝"
 echo -e "${NC}"
 echo -e "${CYAN}  🎛️  Toolkit de Base de Datos SQLite y Catálogo Visual para Akai MPC${NC}"
-echo -e "${GOLD}  Versión 1.1.0 • Open Source Community Edition • Astro1Deep${NC}"
+echo -e "${GOLD}  BeatOS 3.6.4 • Open Source Community Edition • Astro1Deep${NC}"
 echo "=============================================================================="
 
 # 1. Comprobación de requisitos
@@ -48,7 +48,7 @@ fi
 # 2. Menú de Opciones
 echo -e "\n${BOLD}[2/2] Selecciona una opción:${NC}"
 echo -e "  ${CYAN}1)${NC} 🚀 Indexar automáticamente tarjeta Micro SD o carpeta de samples"
-echo -e "  ${CYAN}2)${NC} 🌐 Iniciar Servidor Web Local y Abrir Catálogo (Reproducción 100% garantizada)"
+echo -e "  ${CYAN}2)${NC} 🌐 Iniciar Servidor Web Local y Abrir Catálogo (Audio y herramientas locales)"
 echo -e "  ${CYAN}3)${NC} 🧹 Limpiar archivos fantasma de macOS (._* y .DS_Store) en la tarjeta"
 echo -e "  ${CYAN}4)${NC} 🗄️ Inicializar una Base de Datos SQLite vacía desde schema.sql"
 echo -e "  ${CYAN}5)${NC} 📚 Abrir Wiki y Documentación Oficial"
@@ -65,15 +65,6 @@ case $OPTION in
             TARGET_PATH="$SCRIPT_DIR"
         fi
         
-        # Limpieza previa de AppleDouble si es macOS
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            echo -e "${GOLD}Comprobando archivos fantasma AppleDouble (._*)...${NC}"
-            if command -v dot_clean &>/dev/null; then
-                dot_clean -m "$TARGET_PATH" 2>/dev/null || true
-            fi
-            find "$TARGET_PATH" -name "._*" -delete 2>/dev/null || true
-        fi
-        
         echo -e "\n${CYAN}Iniciando indexador en:${NC} $TARGET_PATH"
         python3 "$SCRIPT_DIR/index_mpc_library.py" --path "$TARGET_PATH"
         
@@ -87,11 +78,7 @@ case $OPTION in
             echo -e "¿Deseas abrir el catálogo en tu navegador ahora? (s/n)"
             read -p "> " OPEN_NOW
             if [[ "$OPEN_NOW" =~ ^[sSyY] ]]; then
-                if [[ "$OSTYPE" == "darwin"* ]]; then
-                    open "$TARGET_CAT"
-                elif command -v xdg-open &>/dev/null; then
-                    xdg-open "$TARGET_CAT"
-                fi
+                python3 "$SCRIPT_DIR/serve_mpc.py" "$TARGET_PATH"
             fi
         fi
         ;;

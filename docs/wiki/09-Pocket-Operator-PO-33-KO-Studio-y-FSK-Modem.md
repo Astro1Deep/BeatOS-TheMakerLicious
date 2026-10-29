@@ -1,39 +1,23 @@
-# 🕹️ 09. Pocket Operator PO-33 / PO-133 Studio & FSK Audio Modem
+# PO-33, PO-133 y EP-133: alcance real de BeatOS
 
-Esta sección documenta el soporte de ingeniería para los samplers de bolsillo **Teenage Engineering Pocket Operator PO-33 K.O.! y PO-133 Street Fighter**.
+## PO-33 / PO-133
 
----
+El reel reúne los pads ocupados del rack en audio mono PCM 16-bit/44.1 kHz. Ese es el formato del archivo de intercambio, no una afirmación sobre la electrónica interna. Volumen y afinación se procesan en el audio y luego se normaliza el conjunto; panorama y mutes no se transfieren al PO.
 
-## ⏱️ 1. Restricciones Críticas de Hardware
+El Hub permite fijar presupuesto de 1–40 s y pausas de 0–500 ms. Introduce la memoria libre que muestra el dispositivo: BeatOS no la consulta. Si hace falta, el exportador recorta con fade-out y guarda un manifiesto con segundos, frames, número de corte y pad de origen. Los 150 ms predeterminados ayudan a separar golpes, pero no garantizan cortes perfectos: revisa TRIM.
 
-El microcontrolador del PO-33 opera bajo especificaciones estrictas:
-* **Capacidad Máxima de Muestra**: **40.0 segundos totales** de memoria RAM compartida entre los 16 slots.
-* **Distribución de Ranuras**:
-  - Ranuras 1 a 8: **Slots Melódicos** (un sample asignado cromáticamente a lo largo de los 16 botones).
-  - Ranuras 9 a 16: **Slots de Batería (Drum Kits)** (cada slot contiene hasta 16 slices o cortes independientes).
-* **Frecuencia de Muestreo Hardware**: 16-bit / 44.1 kHz.
+Conecta la salida de audio a LINE IN y graba manteniendo RECORD y el slot de batería elegido (9–16). Ajusta nivel sin saturación. No hay un porcentaje universal de volumen válido para todas las interfaces. El PO-20 no admite esta carga de samples.
 
----
+Los respaldos de audio se catalogan y descargan sin modificarlos. La inspección revisa encabezado y amplitud de los primeros cuatro segundos: **no decodifica ni verifica el contenido del módem**, y nunca debe interpretarse como garantía de restauración. Guarda antes el estado del PO; recibir un respaldo sustituye muestras y patrones. Fuentes: [PO-33](https://teenage.engineering/guides/po-33/en) y [PO-133](https://teenage.engineering/guides/po-133/en).
 
-## 🥁 2. Generador de Drum Reel con Auto-Slice de 150 ms
+## EP-133 K.O. II
 
-El PO-33 cuenta con un algoritmo interno de corte por transitorios (**Auto-Slice**) que segmenta automáticamente un sonido en hasta 16 porciones cuando detecta pausas de silencio entre golpes.
+BeatOS genera WAV PCM 16-bit/44.1 kHz, conservando mono/estéreo y niveles originales, más un mapa JSON y un ZIP de transporte. Sólo incluye pads ocupados. FFmpeg es necesario para convertir formatos o frecuencias distintos; un fallo detiene la exportación y no deja un kit parcial anunciado como válido.
 
-### Calibración del Reel
-El módulo [`hardware_kit_builder.py`](file:///Users/ivan/Documents/mpc-sample-database/hardware_kit_builder.py) sintetiza una única pista de audio continua concatenando los pads 9 al 16 con las siguientes características:
-1. **Silencio Calibrado**: Exactamente **150 milisegundos de silencio digital puro** entre cada muestra. Menos de 100 ms puede provocar que el algoritmo una dos golpes; más de 250 ms desperdicia memoria RAM valiosa.
-2. **Presupuesto Estricto**: El generador verifica matemáticamente que la suma total de los samples más los silencios **no supere los 40.0 segundos**, emitiendo una alerta si se excede el límite.
-3. **Puntos de Trim**: Exporta un manifiesto en JSON y TXT con los puntos de corte en milisegundos (`start_ms` y `end_ms`).
+Extrae el ZIP y carga los WAV con [EP Sample Tool](https://teenage.engineering/apps/ep-sample-tool). El ZIP BeatOS no es un respaldo nativo. El mapa propone A: teclas 1–9, punto, 0, ENTER; y B: teclas 1–4. La asignación, volumen, panorama, tono y mutes del mapa se aplican manualmente; cargar un WAV no transmite esos parámetros.
 
----
+La herramienta oficial usa **Web MIDI** por USB-C. El soporte oficial incluye Chrome, Edge y Firefox de escritorio, y excluye Safari y móviles. Permite importar muestras y gestionar respaldos de sistema o proyecto. [Instrucciones oficiales](https://support.teenage.engineering/hc/en-us/articles/11639171890204-how-to-use-the-EP-sample-tool).
 
-## 📡 3. Protocolo de Respaldo por Audio Módem FSK (~73.6 s)
+La guía actual 2.5 describe 128 MB y hasta 999 muestras; el artículo antiguo de soporte aún menciona 64 MB. Comprueba la capacidad indicada por tu herramienta y firmware. La frecuencia nativa indicada en la guía es 46.875 kHz; el archivo exportado por BeatOS a 44.1 kHz es un formato de intercambio admitido, no la frecuencia nativa. [Guía actual](https://teenage.engineering/guides/ep-133) · [Transferencia y CHOP](https://teenage.engineering/guides/ep-133/functions) · [Ajustes y mutes](https://teenage.engineering/guides/ep-133/modes).
 
-El PO-33 permite realizar copias de seguridad completas de sus patrones, kits y sonidos mediante un flujo de modulación por desplazamiento de frecuencia (**FSK - Frequency Shift Keying**), transmitido a través del conector jack de 3.5 mm.
-
-### Especificaciones del Archivo de Backup
-* **Duración Típica**: Aproximadamente **73.6 segundos** a 44.1 kHz estéreo (Canal Izquierdo: Datos binarios modulados en FSK; Canal Derecho: Pista de audio de sincronización o click).
-* **Verificación Forense**:
-  El analizador examina la cabecera del archivo WAV, la frecuencia de muestreo y la presencia de tonos de portadora de audio de alta frecuencia característicos del módem FSK.
-* **Carga en los Pads Web**:
-  Desde la pestaña **`🕹️ Pocket Operator (PO-33)`** del catálogo, puedes preescuchar y verificar cualquier archivo de backup existente en tu carpeta de usuario (ej. `boombap.wav`, `backup_po33.wav`), y cargarlo de vuelta a la interfaz web para editar o intercambiar sus sonidos.
+No se ha conectado ni actualizado firmware de hardware durante esta revisión. Una prueba de software no sustituye la carga y escucha física.

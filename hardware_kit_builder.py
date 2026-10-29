@@ -6,7 +6,7 @@ Soporta de forma nativa, estable y sin dependencias externas:
      - Exportación de Programas (.xpm Drum Program) y Proyectos (.xpj)
      - Mapeo de 16 a 128 pads, Bancos A-H, capas de velocidad, afinación y choke groups.
   2. Native Instruments Maschine (MK3 / Plus / Mikro):
-     - Mapeo de Grupos (.mxgrp / audio mapping estructurado)
+     - Mapeo de Grupos (WAV y mapa JSON)
      - Estructura de directorio estandarizada Samples/Group_A
   3. Roland SP-404MK2 & DOOM OS / SP-404A / SX:
      - Mapeo de Banco A (16 pads para MK2 / 12 pads para 404A)
@@ -29,6 +29,7 @@ import os
 import re
 import shutil
 import struct
+import subprocess
 import sys
 import time
 import wave
@@ -40,7 +41,7 @@ from xml.etree import ElementTree as ET
 logger = logging.getLogger(__name__)
 
 # Directorio por defecto de backups de Pocket Operator
-DEFAULT_PO_DIR = Path("/Users/ivan/Documents/PO- POCKET OPERATORS")
+DEFAULT_PO_DIR = Path.home() / "Documents" / "PO- POCKET OPERATORS"
 
 # ==============================================================================
 # 1. PARSERS: LECTURA DE PROYECTOS Y PROGRAMAS EXISTENTES
@@ -55,7 +56,9 @@ def detect_sound_type(filename: str) -> str:
         return "SNARE"
     if any(k in f for k in ["clap", "cp_", "clp", "cp-"]):
         return "CLAP"
-    if any(k in f for k in ["hat", "hh_", "cymbal", "ride", "crash", "hihat", "openhh", "closedhh"]):
+    if any(k in f for k in ["cymbal", "ride", "crash"]):
+        return "CYMBAL"
+    if any(k in f for k in ["hat", "hh_", "hihat", "openhh", "closedhh"]):
         return "HIHAT"
     if any(k in f for k in ["bass", "808", "sub", "subbass", "reese"]):
         return "BASS_808"
@@ -70,6 +73,24 @@ def detect_sound_type(filename: str) -> str:
     if any(k in f for k in ["loop", "break", "groove"]):
         return "MELODIC_LOOP"
     return "PERCUSSION"
+
+
+def default_mute_group(sound_type: str) -> int:
+    """Only like percussion families choke each other; all other pads stay free."""
+    return {"KICK": 1, "HIHAT": 2, "SNARE": 3}.get(sound_type, 0)
+
+
+def pad_mute_group(pad: dict) -> int:
+    value = pad.get("mute_group", pad.get("muteGroup"))
+    if value is None:
+        kind = pad.get("sound_type", pad.get("soundType"))
+        if not kind or kind == "SAMPLE":
+            kind = detect_sound_type(pad.get("sample_file") or pad.get("source_path") or pad.get("sample_name", ""))
+        value = default_mute_group(kind)
+    value = int(value)
+    if not 0 <= value <= 32:
+        raise ValueError("Mute group must be between 0 and 32")
+    return value
 
 
 def _normalize_name(name: str) -> str:
@@ -116,69 +137,29 @@ def _resolve_sample_file(
     Busca físicamente un archivo de muestra en una lista de directorios con tolerancia a espacios y guiones.
     Devuelve (Path_absoluto_o_None, rel_path_respecto_a_source_root).
     """
-    clean_ref = Path(sample_ref).name
-    norm_ref = _normalize_name(clean_ref)
-
-    if source_root is None:
-        source_root = Path("/Volumes/MPCSMPL") if Path("/Volumes/MPCSMPL").is_dir() else Path.cwd()
-
-    for s_dir in search_dirs:
-        if not s_dir or not s_dir.is_dir():
-            continue
-
-        # 1. Coincidencia exacta
-        direct = s_dir / clean_ref
-        if direct.is_file():
-            try:
-                rel = direct.relative_to(source_root).as_posix()
-            except ValueError:
-                rel = direct.name
-            return direct, rel
-
-        # 2. Variantes comunes (espacio <-> guion bajo, trailing spaces)
-        variants = [
-            clean_ref.replace(" ", "_"),
-            clean_ref.replace("_", " "),
-            clean_ref.replace(" .wav", ".wav"),
-            clean_ref.strip(),
-        ]
-        for v in variants:
-            cand = s_dir / v
-            if cand.is_file():
-                try:
-                    rel = cand.relative_to(source_root).as_posix()
-                except ValueError:
-                    rel = cand.name
-                return cand, rel
-
-        # 3. Búsqueda normalizada en el directorio
-        for f in s_dir.iterdir():
-            if f.is_file() and _normalize_name(f.name) == norm_ref:
-                try:
-                    rel = f.relative_to(source_root).as_posix()
-                except ValueError:
-                    rel = f.name
-                return f, rel
-
-    # 4. Búsqueda recursiva en subdirectorios si es una expansión o carpeta de datos
-    for s_dir in search_dirs:
-        if s_dir and s_dir.is_dir():
-            cand_sub = list(s_dir.glob(f"**/{clean_ref}"))
-            if not cand_sub:
-                cand_sub = list(s_dir.glob(f"**/{clean_ref.replace(' ', '_')}"))
-            if not cand_sub:
-                cand_sub = list(s_dir.glob(f"**/{clean_ref.replace('_', ' ')}"))
-            if cand_sub:
-                f = cand_sub[0]
-                try:
-                    rel = f.relative_to(source_root).as_posix()
-                except ValueError:
-                    rel = f.name
-                return f, rel
-
-    # Fallback si no se encontró en disco
-    fallback_rel = sample_ref.replace("/Volumes/MPCSMPL/", "").lstrip("/")
-    return None, fallback_rel
+    root = Path(source_root or Path.cwd()).resolve()
+    reference = Path(str(sample_ref).replace("\\", "/"))
+    directories = [Path(d).resolve() for d in search_dirs if d and Path(d).is_dir()]
+    def usable(candidate):
+        return candidate.is_file() and candidate.resolve().is_relative_to(root)
+    exact = [reference] if reference.is_absolute() else [d / reference for d in directories] + [root / reference]
+    for candidate in exact:
+        if usable(candidate):
+            return candidate.resolve(), candidate.resolve().relative_to(root).as_posix()
+    # Basename fallback must be unique: never substitute a different layer silently.
+    name = reference.name
+    for normalized in (False, True):
+        matches = set()
+        for directory in directories:
+            for candidate in directory.rglob('*'):
+                if (candidate.name == name if not normalized else _normalize_name(candidate.name) == _normalize_name(name)) and usable(candidate):
+                    matches.add(candidate.resolve())
+        if len(matches) == 1:
+            match = matches.pop()
+            return match, match.relative_to(root).as_posix()
+        if matches:
+            return None, ''
+    return None, ''
 
 
 def parse_xpm_program(xpm_path: str | Path, source_root: Optional[str | Path] = None) -> dict:
@@ -223,7 +204,8 @@ def parse_xpm_program(xpm_path: str | Path, source_root: Optional[str | Path] = 
 
         sample_name = ""
         sample_file = ""
-        for layer in inst.findall(".//Layer"):
+        layers = [layer for layer in inst.findall(".//Layer") if layer.findtext("Active", "True").lower() != "false" and (layer.findtext("SampleName") or layer.findtext("SampleFile"))]
+        for layer in layers:
             sn = layer.findtext("SampleName", "").strip()
             sf = layer.findtext("SampleFile", "").strip()
             if sf or sn:
@@ -256,6 +238,8 @@ def parse_xpm_program(xpm_path: str | Path, source_root: Optional[str | Path] = 
             "tune": tune_coarse,
             "mute_group": mute_group,
             "sound_type": stype,
+            "missing": found_path is None,
+            "layer_count": len(layers),
         }
 
     return {
@@ -268,7 +252,7 @@ def parse_xpm_program(xpm_path: str | Path, source_root: Optional[str | Path] = 
     }
 
 
-def parse_xpj_project(xpj_path: str | Path, source_root: Optional[str | Path] = None) -> dict:
+def parse_xpj_project(xpj_path: str | Path, source_root: Optional[str | Path] = None, track_index: Optional[int] = None) -> dict:
     """
     Extrae metadatos y lista de samples de un proyecto MPC .xpj (Gzip JSON),
     resolviendo de forma robusta la carpeta de datos y las rutas reales de los samples.
@@ -278,47 +262,60 @@ def parse_xpj_project(xpj_path: str | Path, source_root: Optional[str | Path] = 
         Path("/Volumes/MPCSMPL") if Path("/Volumes/MPCSMPL").is_dir() else xpj_p.parent
     )
 
-    with gzip.open(str(xpj_p), "rt", encoding="utf-8", errors="ignore") as gz:
+    with gzip.open(str(xpj_p), "rt", encoding="utf-8") as gz:
         content = gz.read()
 
     p_name = xpj_p.stem
     data_dir = _resolve_project_data_dir(xpj_p)
 
-    tempo = 120.0
-    key = "C"
-    m_tempo = re.search(r'"tempo"\s*:\s*([0-9\.]+)', content)
-    if m_tempo:
-        tempo = float(m_tempo.group(1))
-    m_key = re.search(r'"key"\s*:\s*"([^"]+)"', content)
-    if m_key:
-        key = m_key.group(1)
-
-    paths = re.findall(r'"path"\s*:\s*"([^"]+)"', content)
-    unique_samples = [p for p in set(paths) if p and not p.startswith(".")]
-
-    search_dirs = []
-    if data_dir:
-        search_dirs.append(data_dir)
-    search_dirs.append(xpj_p.parent)
-
+    payload = json.loads(content[content.index("{"):])
+    data = payload.get("data", payload)
+    tempo = float(data.get("masterTempo", data.get("tempo", 120.0)))
+    key = data.get("key")
+    samples = data.get("samples", [])
+    search_dirs = ([data_dir] if data_dir else []) + [xpj_p.parent]
     pads = {}
-    for idx, s in enumerate(unique_samples[:16], start=1):
-        found_path, rel_path = _resolve_sample_file(s, search_dirs, root_p)
-        actual_name = found_path.name if found_path else Path(s).name
-        stype = detect_sound_type(actual_name)
-
-        pads[idx] = {
-            "pad_number": idx,
-            "sample_name": Path(actual_name).stem,
-            "sample_file": actual_name,
-            "full_path": str(found_path) if found_path else s,
-            "rel_path": rel_path,
-            "volume": 0.707946,
-            "pan": 0.5,
-            "tune": 0,
-            "mute_group": 1 if stype in ("HIHAT", "BASS_808") else 0,
-            "sound_type": stype,
-        }
+    tracks = [{"index": i, "name": t.get("name") or f"Pista {i + 1}",
+               "pad_count": len(t.get("program", {}).get("drum", {}).get("instruments", []))}
+              for i, t in enumerate(data.get("tracks", [])) if t.get("program", {}).get("drum", {}).get("instruments")]
+    if track_index is not None and track_index not in [t['index'] for t in tracks]:
+        raise ValueError("La pista seleccionada no contiene un programa de batería")
+    selected = track_index if track_index is not None else (tracks[0]['index'] if tracks else None)
+    for i, track in enumerate(data.get("tracks", [])):
+        if i != selected:
+            continue
+        instruments = track.get("program", {}).get("drum", {}).get("instruments", [])
+        if not instruments:
+            continue
+        names = {sample.get("name"): sample.get("path", "")
+                 for sample in samples + track.get("samples", [])}
+        for idx, inst in enumerate(instruments[:128], start=1):
+            layers = [layer for layer in inst.get("layersv", []) if layer.get("active", True) and (layer.get("sampleFile") or layer.get("sampleName"))]
+            layer = layers[0] if layers else None
+            if layer is None:
+                continue
+            sample = layer.get("sampleFile") or names.get(layer.get("sampleName")) or layer.get("sampleName")
+            found, relative = _resolve_sample_file(sample, search_dirs, root_p)
+            name = found.name if found else Path(sample).name
+            kind = detect_sound_type(name)
+            mix = inst.get("mixable", {})
+            pads[idx] = {"pad_number": idx, "sample_name": layer.get("sampleName") or Path(name).stem,
+                         "sample_file": name, "full_path": str(found) if found else sample,
+                         "rel_path": relative, "volume": mix.get("volume", 0.707946),
+                         "pan": mix.get("pan", 0.5), "tune": inst.get("coarseTune", 0),
+                         "mute_group": inst.get("whichMuteGroup", default_mute_group(kind)), "sound_type": kind, "missing": found is None, "layer_count": len(layers)}
+        break
+    if not pads and not data.get("tracks"):
+        # Legacy sample-pool projects have no instruments; retain stable pool order.
+        for idx, sample in enumerate(samples[:16], start=1):
+            path = sample.get("path", "")
+            found, relative = _resolve_sample_file(path, search_dirs, root_p)
+            name = found.name if found else Path(path).name
+            kind = detect_sound_type(name)
+            pads[idx] = {"pad_number": idx, "sample_name": Path(name).stem, "sample_file": name,
+                         "full_path": str(found) if found else path, "rel_path": relative,
+                         "volume": 0.707946, "pan": 0.5, "tune": 0,
+                         "mute_group": default_mute_group(kind), "sound_type": kind}
 
     return {
         "project_name": p_name,
@@ -327,7 +324,8 @@ def parse_xpj_project(xpj_path: str | Path, source_root: Optional[str | Path] = 
         "data_dir": str(data_dir) if data_dir else "",
         "tempo": tempo,
         "key": key,
-        "total_samples": len(unique_samples),
+        "tracks": tracks, "selected_track": selected,
+        "total_samples": len(samples),
         "pads": pads,
     }
 
@@ -346,7 +344,11 @@ def list_expansion_kits(
     )
     exp_base = Path(expansions_root) if expansions_root else card_root / "Expansions"
 
-    exp_dir = exp_base / expansion_name
+    if not exp_base.is_dir():
+        return []
+    exp_dir = (exp_base / expansion_name).resolve()
+    if not exp_dir.is_relative_to(exp_base.resolve()):
+        raise ValueError("Expansión fuera de la biblioteca")
     if not exp_dir.is_dir():
         # Probar coincidencias tolerantes
         norm_exp = _normalize_name(expansion_name)
@@ -374,7 +376,7 @@ def list_expansion_kits(
             samples = []
             for inst in root.findall(".//Instrument"):
                 num = int(inst.get("number", 0))
-                if 1 <= num <= 16:
+                if 1 <= num <= 128:
                     for layer in inst.findall(".//Layer"):
                         sf = layer.findtext("SampleFile", "").strip()
                         sn = layer.findtext("SampleName", "").strip()
@@ -418,16 +420,136 @@ def list_expansion_kits(
 # 2. GENERADORES: EXPORTACIÓN ADAPTATIVA POR HARDWARE
 # ==============================================================================
 
+def _find_mpc_template(filename: str, fallback_rel: str) -> Optional[Path]:
+    """Busca la plantilla genuina de Akai MPC (.xpm o .xpj)."""
+    here = Path(__file__).resolve().parent
+    candidates = [
+        here / "templates" / filename,
+        here / "_INDEX_MPC_SAMPLE" / "templates" / filename,
+    ]
+    for c in candidates:
+        if c.is_file():
+            return c
+    return None
+
+
+def _get_wav_frames(path_cand: Optional[str | Path]) -> int:
+    """Devuelve el número total de frames de un archivo WAV, o 0 si no se puede leer."""
+    if not path_cand:
+        return 0
+    p = Path(path_cand)
+    if not p.is_file():
+        return 0
+    try:
+        with wave.open(str(p), "rb") as wf:
+            return wf.getnframes()
+    except Exception:
+        return 0
+
+
+def _set_xml_text(parent: ET.Element, tag: str, value: str) -> None:
+    el = parent.find(tag)
+    if el is None:
+        el = ET.SubElement(parent, tag)
+    el.text = value
+
+
 def export_mpc_program(
     kit_name: str,
     pads_data: dict,
     output_dir: str | Path,
     copy_samples: bool = False,
 ) -> str:
-    """Genera un archivo XML .xpm válido para Akai MPC Standalone."""
-    out_path = Path(output_dir) / f"{kit_name}.xpm"
-    out_path.parent.mkdir(parents=True, exist_ok=True)
+    """Genera un archivo XML .xpm completo y genuino para Akai MPC Standalone."""
+    out_dir = Path(output_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / f"{kit_name}.xpm"
 
+    if copy_samples:
+        copied = {}
+        for key, info in pads_data.items():
+            pad_num = int(key)
+            p_info = dict(info)
+            src = p_info.get("source_path", "")
+            if src and Path(src).is_file():
+                name = f"PAD{pad_num:03d}_{Path(src).stem}.wav"
+                _convert_audio(src, out_dir / name, mono=False)
+                p_info.update(sample_file=name, sample_name=Path(name).stem, n_frames=_get_wav_frames(out_dir/name))
+            copied[pad_num] = p_info
+        pads_data = copied
+
+    tpl = _find_mpc_template(
+        "template_drum.xpm",
+        "MPC-Sample/Programs/Astro1Deep_Kit_01/Astro1Deep_Kit_01.xpm",
+    )
+    if tpl is not None:
+        tree = ET.parse(str(tpl))
+        root = tree.getroot()
+        prog = root.find("Program")
+        _set_xml_text(prog, "ProgramName", kit_name)
+
+        for inst in prog.findall("Instruments/Instrument"):
+            pad_num = int(inst.get("number", "0"))
+            p_info = pads_data.get(pad_num) or pads_data.get(str(pad_num)) or {}
+            s_name = (p_info.get("sample_name") or "").strip()
+            s_file = (
+                p_info.get("sample_file")
+                or p_info.get("sample_path")
+                or p_info.get("source_path")
+                or (f"{s_name}.wav" if s_name else "")
+            )
+            vol = float(p_info.get("volume", 0.707946))
+            pan = float(p_info.get("pan", 0.500000))
+            tune = int(p_info.get("tune", 0))
+            mute = pad_mute_group(p_info)
+
+            _set_xml_text(inst, "Volume", f"{vol:.6f}")
+            _set_xml_text(inst, "Pan", f"{pan:.6f}")
+            _set_xml_text(inst, "TuneCoarse", str(tune))
+            _set_xml_text(inst, "TuneFine", "0")
+            _set_xml_text(inst, "MuteGroup", str(mute))
+            for target in inst:
+                if re.fullmatch(r"MuteTarget[1-4]?", target.tag):
+                    target.text = "0"
+
+            layers = inst.findall("Layers/Layer")
+            for lay in layers:
+                _set_xml_text(lay, "Active", "False")
+                _set_xml_text(lay, "SampleName", "")
+                _set_xml_text(lay, "SampleFile", "")
+                _set_xml_text(lay, "SliceIndex", "129")
+                _set_xml_text(lay, "SliceStart", "0")
+                _set_xml_text(lay, "SliceEnd", "0")
+                _set_xml_text(lay, "SliceLoopStart", "0")
+
+            if (s_file or s_name) and layers:
+                file_name = (
+                    Path(s_file).name
+                    if s_file
+                    else (f"{s_name}.wav" if not s_name.lower().endswith(".wav") else s_name)
+                )
+                name_stem = Path(file_name).stem
+                wav_cand = out_dir / file_name
+                if not wav_cand.is_file() and p_info.get("source_path"):
+                    wav_cand = Path(p_info["source_path"])
+                n_frames = _get_wav_frames(wav_cand)
+
+                lay0 = layers[0]
+                _set_xml_text(lay0, "Active", "True")
+                _set_xml_text(lay0, "SampleName", name_stem)
+                _set_xml_text(lay0, "SampleFile", file_name)
+                _set_xml_text(lay0, "VelStart", "0")
+                _set_xml_text(lay0, "VelEnd", "127")
+                _set_xml_text(lay0, "SliceIndex", "129")
+                _set_xml_text(lay0, "SliceStart", "0")
+                _set_xml_text(lay0, "SliceEnd", str(n_frames))
+                _set_xml_text(lay0, "SliceLoopStart", "0")
+
+        ET.indent(tree, space="  ", level=0)
+        tree.write(str(out_path), encoding="utf-8", xml_declaration=True)
+        return str(out_path)
+
+    # Fallback si no existe plantilla en disco
     root = ET.Element("MPCVObject")
     v = ET.SubElement(root, "Version")
     ET.SubElement(v, "File_Version").text = "2.1"
@@ -440,18 +562,18 @@ def export_mpc_program(
 
     instruments = ET.SubElement(prog, "Instruments")
     for pad_num in range(1, 129):
-        p_info = pads_data.get(pad_num, {})
-        s_name = p_info.get("sample_name", "")
+        p_info = pads_data.get(pad_num) or pads_data.get(str(pad_num)) or {}
+        s_name = (p_info.get("sample_name") or "").strip()
         s_file = (
             p_info.get("sample_file")
             or p_info.get("sample_path")
             or p_info.get("source_path")
             or (f"{s_name}.wav" if s_name else "")
         )
-        vol = p_info.get("volume", 0.707946)
-        pan = p_info.get("pan", 0.500000)
-        tune = p_info.get("tune", 0)
-        mute = p_info.get("mute_group", 0)
+        vol = float(p_info.get("volume", 0.707946))
+        pan = float(p_info.get("pan", 0.500000))
+        tune = int(p_info.get("tune", 0))
+        mute = pad_mute_group(p_info)
 
         inst = ET.SubElement(instruments, "Instrument", number=str(pad_num))
         ET.SubElement(inst, "Volume").text = f"{vol:.6f}"
@@ -467,36 +589,38 @@ def export_mpc_program(
             layer = ET.SubElement(layers, "Layer", number=str(layer_idx))
             if layer_idx == 1 and (s_file or s_name):
                 file_name = Path(s_file).name if s_file else (f"{s_name}.wav" if not s_name.endswith(".wav") else s_name)
-                name_stem = s_name or Path(file_name).stem
+                name_stem = Path(file_name).stem
+                ET.SubElement(layer, "Active").text = "True"
                 ET.SubElement(layer, "SampleName").text = name_stem
                 ET.SubElement(layer, "SampleFile").text = file_name
-                ET.SubElement(layer, "SliceIndex").text = "0"
+                ET.SubElement(layer, "SliceIndex").text = "129"
                 ET.SubElement(layer, "VelStart").text = "0"
                 ET.SubElement(layer, "VelEnd").text = "127"
             else:
+                ET.SubElement(layer, "Active").text = "False"
                 ET.SubElement(layer, "SampleName").text = ""
                 ET.SubElement(layer, "SampleFile").text = ""
-                ET.SubElement(layer, "SliceIndex").text = "0"
+                ET.SubElement(layer, "SliceIndex").text = "129"
                 ET.SubElement(layer, "VelStart").text = "0"
                 ET.SubElement(layer, "VelEnd").text = "127"
 
     tree = ET.ElementTree(root)
     ET.indent(tree, space="  ", level=0)
     tree.write(str(out_path), encoding="utf-8", xml_declaration=True)
-
-    if copy_samples:
-        for pad_num in range(1, 129):
-            p_info = pads_data.get(pad_num, {})
-            src = p_info.get("source_path", "")
-            if src and os.path.exists(src):
-                dest = out_path.parent / Path(src).name
-                if not dest.exists():
-                    try:
-                        shutil.copy2(src, dest)
-                    except Exception as e:
-                        logger.warning("No se pudo copiar muestra %s: %s", src, e)
-
     return str(out_path)
+
+
+def _replace_template_kit_name(obj: Any, old_name: str, new_name: str) -> Any:
+    if isinstance(obj, dict):
+        return {
+            (new_name if k == old_name else k): _replace_template_kit_name(v, old_name, new_name)
+            for k, v in obj.items()
+        }
+    if isinstance(obj, list):
+        return [_replace_template_kit_name(i, old_name, new_name) for i in obj]
+    if isinstance(obj, str) and obj == old_name:
+        return new_name
+    return obj
 
 
 def export_mpc_project(
@@ -506,47 +630,165 @@ def export_mpc_project(
     tempo: float = 120.0,
     key: str = "C",
 ) -> str:
-    """Genera un proyecto MPC completo (.xpj) junto a su carpeta [ProjectData]."""
+    """Genera un proyecto MPC genuino (.xpj con cabecera ACVS) junto a su carpeta [ProjectData]."""
     base_dir = Path(output_dir) / kit_name
     base_dir.mkdir(parents=True, exist_ok=True)
     proj_data_dir = base_dir / f"{kit_name}_[ProjectData]"
     proj_data_dir.mkdir(parents=True, exist_ok=True)
 
     # Copiar muestras en [ProjectData]
-    linked_samples = []
+    linked_samples: list[tuple[str, str, int]] = []
+    seen_files: set[str] = set()
     normalized_pads = {}
     for pad_num in range(1, 129):
-        p_info = pads_data.get(pad_num, {})
+        p_info = pads_data.get(pad_num) or pads_data.get(str(pad_num)) or {}
         src = p_info.get("source_path", "")
+        s_file = p_info.get("sample_file") or (Path(src).name if src else "")
         if src and os.path.exists(src):
-            s_name = Path(src).name
+            s_name = f"PAD{pad_num:03d}_{Path(src).stem}.wav"
             dest = proj_data_dir / s_name
-            if not dest.exists():
-                shutil.copy2(src, dest)
-            linked_samples.append(s_name)
+            _convert_audio(src, dest, mono=False)
+            s_stem = Path(s_name).stem
+            n_frames = _get_wav_frames(dest)
+            if s_name not in seen_files:
+                seen_files.add(s_name)
+                linked_samples.append((s_stem, s_name, n_frames))
             p_copy = dict(p_info)
             p_copy["sample_file"] = s_name
-            p_copy["sample_name"] = Path(src).stem
+            p_copy["sample_name"] = s_stem
+            p_copy["n_frames"] = n_frames
+            normalized_pads[pad_num] = p_copy
+        elif s_file and (proj_data_dir / s_file).is_file():
+            dest = proj_data_dir / s_file
+            s_stem = Path(s_file).stem
+            n_frames = _get_wav_frames(dest)
+            if s_file not in seen_files:
+                seen_files.add(s_file)
+                linked_samples.append((s_stem, s_file, n_frames))
+            p_copy = dict(p_info)
+            p_copy["sample_file"] = s_file
+            p_copy["sample_name"] = s_stem
+            p_copy["n_frames"] = n_frames
             normalized_pads[pad_num] = p_copy
         else:
             normalized_pads[pad_num] = p_info
 
-    # Exportar el programa Drum .xpm dentro de [ProjectData]
+    # Exportar el programa Drum .xpm genuino dentro de [ProjectData]
     export_mpc_program(kit_name, normalized_pads, proj_data_dir, copy_samples=False)
 
-    # Crear el archivo comprimido .xpj
     xpj_path = base_dir / f"{kit_name}.xpj"
+    tpl_xpj = _find_mpc_template(
+        "template_project.xpj",
+        "MPC-Sample/Programs/Astro1Deep_Kit_01/Astro1Deep_Kit_01.xpj",
+    )
+    if tpl_xpj is not None:
+        raw_bytes = tpl_xpj.read_bytes()
+        try:
+            raw_bytes = gzip.decompress(raw_bytes)
+        except OSError:
+            pass
+        raw_text = raw_bytes.decode("utf-8")
+        json_idx = raw_text.index("{")
+        header = raw_text[:json_idx]
+        payload = json.loads(raw_text[json_idx:])
+        payload = _replace_template_kit_name(payload, "Astro1Deep_Kit_01", kit_name)
+
+        data = payload.get("data", {})
+        key_str = key if " " in key else f"{key} Major"
+        data["key"] = key_str
+        data["masterTempo"] = float(tempo)
+
+        for seq in data.get("sequences", []):
+            if isinstance(seq, dict) and isinstance(seq.get("value"), dict):
+                seq["value"]["bpm"] = float(tempo)
+
+        data["samples"] = [
+            {
+                "version": 1,
+                "name": s_stem,
+                "path": s_file,
+                "loadImpl": 0,
+                "metadata": {
+                    "tempo": 0.0,
+                    "rootNote": 60,
+                    "tune": 0.0,
+                    "key": key_str,
+                },
+            }
+            for s_stem, s_file, _ in linked_samples
+        ]
+
+        tracks = data.get("tracks", [])[:1]
+        data["tracks"] = tracks
+        if tracks:
+            for t in tracks[1:]:
+                if isinstance(t, dict) and "samples" in t:
+                    t["samples"] = []
+            tracks[0]["name"] = kit_name
+            tracks[0]["samples"] = copy.deepcopy(data["samples"]) if "copy" in globals() else list(data["samples"])
+            prog = tracks[0].get("program", {})
+            prog["name"] = kit_name
+            drum = prog.get("drum", {})
+            insts = drum.get("instruments", [])
+            for idx, inst in enumerate(insts):
+                pad_num = idx + 1
+                p_info = normalized_pads.get(pad_num, {})
+                s_file = p_info.get("sample_file", "")
+                s_stem = p_info.get("sample_name", "")
+                n_frames = int(p_info.get("n_frames", 0))
+                vol = float(p_info.get("volume", 0.707946))
+                pan = float(p_info.get("pan", 0.500000))
+                tune = int(p_info.get("tune", 0))
+                mute = pad_mute_group(p_info)
+
+                inst["coarseTune"] = tune
+                inst["whichMuteGroup"] = mute
+                if isinstance(inst.get("muteTargets"), dict):
+                    inst["muteTargets"] = {k: 0 for k in inst["muteTargets"]}
+                if isinstance(inst.get("mixable"), dict):
+                    inst["mixable"]["volume"] = vol
+                    inst["mixable"]["pan"] = pan
+
+                layersv = inst.get("layersv", [])
+                for lay in layersv:
+                    lay["active"] = False
+                    lay["sampleName"] = ""
+                    lay["sampleFile"] = ""
+                    if isinstance(lay.get("sliceInfo"), dict):
+                        lay["sliceInfo"]["Start"] = 0
+                        lay["sliceInfo"]["End"] = 0
+                        lay["sliceInfo"]["LoopStart"] = 0
+
+                if s_file and layersv:
+                    lay0 = layersv[0]
+                    lay0["active"] = True
+                    lay0["sampleName"] = s_stem or Path(s_file).stem
+                    lay0["sampleFile"] = s_file
+                    lay0["sliceIndex"] = 129
+                    if isinstance(lay0.get("sliceInfo"), dict):
+                        lay0["sliceInfo"]["Start"] = 0
+                        lay0["sliceInfo"]["End"] = n_frames
+                        lay0["sliceInfo"]["LoopStart"] = 0
+
+        out_content = header + json.dumps(payload, indent=0)
+        with gzip.open(str(xpj_path), "wb") as gz:
+            gz.write(out_content.encode("utf-8"))
+        return str(xpj_path)
+
+    header_fallback = "ACVS\n1.3.0.12\nSerialisableProjectData\njson\nLinux\n"
     project_dict = {
-        "formatVersion": "2.0",
-        "programType": "Drum",
-        "tempo": tempo,
-        "key": key,
-        "masterVolume": 0.0,
-        "linkedSamples": linked_samples,
-        "created_by": "Cerebro OS Universal Kit Builder",
+        "data": {
+            "version": 28,
+            "key": f"{key} Major",
+            "masterTempo": float(tempo),
+            "samples": [
+                {"version": 1, "name": s_stem, "path": s_file, "loadImpl": 0}
+                for s_stem, s_file, _ in linked_samples
+            ],
+        }
     }
-    with gzip.open(str(xpj_path), "wt", encoding="utf-8") as gz:
-        json.dump(project_dict, gz, indent=2)
+    with gzip.open(str(xpj_path), "wb") as gz:
+        gz.write((header_fallback + json.dumps(project_dict)).encode("utf-8"))
 
     return str(xpj_path)
 
@@ -573,7 +815,7 @@ def export_sp404mk2_kit(
         dest_file = kit_dir / dest_filename
 
         if src_path and Path(src_path).exists():
-            shutil.copy2(src_path, dest_file)
+            _convert_audio(src_path, dest_file, mono=False, sample_rate=48000)
             manifest["pads"].append({
                 "pad": pad_num,
                 "file": dest_filename,
@@ -604,7 +846,7 @@ def export_sp404a_kit(
         dest_file = kit_dir / dest_filename
 
         if src_path and Path(src_path).exists():
-            shutil.copy2(src_path, dest_file)
+            _convert_audio(src_path, dest_file, mono=False)
 
     return str(kit_dir)
 
@@ -615,7 +857,7 @@ def export_ni_maschine_kit(
     output_dir: str | Path,
 ) -> str:
     """
-    Genera un paquete de Drum Kit para Native Instruments Maschine (.mxgrp y samples mapeados).
+    Genera un paquete de Drum Kit para Native Instruments Maschine (WAV y mapa JSON; no genera .mxgrp nativo).
     """
     base_dir = Path(output_dir) / kit_name
     samples_dir = base_dir / "Samples" / "Group_A"
@@ -629,15 +871,15 @@ def export_ni_maschine_kit(
         "sounds": [],
     }
 
-    for pad_num in range(1, 17):
-        p_info = pads_data.get(pad_num, {})
+    for pad_num in sorted(pads_data):
+        p_info = pads_data[pad_num]
         src_path = p_info.get("source_path", "")
         s_name = p_info.get("sample_name", f"Sound_{pad_num:02d}")
         clean_name = re.sub(r"[^a-zA-Z0-9_\-\.]", "_", s_name)
         dest_filename = f"A{pad_num:02d}_{clean_name}.wav"
 
         if src_path and Path(src_path).exists():
-            shutil.copy2(src_path, samples_dir / dest_filename)
+            _convert_audio(src_path, samples_dir / dest_filename, mono=False)
 
         manifest["sounds"].append({
             "slot": pad_num,
@@ -646,7 +888,7 @@ def export_ni_maschine_kit(
             "tune": p_info.get("tune", 0),
             "pan": p_info.get("pan", 0.5),
             "volume": p_info.get("volume", 0.707946),
-            "choke_group": p_info.get("mute_group", 0),
+            "choke_group": pad_mute_group(p_info),
         })
 
     manifest_path = groups_dir / f"{kit_name}_Maschine_Map.json"
@@ -670,7 +912,7 @@ def export_ep133_ko2_kit(
     Mapea hasta 16 pads con slots de sonido (001 a 016), grupos A y B, y genera:
     1. Carpeta con samples .wav listos para arrastrar al EP Sample Tool (teenage.engineering/apps/ep-sample-tool)
     2. Archivo meta.json con asignaciones de grupo, tecla, volumen, afinación y paneo.
-    3. Archivo .pak (ZIP) estándar de backup del EP-133 para restauración directa.
+    3. Archivo ZIP de transporte de muestras y mapa; no es un backup nativo del EP-133.
     4. Guía técnica README_EP133_KO_II.txt con instrucciones de importación paso a paso.
     
     Retorna: (ruta_directorio_kit, ruta_archivo_pak)
@@ -700,8 +942,8 @@ def export_ep133_ko2_kit(
     }
 
     copied_count = 0
-    for pad_num in range(1, 17):
-        p_info = pads_data.get(pad_num, {})
+    for pad_num in sorted(pads_data):
+        p_info = pads_data[pad_num]
         src_path = p_info.get("source_path", "")
         s_name = p_info.get("sample_name", f"Sound_{pad_num:02d}")
         clean_name = re.sub(r"[^a-zA-Z0-9_\-\.]", "_", s_name)
@@ -710,9 +952,11 @@ def export_ep133_ko2_kit(
 
         grp, key = ep_keys[pad_num - 1] if pad_num - 1 < len(ep_keys) else ("B", str(pad_num))
 
-        if src_path and Path(src_path).exists():
-            shutil.copy2(src_path, dest_file)
-            copied_count += 1
+        if not src_path or not Path(src_path).is_file():
+            raise ValueError(f"Muestra ausente en pad {pad_num}")
+        # Sample Tool accepts stereo PCM; preserve its channels and original level.
+        _convert_audio(src_path, dest_file, mono=False)
+        copied_count += 1
 
         manifest["sounds"].append({
             "slot": pad_num,
@@ -723,7 +967,7 @@ def export_ep133_ko2_kit(
             "tune": p_info.get("tune", 0),
             "pan": p_info.get("pan", 0.5),
             "volume": p_info.get("volume", 0.707946),
-            "choke_group": p_info.get("mute_group", 0),
+            "choke_group": pad_mute_group(p_info),
             "sound_type": p_info.get("sound_type", "SAMPLE"),
         })
 
@@ -746,9 +990,9 @@ INSTRUCCIONES DE IMPORTACIÓN:
 3. Método A (Arrastrar y Soltar):
    - Abre la carpeta 'sounds/' y arrastra los archivos .wav directamente a los
      slots de sonido deseados (001 - 016).
-4. Método B (Paquete de Backup .pak / .zip):
-   - En el EP Sample Tool, puedes cargar o restaurar el paquete '{clean_kit_name}.pak'
-     generado en este directorio.
+4. El ZIP es un contenedor de transporte de BeatOS. Extráelo y carga los WAV.
+   No lo restaures como backup nativo. Los grupos de choke del mapa son una
+   referencia: configura las asignaciones en el hardware.
 
 MAPEO DE PADS A TECLAS EP-133:
 - Pad 01 -> Grupo A, Tecla 1
@@ -772,81 +1016,59 @@ MAPEO DE PADS A TECLAS EP-133:
     with open(kit_dir / "README_EP133_KO_II.txt", "w", encoding="utf-8") as f:
         f.write(readme_content)
 
-    # Generar paquete .pak (formato ZIP estándar reconocido por Teenage Engineering)
-    pak_file = kit_dir.parent / f"{clean_kit_name}_EP133.pak"
+    # ZIP de transporte de BeatOS; los backups nativos del fabricante tienen otro esquema.
+    pak_file = kit_dir.parent / f"{clean_kit_name}_EP133.zip"
     with zipfile.ZipFile(pak_file, "w", compression=zipfile.ZIP_DEFLATED) as z:
         z.write(meta_file, arcname="meta.json")
         for s_file in sounds_dir.glob("*.wav"):
+            if s_file.name.startswith("."):
+                continue
             z.write(s_file, arcname=f"sounds/{s_file.name}")
         z.write(kit_dir / "README_EP133_KO_II.txt", arcname="README_EP133_KO_II.txt")
 
     return str(kit_dir), str(pak_file)
 
 
-def _read_wav_mono_16bit_44k(file_path: str | Path) -> list[int]:
-    """
-    Lee y decodifica eficientemente cualquier archivo WAV (16-bit, 24-bit, 32-bit, mono/estéreo,
-    cualquier frecuencia de muestreo) convirtiéndolo a mono 16-bit PCM 44.1kHz.
-    """
-    with wave.open(str(file_path), "rb") as wf:
-        n_ch = wf.getnchannels()
-        sw = wf.getsampwidth()
-        fr = wf.getframerate()
-        n_frames = wf.getnframes()
-        raw = wf.readframes(n_frames)
+def _convert_audio(source, destination=None, mono=True, tune=0, sample_rate=44100):
+    """Decode/resample using FFmpeg; preserve compatible PCM without a dependency."""
+    try:
+        with wave.open(str(source), 'rb') as wav:
+            if not tune and wav.getsampwidth() == 2 and wav.getframerate() == sample_rate and (wav.getnchannels() == 1 if mono else wav.getnchannels() in (1, 2)):
+                raw = wav.readframes(wav.getnframes())
+                if raw and len(raw) == wav.getnframes() * wav.getnchannels() * 2:
+                    if destination:
+                        shutil.copyfile(source, destination)
+                        return
+                    return list(struct.unpack(f'<{len(raw)//2}h', raw))
+                # Malformed source headers must be decoded, never copied as valid WAV.
 
-    if n_frames == 0:
-        return []
+    except (wave.Error, EOFError):
+        pass
+    executable = shutil.which('ffmpeg')
+    if not executable:
+        raise ValueError("Esta conversión necesita FFmpeg. Instálalo o usa WAV PCM 16-bit/44.1kHz.")
+    command = [executable, '-nostdin', '-v', 'error', '-i', str(source), '-map', '0:a:0', '-ar', str(sample_rate)]
+    if mono:
+        command += ['-ac', '1']
+    if tune:
+        command += ['-af', f'aresample=44100,asetrate={44100 * 2**(tune/12)},aresample=44100']
+    command += ['-c:a', 'pcm_s16le']
+    command += ['-f', 'wav', '-y', str(destination)] if destination else ['-f', 's16le', 'pipe:1']
+    result = subprocess.run(command, capture_output=True, timeout=120)
+    if result.returncode:
+        raise ValueError(f"No se pudo decodificar {Path(source).name}")
+    if destination:
+        with wave.open(str(destination), 'rb') as wav:
+            if not wav.getnframes() or wav.getnchannels() not in (1, 2):
+                raise ValueError("Se requiere audio mono o estéreo no vacío")
+        return
+    if not result.stdout:
+        raise ValueError("Audio vacío")
+    return list(struct.unpack(f'<{len(result.stdout)//2}h', result.stdout))
 
-    # 1. Normalización de profundidad de bits a 16-bit little-endian
-    if sw == 2:
-        raw_16 = raw[: (len(raw) // 2) * 2]
-    elif sw == 3:
-        # 24-bit PCM: extraer los dos bytes más significativos (MSB)
-        num_samples = len(raw) // 3
-        b1 = raw[1 : num_samples * 3 : 3]
-        b2 = raw[2 : num_samples * 3 : 3]
-        b = bytearray(num_samples * 2)
-        b[0::2] = b1
-        b[1::2] = b2
-        raw_16 = bytes(b)
-    elif sw == 4:
-        # 32-bit PCM: extraer los dos bytes superiores
-        num_samples = len(raw) // 4
-        b2 = raw[2 : num_samples * 4 : 4]
-        b3 = raw[3 : num_samples * 4 : 4]
-        b = bytearray(num_samples * 2)
-        b[0::2] = b2
-        b[1::2] = b3
-        raw_16 = bytes(b)
-    elif sw == 1:
-        # 8-bit unsigned PCM a 16-bit con signo
-        b = bytearray(len(raw) * 2)
-        for i in range(len(raw)):
-            val = (raw[i] - 128) << 8
-            b[i*2 : i*2+2] = struct.pack("<h", val)
-        raw_16 = bytes(b)
-    else:
-        raw_16 = raw[: (len(raw) // 2) * 2]
 
-    total_samples = len(raw_16) // 2
-    unpacked = struct.unpack(f"<{total_samples}h", raw_16)
-
-    # 2. Mezcla de canales a Mono
-    usable_frames = total_samples // n_ch
-    if n_ch == 2:
-        mono = [(unpacked[i * 2] + unpacked[i * 2 + 1]) // 2 for i in range(usable_frames)]
-    elif n_ch > 2:
-        mono = [sum(unpacked[i * n_ch : (i + 1) * n_ch]) // n_ch for i in range(usable_frames)]
-    else:
-        mono = list(unpacked[:usable_frames])
-
-    # 3. Resampleo a 44.1 kHz si la fuente es 48kHz, 96kHz, etc.
-    if fr != 44100 and fr > 0:
-        new_len = int(len(mono) * 44100 / fr)
-        mono = [mono[int(i * fr / 44100)] for i in range(new_len)]
-
-    return mono
+def _read_wav_mono_16bit_44k(file_path):
+    return _convert_audio(file_path)
 
 
 def export_po33_drum_reel(
@@ -854,6 +1076,7 @@ def export_po33_drum_reel(
     pads_data: dict,
     output_dir: str | Path,
     gap_ms: int = 150,
+    max_total_sec: float = 40.0,
 ) -> tuple[str, float, list[dict]]:
     """
     Genera un archivo WAV 'Drum Reel' de hasta 16 golpes espaciados por pausas de silencio (150ms)
@@ -862,6 +1085,12 @@ def export_po33_drum_reel(
     de la PO-33 aplicando recorte inteligente (Smart Trim) con fade-out a transitorios excesivos.
     Retorna (ruta_wav, duracion_segundos, lista_slices_con_timestamps).
     """
+    if not math.isfinite(float(max_total_sec)) or not 1 <= float(max_total_sec) <= 40:
+        raise ValueError("Presupuesto PO: entre 1 y 40 segundos")
+    if not isinstance(gap_ms, int) or not 0 <= gap_ms <= 500:
+        raise ValueError("Separación PO: entre 0 y 500 ms")
+    if len(pads_data) * gap_ms / 1000 >= max_total_sec:
+        raise ValueError("Las pausas ocupan todo el presupuesto; reduce su duración")
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     out_file = out_dir / f"{kit_name}_PO33_AutoSlice_Reel.wav"
@@ -879,12 +1108,16 @@ def export_po33_drum_reel(
         s_type = p_info.get("sound_type", "SAMPLE")
 
         if not src_path or not Path(src_path).exists():
+            if pad_num in pads_data:
+                raise ValueError(f"Muestra ausente en pad {pad_num}")
             continue
 
         try:
-            mono_samples = _read_wav_mono_16bit_44k(src_path)
+            mono_samples = _convert_audio(src_path, tune=float(p_info.get("tune", 0)))
             if not mono_samples:
-                continue
+                raise ValueError("Audio vacío")
+            gain = float(p_info.get("volume", 0.707946))
+            mono_samples = [max(-32768, min(32767, round(sample * gain))) for sample in mono_samples]
 
             parsed_pads.append({
                 "pad_num": pad_num,
@@ -895,8 +1128,7 @@ def export_po33_drum_reel(
                 "original_raw_dur": len(mono_samples) / sample_rate
             })
         except Exception as e:
-            logger.warning("Fallo al procesar audio para PO-33 Pad %d: %s", pad_num, e)
-            continue
+            raise ValueError(f"No se pudo procesar pad {pad_num}: {e}") from e
 
     if not parsed_pads:
         with wave.open(str(out_file), "wb") as out_wf:
@@ -907,10 +1139,10 @@ def export_po33_drum_reel(
         return str(out_file), 0.0, []
 
     # 2. Control riguroso de presupuesto hardware (40.00 segundos máx)
-    MAX_TOTAL_SEC = 40.0
+    MAX_TOTAL_SEC = float(max_total_sec)
     num_pads = len(parsed_pads)
     total_gap_sec = num_pads * (gap_ms / 1000.0)
-    max_audio_sec = max(1.0, MAX_TOTAL_SEC - total_gap_sec)
+    max_audio_sec = MAX_TOTAL_SEC - total_gap_sec
 
     total_raw_audio_sec = sum(p["raw_dur"] for p in parsed_pads)
     is_trimmed = False
@@ -918,7 +1150,7 @@ def export_po33_drum_reel(
     # Si excede el presupuesto disponible de audio, calcular límite por corte (water-filling)
     if total_raw_audio_sec > max_audio_sec:
         is_trimmed = True
-        low = 0.05
+        low = 0.0
         high = max(p["raw_dur"] for p in parsed_pads)
         for _ in range(40):
             mid = (low + high) / 2.0
@@ -933,11 +1165,11 @@ def export_po33_drum_reel(
         fade_len = int(0.050 * sample_rate)
         for p in parsed_pads:
             if p["raw_dur"] > cap_sec:
-                max_frames = max(fade_len, int(cap_sec * sample_rate))
+                max_frames = max(1, int(cap_sec * sample_rate))
                 trimmed = p["samples"][:max_frames]
                 actual_fade = min(fade_len, len(trimmed))
                 for fi in range(actual_fade):
-                    fade_factor = (actual_fade - fi) / float(actual_fade)
+                    fade_factor = fi / float(max(1, actual_fade - 1))
                     idx = len(trimmed) - 1 - fi
                     trimmed[idx] = int(trimmed[idx] * fade_factor)
                 p["samples"] = trimmed
@@ -965,7 +1197,8 @@ def export_po33_drum_reel(
         end_sec = end_frame / sample_rate
 
         slices_meta.append({
-            "slice_number": pad_num,
+            "slice_number": len(slices_meta) + 1,
+            "source_pad": pad_num,
             "name": s_name,
             "type": s_type,
             "start_sec": round(start_sec, 3),
@@ -1010,9 +1243,10 @@ def export_po33_drum_reel(
             {
                 "kit_name": kit_name,
                 "total_duration_sec": round(total_duration_sec, 2),
-                "ram_limit_sec": 40.0,
+                "ram_limit_sec": MAX_TOTAL_SEC,
+                "gap_ms": gap_ms,
                 "smart_trim_applied": is_trimmed,
-                "budget_used_pct": round((total_duration_sec / 40.0) * 100, 1),
+                "budget_used_pct": round((total_duration_sec / MAX_TOTAL_SEC) * 100, 1),
                 "slices": slices_meta,
             },
             f,
@@ -1024,23 +1258,22 @@ def export_po33_drum_reel(
     guide_path = out_dir / f"{kit_name}_PO33_Carga_Guia.txt"
     guide_text = f"""========================================================================
 TEENAGE ENGINEERING POCKET OPERATOR PO-33 K.O.! - GUÍA DE CARGA RÁPIDA
-Kit: {kit_name} | Duración: {total_duration_sec:.2f}s / 40.00s máx.
+Kit: {kit_name} | Duración: {total_duration_sec:.2f}s / {MAX_TOTAL_SEC:.2f}s presupuestados
 Smart Trim Aplicado: {'SÍ (Ajustado a RAM 40s)' if is_trimmed else 'NO (Audio original < 40s)'}
 ========================================================================
 
 1. Conecta un cable minijack 3.5mm estéreo desde la salida de tu Mac a la entrada LINE IN (izquierda) de la PO-33.
 2. EN TU PO-33:
-   - Mantén presionado: RECORD + SOUND
-   - Mientras los mantienes, presiona un PAD DE BATERÍA (del 9 al 16) donde quieras alojar el kit.
+   - Mantén RECORD + un PAD DE BATERÍA (del 9 al 16) donde quieras alojar el kit.
    - La pantalla mostrará "IN" parpadeando o el nivel de entrada.
 3. EN TU MAC:
    - Reproduce el archivo: '{out_file.name}'
-   - El volumen del Mac debe estar entre el 85% y el 95% (sin distorsión).
+   - Ajusta el nivel de salida según tu interfaz para evitar saturación; no hay un porcentaje universal.
 4. RESULTADO:
-   - La PO-33 detectará automáticamente las pausas de 150ms y dividirá cada sonido en sus 16 pads internos (Auto-Slice).
+   - Revisa y ajusta los 16 cortes en TRIM. Las pausas de 150ms son una ayuda, no garantizan detección perfecta.
    - ¡Listo para secuenciar con el botón WRITE!
 
-Para volcado de BACKUP COMPLETO (73.6s):
+Para volcado de BACKUP COMPLETO (duración variable; reemplaza muestras y patrones):
 - Restaurar: Mantén WRITE + SOUND + RECORD y reproduce el audio módem FSK.
 - Crear Backup: Mantén WRITE + SOUND y presiona PLAY para enviar audio hacia tu Mac.
 ========================================================================
@@ -1076,8 +1309,8 @@ def inspect_po33_backup(wav_path: str | Path) -> dict:
             sample_frames_to_read = min(n_frames, fr * 4)  # primeros 4 segundos
             raw_sample = wf.readframes(sample_frames_to_read)
 
-        # Duración estándar de backup PO-33: 73.6s (~70s a 78s en función de silencios de entrada/salida)
-        is_duration_valid = 68.0 <= duration <= 80.0
+        # Duración de backup PO-33: Dinámica (típicamente entre 1 y 4 minutos, ~30s a 260s según samples y patrones en RAM)
+        is_duration_valid = 15.0 <= duration <= 300.0
         is_stereo = n_ch == 2
         is_16bit = sw == 2
 
@@ -1101,8 +1334,8 @@ def inspect_po33_backup(wav_path: str | Path) -> dict:
         has_clipping = peak_val >= 32760
         is_too_quiet = peak_dbfs < -25.0
 
-        status = "VALID_PO33_BACKUP"
-        if not is_duration_valid or not is_stereo:
+        status = "AUDIO_COMPATIBLE_NOT_DECODED"
+        if not is_duration_valid or not is_stereo or not is_16bit:
             status = "INVALID_OR_NOT_A_PO33_BACKUP"
         elif has_clipping:
             status = "WARNING_CLIPPING_DETECTED"
@@ -1110,7 +1343,10 @@ def inspect_po33_backup(wav_path: str | Path) -> dict:
             status = "WARNING_SIGNAL_TOO_QUIET"
 
         return {
-            "valid": is_duration_valid and is_stereo and is_16bit,
+            "valid": False,
+            "audio_compatible": is_duration_valid and is_stereo and is_16bit,
+            "payload_verified": False,
+            "inspection_scope": "Encabezado y primeros 4s; no decodifica ni verifica datos del módem",
             "filename": p.name,
             "path": str(p),
             "size_mb": round(p.stat().st_size / (1024 * 1024), 2),
@@ -1151,8 +1387,9 @@ def scan_po33_backups(search_dirs: Optional[list[str | Path]] = None) -> list[di
                 continue
             seen_paths.add(wav)
             info = inspect_po33_backup(wav)
-            if info.get("valid") or "PO33" in info.get("status", ""):
-                results.append(info)
+            info["filename"] = wav.name
+            info["path"] = str(wav.resolve())
+            results.append(info)
 
     return sorted(results, key=lambda x: x.get("filename", ""))
 
@@ -1167,6 +1404,8 @@ def create_kit(
     target: str = "universal",
     source_root: Optional[str | Path] = None,
     output_base_dir: Optional[str | Path] = None,
+    tempo: float = 120.0,
+    po_options: Optional[dict] = None,
 ) -> dict:
     """
     Función maestra llamada por la API web (/api/create_kit) o por línea de comandos.
@@ -1175,49 +1414,43 @@ def create_kit(
     clean_kit_name = re.sub(r"[^a-zA-Z0-9_\-]", "_", kit_name.strip()) or "Custom_Beatmaker_Kit"
 
     if source_root is None:
-        source_root = (
-            Path("/Volumes/MPCSMPL")
-            if Path("/Volumes/MPCSMPL").exists()
-            else Path("/Users/ivan/Documents/mpc-sample-database")
-        )
+        source_root = Path.cwd()
     else:
         source_root = Path(source_root)
 
     if output_base_dir is None:
-        if str(source_root).startswith("/Volumes/"):
-            output_base_dir = source_root / "Custom_Kits" / clean_kit_name
-        else:
-            output_base_dir = (
-                Path("/Users/ivan/Documents/mpc-sample-database")
-                / "Custom_Kits"
-                / clean_kit_name
-            )
+        output_base_dir = source_root / "Custom_Kits" / clean_kit_name
     else:
         output_base_dir = Path(output_base_dir) / clean_kit_name
 
-    output_base_dir.mkdir(parents=True, exist_ok=True)
+
+    if output_base_dir.exists():
+        raise FileExistsError("Ya existe un kit con ese nombre. Elige otro para conservar el original.")
 
     # Normalizar pads_data en un diccionario de 1 a 16 (o más)
     pads_dict = {}
     if isinstance(pads, list):
         for item in pads:
             pad_num = int(item.get("pad", item.get("pad_number", 0)))
-            if pad_num < 1:
-                continue
+            if pad_num in pads_dict:
+                raise ValueError("Pad duplicado")
             rel_path = item.get("rel_path", item.get("relPath", ""))
             src_path = item.get("source_path", "")
             if not src_path and rel_path:
                 src_path = str(source_root / rel_path)
 
+            raw_sname = (item.get("sample_name") or item.get("sampleName") or "").strip()
+            fallback_stem = Path(rel_path or src_path).stem if (rel_path or src_path) else ""
             pads_dict[pad_num] = {
                 "pad_number": pad_num,
-                "sample_name": item.get("sample_name", Path(rel_path or src_path).stem),
+                "sample_name": raw_sname or fallback_stem,
+                "sample_file": Path(src_path or rel_path).name if (src_path or rel_path) else "",
                 "sound_type": item.get("sound_type", item.get("soundType", "SAMPLE")),
                 "source_path": src_path,
                 "volume": float(item.get("volume", 0.707946)),
                 "pan": float(item.get("pan", 0.5)),
                 "tune": int(item.get("tune", 0)),
-                "mute_group": int(item.get("mute_group", item.get("muteGroup", 0))),
+                "mute_group": pad_mute_group(item),
             }
     elif isinstance(pads, dict):
         for k, v in pads.items():
@@ -1228,74 +1461,120 @@ def create_kit(
                     source_root / pads_dict[pad_num]["rel_path"]
                 )
 
-    targets_result = {}
+    tempo = float(tempo)
+    if not math.isfinite(tempo) or not 30 <= tempo <= 300:
+        raise ValueError("Tempo fuera de rango (30–300 BPM)")
     target_lower = target.lower()
+    if target_lower not in {'universal','mpc','maschine','sp404mk2','sp404a','po33','po-33','pocket_operator','ep133','ep-133','ko2','ko-ii','ko_ii'}:
+        raise ValueError("Destino de exportación no reconocido")
+    if not pads_dict or any(not 1 <= n <= 16 for n in pads_dict):
+        raise ValueError("El rack admite pads 1 a 16 y necesita al menos una muestra")
+    for number, pad in pads_dict.items():
+        source = Path(pad.get('source_path', '')).resolve()
+        if not source.is_relative_to(source_root.resolve()) or not source.is_file():
+            raise ValueError(f"Pad {number}: muestra ausente o fuera de la biblioteca")
+        for key, low, high, default in [('volume',0,1,0.707946),('pan',0,1,0.5),('tune',-36,36,0)]:
+            value = float(pad.get(key, default))
+            if not math.isfinite(value) or not low <= value <= high:
+                raise ValueError(f"Pad {number}: {key} fuera de rango")
+        pad_mute_group(pad)
+    # Atomic reservation prevents concurrent exports overwriting one another.
+    if output_base_dir.exists():
+        raise FileExistsError("Ya existe un kit con ese nombre. Elige otro para conservar el original.")
+    output_base_dir.mkdir(parents=True, exist_ok=False)
+    targets_result = {}
 
-    # 1. Akai MPC
-    if target_lower in ("universal", "mpc"):
-        mpc_dir = output_base_dir / "Akai_MPC"
-        mpc_dir.mkdir(parents=True, exist_ok=True)
-        proj_path = export_mpc_project(clean_kit_name, pads_dict, mpc_dir)
-        prog_path = export_mpc_program(clean_kit_name, pads_dict, mpc_dir, copy_samples=True)
-        targets_result["mpc"] = {
-            "project_path": proj_path,
-            "program_path_root": prog_path,
+    try:
+        # 1. Akai MPC
+        if target_lower in ("universal", "mpc"):
+            mpc_dir = output_base_dir / "Akai_MPC"
+            mpc_dir.mkdir(parents=True, exist_ok=True)
+            proj_path = export_mpc_project(clean_kit_name, pads_dict, mpc_dir, tempo=tempo)
+            prog_path = export_mpc_program(clean_kit_name, pads_dict, mpc_dir, copy_samples=True)
+            targets_result["mpc"] = {
+                "project_path": proj_path,
+                "program_path_root": prog_path,
+            }
+
+        # 2. Native Instruments Maschine
+        if target_lower in ("universal", "maschine"):
+            maschine_dir = output_base_dir / "NI_Maschine"
+            masch_path = export_ni_maschine_kit(clean_kit_name, pads_dict, maschine_dir)
+            targets_result["maschine"] = {"bundle_path": masch_path}
+
+        # 3. Roland SP-404MK2 & DOOM OS
+        if target_lower in ("universal", "sp404mk2"):
+            sp_mk2_dir = output_base_dir / "Roland_SP404MK2"
+            mk2_path = export_sp404mk2_kit(clean_kit_name, pads_dict, sp_mk2_dir)
+            targets_result["sp404mk2"] = {"import_folder": mk2_path}
+
+        # 4. Roland SP-404A / SX
+        if target_lower in ("universal", "sp404a"):
+            sp_a_dir = output_base_dir / "Roland_SP404A"
+            a_path = export_sp404a_kit(clean_kit_name, pads_dict, sp_a_dir)
+            targets_result["sp404a"] = {"folder": a_path}
+
+        # 5. Teenage Engineering Pocket Operator PO-33 / PO-133
+        if target_lower in ("universal", "po33", "po-33", "pocket_operator"):
+            po_dir = output_base_dir / "Pocket_Operator_PO33"
+            reel_wav, duration, slices = export_po33_drum_reel(
+                clean_kit_name, pads_dict, po_dir, **(po_options or {})
+            )
+            targets_result["po33"] = {
+                "reel_wav": reel_wav,
+                "duration_sec": duration,
+                "ram_limit_sec": (po_options or {}).get("max_total_sec",40.0),
+                "slices_count": len(slices),
+            }
+
+        # 6. Teenage Engineering EP-133 K.O. II
+        if target_lower in ("universal", "ep133", "ep-133", "ko2", "ko-ii", "ko_ii"):
+            ep_dir = output_base_dir / "Teenage_Engineering_EP133"
+            ep_dir.mkdir(parents=True, exist_ok=True)
+            ep_folder, ep_pak = export_ep133_ko2_kit(clean_kit_name, pads_dict, ep_dir)
+            targets_result["ep133"] = {
+                "folder": ep_folder,
+                "pak_package": ep_pak,
+                "slots_count": len(pads_dict),
+            }
+
+        return {
+            "success": True,
+            "kit_name": clean_kit_name,
+            "target": target,
+            "kit_path": str(output_base_dir),
+            "samples_count": len(pads_dict),
+            "targets": targets_result,
+            "message": f"Kit '{clean_kit_name}' generado exitosamente para destino '{target}'.",
         }
+    except Exception:
+        try:
+            shutil.rmtree(output_base_dir)
+        except OSError as cleanup_error:
+            logger.warning("No se pudo retirar el kit incompleto %s: %s", output_base_dir, cleanup_error)
+        raise
 
-    # 2. Native Instruments Maschine
-    if target_lower in ("universal", "maschine"):
-        maschine_dir = output_base_dir / "NI_Maschine"
-        masch_path = export_ni_maschine_kit(clean_kit_name, pads_dict, maschine_dir)
-        targets_result["maschine"] = {"bundle_path": masch_path}
-
-    # 3. Roland SP-404MK2 & DOOM OS
-    if target_lower in ("universal", "sp404mk2"):
-        sp_mk2_dir = output_base_dir / "Roland_SP404MK2"
-        mk2_path = export_sp404mk2_kit(clean_kit_name, pads_dict, sp_mk2_dir)
-        targets_result["sp404mk2"] = {"import_folder": mk2_path}
-
-    # 4. Roland SP-404A / SX
-    if target_lower in ("universal", "sp404a"):
-        sp_a_dir = output_base_dir / "Roland_SP404A"
-        a_path = export_sp404a_kit(clean_kit_name, pads_dict, sp_a_dir)
-        targets_result["sp404a"] = {"folder": a_path}
-
-    # 5. Teenage Engineering Pocket Operator PO-33 / PO-133
-    if target_lower in ("universal", "po33", "po-33", "pocket_operator"):
-        po_dir = output_base_dir / "Pocket_Operator_PO33"
-        reel_wav, duration, slices = export_po33_drum_reel(
-            clean_kit_name, pads_dict, po_dir, gap_ms=150
-        )
-        targets_result["po33"] = {
-            "reel_wav": reel_wav,
-            "duration_sec": duration,
-            "ram_limit_sec": 40.0,
-            "slices_count": len(slices),
-        }
-
-    # 6. Teenage Engineering EP-133 K.O. II
-    if target_lower in ("universal", "ep133", "ep-133", "ko2", "ko-ii", "ko_ii"):
-        ep_dir = output_base_dir / "Teenage_Engineering_EP133"
-        ep_dir.mkdir(parents=True, exist_ok=True)
-        ep_folder, ep_pak = export_ep133_ko2_kit(clean_kit_name, pads_dict, ep_dir)
-        targets_result["ep133"] = {
-            "folder": ep_folder,
-            "pak_package": ep_pak,
-            "slots_count": len(pads_dict),
-        }
-
-    return {
-        "success": True,
-        "kit_name": clean_kit_name,
-        "target": target,
-        "kit_path": str(output_base_dir),
-        "samples_count": len(pads_dict),
-        "targets": targets_result,
-        "message": f"Kit '{clean_kit_name}' generado exitosamente para destino '{target}'.",
-    }
 
 
 if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1:
+        import argparse
+        import base64
+        parser = argparse.ArgumentParser(description="BeatOS hardware kit builder")
+        commands = parser.add_subparsers(dest="command", required=True)
+        create = commands.add_parser("create")
+        create.add_argument("--name", required=True)
+        create.add_argument("--target", default="universal", choices=["universal", "mpc", "maschine", "sp404mk2", "sp404a", "po33", "ep133"])
+        create.add_argument("--b64", required=True)
+        create.add_argument("--root", type=Path, required=True)
+        args = parser.parse_args()
+        pads = json.loads(base64.b64decode(args.b64, validate=True))
+        if not args.root.is_dir():
+            parser.error("La biblioteca no existe")
+        result = create_kit(args.name, pads, target=args.target, source_root=args.root)
+        print(json.dumps(result, ensure_ascii=False))
+        sys.exit(0)
     print("=================================================================")
     print("Universal Hardware Kit Builder & Multi-Sampler Bridge v3.5 cargado")
     print(f"Directorio de Backups PO-33 detectado: {DEFAULT_PO_DIR}")

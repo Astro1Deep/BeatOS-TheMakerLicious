@@ -24,10 +24,10 @@ def main():
     
     print("=" * 70)
     print("🎛️  AKAI MPC SAMPLE DATABASE & FINDER TOOLKIT - INSTALADOR UNIVERSAL")
-    print("    Versión 1.1.0 • Astro1Deep • Compatible con Akai MPC Standalone")
+    print("    BeatOS 3.6.4 • Astro1Deep • Compatible con Akai MPC Standalone")
     print("=" * 70)
     print("1. 🚀 Indexar tarjeta Micro SD o carpeta de samples para MPC")
-    print("2. 🌐 Iniciar Servidor Web Local y Abrir Catálogo (Reproducción 100% garantizada)")
+    print("2. 🌐 Iniciar Servidor Web Local y Abrir Catálogo (Audio y herramientas locales)")
     print("3. 🧹 Limpiar archivos fantasma (._* y .DS_Store) en tarjeta SD")
     print("4. 🗄️  Inicializar base de datos SQLite en blanco desde schema.sql")
     print("5. 📚 Abrir Wiki Oficial y Guías de Uso")
@@ -41,12 +41,9 @@ def main():
         if not path:
             path = script_dir
         
-        # Limpieza previa si es Mac
-        if sys.platform == "darwin":
-            subprocess.run(["dot_clean", "-m", path], stderr=subprocess.DEVNULL)
             
         cmd = [sys.executable, os.path.join(script_dir, "index_mpc_library.py"), "--path", path]
-        subprocess.run(cmd)
+        subprocess.run(cmd, check=True)
         
         cat_path = os.path.join(path, "catalogo_mpc_sample.html")
         cat_sub = os.path.join(path, "SQLITE_DATABASE", "catalogo_mpc_sample.html")
@@ -55,16 +52,16 @@ def main():
         if target_cat:
             ans = input("\n¿Deseas abrir el catálogo en tu navegador ahora? (s/n): ").strip().lower()
             if ans in ["s", "y", "si", "yes"]:
-                open_url_or_file(target_cat)
+                import serve_mpc
+                serve_mpc.run_server(os.path.abspath(path))
                 
     elif choice == "2":
-        path = input("Ingresa la ruta de la tarjeta SD (Enter para auto-detectar tarjeta montada): ").strip()
+        path = input("Ingresa la ruta de la tarjeta SD (Enter para carpeta de instalación): ").strip()
         try:
             import serve_mpc
-            serve_mpc.run_server(path if path else None)
+            serve_mpc.run_server(path if path else script_dir)
         except ImportError:
             # Fallback inline si serve_mpc no estuviera disponible
-            import subprocess
             subprocess.run([sys.executable, os.path.join(script_dir, "serve_mpc.py"), path if path else ""])
             
     elif choice == "3":

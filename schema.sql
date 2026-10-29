@@ -24,7 +24,10 @@ INSERT OR IGNORE INTO sound_categories (code, name, icon) VALUES
 ('MELODIC_LOOP', 'Loops Melódicos & Chops', '🎸'),
 ('DRUM_LOOP', 'Breakbeats & Drum Loops', '🔁'),
 ('VOCAL', 'Voces, Acapellas & Chants', '🎤'),
-('FX', 'Efectos & Texturas Sonoras', '⚡');
+('FX', 'Efectos & Texturas Sonoras', '⚡'),
+('UNKNOWN', 'Sin identificar', '❓'),
+('STEM', 'Stems & Pistas', '🎛️'),
+('ROLL_FILL', 'Rolls & Fills', '🥁');
 
 -- 2. Expansiones Oficiales y de Terceros
 CREATE TABLE IF NOT EXISTS expansions (
@@ -68,6 +71,7 @@ CREATE TABLE IF NOT EXISTS packs (
 CREATE TABLE IF NOT EXISTS samples (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     filename TEXT NOT NULL,
+    sample_format TEXT DEFAULT 'ONE_SHOT',
     sound_type TEXT NOT NULL,
     macro_category TEXT,
     sub_pack TEXT,

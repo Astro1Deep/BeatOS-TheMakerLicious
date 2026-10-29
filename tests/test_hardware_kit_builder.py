@@ -37,7 +37,8 @@ class TestHardwareKitBuilder(unittest.TestCase):
         # Create 4 dummy audio files
         cls.sample_files = []
         for i in range(1, 5):
-            p = cls.test_dir / f"test_sample_{i}.wav"
+            label = ('Kick', 'Snare', 'Hat_Closed', 'Hat_Open')[i - 1]
+            p = cls.test_dir / f"{label}_test_sample_{i}.wav"
             with wave.open(str(p), "wb") as wf:
                 wf.setnchannels(1)
                 wf.setsampwidth(2)
@@ -76,12 +77,16 @@ class TestHardwareKitBuilder(unittest.TestCase):
         xpj_path = export_mpc_project("TestProject_MPC", self.pads_data, out_dir, tempo=92.0)
         self.assertTrue(Path(xpj_path).exists())
         
-        # Validate gzip JSON schema
+        # Native MPC projects wrap JSON in an ACVS header inside gzip.
         with gzip.open(xpj_path, "rt", encoding="utf-8") as gz:
-            data = json.load(gz)
-        self.assertEqual(data["formatVersion"], "2.0")
-        self.assertEqual(data["programType"], "Drum")
-        self.assertEqual(data["tempo"], 92.0)
+            content = gz.read()
+        self.assertTrue(content.startswith('ACVS\n'))
+        data = json.loads(content[content.index('{'):])['data']
+        self.assertEqual(data['masterTempo'], 92.0)
+        self.assertEqual(len(data['samples']), 4)
+        project_data = Path(xpj_path).parent / 'TestProject_MPC_[ProjectData]'
+        for sample in data['samples']:
+            self.assertTrue((project_data / sample['path']).is_file())
 
     def test_03_export_sp404mk2_kit(self):
         out_dir = self.test_dir / "out_sp404mk2"
@@ -123,7 +128,7 @@ class TestHardwareKitBuilder(unittest.TestCase):
             meta = json.load(f)
         self.assertEqual(meta["device"], "Teenage Engineering EP-133 K.O. II")
         self.assertEqual(meta["package_name"], "TestKit_EP133")
-        self.assertEqual(len(meta["sounds"]), 16)
+        self.assertEqual(len(meta["sounds"]), 4)
         
         # Verify .pak is a valid zip archive
         self.assertTrue(zipfile.is_zipfile(pak_path))
