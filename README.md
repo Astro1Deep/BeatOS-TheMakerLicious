@@ -4,7 +4,7 @@
 
 Biblioteca de samples, inspector de proyectos MPC y rack de 16 pads. Diseño y desarrollo de **Astro1Deep**. El ojo y el cohete del creador forman una firma gráfica discreta en la barra inferior, adaptada a los ocho temas.
 
-Versión **3.6.4-refined.20261029**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc-sample-database/releases) · [Guía de instalación](GUIA_INSTALACION.md) · [Identidad del creador](docs/IDENTIDAD_DEL_CREADOR.md)
+Versión **3.6.5-layout.20261029**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc-sample-database/releases) · [Guía de instalación](GUIA_INSTALACION.md) · [Identidad del creador](docs/IDENTIDAD_DEL_CREADOR.md)
 
 ## Instalación
 

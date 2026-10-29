@@ -24,7 +24,7 @@ echo "  ██║ ╚═╝ ██║██║     ╚██████╗    �
 echo "  ╚═╝     ╚═╝╚═╝      ╚═════╝    ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝     ╚══════╝╚══════╝"
 echo -e "${NC}"
 echo -e "${CYAN}  🎛️  Toolkit de Base de Datos SQLite y Catálogo Visual para Akai MPC${NC}"
-echo -e "${GOLD}  BeatOS 3.6.4 • Open Source Community Edition • Astro1Deep${NC}"
+echo -e "${GOLD}  BeatOS 3.6.5 • Open Source Community Edition • Astro1Deep${NC}"
 echo "=============================================================================="
 
 # 1. Comprobación de requisitos
