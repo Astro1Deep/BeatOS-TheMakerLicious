@@ -33,7 +33,7 @@ Este toolkit resuelve estos desafíos combinando **SQLite 3**, un indexador aut�
 | **[🌐 6. Catálogo Web y Audio Player](06-Catalogo-Web-y-Audio-Player.md)** | Catálogo interactivo HTML5, streaming local y botón de copiado de rutas. |
 | **[📊 7. Consultas Avanzadas SQLite](07-Consultas-Avanzadas-SQLite.md)** | Consultas SQL prácticas para beatmakers y exportaciones a CSV/JSON. |
 | **[🎛️ 8. Universal Beatmaker Rack](08-Universal-Hardware-Beatmaker-Rack-(MPC-Maschine-SP404-PO33).md)** | Rack de 16 pads, afinación, choke groups, pad swap y exportación multi-sampler (MPC, EP-133, SP-404, Maschine, PO-33). |
-| **[🕹️ 9. Pocket Operator PO-33 Studio](09-Pocket-Operator-PO-33-KO-Studio-y-FSK-Modem.md)** | Drum Reels con silencios de 150 ms (≤ 40s) y verificación de copias FSK. |
+| **[🕹️ 9. Pocket Operator PO-33 Studio](09-Pocket-Operator-PO-33-KO-Studio-y-FSK-Modem.md)** | Drum Reels con silencios de 150 ms (≤ 40s) y inspección de audio sin decodificar respaldos. |
 | **[🌐 10. Manual Bilingüe (ES / EN)](10-Manual-Bilingue-y-Selector-de-Idioma-(ES-EN).md)** | Selector dinámico de idioma, persistencia en localStorage y workflow internacional. |
 | **[🔌 11. Auto-Reconocimiento de Discos](11-Auto-Reconocimiento-y-Onboarding-de-Discos.md)** | Motor forense para diagnosticar y estructurar cualquier disco externo nuevo. |
 
@@ -42,7 +42,7 @@ Este toolkit resuelve estos desafíos combinando **SQLite 3**, un indexador aut�
 ## ☕ Apoyo al Desarrollo / Support the Project
 
 BeatOS es 100% independiente, autónomo y libre de telemetría. Puedes apoyar el proyecto mediante microdonaciones:
-* ☕ **[Invitar a un café en Ko-fi (1€)](https://ko-fi.com/astro1deep)**
+* ☕ **[Invitar a un café en Ko-fi ](https://ko-fi.com/astro1deep)**
 * 💖 **[Patrocinar en GitHub Sponsors](https://github.com/sponsors/Astro1Deep)**
 
 ---
@@ -52,10 +52,10 @@ BeatOS es 100% independiente, autónomo y libre de telemetría. Puedes apoyar el
 ### Overview
 **BeatOS (The System)** — *Edition: The MakerLicious* is a lightweight, zero-dependency open source ecosystem (**Universal Beatmaker Hub & Multi-Sampler Toolkit**) built with **Python 3, SQLite 3, and HTML5**. It provides instant local sample search, automatic sonic taxonomy, project integrity auditing, and a 16-pad **Universal Beatmaker Kit Rack** that exports programs and kits natively to:
 * **Akai Professional MPC Sample & Standalone** (`.xpm` Drum Programs & `.xpj` Projects)
-* **Teenage Engineering EP-133 K.O. II** (`.pak` native backup packages & EP Sample Tool drag-and-drop kits)
-* **Native Instruments Maschine** (`.mxgrp` Groups & mapping)
+* **Teenage Engineering EP-133 K.O. II** (WAV + BeatOS ZIP; manual import via EP Sample Tool)
+* **Native Instruments Maschine** (WAV + JSON mapping)
 * **Roland SP-404MK2 & SP-404A / SX** (Bank A/B import folders)
-* **Teenage Engineering PO-33 / PO-20 / PO-133** (Calibrated 150ms Drum Reels & FSK modem backup tools)
+* **Teenage Engineering PO-33 / PO-133** (Adjustable Drum Reels & backup audio inspection)
 
 ---
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Akai MPC Sample Finder & Hardware Multi-Sampler Audio Streamer (v3.5)
+Akai MPC Sample Finder & Hardware Multi-Sampler Audio Streamer (v3.6)
 Ubicación: serve_mpc.py
 Repositorio: Astro1Deep/mpc-sample-database
 
@@ -10,9 +10,9 @@ Servidor HTTP de alto rendimiento con:
 3. API REST para el Ecosistema Multi-Sampler:
    - GET  /api/status: Estado del sistema, memoria, espacio y tarjeta montada.
    - GET  /api/task_status: Estado de tareas de reindexación en segundo plano.
-   - GET  /api/po33_backups: Escaneo y verificación de señales módem FSK de Pocket Operator.
-   - GET  /api/po33_backup_audio: Streaming de audio de respaldo de PO-33 para carga directa en pads.
-   - POST /api/create_kit: Síntesis y exportación universal de kits para Akai MPC (.xpm/.xpj), NI Maschine (.mxgrp), Roland SP-404MK2 y PO-33 Drum Reel.
+   - GET  /api/po33_backups: Inspección de audio de respaldos; no valida sus datos.
+   - GET  /api/po33_backup_audio: Descarga de audio de respaldo de PO-33.
+   - POST /api/create_kit: Síntesis y exportación universal de kits para Akai MPC (.xpm/.xpj), NI Maschine (WAV + mapa JSON), Roland SP-404MK2 y PO-33 Drum Reel.
    - POST /api/load_project: Carga de proyectos MPC (.xpj) en el Beatmaker Rack.
    - POST /api/reindex: Re-indexación autónoma en segundo plano.
    - POST /api/clean_metadata: Purga de residuos AppleDouble (._*) y .DS_Store.
@@ -35,9 +35,10 @@ import tempfile
 import threading
 import time
 import urllib.parse
+import urllib.request
 import webbrowser
 import zipfile
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer as HTTPServer
 from pathlib import Path
 
 mimetypes.init()
@@ -52,6 +53,7 @@ mimetypes.add_type("image/svg+xml", ".svg")
 mimetypes.add_type("application/json", ".json")
 
 # Estado global de tareas en segundo plano
+TASK_LOCK = threading.Lock()
 TASK_STATE = {
     "running": False,
     "task_name": "",
@@ -66,9 +68,7 @@ def get_hardware_kit_builder(root_dir: str):
     candidates = [
         os.path.join(root_dir, "hardware_kit_builder.py"),
         os.path.join(root_dir, "_INDEX_MPC_SAMPLE", "hardware_kit_builder.py"),
-        os.path.expanduser("~/Documents/mpc-sample-database/hardware_kit_builder.py"),
-        "/Volumes/MPCSMPL/_INDEX_MPC_SAMPLE/hardware_kit_builder.py",
-        "/Volumes/MPCSMPL/hardware_kit_builder.py",
+        os.path.join(os.path.dirname(__file__), "hardware_kit_builder.py"),
     ]
     for cand in candidates:
         if os.path.isfile(cand):
@@ -92,12 +92,8 @@ def run_reindex_thread(root_dir: str):
     TASK_STATE["finished_at"] = 0
     TASK_STATE["success"] = None
 
-    candidates = [
-        os.path.join(root_dir, "index_mpc_library.py"),
-        os.path.join(root_dir, "_INDEX_MPC_SAMPLE", "reindex_mpc_sample.py"),
-        "/Volumes/MPCSMPL/_INDEX_MPC_SAMPLE/reindex_mpc_sample.py",
-        os.path.expanduser("~/Documents/mpc-sample-database/index_mpc_library.py"),
-    ]
+    candidates = [os.path.join(root_dir, "index_mpc_library.py"),
+                  os.path.join(os.path.dirname(__file__), "index_mpc_library.py")]
     script_path = None
     for cand in candidates:
         if os.path.isfile(cand):
@@ -113,7 +109,7 @@ def run_reindex_thread(root_dir: str):
 
     try:
         proc = subprocess.Popen(
-            [sys.executable, script_path],
+            [sys.executable, script_path, "--path", root_dir],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -127,11 +123,6 @@ def run_reindex_thread(root_dir: str):
                     if len(TASK_STATE["logs"]) > 300:
                         TASK_STATE["logs"].pop(1)
         proc.wait()
-
-        dashboard_script = os.path.expanduser("~/.gemini/antigravity/scratch/sync_master_dashboard.py")
-        if proc.returncode == 0 and os.path.isfile(dashboard_script):
-            TASK_STATE["logs"].append("📊 Sincronizando Master Dashboard...")
-            subprocess.run([sys.executable, dashboard_script], stderr=subprocess.DEVNULL, check=False)
 
         TASK_STATE["success"] = (proc.returncode == 0)
         TASK_STATE["logs"].append(
@@ -184,9 +175,6 @@ def get_system_status(root_dir: str):
     db_candidates = [
         os.path.join(root_dir, "SQLITE_DATABASE", "mpc_sample.db"),
         os.path.join(root_dir, "_INDEX_MPC_SAMPLE", "mpc_sample.db"),
-        "/Volumes/MPCSMPL/SQLITE_DATABASE/mpc_sample.db",
-        "/Volumes/MPCSMPL/_INDEX_MPC_SAMPLE/mpc_sample.db",
-        os.path.expanduser("~/Documents/mpc-sample-database/SQLITE_DATABASE/mpc_sample.db"),
     ]
     sample_count = 0
     for cand in db_candidates:
@@ -234,6 +222,8 @@ def find_card_root(start_dir: str) -> str:
 def find_available_port(start_port: int = 8888, max_attempts: int = 50) -> int:
     for port in range(start_port, start_port + max_attempts):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if sys.platform != 'win32':
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
                 s.bind(("127.0.0.1", port))
                 return port
@@ -241,11 +231,24 @@ def find_available_port(start_port: int = 8888, max_attempts: int = 50) -> int:
                 continue
     return start_port
 
+def resolve_library_path(root_dir: str, value: str) -> Path:
+    root = Path(root_dir).resolve()
+    candidate = Path(value)
+    candidate = (candidate if candidate.is_absolute() else root / candidate).resolve()
+    relative = candidate.relative_to(root)
+    if any(part.startswith('.') for part in relative.parts):
+        raise ValueError('Las rutas privadas no están disponibles por HTTP')
+    return candidate
+
+
 class MPCAudioRequestHandler(BaseHTTPRequestHandler):
-    server_version = "MPCAudioStreamer/3.5"
+    server_version = "MPCAudioStreamer/3.6.2-metadata.20261029"
 
     def send_cors_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
+        origin = self.headers.get('Origin')
+        if origin and urllib.parse.urlsplit(origin).netloc == self.headers.get('Host'):
+            self.send_header('Access-Control-Allow-Origin', origin)
+            self.send_header('Vary', 'Origin')
         self.send_header("Access-Control-Allow-Methods", "GET, HEAD, POST, OPTIONS")
         self.send_header(
             "Access-Control-Allow-Headers",
@@ -254,13 +257,33 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Expose-Headers", "Content-Range, Content-Length, Accept-Ranges")
         self.send_header("Access-Control-Max-Age", "86400")
 
+    def allow_local_request(self):
+        host = self.headers.get('Host', '')
+        origin = self.headers.get('Origin')
+        try:
+            parsed_host = urllib.parse.urlsplit('http://' + host)
+            valid_host = parsed_host.hostname in {'127.0.0.1', 'localhost', '::1'}
+            valid_host = valid_host and parsed_host.port == self.server.server_address[1]
+            parsed_origin = urllib.parse.urlsplit(origin) if origin else None
+            valid_origin = not origin or (parsed_origin.scheme == 'http' and parsed_origin.netloc == host)
+        except ValueError:
+            valid_host = valid_origin = False
+        if not valid_host or not valid_origin:
+            self.send_error(403, 'Use la interfaz local de BeatOS')
+            return False
+        return True
+
     def do_OPTIONS(self):
+        if not self.allow_local_request():
+            return
         self.send_response(204)
         self.send_cors_headers()
         self.send_header("Content-Length", "0")
         self.end_headers()
 
     def do_GET(self):
+        if not self.allow_local_request():
+            return
         parsed = urllib.parse.urlparse(self.path)
         clean_path = parsed.path.rstrip("/")
 
@@ -307,7 +330,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             kit_mod = get_hardware_kit_builder(self.server.root_dir)
             if kit_mod and hasattr(kit_mod, "scan_po33_backups"):
                 try:
-                    backups = kit_mod.scan_po33_backups()
+                    backups = kit_mod.scan_po33_backups([kit_mod.DEFAULT_PO_DIR, Path(self.server.root_dir) / "PO_BACKUPS", Path.home() / "Music/Pocket_Operator_Backups"])
                     self.wfile.write(json.dumps({"success": True, "backups": backups}, ensure_ascii=False).encode("utf-8"))
                 except Exception as e:
                     self.wfile.write(json.dumps({"success": False, "error": str(e), "backups": []}).encode("utf-8"))
@@ -319,14 +342,13 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             query = urllib.parse.parse_qs(parsed.query)
             file_name = query.get("file", [""])[0] or query.get("path", [""])[0]
             target_path = None
-            if file_name:
-                p_cand = Path(file_name)
-                if p_cand.is_absolute() and p_cand.is_file():
-                    target_path = p_cand
-                else:
-                    cand2 = Path("/Users/ivan/Documents/PO- POCKET OPERATORS") / Path(file_name).name
-                    if cand2.is_file():
-                        target_path = cand2
+            kit_mod = get_hardware_kit_builder(self.server.root_dir)
+            if file_name and kit_mod:
+                roots = [kit_mod.DEFAULT_PO_DIR.resolve(), (Path(self.server.root_dir) / "PO_BACKUPS").resolve(), (Path.home() / "Music/Pocket_Operator_Backups").resolve()]
+                candidate = Path(file_name)
+                candidate = (candidate if candidate.is_absolute() else roots[0] / candidate).resolve()
+                if any(candidate.is_relative_to(root) for root in roots) and candidate.suffix.lower() == '.wav':
+                    target_path = candidate
             if not target_path or not target_path.is_file():
                 self.send_response(404)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -349,12 +371,54 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.end_headers()
             return
 
+        elif clean_path == "/api/download_file":
+            query = urllib.parse.parse_qs(parsed.query)
+            file_name = query.get("file", [""])[0] or query.get("path", [""])[0]
+            try:
+                target_path = resolve_library_path(self.server.root_dir, file_name) if file_name else None
+            except ValueError:
+                self.send_error(403, 'Ruta fuera de la biblioteca')
+                return
+            if not target_path or not target_path.is_file():
+                self.send_response(404)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Archivo no encontrado."}).encode("utf-8"))
+                return
+            try:
+                data = target_path.read_bytes()
+                mime = mimetypes.guess_type(target_path.name)[0] or "application/octet-stream"
+                self.send_response(200)
+                self.send_header("Content-Type", mime)
+                self.send_header("Content-Length", str(len(data)))
+                self.send_header("Content-Disposition", f'attachment; filename="{target_path.name}"')
+                self.send_cors_headers()
+                self.end_headers()
+                self.wfile.write(data)
+            except Exception:
+                self.send_response(500)
+                self.end_headers()
+            return
+
         self.handle_request(send_body=True)
 
     def do_HEAD(self):
+        if not self.allow_local_request():
+            return
         self.handle_request(send_body=False)
 
     def do_POST(self):
+        if not self.allow_local_request():
+            return
+        try:
+            length = int(self.headers.get('Content-Length', '0'))
+        except ValueError:
+            self.send_error(400, 'Content-Length no válido')
+            return
+        if length < 0 or length > 1024 * 1024:
+            self.send_error(400 if length < 0 else 413, 'Tamaño de petición no permitido')
+            return
         parsed = urllib.parse.urlparse(self.path)
         clean_api = parsed.path.rstrip("/")
 
@@ -372,7 +436,16 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 target = payload.get("target", "universal")
                 pads = payload.get("pads", [])
 
-                result = kit_mod.create_kit(kit_name, pads, target=target, source_root=self.server.root_dir)
+                entries = pads.values() if isinstance(pads, dict) else pads
+                if not isinstance(pads, (dict, list)):
+                    raise ValueError('Los pads deben ser una lista o un objeto')
+                for pad in entries:
+                    if not isinstance(pad, dict):
+                        raise ValueError('Cada pad debe ser un objeto')
+                    for field in ('source_path', 'rel_path', 'relPath', 'sample_path'):
+                        if pad.get(field):
+                            resolve_library_path(self.server.root_dir, pad[field])
+                result = kit_mod.create_kit(kit_name, pads, target=target, source_root=self.server.root_dir, tempo=payload.get("tempo",120), po_options=payload.get("po_options"))
 
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -388,24 +461,77 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps(err_resp).encode("utf-8"))
             return
 
-        elif clean_api == "/api/reindex":
-            if TASK_STATE["running"]:
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.send_cors_headers()
-                self.end_headers()
-                self.wfile.write(
-                    json.dumps(
-                        {
-                            "success": False,
-                            "message": "Ya hay una reindexación en ejecución en segundo plano.",
-                            "task_state": TASK_STATE,
-                        },
-                        ensure_ascii=False,
-                    ).encode("utf-8")
-                )
-                return
+        elif clean_api == "/api/reveal_in_finder":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                payload = json.loads(body)
+                target_path = payload.get("path", "").strip()
+                if not target_path:
+                    raise ValueError("Falta parámetro 'path'")
 
+                p = resolve_library_path(self.server.root_dir, target_path)
+                if not p.exists():
+                    raise FileNotFoundError(f"Ruta no encontrada: {target_path}")
+
+                if sys.platform == 'darwin':
+                    subprocess.run(['open', str(p)] if p.is_dir() else ['open','-R',str(p)], check=True)
+                elif sys.platform == 'win32':
+                    os.startfile(str(p if p.is_dir() else p.parent))
+                else:
+                    subprocess.run(['xdg-open',str(p if p.is_dir() else p.parent)], check=True)
+                resp = {"success": True, "message": f"Abierto en el explorador: {p}"}
+            except Exception as e:
+                resp = {"success": False, "error": str(e)}
+
+            self.send_response(200 if resp.get("success") else 500)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_cors_headers()
+            self.end_headers()
+            self.wfile.write(json.dumps(resp, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif clean_api == "/api/launch_ep_tool":
+            try:
+                url = "https://teenage.engineering/apps/ep-sample-tool"
+                if sys.platform == 'darwin':
+                    browser = next((str(Path('/Applications')/name) for name in ['Google Chrome.app','Microsoft Edge.app','Firefox.app'] if (Path('/Applications')/name).is_dir()), None)
+                    if not browser:
+                        raise RuntimeError("Abre la herramienta oficial en Chrome, Edge o Firefox de escritorio; Safari no admite Web MIDI.")
+                    subprocess.run(['open','-a',browser,url],check=True)
+                elif not webbrowser.open(url):
+                    raise RuntimeError("Abre la herramienta oficial en un navegador con Web MIDI")
+                resp = {"success": True, "url": url}
+            except Exception as e:
+                resp = {"success": False, "error": str(e)}
+
+            self.send_response(200 if resp.get("success") else 500)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_cors_headers()
+            self.end_headers()
+            self.wfile.write(json.dumps(resp, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif clean_api == "/api/reindex":
+            with TASK_LOCK:
+                if TASK_STATE["running"]:
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_cors_headers()
+                    self.end_headers()
+                    self.wfile.write(
+                        json.dumps(
+                            {
+                                "success": False,
+                                "message": "Ya hay una reindexación en ejecución en segundo plano.",
+                                "task_state": TASK_STATE,
+                            },
+                            ensure_ascii=False,
+                        ).encode("utf-8")
+                    )
+                    return
+
+                TASK_STATE["running"] = True
             t = threading.Thread(target=run_reindex_thread, args=(self.server.root_dir,), daemon=True)
             t.start()
 
@@ -452,18 +578,13 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 if not rel_path:
                     raise ValueError("Falta parámetro 'rel_path'")
 
-                src_path = os.path.join(self.server.root_dir, rel_path)
+                src_path = str(resolve_library_path(self.server.root_dir, rel_path))
                 if not os.path.isfile(src_path):
-                    # Probar rutas alternativas
-                    alt_cand = Path("/Volumes/MPCSMPL") / rel_path
-                    if alt_cand.is_file():
-                        src_path = str(alt_cand)
-                    else:
-                        raise FileNotFoundError(f"Proyecto no encontrado: {src_path}")
+                    raise FileNotFoundError('Proyecto no encontrado en la biblioteca')
 
                 kit_mod = get_hardware_kit_builder(self.server.root_dir)
                 if kit_mod and hasattr(kit_mod, "parse_xpj_project"):
-                    proj_info = kit_mod.parse_xpj_project(src_path, source_root=self.server.root_dir)
+                    proj_info = kit_mod.parse_xpj_project(src_path, source_root=self.server.root_dir, track_index=payload.get("track_index"))
                     resp = {"success": True, "project": proj_info}
                 else:
                     raise RuntimeError("Función parse_xpj_project no disponible.")
@@ -489,8 +610,6 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 kit_mod = get_hardware_kit_builder(self.server.root_dir)
                 if kit_mod and hasattr(kit_mod, "list_expansion_kits"):
                     exp_root = Path(self.server.root_dir) / "Expansions"
-                    if not exp_root.is_dir():
-                        exp_root = Path("/Volumes/MPCSMPL/Expansions")
                     kits = kit_mod.list_expansion_kits(expansion_name, expansions_root=exp_root, source_root=self.server.root_dir)
                     resp = {"success": True, "expansion_name": expansion_name, "programs": kits, "total": len(kits)}
                 else:
@@ -520,18 +639,9 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                     raise ValueError("Falta parámetro 'rel_path' o 'program_file'")
 
                 clean_rel = rel_path.lstrip("/")
-                src_path = os.path.join(self.server.root_dir, clean_rel)
+                src_path = str(resolve_library_path(self.server.root_dir, clean_rel))
                 if not os.path.isfile(src_path):
-                    alt_cand = Path("/Volumes/MPCSMPL") / clean_rel
-                    if alt_cand.is_file():
-                        src_path = str(alt_cand)
-                    else:
-                        # Buscar si está en el directorio del script
-                        script_cand = Path(__file__).parent / clean_rel
-                        if script_cand.is_file():
-                            src_path = str(script_cand)
-                        else:
-                            raise FileNotFoundError(f"Programa XPM no encontrado: {src_path}")
+                    raise FileNotFoundError('Programa XPM no encontrado en la biblioteca')
 
                 kit_mod = get_hardware_kit_builder(self.server.root_dir)
                 if kit_mod and hasattr(kit_mod, "parse_xpm_program"):
@@ -558,7 +668,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 rel_path = payload.get("rel_path")
                 if not rel_path:
                     raise ValueError("Falta parámetro 'rel_path'")
-                src_path = os.path.join(self.server.root_dir, rel_path)
+                src_path = str(resolve_library_path(self.server.root_dir, rel_path))
                 if not os.path.isfile(src_path):
                     raise FileNotFoundError(f"Proyecto no encontrado: {src_path}")
 
@@ -574,7 +684,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                             for f in files:
                                 full_path = os.path.join(root, f)
                                 arcname = os.path.relpath(full_path, os.path.dirname(src_path))
-                                zf.write(full_path, arcname)
+                                zf.write(resolve_library_path(self.server.root_dir, full_path), arcname)
 
                 self.send_response(200)
                 self.send_header("Content-Type", "application/zip")
@@ -647,9 +757,18 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                     clean_path = candidate
                     break
 
-        target_path = os.path.join(self.server.root_dir, clean_path)
+        file_root = self.server.root_dir
+        if clean_path.startswith('docs/assets/') and not os.path.isfile(os.path.join(file_root,clean_path)):
+            file_root = os.path.join(os.path.dirname(__file__),'docs','assets')
+            clean_path = clean_path[len('docs/assets/'):]
 
-        if not os.path.isfile(target_path):
+        try:
+            target_path = str(resolve_library_path(file_root, clean_path))
+        except ValueError:
+            self.send_error(403, 'Ruta fuera de la biblioteca')
+            return
+
+        if file_root == self.server.root_dir and not os.path.isfile(target_path):
             sub_path = os.path.join(self.server.root_dir, "SQLITE_DATABASE", clean_path)
             if os.path.isfile(sub_path):
                 target_path = sub_path
@@ -657,10 +776,6 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 root_direct = os.path.join(self.server.root_dir, clean_path.replace("SQLITE_DATABASE/", "", 1))
                 if os.path.isfile(root_direct):
                     target_path = root_direct
-            elif os.path.isdir("/Volumes/MPCSMPL") and not target_path.startswith("/Volumes/MPCSMPL"):
-                alt_path = os.path.join("/Volumes/MPCSMPL", clean_path)
-                if os.path.isfile(alt_path):
-                    target_path = alt_path
 
         if not os.path.isfile(target_path):
             self.send_response(404)
@@ -670,6 +785,12 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             if send_body:
                 msg = f"404 No encontrado: {clean_path}\nBuscado en: {target_path}\n"
                 self.wfile.write(msg.encode("utf-8"))
+            return
+
+        try:
+            target_path = str(resolve_library_path(file_root, target_path))
+        except ValueError:
+            self.send_error(403, 'Ruta fuera de la biblioteca')
             return
 
         file_size = os.path.getsize(target_path)
@@ -736,12 +857,22 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             except (BrokenPipeError, ConnectionResetError):
                 pass
 
+def existing_library_root(port):
+    try:
+        with urllib.request.urlopen(f'http://127.0.0.1:{port}/api/status', timeout=2) as response:
+            state = json.loads(response.read(65536))
+        return Path(state['root_dir']).resolve() if state.get('status') == 'online' else None
+    except (OSError, ValueError, KeyError):
+        return None
+
 def run_server(custom_path: str | None = None, port: int | None = None, auto_open: bool = True):
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    target_root = find_card_root(custom_path if custom_path else script_dir)
+    target_root = str(Path(custom_path).expanduser().resolve()) if custom_path else find_card_root(script_dir)
+    if not Path(target_root).is_dir():
+        raise ValueError(f"La biblioteca no existe: {target_root}")
 
-    if not port:
-        port = find_available_port(8888)
+    desired_port = port or 8888
+    port = find_available_port(desired_port)
 
     catalog_rel = None
     for cand in ("catalogo_universal.html", "catalogo_mpc_sample.html", "SQLITE_DATABASE/catalogo_mpc_sample.html"):
@@ -755,7 +886,24 @@ def run_server(custom_path: str | None = None, port: int | None = None, auto_ope
         elif os.path.isfile(os.path.join(script_dir, "catalogo_mpc_sample.html")):
             catalog_rel = "catalogo_mpc_sample.html"
 
-    url = f"http://localhost:{port}/" + (catalog_rel if catalog_rel else "")
+    if port != desired_port and existing_library_root(desired_port) == Path(target_root):
+        existing_url = f"http://127.0.0.1:{desired_port}/" + (catalog_rel if catalog_rel else "")
+        if auto_open:
+            print(f"✔ El servidor BeatOS ya está activo en segundo plano en {existing_url} — abriendo navegador...")
+            try:
+                if sys.platform == "darwin":
+                    subprocess.run(["open", existing_url], check=False)
+                else:
+                    webbrowser.open(existing_url)
+            except Exception:
+                pass
+        else:
+            print(f"✔ El servidor BeatOS ya está activo en segundo plano en {existing_url} — omitiendo instancia duplicada.")
+        return
+
+    if port != desired_port:
+        print(f"Puerto {desired_port} ocupado por otra biblioteca o servicio; esta biblioteca usa {port}.")
+    url = f"http://127.0.0.1:{port}/" + (catalog_rel if catalog_rel else "")
 
     print("\n" + "=" * 70)
     print("🔊 BeatOS — The MakerLicious")
@@ -790,11 +938,13 @@ def run_server(custom_path: str | None = None, port: int | None = None, auto_ope
         httpd.serve_forever()
     except KeyboardInterrupt:
         print("\n✔ Servidor web detenido correctamente.")
+    finally:
+        httpd.server_close()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="MPC Sample & Multi-Sampler Audio Streamer")
     parser.add_argument("path", nargs="?", default=None, help="Directorio raíz de la tarjeta o base")
-    parser.add_argument("--port", "-p", type=int, default=8888, help="Puerto HTTP (def: 8888)")
+    parser.add_argument("--port", "-p", type=int, default=None, help="Puerto HTTP (def: 8888)")
     parser.add_argument("--no-browser", action="store_true", help="No abrir automáticamente el navegador")
     args = parser.parse_args()
     run_server(args.path, port=args.port, auto_open=not args.no_browser)

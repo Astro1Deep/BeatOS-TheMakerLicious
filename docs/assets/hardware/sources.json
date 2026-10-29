@@ -1,0 +1,56 @@
+[
+  {
+    "name": "Akai MPC One",
+    "file": "mpc-one.jpg",
+    "page": "https://www.chicagomusicexchange.com/products/akai-professional-mpc-one-sampler-and-sequencer-1462111",
+    "image_url": "https://www.chicagomusicexchange.com/cdn/shop/products/akai-keyboards-and-synths-controllers-akai-professional-mpc-one-sampler-and-sequencer-mpconexus-29157676843143.jpg?v=1649358153&width=1946",
+    "sha256": "d4400a8e144b4e5b84c13e46c571d28a9072e65d600b3b5b38ecd09d541990e7",
+    "bytes": 131187,
+    "source": "Chicago Music Exchange"
+  },
+  {
+    "name": "Akai MPC Sample",
+    "file": "mpc-sample.png",
+    "page": "https://www.akaipro.com/mpc-sample/",
+    "image_url": "https://cdn.builder.io/api/v1/image/assets%2F47c5d023e7b3451a86ac03602c65dce8%2Fd9ff712b4ef44e83a17fe35c155a15be?format=png&width=1875",
+    "sha256": "bb9215566f5bf8154579fa33e01074f19ac5ae3b8fb39551f54d5cc21a20e565",
+    "bytes": 719876,
+    "source": "Fabricante"
+  },
+  {
+    "name": "Native Instruments MASCHINE+",
+    "file": "maschine-plus.png",
+    "page": "https://www.native-instruments.com/products/maschine-plus",
+    "image_url": "https://www.native-instruments.com/cdn/shop/files/ac8e8e71ef1a-maschine-plus-image-01.png?v=1786053951&width=2000",
+    "sha256": "f23e870a501f1de0357ae9a021e36397641e26cdb3280e27697f39f1fe85471b",
+    "bytes": 1100942,
+    "source": "Fabricante"
+  },
+  {
+    "name": "Roland SP-404MKII",
+    "file": "sp404mkii.jpg",
+    "page": "https://www.roland.com/global/products/sp-404mk2/",
+    "image_url": "https://static.roland.com/assets/images/products/gallery/sp-404mkii_top_waveform_gal.jpg",
+    "sha256": "cf0885579008d45e47f45fe01ea4ed04de28d474a6d58c8728b96d61ffaa51b7",
+    "bytes": 178632,
+    "source": "Fabricante"
+  },
+  {
+    "name": "Teenage Engineering EP–133 K.O. II",
+    "file": "ep133.webp",
+    "page": "https://teenage.engineering/products/ep-133",
+    "image_url": "https://assets.teenage.engineering/_img/store/54d4815453243a8508a520cfc74c764421e39948e9e4f2fe206e03ed4ec9d4cc.webp?w=2000",
+    "sha256": "21dae6aa8719458df33f4caa3d63c3ea3b6081026e58fb7b749e8a99587b441c",
+    "bytes": 114660,
+    "source": "Fabricante"
+  },
+  {
+    "name": "Teenage Engineering PO–33 K.O!",
+    "file": "po33.webp",
+    "page": "https://teenage.engineering/store/po-33",
+    "image_url": "https://assets.teenage.engineering/_img/store/a0098c9afcfec793aea0bea39d6bc985b45ca1ac96fc8c475070a32b6873b066.webp?w=2000",
+    "sha256": "d7b35f82f41b7985dec6a96ef7531ebd14272e907722635e417adda94bc5e07d",
+    "bytes": 154494,
+    "source": "Fabricante"
+  }
+]

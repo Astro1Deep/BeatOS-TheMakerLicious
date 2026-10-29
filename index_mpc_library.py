@@ -9,6 +9,7 @@ Uso:
     python3 index_mpc_library.py --path "/Volumes/MiTarjetaMPC" --output "./SQLITE_DATABASE"
 """
 
+from pathlib import Path
 import os
 import sys
 import sqlite3
@@ -16,7 +17,11 @@ import json
 import csv
 import re
 import gzip
+import math
+import wave
+import array
 import argparse
+import html
 from datetime import datetime
 from xml.etree import ElementTree as ET
 from collections import defaultdict
@@ -27,13 +32,13 @@ from collections import defaultdict
 
 SOUND_RULES = [
     ("KICK", ["kick", "kik", "bd", "bassdrum", "bass drum", "bombo", "sub kick", "acoustic kick", "808 kick"]),
-    ("SNARE", ["snare", "snr", "rimshot", "rim", "cross stick", "sidestick", "caja", "tarola", "snare roll", "acoustic snare"]),
+    ("SNARE", ["snare", "snr", "sd", "rimshot", "cross stick", "sidestick", "caja", "tarola", "snare roll", "acoustic snare"]),
     ("CLAP", ["clap", "clp", "snap", "finger snap", "palma", "palmas", "handclap"]),
-    ("HIHAT", ["hihat", "hi-hat", "hat", "hh", "openhh", "closedhh", "open hat", "closed hat", "open-hat", "closed-hat", "oh", "ch", "pedal hat", "shaker", "tambourine", "tamb"]),
+    ("HIHAT", ["hihat", "hi-hat", "hat", "hh", "openhh", "closedhh", "open hat", "closed hat", "open-hat", "closed-hat", "oh", "ch", "pedal hat"]),
     ("CYMBAL", ["crash", "ride", "cymbal", "splash", "china", "gong", "cymb"]),
-    ("PERCUSSION", ["perc", "prc", "conga", "bongo", "cowbell", "woodblock", "foley", "tom", "organic", "agogo", "timbales", "clave", "claves", "cabasa", "triangle", "cajon", "djembe", "tabla", "guiro", "cuica", "chimes", "maraca"]),
+    ("PERCUSSION", ["perc", "prc", "conga", "bongo", "cowbell", "woodblock", "foley", "tom", "organic", "agogo", "timbales", "clave", "claves", "cabasa", "triangle", "cajon", "djembe", "tabla", "guiro", "cuica", "chimes", "maraca", "shaker", "tambourine", "tamb", "rim"]),
     ("BASS_808", ["808", "sub", "bass", "subbass", "reese", "synthbass", "synth bass", "electric bass", "upright bass", "slap bass", "bassline", "sub-bass"]),
-    ("KEYS_SYNTH", ["piano", "rhodes", "wurli", "wurlitzer", "clav", "clavinet", "synth", "lead", "pluck", "organ", "brass", "horn", "trumpet", "trombone", "sax", "strings", "violin", "cello", "chord", "stab", "keys", "pad", "arp", "music box"]),
+    ("KEYS_SYNTH", ["piano", "rhodes", "wurli", "wurlitzer", "clav", "clavinet", "synth", "lead", "pluck", "organ", "brass", "horn", "trumpet", "trombone", "sax", "strings", "violin", "cello", "chord", "stab", "keys", "pad", "arp", "music box", "guitar", "flute", "mallet", "bell"]),
     ("MELODIC_LOOP", ["melody", "arp loop", "keyslp", "voxlp", "synth loop", "guitar loop", "riff", "stem", "sample chop", "chops", "loop", "acoustic guitar", "electric guitar", "lick"]),
     ("DRUM_LOOP", ["break", "drum loop", "drumloop", "breaks", "breakbeat", "amen", "groove", "top loop", "perc loop", "drum track", "beat"]),
     ("VOCAL", ["vocal", "vox", "acapella", "chant", "adlib", "voices", "speech", "phrase", "acap", "singing", "spoken word", "vocal chop"]),
@@ -63,26 +68,65 @@ BPM_REGEXES = [
     r'([A-Ga-g][#b]?(?:m|maj|min|Maj|Min)?)(\d{2,3})'
 ]
 
-KEY_REGEXES = [
-    r'[\s_\-]([A-G][#b]?(?:m|maj|min|Maj|Min)?)(?:[\s_\-]|\.|$)',
-    r'(?:Key|key|KEY)[\s_\-]*([A-G][#b]?(?:m|maj|min)?)',
-    r'([A-G][#b]?(?:m|maj|min|Maj|Min))\s*(?:1[0-9]{2}|[6-9][0-9])'
-]
+def _sound_text(value):
+    value = re.sub(r'([a-z])([A-Z])', r'\1 \2', value)
+    return re.sub(r'[_\-]+', ' ', value).lower()
+
+
+def _has_keyword(text, keyword):
+    keyword = _sound_text(keyword)
+    return bool(re.search(r'(?<![a-z])' + re.escape(keyword) + r'(?:s)?(?![a-z])', text))
+
 
 def classify_sound_type(filename, parent_dir=""):
-    t = (filename + " " + parent_dir).lower()
-    for code, keywords in SOUND_RULES:
-        for kw in keywords:
-            pattern = r'(?:\b|[\s\-_0-9])' + re.escape(kw) + r'(?:\b|[\s\-_0-9])'
-            if re.search(pattern, t):
+    # A filename outranks folders; broad collection/genre names are not instruments.
+    def identify(value):
+        text = _sound_text(value)
+        loop = any(_has_keyword(text, k) for k in ('loop', 'lp', 'drumloop', 'keyslp', 'voxlp', 'breakbeat', 'break', 'breaks'))
+        if _has_keyword(text, 'stem'):
+            return 'STEM'
+        if any(_has_keyword(text, k) for k in ('roll', 'fill')):
+            return 'ROLL_FILL'
+        for code, keywords in SOUND_RULES:
+            if code in {'MELODIC_LOOP', 'DRUM_LOOP'}:
+                continue
+            if any(_has_keyword(text, kw) for kw in keywords):
+                if loop and code in {'KICK','SNARE','CLAP','HIHAT','CYMBAL','PERCUSSION'}:
+                    return 'DRUM_LOOP'
+                if loop and code in {'BASS_808','KEYS_SYNTH'}:
+                    return 'MELODIC_LOOP'
                 return code
-    if "kick" in t or "kik" in t: return "KICK"
-    if "snr" in t or "snare" in t: return "SNARE"
-    if "hat" in t: return "HIHAT"
-    if "loop" in t: return "MELODIC_LOOP"
-    if "drum" in t: return "DRUM_LOOP"
-    if "chord" in t: return "KEYS_SYNTH"
-    return "PERCUSSION"
+        if loop and any(_has_keyword(text, k) for k in ('drum', 'drumloop', 'break', 'breakbeat', 'top', 'amen')):
+            return 'DRUM_LOOP'
+        if loop and any(_has_keyword(text, k) for k in ('melody', 'melodic', 'music', 'riff')):
+            return 'MELODIC_LOOP'
+        return None
+
+    found = identify(Path(filename).stem)
+    if found:
+        return found
+    for part in reversed(Path(parent_dir).parts):
+        text = _sound_text(part)
+        # Only specific instrument folders; never infer from an entire ancestor path.
+        exact = [(code, kw) for code, kws in SOUND_RULES for kw in kws
+                 if text.strip(' 0123456789') in { _sound_text(kw), _sound_text(kw) + 's' }]
+        if exact:
+            return identify(part) or exact[0][0]
+    return 'UNKNOWN'
+
+
+def classify_sample_format(filename, sound_type, parent_dir=""):
+    text = _sound_text(Path(filename).stem + ' ' + Path(parent_dir).name)
+    if _has_keyword(text, 'stem'):
+        return 'STEM'
+    if any(_has_keyword(text, k) for k in ('roll','fill')):
+        return 'ROLL_FILL'
+    if sound_type in {'DRUM_LOOP','MELODIC_LOOP'} or _has_keyword(text, 'loop') or _has_keyword(text, 'lp'):
+        return 'LOOP'
+    if 'one shot' in text or 'oneshot' in text or sound_type in {'KICK','SNARE','CLAP','HIHAT','CYMBAL','PERCUSSION'}:
+        return 'ONE_SHOT'
+    return 'UNSPECIFIED'
+
 
 def extract_bpm(filename):
     for rx in BPM_REGEXES:
@@ -105,29 +149,130 @@ def get_bpm_tier(bpm):
     return "DNB_JUNGLE"
 
 def extract_key(filename):
-    for rx in KEY_REGEXES:
-        m = re.search(rx, filename)
-        if m:
-            k = m.group(1).strip()
-            k = k.replace("Min", "m").replace("min", "m").replace("Maj", "").replace("maj", "").replace("Major", "").replace("minor", "m")
-            if k in CAMELOT_MAP:
-                return k, CAMELOT_MAP[k]
-            base = k[0].upper() + (k[1] if len(k) > 1 and k[1] in '#b' else '')
-            if base in CAMELOT_MAP:
-                return base, CAMELOT_MAP[base]
+    text = Path(filename).stem.replace('♯','#').replace('♭','b')
+    # A root note, an octave or a bank letter does not establish major/minor.
+    match = re.search(r'(?<![A-Za-z0-9])([A-Ga-g])([#b]?)[ _-]*(major|minor|maj|min|m)(?=$|[^A-Za-z]|[0-9])', text, re.IGNORECASE)
+    if match:
+        root, accidental, mode = match.groups()
+        key = root.upper() + accidental + ('m' if mode != 'M' and mode.lower() in {'m','min','minor'} else '')
+        return (key, CAMELOT_MAP[key]) if key in CAMELOT_MAP else (None, None)
+    match = re.search(r'(?i)(?:^|[ _-])key[ _-]*([a-g])([#b]?)(?![a-z])',text)
+    if not match:
+        match = re.search(r'(?<![A-Za-z0-9])([A-G])([#b]?)[0-8](?![A-Za-z0-9])', text)
+    if match:
+        return match[1].upper() + match[2] + ' (nota)', None
     return None, None
 
-def estimate_energy(sound_type, bpm_tier, macro_category, filename):
-    t = (filename + " " + macro_category).lower()
-    if sound_type in ["BASS_808"] and ("808" in t or "drill" in t or "trap" in t):
-        return "BANGER"
-    if bpm_tier in ["DNB_JUNGLE", "TRAP_HALFTIME"]:
-        return "BANGER"
-    if "lo-fi" in t or "lofi" in t or "ambient" in t or "chill" in t or bpm_tier == "DOWN_TEMPO":
-        return "CHILL"
-    if "boom bap" in t or "house" in t or "funk" in t or "groove" in t or bpm_tier in ["BOOM_BAP_LOFI", "HOUSE_GARAGE"]:
-        return "GROOVE"
-    return "GROOVE"
+
+def measure_energy(path):
+    """Bounded PCM RMS estimate; not genre, integrated loudness or musical intensity."""
+    try:
+        with wave.open(str(path), 'rb') as audio:
+            width, channels, count = audio.getsampwidth(), audio.getnchannels(), audio.getnframes()
+            if width not in {1,2,3,4} or not count or not 1 <= channels <= 8:
+                return 'UNMEASURED'
+            window = min(count, 4096)
+            positions = sorted({0, max(0,(count-window)//2), max(0,count-window)})
+            squares = 0
+            values_count = 0
+            for position in positions:
+                audio.setpos(position)
+                data = audio.readframes(window)
+                if len(data) % width:
+                    return 'UNMEASURED'
+                if width == 1:
+                    values = [v-128 for v in data]
+                elif width in {2,4}:
+                    values = array.array('h' if width == 2 else 'i')
+                    values.frombytes(data)
+                    if sys.byteorder != 'little':
+                        values.byteswap()
+                else:
+                    values = [int.from_bytes(data[i:i+3],'little',signed=True) for i in range(0,len(data),3)]
+                squares += sum(v*v for v in values)
+                values_count += len(values)
+            if not values_count:
+                return 'UNMEASURED'
+            if not squares:
+                return 'SILENT'
+            dbfs = 10 * math.log10(squares / values_count / (2 ** (8*width-1))**2)
+            return 'CHILL' if dbfs < -24 else ('GROOVE' if dbfs < -12 else 'BANGER')
+    except (OSError, EOFError, wave.Error, ValueError, OverflowError):
+        return 'UNMEASURED'
+
+
+def render_catalog(template, records, metadata):
+    marker = re.search(r'const SAMPLES\s*=\s*', template)
+    if not marker:
+        raise ValueError('La plantilla no declara SAMPLES')
+    _, end = json.JSONDecoder().raw_decode(template[marker.end():])
+    safe_records = json.dumps(records, ensure_ascii=False).replace('<', '\\u003c')
+    rendered = template[:marker.end()] + safe_records + template[marker.end() + end:]
+    projects = metadata.get('projects', [])
+    expansions = metadata.get('expansions', [])
+    values = {'__SAMPLE_COUNT__': f'{len(records):,}',
+              '__VOLUME_GB__': f'{sum(float(row[9] or 0) for row in records) / 1024:.2f} GB',
+              '__PROJECT_COUNT__': str(len(projects)), '__EXPANSION_COUNT__': str(len(expansions))}
+    for key, value in values.items():
+        rendered = rendered.replace(key, value)
+    esc = lambda value: html.escape(str(value if value is not None else '—'), quote=True)
+    labels = {'UNKNOWN':'Sin identificar','UNSPECIFIED':'Sin identificar','UNMEASURED':'Sin medir',
+              'SILENT':'Silencio medido','CHILL':'Baja · RMS','GROOVE':'Media · RMS','BANGER':'Alta · RMS'}
+    for column, marker in [(2,'FORMAT'),(1,'TYPE'),(3,'MACRO'),(8,'ENERGY')]:
+        counts = defaultdict(int)
+        for row in records:
+            counts[row[column] or 'UNSPECIFIED'] += 1
+        stats = ''.join(f'<p>{esc(labels.get(k,k))}: <strong>{v:,}</strong></p>'
+                        for k,v in sorted(counts.items(),key=lambda item:(-item[1],item[0])))
+        rendered = rendered.replace('__STAT_' + marker + '__', stats or '<p>Biblioteca vacía</p>')
+    bpm_counts = defaultdict(int)
+    for row in records:
+        bpm_counts[get_bpm_tier(row[5])] += 1
+    rendered = rendered.replace('__STAT_BPM__',''.join(f'<p>{esc(k)}: <strong>{v:,}</strong></p>' for k,v in sorted(bpm_counts.items())) or '<p>Biblioteca vacía</p>')
+
+    project_cards = []
+    for project in projects:
+        title = esc(project.get('name', ''))
+        raw_path = project.get('rel_path') or project.get('file_path') or ''
+        path = esc(raw_path)
+        tempo = esc(project.get('tempo'))
+        count = esc(project.get('samples', project.get('sample_refs_count')))
+        missing_value = project.get('missing', project.get('missing_samples_count'))
+        missing = esc(missing_value)
+        status = project.get('status', '')
+        warning = bool(missing_value) or status in {'ERROR', 'ATTENTION'}
+        label = 'Revisar referencias' if warning else ('Índice sin avisos' if status in {'INDEX_OK', 'HEALTHY', 'Lectura actual OK'} else 'Sin inspeccionar')
+        kind = 'sessions' if 'projects' in [p.lower() for p in Path(raw_path).parts] else 'kits'
+        category = 'Sesión MPC' if kind == 'sessions' else 'Kit / otro proyecto'
+        project_cards.append(f'''<article class="card library-card" data-name="{title}" data-tempo="{tempo}" data-count="{count}" data-kind="{kind}" data-search="{title} {path}">
+          <div class="library-card-heading"><span class="library-kind">{category}</span><span class="library-state {'warning' if warning else ''}">{label}</span></div>
+          <h3>{title}</h3><dl><dt>Tempo</dt><dd>{tempo} BPM</dd><dt>Muestras referenciadas</dt><dd>{count}</dd><dt>Ausentes en el índice</dt><dd>{missing}</dd></dl>
+          <details class="library-location"><summary>Ubicación del proyecto</summary><code>{path}</code></details>
+          <div class="card-actions"><button type="button" class="po33-btn-secondary library-action primary" data-project="{title}" data-path="{path}" onclick="loadProjectToRack(this.dataset.project,this.dataset.path,null,this)">🎛️ Editar copia en rack</button>
+          <button type="button" class="po33-btn-secondary library-action" data-path="{path}" onclick="revealLibraryPath(this.dataset.path,this)">📁 Mostrar en Finder</button>
+          <button type="button" class="po33-btn-secondary library-action" data-path="{path}" onclick="copyLibraryPath(this.dataset.path)">📋 Copiar ruta</button></div></article>''')
+    expansion_cards = []
+    for expansion in expansions:
+        title = esc(expansion.get('title', ''))
+        path_value = expansion.get('path') or expansion.get('full_path') or ''
+        path = esc(path_value)
+        folder = esc(Path(path_value).name if path_value else expansion.get('title',''))
+        cover = expansion.get('cover_url', '')
+        picture = f'<img src="{esc(cover)}" alt="Carátula {title}" loading="lazy">' if cover and not cover.startswith(('http:', 'https:', '//', 'data:')) else '<div class="library-cover-placeholder" aria-hidden="true">🎛️</div>'
+        manufacturer = esc(expansion.get('mfg', expansion.get('manufacturer')))
+        programs = esc(expansion.get('programs', expansion.get('programs_count')))
+        samples = esc(expansion.get('samples', expansion.get('samples_count')))
+        expansion_cards.append(f'''<article class="card library-card" data-name="{title}" data-count="{programs}" data-samples="{samples}" data-search="{title} {manufacturer} {path}">
+          <div class="library-cover">{picture}</div><div class="library-card-heading"><span class="library-kind">Expansión MPC</span><span class="library-state">{programs} programas</span></div>
+          <h3>{title}</h3><p class="library-manufacturer">{manufacturer}</p>
+          <dl><dt>Samples</dt><dd>{samples}</dd><dt>Tamaño</dt><dd>{esc(expansion.get('size_mb'))} MB</dd></dl>
+          <details class="library-location"><summary>Ubicación de la expansión</summary><code>{path}</code></details>
+          <div class="card-actions"><button type="button" class="po33-btn-secondary library-action primary" data-expansion="{folder}" onclick="openExpansionBrowser(this.dataset.expansion)">🎛️ Ver programas</button>
+          <button type="button" class="po33-btn-secondary library-action" data-path="{path}" data-title="{title}" data-folder="{folder}" onclick="viewExpansionSamples(this.dataset.path,this.dataset.title,this.dataset.folder)">🔊 Explorar samples</button>
+          <button type="button" class="po33-btn-secondary library-action" data-path="{path}" onclick="revealLibraryPath(this.dataset.path,this)">📁 Mostrar en Finder</button>
+          <button type="button" class="po33-btn-secondary library-action" data-path="{path}" onclick="copyLibraryPath(this.dataset.path)">📋 Copiar ruta</button></div></article>''')
+    return rendered.replace('<!--PROJECT_CARDS-->', ''.join(project_cards)).replace(
+        '<!--EXPANSION_CARDS-->', ''.join(expansion_cards))
 
 def main():
     parser = argparse.ArgumentParser(description="Indexador Universal de Samples y Proyectos para Akai MPC")
@@ -136,6 +281,8 @@ def main():
     args = parser.parse_args()
 
     root_path = os.path.abspath(args.path)
+    if not Path(root_path).is_dir():
+        parser.error("La biblioteca indicada no existe o no es una carpeta")
     output_dir = os.path.abspath(args.output) if args.output else os.path.join(root_path, "SQLITE_DATABASE")
     os.makedirs(output_dir, exist_ok=True)
 
@@ -169,13 +316,20 @@ def main():
         CREATE TABLE IF NOT EXISTS packs (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, macro_category TEXT, samples_count INTEGER DEFAULT 0, size_mb REAL DEFAULT 0.0, full_path TEXT);
         CREATE TABLE IF NOT EXISTS samples (id INTEGER PRIMARY KEY AUTOINCREMENT, filename TEXT NOT NULL, sound_type TEXT NOT NULL, macro_category TEXT, sub_pack TEXT, bpm INTEGER, bpm_tier TEXT, musical_key TEXT, camelot TEXT, energy_level TEXT, extension TEXT, size_mb REAL DEFAULT 0.0, full_path TEXT, rel_path TEXT);
         """)
+    columns = {row[1] for row in cur.execute('PRAGMA table_info(samples)')}
+    if 'sample_format' not in columns:
+        cur.execute("ALTER TABLE samples ADD COLUMN sample_format TEXT DEFAULT 'ONE_SHOT'")
     conn.commit()
+    cur.execute('BEGIN IMMEDIATE')
+    for table in ('samples', 'projects', 'expansions', 'packs'):
+        cur.execute(f'DELETE FROM {table}')
 
     # 1. Escanear Proyectos MPC (.xpj)
     print("\n🔍 1. Buscando y analizando proyectos MPC (.xpj)...")
     total_projects = 0
     projects_list = []
     for r, dirs, files in os.walk(root_path):
+        dirs[:] = [d for d in dirs if not d.startswith('.') and d not in {'BACKUPS_SEGURIDAD','backups_seguridad','templates','01_INSTALADORES','00_COMPARTIR_BEATOS'}]
         if any(part.startswith('.') for part in r.split(os.sep)): continue
         for f in files:
             if f.endswith(".xpj") and not f.startswith('.'):
@@ -184,7 +338,8 @@ def main():
                 data_dir = os.path.join(r, p_name + "_[ProjectData]")
                 
                 tempo = 120.0
-                key = "C"
+                key = None
+                parse_error = False
                 missing_count = 0
                 unique_paths = set()
                 try:
@@ -192,7 +347,7 @@ def main():
                         content = gz.read()
                         m_key = re.search(r'\"key\"\s*:\s*\"([^\"]+)\"', content)
                         if m_key: key = m_key.group(1)
-                        m_tempo = re.search(r'\"tempo\"\s*:\s*([0-9\.]+)', content)
+                        m_tempo = re.search(r'\"(?:masterTempo|tempo)\"\s*:\s*([0-9\.]+)', content)
                         if m_tempo: tempo = float(m_tempo.group(1))
                         paths = re.findall(r'\"path\"\s*:\s*\"([^\"]+)\"', content)
                         unique_paths = set(p for p in paths if p and not p.startswith('.'))
@@ -203,24 +358,24 @@ def main():
                         else:
                             missing_count = len(unique_paths)
                 except Exception as e:
-                    pass
+                    parse_error = True
                 
-                status = "HEALTHY" if missing_count == 0 else "ATTENTION"
+                status = "ERROR" if parse_error else ("INDEX_OK" if missing_count == 0 else "ATTENTION")
                 sz_kb = round(os.path.getsize(xpj_path) / 1024, 2)
                 cur.execute("""
                 INSERT INTO projects (name, file_path, tempo, musical_key, sample_refs_count, missing_samples_count, status, size_kb)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """, (p_name, xpj_path, tempo, key, len(unique_paths), missing_count, status, sz_kb))
                 total_projects += 1
-                projects_list.append({"name": p_name, "tempo": round(tempo, 1), "key": key, "samples": len(unique_paths), "missing": missing_count, "status": status, "size_kb": sz_kb})
+                projects_list.append({"name": p_name, "tempo": round(tempo, 1), "key": key, "samples": len(unique_paths), "missing": missing_count, "status": status, "size_kb": sz_kb, "rel_path": os.path.relpath(xpj_path, root_path)})
                 print(f"  ✔ Proyecto: {p_name} | {round(tempo, 1)} BPM | Clave: {key} | Samples: {len(unique_paths)} | Estado: {status}")
-    conn.commit()
 
     # 2. Escanear Expansiones Oficiales
     print("\n📦 2. Buscando Expansiones Oficiales MPC...")
     total_expansions = 0
     expansions_list = []
     for r, dirs, files in os.walk(root_path):
+        dirs[:] = [d for d in dirs if not d.startswith('.') and d not in {'BACKUPS_SEGURIDAD','backups_seguridad','templates','01_INSTALADORES','00_COMPARTIR_BEATOS'}]
         if any(part.startswith('.') for part in r.split(os.sep)): continue
         if "Expansion.xml" in files:
             xml_path = os.path.join(r, "Expansion.xml")
@@ -256,9 +411,8 @@ def main():
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (title, title.lower(), mfg, etype, "1.0", cover_img, p_count, s_count, sz_mb, r))
             total_expansions += 1
-            expansions_list.append({"title": title, "mfg": mfg, "type": etype, "programs": p_count, "samples": s_count, "size_mb": sz_mb, "path": r})
+            expansions_list.append({"title": title, "mfg": mfg, "type": etype, "programs": p_count, "samples": s_count, "size_mb": sz_mb, "path": os.path.relpath(r, root_path), "cover_url": os.path.relpath(os.path.join(r, cover_img), root_path) if cover_img and os.path.isfile(os.path.join(r, cover_img)) else ""})
             print(f"  ✔ Expansión: {title} ({mfg}) | {p_count} Programas | {s_count} Samples")
-    conn.commit()
 
     # 3. Escanear Samples de Audio
     print("\n🔊 3. Escaneando y clasificando muestras de audio...")
@@ -268,6 +422,7 @@ def main():
     total_bytes = 0
     
     for r, dirs, files in os.walk(root_path):
+        dirs[:] = [d for d in dirs if not d.startswith('.') and d not in {'BACKUPS_SEGURIDAD','backups_seguridad','templates','01_INSTALADORES','00_COMPARTIR_BEATOS'}]
         if any(part.startswith('.') for part in r.split(os.sep)): continue
         if "_[ProjectData]" in r or ".git" in r: continue
         rel = os.path.relpath(r, root_path)
@@ -286,30 +441,31 @@ def main():
                 total_samples += 1
                 total_bytes += sz
                 
-                stype = classify_sound_type(f, r)
+                stype = classify_sound_type(f, rel)
+                sample_format = classify_sample_format(f, stype, rel)
                 bpm = extract_bpm(f)
                 btier = get_bpm_tier(bpm)
                 key, camelot = extract_key(f)
-                energy = estimate_energy(stype, btier, macro, f)
+                energy = measure_energy(fp)
                 
-                batch.append((f, stype, macro, sub, bpm, btier, key, camelot, energy, ext, sz_mb, fp, os.path.relpath(fp, root_path)))
+                batch.append((f, stype, sample_format, macro, sub, bpm, btier, key, camelot, energy, ext, sz_mb, fp, os.path.relpath(fp, root_path)))
                 if len(batch) >= 1500:
                     cur.executemany("""
-                    INSERT INTO samples (filename, sound_type, macro_category, sub_pack, bpm, bpm_tier, musical_key, camelot, energy_level, extension, size_mb, full_path, rel_path)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO samples (filename, sound_type, sample_format, macro_category, sub_pack, bpm, bpm_tier, musical_key, camelot, energy_level, extension, size_mb, full_path, rel_path)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, batch)
-                    conn.commit()
                     batch = []
                     sys.stdout.write(f"\r  Muestras indexadas: {total_samples:,}...")
                     sys.stdout.flush()
 
     if batch:
         cur.executemany("""
-        INSERT INTO samples (filename, sound_type, macro_category, sub_pack, bpm, bpm_tier, musical_key, camelot, energy_level, extension, size_mb, full_path, rel_path)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO samples (filename, sound_type, sample_format, macro_category, sub_pack, bpm, bpm_tier, musical_key, camelot, energy_level, extension, size_mb, full_path, rel_path)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, batch)
-        conn.commit()
     print(f"\n✔ Total muestras de audio: {total_samples:,} ({total_bytes / (1024**3):.2f} GB)")
+
+    conn.commit()
 
     # 4. Generar CSV y JSON
     print("\n📊 4. Generando archivos de exportación...")
@@ -341,31 +497,33 @@ def main():
     # 5. Generar Catálogo HTML5
     print("\n🌐 5. Generando Catálogo Web HTML5 interactivo...")
     cur.execute("""
-    SELECT filename, sound_type, macro_category, sub_pack, COALESCE(bpm, 0), COALESCE(musical_key, '-'), COALESCE(camelot, '-'), energy_level, size_mb, rel_path
+    SELECT filename, sound_type, sample_format, macro_category, sub_pack, COALESCE(bpm, 0), COALESCE(musical_key, '-'), COALESCE(camelot, '-'), energy_level, size_mb, rel_path, id
     FROM samples
-    ORDER BY RANDOM()
-    LIMIT 15000
+    ORDER BY id
     """)
     catalog_records = cur.fetchall()
     records_json = json.dumps(catalog_records, ensure_ascii=False)
     metadata_json = json.dumps(json_payload, ensure_ascii=False)
 
     # Leer catalogo_universal.html como base
-    universal_template_path = os.path.join(os.path.dirname(__file__), "catalogo_universal.html")
+    universal_template_path = os.path.join(os.path.dirname(__file__), "templates", "catalogo.html")
     if os.path.exists(universal_template_path):
         with open(universal_template_path, 'r', encoding='utf-8') as f:
             html_code = f.read()
-        # Inyectar datos completos
-        inject_script = f"<script>\nconst SAMPLES = {records_json};\nconst METADATA = {metadata_json};\n</script>\n"
-        html_code = html_code.replace("<!-- DATA_PLACEHOLDER -->", inject_script)
+        html_code = render_catalog(html_code, catalog_records, json_payload)
     else:
         # Fallback inline minimal catalog
         html_code = f"<html><body><h1>MPC Sample Catalog</h1><script>const SAMPLES={records_json}; const METADATA={metadata_json};</script></body></html>"
 
-    with open(html_root_path, 'w', encoding='utf-8') as f:
-        f.write(html_code)
-    with open(html_sqlite_path, 'w', encoding='utf-8') as f:
-        f.write(html_code)
+    paths = [Path(root_path)/'catalogo_mpc_sample.html', Path(root_path)/'catalogo_universal.html',
+             Path(output_dir)/'catalogo_mpc_sample.html', Path(output_dir)/'catalogo_universal.html']
+    legacy = Path(root_path)/'_INDEX_MPC_SAMPLE'
+    if legacy.is_dir():
+        paths += [legacy/'catalogo_mpc_sample.html', legacy/'catalogo_universal.html']
+    for target in set(paths):
+        temporary = target.with_suffix('.html.new')
+        temporary.write_text(html_code, encoding='utf-8')
+        temporary.replace(target)
 
     print(f"✔ Catálogo en Raíz: {html_root_path}")
     print(f"✔ Catálogo en Carpeta SQLite: {html_sqlite_path}")

@@ -34,3 +34,18 @@ SQLITE_DATABASE/
 
 # Local safety snapshots
 backups_seguridad/
+
+# Private libraries, generated state and audit output
+/MPC-Sample/
+/Expansions/
+/Custom_Kits/
+/ROLAND/
+/BACKUPS_SEGURIDAD/
+/01_INSTALADORES/
+/02_DOCUMENTACION/
+/theme_config.json
+/expansion_audit_report.json
+/catalogo_*preview.html
+*.sqlite3
+.env
+.env.*

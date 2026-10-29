@@ -40,14 +40,14 @@ Cada pad dispone de un botón de ajustes individuales que despliega el **Pad Ins
 
 ## 🚀 3. Motores de Exportación Hardware Soportados
 
-El motor autónomo [`hardware_kit_builder.py`](file:///Users/ivan/Documents/mpc-sample-database/hardware_kit_builder.py) compila el kit según los estándares nativos de cada fabricante:
+El motor autónomo [`hardware_kit_builder.py`](../../hardware_kit_builder.py) compila el kit según los estándares nativos de cada fabricante:
 
 ### A. Akai MPC Standalone (.xpm & .xpj)
 * Genera un archivo XML `MPCVObject` versión 2.1 compatible con MPC One, Live, X, Key y MPC Software.
 * Mapea capas de velocidad (Layer 1 a 4), curvas de volumen cúbicas y mute groups nativos de Akai.
 * Crea el proyecto `.xpj` con su correspondiente carpeta `_[ProjectData]`.
 
-### B. Native Instruments Maschine (.mxgrp / Bundle)
+### B. Native Instruments Maschine (WAV + mapa JSON)
 * Estructura los 16 pads con nombres estandarizados y mapeo MIDI en C3 (Root Note 60).
 * Organiza los samples en la subcarpeta `Samples/Group_A/` lista para importar en Maschine MK3, Plus y Mikro.
 
@@ -60,9 +60,9 @@ El motor autónomo [`hardware_kit_builder.py`](file:///Users/ivan/Documents/mpc-
 * Mapea los primeros 12 pads al Banco A con formato **WAV 16-bit / 44.1 kHz**.
 
 ### E. Teenage Engineering Pocket Operator (PO-33 & PO-133)
-* Genera una tira **Drum Reel** única con pausas calibradas de 150 ms para auto-slicing automático en los pads 9-16.
+* Genera una tira **Drum Reel** única con pausas ajustables (150 ms por defecto) como ayuda al slicing en los pads 9-16.
 
 ### F. Teenage Engineering EP-133 K.O. II
-* Exporta paquetes de respaldo estándar **`.pak`** comprimidos en ZIP con manifiesto `meta.json` y carpeta de muestras `sounds/`.
-* Mapea los 16 pads divididos en Grupo A (pads 1-9) y Grupo B (pads 10-16) calibrados a **WAV 16-bit / 44.1 kHz**.
-* Compatible directamente con **EP Sample Tool** vía WebUSB / Drag-and-Drop y gestión nativa de proyectos en el hardware.
+* Exporta contenedores de transporte **ZIP** de BeatOS (no backups nativos) con manifiesto `meta.json` y carpeta de muestras `sounds/`.
+* Mapea los 16 pads divididos en Grupo A (pads 1-12) y Grupo B (pads 13-16) calibrados a **WAV 16-bit / 44.1 kHz**.
+* Compatible directamente con **EP Sample Tool** vía Web MIDI / Drag-and-Drop y gestión nativa de proyectos en el hardware.

@@ -1,0 +1,4 @@
+Abre ABRIR_BEATOS.command para iniciar el servidor sobre esta biblioteca.
+El navegador se abre en la URL correcta del servidor. Comprueba la raíz indicada antes de exportar.
+El HTML abierto con doble clic es un catálogo sin conexión. Para incorporar tu biblioteca, usa index_mpc_library.py --path RUTA.
+Los paquetes nuevos incluyen código y documentación; no incluyen samples personales ni expansiones comerciales.

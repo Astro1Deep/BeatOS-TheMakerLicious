@@ -1,0 +1,33 @@
+name: BeatOS checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.11', '3.14']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - name: Install optional audio converter for export tests
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: Python regression tests
+        run: python -B -m unittest discover -s tests -v
+      - name: Browser logic regression tests
+        run: |
+          node tests/test_library_ui.cjs
+          node tests/test_pad_audio.cjs
+          node tests/test_creator_identity.cjs
+      - name: Build clean installer
+        run: python build_release.py "${{ runner.temp }}/BeatOS.zip"
