@@ -49,3 +49,8 @@ backups_seguridad/
 *.sqlite3
 .env
 .env.*
+
+# Organized runtime state (only the empty bootstrap catalog belongs in source)
+/BeatOS/config/
+/BeatOS/data/*
+!/BeatOS/data/catalogo.html

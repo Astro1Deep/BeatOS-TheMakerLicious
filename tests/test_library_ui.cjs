@@ -10,7 +10,7 @@ ctx.RACK_PADS[0].tune=5;ctx.bank(7);assert.equal(ctx.RACK_PADS[15].muteGroup,9);
 assert.match(nodes.rackSourceNotice.textContent,/1 muestras ausentes/);
 console.log('Library UI: bank H, pad gaps, explicit mute zero, missing files and edited bank restoration OK');
 
-vm.runInContext(html.slice(html.indexOf('function getLibraryView('),html.indexOf('function filterLibraryCards(')) + '\nthis.libraryView=getLibraryView;',ctx);
+vm.runInContext(html.slice(html.indexOf('function matchesLibraryPath('),html.indexOf('function filterLibraryCards(')) + '\nthis.libraryView=getLibraryView;',ctx);
 const cards=Array.from({length:61},(_,i)=>({dataset:{name:'Kit '+i,search:'Kit '+i+' /Library/Kit'+i,kind:i<13?'sessions':'kits',tempo:String(60+i),count:String(i)}}));
 let view=ctx.libraryView(cards,'','','name',1);assert.equal(view.visible.length,24);assert.equal(view.pages,3);assert.equal(view.visible[2].dataset.name,'Kit 2');
 view=ctx.libraryView(cards,'','sessions','tempo',9);assert.equal(view.page,1);assert.equal(view.matches.length,13);
@@ -36,3 +36,34 @@ vm.runInContext(html.slice(html.indexOf('// Captura de teclado QWERTY'),html.ind
 padKeyHandler({key:'z',target:{tagName:'BUTTON',closest:()=>({})}});assert.equal(triggered.length,0);
 padKeyHandler({key:'z',target:{tagName:'BODY',closest:()=>null}});assert.deepEqual(triggered,[1]);
 console.log('Multiword search and modal isolation from pad keyboard OK');
+
+// Catalog URLs must resolve samples from the library, including file:// use.
+const baseScript=html.slice(html.indexOf('<script>')+8,html.indexOf('</script>'));
+for (const [href,expected] of [
+ ['http://127.0.0.1:8888/BeatOS/data/catalogo.html','http://127.0.0.1:8888/'],
+ ['http://127.0.0.1:8888/SQLITE_DATABASE/catalogo_universal.html','http://127.0.0.1:8888/'],
+ ['file:///Volumes/Test/BeatOS/data/catalogo.html','file:///Volumes/Test/']]) {
+ const base={};vm.runInNewContext(baseScript,{URL,location:{href},document:{getElementById:()=>base}});assert.equal(base.href,expected);
+}
+console.log('Catalog base: organized HTTP/file paths and legacy URLs resolve to the library root OK');
+
+const expansionCards=[
+ {dataset:{name:'Demo',path:'Expansions/Pack/Demos/Demo.xpj',search:'Demo'}},
+ {dataset:{name:'Kit',path:'Expansions/Pack/Kit.xpj',search:'Kit'}},
+ {dataset:{name:'Other',path:'Expansions/Pack 2/Other.xpj',search:'Other'}}
+];
+view=ctx.libraryView(expansionCards,'','','name',3,{path:'Expansions/Pack/'});
+assert.equal(view.matches.length,2);assert.equal(view.page,1);
+view=ctx.libraryView(expansionCards,'Demo','','name',1,{path:'Expansions/Pack'});
+assert.equal(view.visible[0].dataset.name,'Demo');
+assert.equal(ctx.libraryView(expansionCards,'','','name',1).matches.length,3);
+console.log('Expansion XPJ scope includes nested demos, excludes similarly named folders, composes with search and clears OK');
+
+const focusNodes={};let focused=0;
+const focusNode=id=>focusNodes[id] ||= {style:{display:'none'},value:'',focus(){focused++;}};
+const focusCtx=vm.createContext({document:{getElementById:focusNode,activeElement:{id:'opener'}},requireConnectedView:()=>true,fetch:()=>new Promise(()=>{}),getApiBaseUrl:()=>'',escapeHtml:s=>s});
+vm.runInContext(html.slice(html.indexOf('let currentExpansionPrograms ='),html.indexOf('function closeExpansionBrowser(')),focusCtx);
+vm.runInContext("openExpansionBrowser('Pack')",focusCtx);assert.equal(focused,1);
+vm.runInContext(html.slice(html.indexOf('function openTerminalModal('),html.indexOf('function closeTerminalModal(')),focusCtx);
+vm.runInContext("openTerminalModal('reindex')",focusCtx);assert.equal(focused,1);assert.equal(focusNodes.terminalModalOverlay.style.display,'flex');
+console.log('Expansion search receives focus; terminal opens without unrelated search globals OK');

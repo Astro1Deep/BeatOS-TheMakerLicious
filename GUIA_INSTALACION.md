@@ -1,13 +1,13 @@
 # BeatOS — instalación limpia
 
-Edición 3.6.5-layout.20261029. Herramientas de biblioteca y sampling para ejecutar en el ordenador; no es firmware ni sustituye el sistema de un MPC.
+Edición 3.7.0-layout.20261029. Herramientas de biblioteca y sampling para ejecutar en el ordenador; no es firmware ni sustituye el sistema de un MPC.
 
 Requiere Python 3.11 o superior. No incluye samples comerciales, proyectos personales, bases de datos de Iván, claves ni configuraciones privadas. La biblioteca inicial está vacía.
 
 1. Descomprime el ZIP en una carpeta nueva, sin sobrescribir tu biblioteca anterior.
-2. Ejecuta `python3 installer.py` (en Windows, `py installer.py`).
+2. Ejecuta `python3 BeatOS/installer.py` (en Windows, `py BeatOS/installer.py`).
 3. Elige indexar e indica la carpeta de tus propios samples. No se eliminan metadatos automáticamente al indexar.
-4. Inicia el servidor indicando esa misma carpeta: `python3 serve_mpc.py "/ruta/a/tu/biblioteca" --port 8888`.
+4. Inicia el servidor indicando esa misma carpeta: `python3 BeatOS/serve_mpc.py "/ruta/a/tu/biblioteca" --port 8888`.
 5. Usa la dirección local que muestra el programa. Abrir el HTML directamente como `file://` no habilita las acciones del servidor.
 
 El servidor escucha en 127.0.0.1. No lo publiques mediante un túnel o un proxy sin autenticación. Rechaza peticiones web de otros orígenes y rutas que salgan de la biblioteca. La opción explícita de limpieza de metadatos sí elimina archivos auxiliares: no es necesaria para arrancar ni indexar.
@@ -18,7 +18,7 @@ Pruebas locales sin hardware: `python3 -B -m unittest discover -s tests -v`. El 
 
 ## Conexión y formatos de audio
 
-Inicia `00_ABRIR_BEATOS/ABRIR_BEATOS.command` en la tarjeta y abre http://127.0.0.1:8888. El HTML por archivo funciona como catálogo sin conexión. Comprueba la raíz indicada antes de exportar. Si la tarjeta no está montada, reconéctala e inicia su lanzador.
+Inicia `BeatOS/ABRIR_BEATOS.command` en la tarjeta y abre http://127.0.0.1:8888. El HTML por archivo funciona como catálogo sin conexión. Comprueba la raíz indicada antes de exportar. Si la tarjeta no está montada, reconéctala e inicia su lanzador.
 
 FFmpeg permite convertir AIFF, FLAC, MP3 y WAV con otra frecuencia/profundidad, además de procesar afinación del reel PO. Sin FFmpeg se admiten WAV PCM 16-bit/44.1kHz compatibles sin afinación; los demás casos muestran un error y no simulan conversión.
 
@@ -35,3 +35,9 @@ Energía significa nivel RMS aproximado del archivo original: tres ventanas de h
 ## Para compartir con otro productor
 
 Comparte sólo el ZIP de BeatOS y su SHA-256, nunca BACKUPS_SEGURIDAD ni los respaldos privados de auditoría. Puede instalarse en una carpeta con espacios y servir una biblioteca situada en otra ubicación. No requiere que exista MPCSMPL ni una cuenta de Iván. La primera indexación genera el catálogo y la base SQLite en la biblioteca elegida, por lo que ésta debe permitir escritura. Indexa tu propia carpeta de samples; el ZIP inicial está vacío. Si Windows no encuentra python3, usa `py` en los comandos.
+
+## Estructura desde 3.7.0
+
+En la tarjeta o ZIP organizado, la raíz sólo necesita los accesos catalogo_universal.html y catalogo_mpc_sample.html. Ambos abren BeatOS/data/catalogo.html: el catálogo completo se guarda una sola vez. Los scripts, instalador, templates, documentación y recursos están dentro de BeatOS/. Las bases, CSV y JSON quedan en BeatOS/data/; las preferencias, en BeatOS/config/. Las carpetas de música no se cambian ni se mueven al reindexar.
+
+Para una biblioteca situada en otra carpeta, ejecuta el instalador desde tu carpeta de código e indica esa biblioteca. El servidor sirve los recursos gráficos de la instalación; usa su URL local para disponer de toda la interfaz. Las opciones de limpieza no se ejecutan automáticamente. Las carpetas ocultas y AppleDouble que crea macOS no son archivos generados por BeatOS.

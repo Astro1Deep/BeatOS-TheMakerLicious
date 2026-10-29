@@ -106,3 +106,15 @@ class ServerSecurityTests(unittest.TestCase):
                 connection.sendall(b'x');connection.close()
                 self.assertEqual(client.recv(2),b'x');self.assertEqual(client.recv(2),b'')
         self.assertEqual(serve_mpc.find_available_port(port,2),port)
+
+    def test_organized_catalog_is_served_and_internal_state_is_private(self):
+        with self.server() as (url,parent):
+            app=parent/'library/BeatOS';(app/'data').mkdir(parents=True)
+            (app/'data/catalogo.html').write_text('<html>organized catalog</html>')
+            (app/'data/mpc_sample.db').write_text('private database')
+            for endpoint in ['/','/BeatOS/data/catalogo.html','/_INDEX_MPC_SAMPLE/catalogo_universal.html']:
+                status,body=self.request(url+endpoint);self.assertEqual(status,200);self.assertIn(b'organized catalog',body)
+            for endpoint in ['/BeatOS/data/mpc_sample.db','/api/download_file?path=BeatOS/data/mpc_sample.db','/BeatOS/config/theme_config.json']:
+                self.assertIn(self.request(url+endpoint)[0],(403,404))
+            status,body=self.request(url+'/BeatOS/docs/assets/branding/blueprint_bone_sin_marcas.png')
+            self.assertEqual(status,200);self.assertTrue(body.startswith(b'\x89PNG'))

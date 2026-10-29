@@ -4,7 +4,7 @@
 
 Biblioteca de samples, inspector de proyectos MPC y rack de 16 pads. Diseño y desarrollo de **Astro1Deep**. El ojo y el cohete del creador forman una firma gráfica discreta en la barra inferior, adaptada a los ocho temas.
 
-Versión **3.6.5-layout.20261029**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc-sample-database/releases) · [Guía de instalación](GUIA_INSTALACION.md) · [Identidad del creador](docs/IDENTIDAD_DEL_CREADOR.md)
+Versión **3.7.0-layout.20261029**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc-sample-database/releases) · [Guía de instalación](GUIA_INSTALACION.md) · [Identidad del creador](docs/IDENTIDAD_DEL_CREADOR.md)
 
 ## Instalación
 
@@ -16,7 +16,7 @@ cd mpc-sample-database
 python3 installer.py
 ```
 
-En Windows puede usarse `py installer.py`. También se ofrece `./install.sh` en macOS/Linux.
+En Windows puede usarse `py BeatOS/installer.py`. También se ofrece `./BeatOS/install.sh` en macOS/Linux.
 
 1. Elige la opción 1 e indica la carpeta de tus propios samples para crear su índice.
 2. Elige la opción 2 e indica esa misma carpeta para abrir la interfaz conectada.
@@ -25,11 +25,17 @@ En Windows puede usarse `py installer.py`. También se ofrece `./install.sh` en 
 Código y biblioteca pueden estar en ubicaciones diferentes:
 
 ```bash
-python3 index_mpc_library.py --path "/ruta/a/tu/biblioteca"
-python3 serve_mpc.py "/ruta/a/tu/biblioteca" --port 8888
+python3 BeatOS/index_mpc_library.py --path "/ruta/a/tu/biblioteca"
+python3 BeatOS/serve_mpc.py "/ruta/a/tu/biblioteca" --port 8888
 ```
 
 El repositorio y el instalador empiezan con una biblioteca vacía y templates MPC sin contenido personal. No incluyen samples comerciales, proyectos del autor ni una base de datos personal.
+
+## Estructura limpia de la biblioteca
+
+La entrega comprimida contiene sólo dos accesos HTML en la raíz y una carpeta `BeatOS/`. Dentro están el código, el lanzador `ABRIR_BEATOS.command`, la documentación, `data/` (base, CSV, JSON y un solo catálogo) y `config/` (preferencias locales). La reindexación no crea carpetas SQL/índices heredadas ni multiplica los HTML. Se omiten del instalador las ilustraciones históricas que ya no usa la interfaz.
+
+La biblioteca musical conserva sus carpetas y rutas. Los kits creados quedan en `Custom_Kits/`. En el repositorio de desarrollo los scripts siguen en la raíz; allí se ejecuta `python3 installer.py`. En el ZIP organizado se ejecuta `python3 BeatOS/installer.py`.
 
 ## Biblioteca y menús
 
@@ -89,3 +95,5 @@ Este proyecto está protegido bajo la licencia **Creative Commons Atribución-No
 3. **Uso No Comercial**: Libre y gratuito para uso personal, artístico y educativo en producción musical.
 
 Consulta el texto íntegro en [LICENSE](LICENSE) o [LICENSE.md](LICENSE.md).
+
+Desde cada expansión, **Ver proyectos** abre sus XPJ indexados, incluidos demos y plantillas de subcarpetas. El filtro conserva el acceso a pistas, bancos, archivo original y copia editable en el rack; **Ver todos los proyectos** vuelve a la biblioteca completa. Recargar consulta el catálogo actual; si se han añadido archivos al disco, hay que reindexarlos primero.

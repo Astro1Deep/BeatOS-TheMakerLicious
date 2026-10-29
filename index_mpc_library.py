@@ -12,6 +12,8 @@ Uso:
 from pathlib import Path
 import os
 import sys
+sys.dont_write_bytecode = True
+from beatos_paths import data_dir as library_data_dir, write_catalog
 import sqlite3
 import json
 import csv
@@ -244,18 +246,20 @@ def render_catalog(template, records, metadata):
         label = 'Revisar referencias' if warning else ('Índice sin avisos' if status in {'INDEX_OK', 'HEALTHY', 'Lectura actual OK'} else 'Sin inspeccionar')
         kind = 'sessions' if 'projects' in [p.lower() for p in Path(raw_path).parts] else 'kits'
         category = 'Sesión MPC' if kind == 'sessions' else 'Kit / otro proyecto'
-        project_cards.append(f'''<article class="card library-card" data-name="{title}" data-tempo="{tempo}" data-count="{count}" data-kind="{kind}" data-search="{title} {path}">
+        project_cards.append(f'''<article class="card library-card" data-name="{title}" data-tempo="{tempo}" data-count="{count}" data-kind="{kind}" data-path="{path}" data-search="{title} {path}">
           <div class="library-card-heading"><span class="library-kind">{category}</span><span class="library-state {'warning' if warning else ''}">{label}</span></div>
           <h3>{title}</h3><dl><dt>Tempo</dt><dd>{tempo} BPM</dd><dt>Muestras referenciadas</dt><dd>{count}</dd><dt>Ausentes en el índice</dt><dd>{missing}</dd></dl>
           <details class="library-location"><summary>Ubicación del proyecto</summary><code>{path}</code></details>
           <div class="card-actions"><button type="button" class="po33-btn-secondary library-action primary" data-project="{title}" data-path="{path}" onclick="loadProjectToRack(this.dataset.project,this.dataset.path,null,this)">🎛️ Editar copia en rack</button>
           <button type="button" class="po33-btn-secondary library-action" data-path="{path}" onclick="revealLibraryPath(this.dataset.path,this)">📁 Mostrar en Finder</button>
           <button type="button" class="po33-btn-secondary library-action" data-path="{path}" onclick="copyLibraryPath(this.dataset.path)">📋 Copiar ruta</button></div></article>''')
+    project_paths = [Path(p.get('rel_path') or p.get('file_path') or '') for p in projects]
     expansion_cards = []
     for expansion in expansions:
         title = esc(expansion.get('title', ''))
         path_value = expansion.get('path') or expansion.get('full_path') or ''
         path = esc(path_value)
+        project_count = sum(p.is_relative_to(Path(path_value)) for p in project_paths) if path_value else 0
         folder = esc(Path(path_value).name if path_value else expansion.get('title',''))
         cover = expansion.get('cover_url', '')
         picture = f'<img src="{esc(cover)}" alt="Carátula {title}" loading="lazy">' if cover and not cover.startswith(('http:', 'https:', '//', 'data:')) else '<div class="library-cover-placeholder" aria-hidden="true">🎛️</div>'
@@ -263,11 +267,12 @@ def render_catalog(template, records, metadata):
         programs = esc(expansion.get('programs', expansion.get('programs_count')))
         samples = esc(expansion.get('samples', expansion.get('samples_count')))
         expansion_cards.append(f'''<article class="card library-card" data-name="{title}" data-count="{programs}" data-samples="{samples}" data-search="{title} {manufacturer} {path}">
-          <div class="library-cover">{picture}</div><div class="library-card-heading"><span class="library-kind">Expansión MPC</span><span class="library-state">{programs} programas</span></div>
+          <div class="library-cover">{picture}</div><div class="library-card-heading"><span class="library-kind">Expansión MPC</span><span class="library-state">{programs} programas · {project_count} proyectos</span></div>
           <h3>{title}</h3><p class="library-manufacturer">{manufacturer}</p>
           <dl><dt>Samples</dt><dd>{samples}</dd><dt>Tamaño</dt><dd>{esc(expansion.get('size_mb'))} MB</dd></dl>
           <details class="library-location"><summary>Ubicación de la expansión</summary><code>{path}</code></details>
           <div class="card-actions"><button type="button" class="po33-btn-secondary library-action primary" data-expansion="{folder}" onclick="openExpansionBrowser(this.dataset.expansion)">🎛️ Ver programas</button>
+          <button type="button" class="po33-btn-secondary library-action" data-path="{path}" data-title="{title}" onclick="viewExpansionProjects(this.dataset.path,this.dataset.title)">📁 Ver proyectos ({project_count})</button>
           <button type="button" class="po33-btn-secondary library-action" data-path="{path}" data-title="{title}" data-folder="{folder}" onclick="viewExpansionSamples(this.dataset.path,this.dataset.title,this.dataset.folder)">🔊 Explorar samples</button>
           <button type="button" class="po33-btn-secondary library-action" data-path="{path}" onclick="revealLibraryPath(this.dataset.path,this)">📁 Mostrar en Finder</button>
           <button type="button" class="po33-btn-secondary library-action" data-path="{path}" onclick="copyLibraryPath(this.dataset.path)">📋 Copiar ruta</button></div></article>''')
@@ -277,20 +282,20 @@ def render_catalog(template, records, metadata):
 def main():
     parser = argparse.ArgumentParser(description="Indexador Universal de Samples y Proyectos para Akai MPC")
     parser.add_argument("--path", "-p", default=".", help="Ruta de la tarjeta SD, USB o carpeta de samples (por defecto: directorio actual)")
-    parser.add_argument("--output", "-o", default="", help="Ruta de salida para la base de datos y catálogo (por defecto: [PATH]/SQLITE_DATABASE)")
+    parser.add_argument("--output", "-o", default="", help="Ruta de salida para la base de datos y catálogo (por defecto: [PATH]/BeatOS/data)")
     args = parser.parse_args()
 
     root_path = os.path.abspath(args.path)
     if not Path(root_path).is_dir():
         parser.error("La biblioteca indicada no existe o no es una carpeta")
-    output_dir = os.path.abspath(args.output) if args.output else os.path.join(root_path, "SQLITE_DATABASE")
+    output_dir = os.path.abspath(args.output) if args.output else str(library_data_dir(root_path))
     os.makedirs(output_dir, exist_ok=True)
 
     db_path = os.path.join(output_dir, "mpc_sample.db")
     json_path = os.path.join(output_dir, "mpc_sample.json")
     csv_path = os.path.join(output_dir, "mpc_sample_resumen.csv")
     html_root_path = os.path.join(root_path, "catalogo_mpc_sample.html")
-    html_sqlite_path = os.path.join(output_dir, "catalogo_mpc_sample.html")
+    html_sqlite_path = os.path.join(root_path, "BeatOS", "data", "catalogo.html")
 
     print("=" * 65)
     print("🎛️  AKAI MPC SAMPLE DATABASE & FINDER TOOLKIT")
@@ -330,6 +335,8 @@ def main():
     projects_list = []
     for r, dirs, files in os.walk(root_path):
         dirs[:] = [d for d in dirs if not d.startswith('.') and d not in {'BACKUPS_SEGURIDAD','backups_seguridad','templates','01_INSTALADORES','00_COMPARTIR_BEATOS'}]
+        if Path(r) == Path(root_path):
+            dirs[:] = [d for d in dirs if d not in {'BeatOS','SQLITE_DATABASE','_INDEX_MPC_SAMPLE','02_DOCUMENTACION','00_ABRIR_BEATOS'}]
         if any(part.startswith('.') for part in r.split(os.sep)): continue
         for f in files:
             if f.endswith(".xpj") and not f.startswith('.'):
@@ -376,6 +383,8 @@ def main():
     expansions_list = []
     for r, dirs, files in os.walk(root_path):
         dirs[:] = [d for d in dirs if not d.startswith('.') and d not in {'BACKUPS_SEGURIDAD','backups_seguridad','templates','01_INSTALADORES','00_COMPARTIR_BEATOS'}]
+        if Path(r) == Path(root_path):
+            dirs[:] = [d for d in dirs if d not in {'BeatOS','SQLITE_DATABASE','_INDEX_MPC_SAMPLE','02_DOCUMENTACION','00_ABRIR_BEATOS'}]
         if any(part.startswith('.') for part in r.split(os.sep)): continue
         if "Expansion.xml" in files:
             xml_path = os.path.join(r, "Expansion.xml")
@@ -423,6 +432,8 @@ def main():
     
     for r, dirs, files in os.walk(root_path):
         dirs[:] = [d for d in dirs if not d.startswith('.') and d not in {'BACKUPS_SEGURIDAD','backups_seguridad','templates','01_INSTALADORES','00_COMPARTIR_BEATOS'}]
+        if Path(r) == Path(root_path):
+            dirs[:] = [d for d in dirs if d not in {'BeatOS','SQLITE_DATABASE','_INDEX_MPC_SAMPLE','02_DOCUMENTACION','00_ABRIR_BEATOS'}]
         if any(part.startswith('.') for part in r.split(os.sep)): continue
         if "_[ProjectData]" in r or ".git" in r: continue
         rel = os.path.relpath(r, root_path)
@@ -515,20 +526,12 @@ def main():
         # Fallback inline minimal catalog
         html_code = f"<html><body><h1>MPC Sample Catalog</h1><script>const SAMPLES={records_json}; const METADATA={metadata_json};</script></body></html>"
 
-    paths = [Path(root_path)/'catalogo_mpc_sample.html', Path(root_path)/'catalogo_universal.html',
-             Path(output_dir)/'catalogo_mpc_sample.html', Path(output_dir)/'catalogo_universal.html']
-    legacy = Path(root_path)/'_INDEX_MPC_SAMPLE'
-    if legacy.is_dir():
-        paths += [legacy/'catalogo_mpc_sample.html', legacy/'catalogo_universal.html']
-    for target in set(paths):
-        temporary = target.with_suffix('.html.new')
-        temporary.write_text(html_code, encoding='utf-8')
-        temporary.replace(target)
+    write_catalog(root_path, html_code)
 
     print(f"✔ Catálogo en Raíz: {html_root_path}")
     print(f"✔ Catálogo en Carpeta SQLite: {html_sqlite_path}")
     print(f"✔ Base de Datos SQLite: {db_path}")
-    print("\n🎉 Indexación completada con éxito. Ejecuta ./install.sh para explorar tu colección.")
+    print("\n🎉 Indexación completada con éxito. Inicia BeatOS/ABRIR_BEATOS.command o el instalador de tu carpeta de código.")
     conn.close()
 
 if __name__ == "__main__":

@@ -23,7 +23,7 @@ class InstallerTests(unittest.TestCase):
                 popen.return_value.stdout=[];popen.return_value.wait.return_value=0
                 serve_mpc.run_reindex_thread(tmp)
             command=popen.call_args.args[0]
-            self.assertEqual(Path(command[1]).parent,Path(serve_mpc.__file__).resolve().parent)
+            self.assertEqual(Path(command[2]).parent,Path(serve_mpc.__file__).resolve().parent)
             self.assertEqual(command[-2:],['--path',tmp])
 
     def test_offline_export_script_requests_user_paths(self):

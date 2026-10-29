@@ -112,7 +112,7 @@ Puedes integrar `mpc_sample.db` en tus propios scripts de Python en menos de 5 l
 ```python
 import sqlite3
 
-conn = sqlite3.connect("SQLITE_DATABASE/mpc_sample.db")
+conn = sqlite3.connect("BeatOS/data/mpc_sample.db")
 cur = conn.cursor()
 
 # Obtener 5 bombos aleatorios para crear un kit
