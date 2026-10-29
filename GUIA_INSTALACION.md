@@ -1,6 +1,6 @@
 # BeatOS — instalación limpia
 
-Edición 3.6.4-refined.20261029. Herramientas de biblioteca y sampling para ejecutar en el ordenador; no es firmware ni sustituye el sistema de un MPC.
+Edición 3.6.5-layout.20261029. Herramientas de biblioteca y sampling para ejecutar en el ordenador; no es firmware ni sustituye el sistema de un MPC.
 
 Requiere Python 3.11 o superior. No incluye samples comerciales, proyectos personales, bases de datos de Iván, claves ni configuraciones privadas. La biblioteca inicial está vacía.
 

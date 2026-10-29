@@ -16,7 +16,7 @@ FILES = ('serve_mpc.py', 'hardware_kit_builder.py', 'index_mpc_library.py',
          'templates/template_project.xpj', 'tests/test_hardware_kit_builder.py',
          'tests/test_serve_mpc.py', 'tests/test_indexer.py', 'tests/test_metadata.py', 'tests/test_installer.py', 'tests/test_mute_groups.py',
          'tests/test_pad_audio.cjs', 'tests/test_library_ui.cjs', 'tests/test_creator_identity.cjs', '00_ABRIR_BEATOS/ABRIR_BEATOS.command', '00_ABRIR_BEATOS/LEEME.txt', 'tests/test_hub_workflows.py', 'docs/assets/hardware/sources.json')
-VERSION = '3.6.4-refined.20261029'
+VERSION = '3.6.5-layout.20261029'
 
 
 def blank_templates(payload):

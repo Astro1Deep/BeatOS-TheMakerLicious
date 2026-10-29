@@ -15,7 +15,7 @@ for(const theme of context.themes){
 assert.equal(context.themes.length,8);assert.equal(seen.size,5);
 context.apply('invalid-theme',false);assert.equal(artist.parentElement.dataset.art,'eye-mirror-compact');
 delete nodes.creatorArtistMark;assert.doesNotThrow(()=>context.apply('makerlicious-bone',false));
-assert.equal((html.match(/class="creator-signature"/g)||[]).length,1);
+assert.equal((html.match(/id="creatorArtistMark"/g)||[]).length,1);
 assert.match(html,/<h1>BeatOS<\/h1>\s*<p class="brand-edition">The MakerLicious<\/p>\s*<p class="brand-description">\[universal beatmaker station\]<\/p>/);
 assert.match(html,/alt="Cohete del sello digital"/);assert.ok(fs.existsSync(path.join(root,'docs/assets/branding/creator/label-rocket.png')));
 console.log('Creator identity: eight themes, five original eye variants, stable banner/backdrop/rack, safe theme fallback and legacy markup OK');
@@ -23,6 +23,7 @@ console.log('Creator identity: eight themes, five original eye variants, stable 
 const head=html.slice(html.indexOf('<header class="beatos-brand"'),html.indexOf('</header>'));
 assert.ok(!head.includes('creator-signature'));assert.ok(!html.includes('creator-caption'));
 const footer=html.slice(html.indexOf('<div class="audio-player-bar"'),html.indexOf('<div id="toast"'));
-assert.ok(footer.includes('creator-signature'));assert.ok(!footer.includes('Diseño y desarrollo'));
+assert.ok(footer.indexOf('id="creatorArtistMark"') < footer.indexOf('id="audioPlayer"'));
+assert.ok(footer.indexOf('id="audioPlayer"') < footer.indexOf('creator/label-rocket.png'));assert.ok(!footer.includes('Diseño y desarrollo'));
 assert.match(html,/mix-blend-mode:screen/);assert.match(html,/mix-blend-mode:multiply/);
-console.log('Creator signature: logos only in the player footer, no header credits, no caption typography, responsive layout OK');
+console.log('Player branding: eye before audio, rocket after audio, no header credits or caption typography OK');
