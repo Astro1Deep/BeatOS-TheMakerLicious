@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -2026,7 +2026,7 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
       <span id="themePillIcon">🕹️</span> <span id="themePillLabel">TE Arcade</span>
     </button>
     <button id="btnLangToggle" class="btn-lang-toggle" onclick="toggleLanguage()" title="Cambiar Idioma / Switch Language" style="margin-right: 4px;">
-      <span id="langFlag">🌐</span> <span id="langLabel">ES 🇪🇸</span>
+      <span id="langFlag">🌐</span> <span id="langLabel">EN 🇬🇧</span>
     </button>
     <details class="support-options">
       <summary class="btn-kofi">♡ Apoyar BeatOS</summary>
@@ -3064,7 +3064,7 @@ function selectPadFromPopover(pNum) {
 // ==============================================================================
 // MOTOR BILINGÜE UNIVERSAL (ESPAÑOL / ENGLISH)
 // ==============================================================================
-let currentLang = (() => { try { return localStorage.getItem('mpc_lang') || 'es'; } catch (error) { return 'es'; } })();
+let currentLang = (() => { try { return localStorage.getItem('mpc_lang') === 'es' ? 'es' : 'en'; } catch (error) { return 'en'; } })();
 
 const I18N = {
   es: {
@@ -4392,6 +4392,30 @@ function getActivePadsPayload() {
   return list;
 }
 
+// Native dialogs are localized before opening. The filesystem paths and
+// user-defined kit names are interpolated verbatim, never machine-translated.
+function beatosExportDialogLines(data) {
+  const en = currentLang === 'en';
+  const paths = data.targets || {};
+  return [
+    en ? '🎉 KIT CREATED SUCCESSFULLY!' : '🎉 ¡KIT CREADO CON ÉXITO!',
+    '',
+    'Kit: ' + data.kit_name,
+    paths.mpc ? (en ? '✔ Akai MPC projects (.xpj): ' : '✔ Akai MPC Proyectos (.xpj): ') + paths.mpc.project_path : '',
+    paths.mpc ? (en ? '✔ Akai MPC programs (.xpm): ' : '✔ Akai MPC Programas (.xpm): ') + paths.mpc.program_path_root : '',
+    paths.maschine ? (en ? '✔ NI Maschine (WAV + JSON map): ' : '✔ NI Maschine (WAV + mapa JSON): ') + paths.maschine.bundle_path : '',
+    paths.sp404mk2 ? '✔ Roland SP-404MK2 (16 pads): ' + paths.sp404mk2.import_folder : '',
+    paths.sp404a ? '✔ Roland SP-404A (12 pads): ' + paths.sp404a.folder : '',
+    paths.po33 ? '✔ TE Pocket Operator PO-33 Reel: ' + paths.po33.reel_wav : '',
+    paths.ep133 ? '✔ TE EP-133 K.O. II (WAV + ZIP): ' + paths.ep133.folder : ''
+  ].filter(Boolean);
+}
+function beatosOfflineConfirmText() {
+  return currentLang === 'en'
+    ? '💡 The local server API is not active in this browser session (this can happen when opening the HTML directly via file://).\\n\\nDownload an offline macOS installation script (.command) instead?'
+    : '💡 La API del servidor local no está activa en esta sesión web (común si abriste el archivo con doble clic directo file://).\\n\\n¿Quieres descargar el Script de Instalación (.command) para crearlo con 1 clic en tu Mac?';
+}
+
 function exportKitToHardware() {
   if (!requireConnectedView()) return;
   const kitName = (document.getElementById('rackKitName').value.trim() || 'Custom_Kit').replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -4418,18 +4442,7 @@ function exportKitToHardware() {
   .then(res => res.json())
   .then(data => {
     if (data.success) {
-      const lines = [
-        '🎉 ¡KIT CREADO CON ÉXITO!',
-        '',
-        'Kit: ' + data.kit_name,
-        (data.targets && data.targets.mpc ? '✔ Akai MPC Proyectos (.xpj): ' + data.targets.mpc.project_path : ''),
-        (data.targets && data.targets.mpc ? '✔ Akai MPC Programas (.xpm): ' + data.targets.mpc.program_path_root : ''),
-        (data.targets && data.targets.maschine ? '✔ NI Maschine (WAV + mapa JSON): ' + data.targets.maschine.bundle_path : ''),
-        (data.targets && data.targets.sp404mk2 ? '✔ Roland SP-404MK2 (16 pads): ' + data.targets.sp404mk2.import_folder : ''),
-        (data.targets && data.targets.sp404a ? '✔ Roland SP-404A (12 pads): ' + data.targets.sp404a.folder : ''),
-        (data.targets && data.targets.po33 ? '✔ TE Pocket Operator PO-33 Reel: ' + data.targets.po33.reel_wav : ''),
-        (data.targets && data.targets.ep133 ? '✔ TE EP-133 K.O. II (WAV + ZIP): ' + data.targets.ep133.folder : '')
-      ].filter(Boolean);
+      const lines = beatosExportDialogLines(data);
       alert(lines.join(String.fromCharCode(10)));
       showToast('✔ Kit ' + kitName + ' guardado en la biblioteca activa.');
     } else {
@@ -4438,12 +4451,7 @@ function exportKitToHardware() {
   })
   .catch(err => {
     console.warn('API local no accesible directamente:', err);
-    const confirmLines = [
-      '💡 La API del servidor local no está activa en esta sesión web (común si abriste el archivo con doble clic directo file://).',
-      '',
-      '¿Quieres descargar el Script de Instalación (.command) para crearlo con 1 clic en tu Mac?'
-    ];
-    const useOffline = confirm(confirmLines.join(String.fromCharCode(10)));
+    const useOffline = confirm(beatosOfflineConfirmText());
     if (useOffline) {
       exportOfflineCommandScript();
     }
