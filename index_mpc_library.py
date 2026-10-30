@@ -380,7 +380,10 @@ def main():
                 """, (p_name, xpj_path, tempo, key, len(unique_paths), missing_count, status, sz_kb))
                 total_projects += 1
                 projects_list.append({"name": p_name, "tempo": round(tempo, 1), "key": key, "samples": len(unique_paths), "missing": missing_count, "status": status, "size_kb": sz_kb, "rel_path": os.path.relpath(xpj_path, root_path)})
-                emit(f"  ✔ Proyecto: {p_name} | {round(tempo, 1)} BPM | Clave: {key} | Samples: {len(unique_paths)} | Estado: {status}")
+                if args.lang == "en":
+                    emit(f"  ✔ Project: {p_name} | {round(tempo, 1)} BPM | Key: {key} | Samples: {len(unique_paths)} | Status: {status}")
+                else:
+                    emit(f"  ✔ Proyecto: {p_name} | {round(tempo, 1)} BPM | Clave: {key} | Samples: {len(unique_paths)} | Estado: {status}")
 
     # 2. Escanear Expansiones Oficiales
     emit("\n📦 2. Buscando Expansiones Oficiales MPC...")
@@ -426,7 +429,10 @@ def main():
             """, (title, title.lower(), mfg, etype, "1.0", cover_img, p_count, s_count, sz_mb, r))
             total_expansions += 1
             expansions_list.append({"title": title, "mfg": mfg, "type": etype, "programs": p_count, "samples": s_count, "size_mb": sz_mb, "path": os.path.relpath(r, root_path), "cover_url": os.path.relpath(os.path.join(r, cover_img), root_path) if cover_img and os.path.isfile(os.path.join(r, cover_img)) else ""})
-            emit(f"  ✔ Expansión: {title} ({mfg}) | {p_count} Programas | {s_count} Samples")
+            if args.lang == "en":
+                emit(f"  ✔ Expansion: {title} ({mfg}) | {p_count} Programs | {s_count} Samples")
+            else:
+                emit(f"  ✔ Expansión: {title} ({mfg}) | {p_count} Programas | {s_count} Samples")
 
     # 3. Escanear Samples de Audio
     emit("\n🔊 3. Escaneando y clasificando muestras de audio...")
