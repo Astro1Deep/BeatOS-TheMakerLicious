@@ -10,7 +10,15 @@
 
 El flujo central es **explorar tu biblioteca → montar y ajustar un kit → elegir destino → generar los archivos → cargarlos en el aparato o software correspondiente**. Puedes partir de samples sueltos sin tener una MPC. La inspección de proyectos XPJ y programas XPM es una función adicional para recuperar referencias y editar copias de kits del ecosistema Akai.
 
-Versión **3.8.0**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc-sample-database/releases) · [Guía de instalación](GUIA_INSTALACION.md) · 
+## English overview — BeatOS / The MakerLicious
+
+**BeatOS** is a local, Python-based **sample library browser and 16-pad beatmaking toolkit** for music producers, DJs and hardware sampler users. Browse and audition samples, assemble drum kits, inspect supported Akai MPC projects, and prepare destination-specific exports for **Akai MPC, Native Instruments Maschine, Roland SP-404MKII / SP-404A / SP-404SX, Teenage Engineering PO-33 / PO-133 and EP-133 K.O. II**.
+
+Export formats and supported parameters vary by destination; producing an export does **not** guarantee native project compatibility with every model or firmware. BeatOS runs on a computer and does not install sampler firmware. See [hardware compatibility](docs/COMPATIBILIDAD_HARDWARE.md), [technical reference](docs/REFERENCIA_TECNICA.md) and the [installation guide](GUIA_INSTALACION.md).
+
+**Related music software:** [DJProducerTools](https://github.com/Astro1Deep/DjProducerTool) — macOS DJ music-library organization, metadata workflows, audio-file auditing and duplicate analysis.
+
+Versión **3.8.0**. [Instaladores y versiones](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases) · [Guía de instalación](GUIA_INSTALACION.md) · 
 
 ## Manual del sistema
 
@@ -24,7 +32,7 @@ Versión **3.8.0**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc
 
 Requiere **Python 3.11 o superior**. El catálogo y el servidor usan la biblioteca estándar. FFmpeg es opcional para convertir audio y necesario en determinados formatos, frecuencias y ajustes de afinación. El sistema se ejecuta en el ordenador; no instala firmware en el sampler.
 
-Descarga el archivo **BeatOS-3.8.0.zip** de [la versión estable](https://github.com/Astro1Deep/mpc-sample-database/releases/latest), junto a su archivo SHA-256. El ZIP adjunto a la versión es el instalador organizado; «Source code» descarga el repositorio de desarrollo, cuya estructura es distinta.
+Descarga el archivo **BeatOS-3.8.0.zip** de [la versión estable](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases/latest), junto a su archivo SHA-256. El ZIP adjunto a la versión es el instalador organizado; «Source code» descarga el repositorio de desarrollo, cuya estructura es distinta.
 
 Descomprime en una carpeta nueva y abre una terminal en la carpeta que contiene `BeatOS/`:
 
