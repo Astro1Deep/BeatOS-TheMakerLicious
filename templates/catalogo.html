@@ -2269,7 +2269,7 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
         <strong style="color:var(--mpc-gold);">💡 Guía de Carga en Hardware:</strong>
         <br>• <strong>Akai MPC</strong>: Ve a <em>Browser &gt; Programs</em> y pulsa <em>Load</em> en tu kit.
         <br>• <strong>Roland SP-404MK2</strong>: Pulsa <code>SHIFT + PAD 14 (IMPORT)</code> y selecciona la carpeta del kit para mapear al Banco A.
-        <br>• <strong>DOOM OS</strong>: Compatible con el secuenciador de patrones y el piano roll de pads.
+        <br>• <strong>DOOM OS</strong>: Sin exportador separado ni compatibilidad certificada.
       </div>
     </div>
   </div>
@@ -3079,7 +3079,7 @@ const I18N = {
     tabRack: '🎛️ Beatmaker Kit Rack',
     tabPO: '🕹️ Pocket Operator (PO-33)',
     tabProjects: '📁 Proyectos MPC (.xpj)',
-    tabExpansions: '🎛️ Expansiones Oficiales (9)',
+    tabExpansions: '🎛️ Expansiones MPC',
     tabStats: '📊 Distribución Sonora',
     tabMaintenance: '⚙️ Acciones & Ajustes de Librería',
     noticeText: '💡 <strong>Consejo de Reproducción:</strong> Si tu navegador restringe la reproducción de archivos locales (protocolo <code>file://</code>), abre la interfaz conectada iniciando: <code>BeatOS/ABRIR_BEATOS.command</code> o utiliza el botón <strong>📋 Copiar Ruta</strong> para cargar al instante en tu hardware MPC.',
@@ -3092,7 +3092,7 @@ const I18N = {
     exportKitTitle: '🚀 Exportar Kit',
     btnGenerateKit: '⚡ Generar Kit en Tarjeta MicroSD',
     btnDownloadScript: '📥 Descargar Script Offline (.command)',
-    btnShuffle: '🎲 AI Shuffle (16 Pads)',
+    btnShuffle: '🎲 Randomize (16 pads)',
     btnClearRack: '🗑️ Vaciar',
     po33Title: '🕹️ Pocket Operator PO-33 / PO-133 Studio & FSK Modem',
     po33Subtitle: 'Reels con pausas ajustables (≤ 40s), captura estéreo y archivo de backups WAV (datos no decodificados).',
@@ -3112,7 +3112,7 @@ const I18N = {
     tabRack: '🎛️ Beatmaker Kit Rack',
     tabPO: '🕹️ Pocket Operator (PO-33)',
     tabProjects: '📁 MPC Projects (.xpj)',
-    tabExpansions: '🎛️ Official Expansions (9)',
+    tabExpansions: '🎛️ MPC Expansions',
     tabStats: '📊 Sonic Distribution',
     tabMaintenance: '⚙️ Library Actions & Maintenance',
     noticeText: '💡 <strong>Playback Tip:</strong> If your browser restricts local media playback (<code>file://</code> protocol), launch the local streaming server in Terminal with: <code>./install.sh</code> (Option 2) or use <strong>📋 Copy Path</strong> to load instantly on your MPC hardware.',
@@ -3134,6 +3134,75 @@ const I18N = {
     toastCopied: '✔ Path copied to clipboard'
   }
 };
+
+
+/* Exact-match, reversible UI localization: never translate sample filenames or input values. */
+const BEATOS_UI_EN = Object.freeze({"🔌 Mosaico Patchbay":"🔌 Patchbay mosaic","⛶ Ampliar banner":"⛶ Expand banner","♡ Apoyar BeatOS":"♡ Support BeatOS","Elige el importe en la plataforma. Sin aportación obligatoria.":"Choose an amount on the platform. Donations are optional.","Comprobando conexión local…":"Checking local connection…","Para cargar proyectos y guardar kits usa la interfaz conectada. Una página abierta como archivo sólo permite explorar el catálogo.":"To load projects and save kits use the connected interface. A locally opened HTML file only allows catalog browsing.","Abrir BeatOS conectado":"Open connected BeatOS","🔄 Comprobar servidor":"🔄 Check server","🎯 Pad Activo:":"🎯 Active pad:","(Vacío)":"(Empty)","Quitar filtro":"Clear filter","Sin identificar":"Unidentified","Cualquier Energía":"Any energy","Baja · RMS < −24 dBFS":"Low · RMS < −24 dBFS","Media · RMS −24 a −12 dBFS":"Medium · RMS −24 to −12 dBFS","Alta · RMS ≥ −12 dBFS":"High · RMS ≥ −12 dBFS","Sin medir · formato no leído":"Unmeasured · unsupported format","Silencio en ventanas medidas":"Silence in measured windows","Cualquier Rango de Tempo (BPM)":"Any tempo range (BPM)","Mostrando muestras...":"Loading samples…","Reproductor / Ruta MPC":"Player / MPC path","Archivo":"File","Formato":"Format","Tipo":"Type","Categoría":"Category","Pack / Colección":"Pack / collection","Tonalidad":"Musical key","Energía":"Energy","Tamaño":"Size","Pista":"Track","Banco":"Bank","Tempo del nuevo proyecto MPC":"New MPC project tempo","Kit Predeterminado (Vacío)":"Default kit (empty)","◀ Anterior":"◀ Previous","Nombre del Drum Kit / Proyecto:":"Drum kit / project name:","Destino de Hardware:":"Hardware target:","Proyectos MPC":"MPC projects","Buscar proyectos":"Search projects","Expansiones MPC":"MPC expansions","Buscar expansiones":"Search expansions","No hay coincidencias. Prueba otro nombre o restablece los filtros.":"No matches. Try another name or reset filters.","Distribución por Formato de Audio":"Audio format distribution","Distribución por Tipo de Sonido":"Sound type distribution","Distribución por Categorías Macro":"Macro-category distribution","Nivel de Energía Sonora":"Audio energy level","Distribución por Rango de BPM":"BPM range distribution","Pads 9 al 16 (≤ 40s)":"Pads 9–16 (≤ 40s)","Memoria disponible para el reel (s)":"Available reel budget (s)","Pausa entre golpes (ms)":"Gap between hits (ms)","Preparando... 3":"Preparing… 3","Muestra":"Sample","Pausa":"Gap","Duración":"Duration","Sonidos + patrones":"Sounds + patterns","Nombre de la grabación":"Recording name","Entrada de línea estéreo":"Stereo line input","Entrada predeterminada del sistema":"System default input","Detectar entradas":"Detect inputs","Reproducción del WAV original a velocidad 1×. Que el archivo esté íntegro no garantiza que el PO haya aceptado el respaldo.":"Play the original WAV at 1× speed. An intact file does not guarantee the PO accepted the backup.","Grupo A (Pads 1 al 12):":"Group A (pads 1–12):","Grupo B (Pads 13 al 16):":"Group B (pads 13–16):","Comprobando conectividad con el servidor local de streaming y automatizaciones (RFC 7233)...":"Checking local server connectivity (RFC 7233)…","Iniciando proceso...":"Starting process…","Estado: En espera":"Status: waiting","Cerrar":"Close","Haz clic en ▶ Play en cualquier sonido":"Press ▶ Play on any sample","Inspector de Pad":"Pad inspector","Muestra no seleccionada":"No sample selected","🔊 Volumen / Ganancia:":"🔊 Volume / gain:","🎚️ Paneo Estéreo:":"🎚️ Stereo pan:","🎵 Afinación (Semitonos):":"🎵 Tuning (semitones):","Centro":"Center","Off (Sin silenciado mutuo)":"Off (no mutual choking)","Grupo 1 (Bombos / Kicks)":"Group 1 (kicks)","Grupo 2 (Hi-Hats Abierto / Cerrado)":"Group 2 (open / closed hi-hats)","Grupo 3 (Cajas / Snares)":"Group 3 (snares)","▶ Probar Sonido":"▶ Test sound","Cancelar":"Cancel","Guardar Ajustes":"Save settings","Expansión Oficial MPC":"Official MPC expansion","Cargando programas...":"Loading programs…","Buscar programa":"Search programs","Todos":"All","Batería editable":"Editable drum kit","Keygroup · motor MPC":"Keygroup · MPC engine","🔄 Recargar programas":"🔄 Reload programs","📁 Ver proyectos":"📁 View projects","🎲 Kit sorpresa":"🎲 Random kit","Buscar por nombre, bombo, caja, 808, Rhodes, tempo (ej: 140), tono (ej: Dm), pack...":"Search by filename, kick, snare, 808, Rhodes, BPM (e.g. 140), key (e.g. Dm), pack…","Nombre o categoría…":"Name or category…","Nombre, carpeta…":"Name, folder…","Nombre, carpeta, fabricante…":"Name, folder, manufacturer…","Cerrar programas de expansión":"Close expansion programs","Banner central BeatOS":"BeatOS main banner","Reproducir muestra del pad activo":"Play active pad sample","Vaciar pad activo":"Clear active pad","Pad Vacío":"Empty pad","Vacío":"Empty","Catálogo sin conexión (archivo local). Abre BeatOS conectado.":"Offline catalog (local HTML file). Open connected BeatOS.","Presupuesto no válido":"Invalid time budget","No consultada en el dispositivo":"Not read from device","Buscando archivos de respaldo…":"Searching for backup WAV files…","No se encontraron WAV en las carpetas de respaldos.":"No WAV files found in backup directories.","Descargar WAV original":"Download original WAV","Preparar restauración":"Prepare restore","Captura interrumpida: repetir":"Interrupted capture: repeat","Descargar WAV":"Download WAV","no disponible":"unavailable","Proyecto MPC":"MPC project","Asigna muestras al rack primero.":"Assign samples to the rack first.","Grupo 5 (Personalizado)":"Group 5 (custom)","Grupo 6 (Personalizado)":"Group 6 (custom)","Grupo 7 (Personalizado)":"Group 7 (custom)","Grupo 8 (Personalizado)":"Group 8 (custom)","Grupo 9 (Personalizado)":"Group 9 (custom)","Grupo 10 (Personalizado)":"Group 10 (custom)","Grupo 11 (Personalizado)":"Group 11 (custom)","Grupo 12 (Personalizado)":"Group 12 (custom)","Grupo 13 (Personalizado)":"Group 13 (custom)","Grupo 14 (Personalizado)":"Group 14 (custom)","Grupo 15 (Personalizado)":"Group 15 (custom)","Grupo 16 (Personalizado)":"Group 16 (custom)","Grupo 17 (Personalizado)":"Group 17 (custom)","Grupo 18 (Personalizado)":"Group 18 (custom)","Grupo 19 (Personalizado)":"Group 19 (custom)","Grupo 20 (Personalizado)":"Group 20 (custom)","Grupo 21 (Personalizado)":"Group 21 (custom)","Grupo 22 (Personalizado)":"Group 22 (custom)","Grupo 23 (Personalizado)":"Group 23 (custom)","Grupo 24 (Personalizado)":"Group 24 (custom)","Grupo 25 (Personalizado)":"Group 25 (custom)","Grupo 26 (Personalizado)":"Group 26 (custom)","Grupo 27 (Personalizado)":"Group 27 (custom)","Grupo 28 (Personalizado)":"Group 28 (custom)","Grupo 29 (Personalizado)":"Group 29 (custom)","Grupo 30 (Personalizado)":"Group 30 (custom)","Grupo 31 (Personalizado)":"Group 31 (custom)","Grupo 32 (Personalizado)":"Group 32 (custom)"});
+const BEATOS_MESSAGES_EN = Object.freeze({"✔ Ruta copiada al portapapeles":"✔ Path copied to clipboard","🗑️ Rack de 16 pads vaciado":"🗑️ 16-pad rack cleared","🎲 ¡16 Pads configurados automáticamente!":"🎲 16 pads randomized!","⏳ Generando kit en la biblioteca activa...":"⏳ Generating kit in the active library…","✔ Servidor local conectado y listo":"✔ Local server connected","✔ Reindexación completada":"✔ Reindexing completed","Finalizado":"Finished","Modo Mover desactivado.":"Move mode disabled.","✔ Kit EP-133 exportado con éxito":"✔ EP-133 kit exported","📂 Carpeta abierta en Finder":"📂 Folder opened in file manager","Ruta copiada":"Path copied","Catálogo recargado; filtros y rack conservados.":"Catalog reloaded; filters and rack preserved.","Abre «BeatOS conectado» para cargar proyectos o exportar. Inicia BeatOS/ABRIR_BEATOS.command si no abre.":"Open connected BeatOS to load projects or export. Run BeatOS/ABRIR_BEATOS.command if needed.","⚠️ Asigna al menos 1 sonido a los pads antes de exportar.":"⚠️ Assign at least one sample before exporting.","Recargar descarta los ajustes de esta copia en el rack. ¿Continuar?":"Reloading discards edits to this rack copy. Continue?","Restaurar en el PO-33 BORRA todos sus sonidos y patrones actuales. ¿Has conservado su backup y quieres preparar la reproducción?":"Restoring on the PO-33 ERASES all its current sounds and patterns. Have you backed up the device and do you want to prepare playback?","⚠️ Asigna al menos 1 sonido en el Beatmaker Rack antes de exportar para EP-133.":"⚠️ Assign at least one sample before exporting to EP-133.","Activa el audio pulsando un pad.":"Enable audio by pressing a pad.","No se pudo cargar el catálogo de programas.":"Could not load the program catalog.","No hay kits de batería editables en esta expansión.":"No editable drum kits in this expansion.","Ruta de proyecto ausente: vuelve a indexar la biblioteca.":"Missing project path: reindex the library.","No se pudo reproducir: ":"Could not play: ","No se pudo generar el kit: ":"Could not generate kit: ","No se cargó el proyecto: ":"Could not load project: ","No se cargó el programa: ":"Could not load program: ","No se generó el reel: ":"Could not generate reel: ","Fallo al generar kit EP-133: ":"Failed to export EP-133 kit: ","🚚 Muestra movida a PAD ":"🚚 Sample moved to PAD ","🔀 Pads intercambiados: PAD ":"🔀 Pads swapped: PAD ","🗑️ PAD ":"🗑️ PAD ","📂 Ruta del kit: ":"📂 Kit folder: ","⏳ Generando Kit para EP-133 K.O. II (16-bit 44.1kHz)...":"⏳ Generating EP-133 kit (16-bit 44.1 kHz)…"});
+const beatosLocaleTextState = new WeakMap();
+const beatosLocaleAttrState = new WeakMap();
+let beatosLocaleObserver = null, beatosLocalePending = false;
+function localizeUiMessage(message) {
+  const raw = String(message == null ? '' : message);
+  if (currentLang !== 'en') return raw;
+  if (Object.prototype.hasOwnProperty.call(BEATOS_MESSAGES_EN, raw)) return BEATOS_MESSAGES_EN[raw];
+  for (const [prefix, translated] of Object.entries(BEATOS_MESSAGES_EN)) {
+    if (raw.startsWith(prefix)) return translated + raw.slice(prefix.length);
+  }
+  return raw;
+}
+function beatosTranslateExact(source) {
+  const trimmed = source.trim();
+  const translated = BEATOS_UI_EN[trimmed] || BEATOS_MESSAGES_EN[trimmed];
+  if (!translated) return source;
+  const start = source.indexOf(trimmed);
+  return source.slice(0,start) + translated + source.slice(start + trimmed.length);
+}
+function beatosTranslateTree(root) {
+  if (!root || typeof document.createTreeWalker !== 'function') return;
+  const walker = document.createTreeWalker(root, (typeof NodeFilter !== 'undefined' ? NodeFilter.SHOW_TEXT : 4));
+  let node;
+  while ((node = walker.nextNode())) {
+    const el = node.parentElement;
+    if (!el || ['SCRIPT','STYLE','CODE','PRE','TEXTAREA'].includes(el.tagName)) continue;
+    let old = beatosLocaleTextState.get(node);
+    let source = old ? old.source : node.nodeValue;
+    if (old && node.nodeValue !== old.last && node.nodeValue !== old.source) source = node.nodeValue;
+    const result = currentLang === 'en' ? beatosTranslateExact(source) : source;
+    if (node.nodeValue !== result) node.nodeValue = result;
+    beatosLocaleTextState.set(node,{source,last:result});
+  }
+  const elements = [root,...(typeof root.querySelectorAll === 'function' ? root.querySelectorAll('[title],[placeholder],[aria-label]') : [])];
+  for (const el of elements) {
+    if (!el || typeof el.hasAttribute !== 'function') continue;
+    const previous = beatosLocaleAttrState.get(el)||{}, next={...previous};
+    for (const attr of ['title','placeholder','aria-label']) {
+      if (!el.hasAttribute(attr)) continue;
+      const value=el.getAttribute(attr);
+      let info=previous[attr]||{source:value,last:value};
+      if (value!==info.last && value!==info.source) info={source:value,last:value};
+      const result=currentLang==='en' ? beatosTranslateExact(info.source) : info.source;
+      if (value!==result) el.setAttribute(attr,result);
+      next[attr]={source:info.source,last:result};
+    }
+    beatosLocaleAttrState.set(el,next);
+  }
+}
+function refreshBeatOsLocale() {
+  if (!document.body) return;
+  beatosTranslateTree(document.body);
+  if (!beatosLocaleObserver && typeof MutationObserver === 'function') {
+    beatosLocaleObserver=new MutationObserver(()=>{
+      if (beatosLocalePending) return;
+      beatosLocalePending=true;
+      Promise.resolve().then(()=>{
+        beatosLocalePending=false;
+        beatosTranslateTree(document.body);
+      });
+    });
+    beatosLocaleObserver.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','placeholder','aria-label']});
+  }
+}
 
 function setLanguage(lang) {
   currentLang = (lang === 'en') ? 'en' : 'es';
@@ -3195,6 +3264,7 @@ function setLanguage(lang) {
   if (btnP) btnP.innerText = t.btnPrev;
   const btnN = document.getElementById('btnNext');
   if (btnN) btnN.innerText = t.btnNext;
+  refreshBeatOsLocale();
 }
 
 function toggleLanguage() {
@@ -3666,6 +3736,7 @@ function copyText(text) {
 }
 
 function showToast(msg) {
+  msg = localizeUiMessage(msg);
   const toast = document.getElementById('toast');
   toast.innerText = msg || '✔ Acción completada con éxito';
   toast.style.display = 'block';
@@ -4289,7 +4360,7 @@ function exportKitToHardware() {
   const activePads = getActivePadsPayload();
 
   if (activePads.length === 0) {
-    alert('⚠️ Asigna al menos 1 sonido a los pads antes de exportar.');
+    alert(localizeUiMessage('⚠️ Asigna al menos 1 sonido a los pads antes de exportar.'));
     return;
   }
 
@@ -4346,7 +4417,7 @@ function exportOfflineCommandScript() {
   const activePads = getActivePadsPayload();
 
   if (activePads.length === 0) {
-    alert('⚠️ Asigna al menos 1 sonido a los pads antes de exportar.');
+    alert(localizeUiMessage('⚠️ Asigna al menos 1 sonido a los pads antes de exportar.'));
     return;
   }
 
@@ -4410,7 +4481,7 @@ async function refreshLibraryMenu(id, button = null) {
   finally { setLibraryButtonBusy(button,false); }
 }
 function reloadImportedSource() {
-  if (!importedSource || !confirm('Recargar descarta los ajustes de esta copia en el rack. ¿Continuar?')) return;
+  if (!importedSource || !confirm(localizeUiMessage('Recargar descarta los ajustes de esta copia en el rack. ¿Continuar?'))) return;
   if (importedSource.kind === 'project') loadProjectToRack(importedSource.project_name, importedSource.path, importedSource.selected_track);
   else loadXpmProgramToRack(importedSource.path, importedSource.program_name, currentLoadedKitIdx);
 }
@@ -5464,7 +5535,7 @@ async function startPo33Recording() {
 function preparePo33Restore(backup) {
   if (po33Recorder) { setPo33BackupStatus('Finaliza y guarda la grabación antes de preparar una restauración.'); return; }
   if (!backup.audio_compatible || backup.capture_interrupted) { setPo33BackupStatus('Este WAV necesita revisión antes de reproducirlo como respaldo. El original sigue disponible para descargar.'); return; }
-  if (!confirm('Restaurar en el PO-33 BORRA todos sus sonidos y patrones actuales. ¿Has conservado su backup y quieres preparar la reproducción?')) return;
+  if (!confirm(localizeUiMessage('Restaurar en el PO-33 BORRA todos sus sonidos y patrones actuales. ¿Has conservado su backup y quieres preparar la reproducción?'))) return;
   document.querySelectorAll('audio').forEach(audio => audio.pause());
   stopPadVoices();
   const audio = document.getElementById('po33RestoreAudio');
@@ -5561,7 +5632,7 @@ function generateEp133KitFromHub() {
   if (!requireConnectedView()) return;
   const activePads = getActivePadsPayload();
   if (activePads.length === 0) {
-    alert('⚠️ Asigna al menos 1 sonido en el Beatmaker Rack antes de exportar para EP-133.');
+    alert(localizeUiMessage('⚠️ Asigna al menos 1 sonido en el Beatmaker Rack antes de exportar para EP-133.'));
     return;
   }
   const kitName = (document.getElementById('rackKitName').value.trim() || 'EP133_Kit').replace(/[^a-zA-Z0-9_-]/g, '_') + '_EP133_' + Date.now();
@@ -5607,7 +5678,7 @@ function generateEp133KitFromHub() {
     }
   })
   .catch(err => {
-    alert('Fallo al generar kit EP-133: ' + err.message);
+    alert(localizeUiMessage('Fallo al generar kit EP-133: ' + err.message));
   });
 }
 
@@ -5785,6 +5856,7 @@ function initEcosystemTheme() {
 
 // Inicialización de vista al cargar
 window.addEventListener('DOMContentLoaded', () => {
+  setLanguage(currentLang);
   initEcosystemTheme();
   initBackdropPreference();
   updatePo33StudioView();
