@@ -64,7 +64,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $release = Invoke-RestMethod 'https://api.github.com/repos/Astro1Deep/mpc-sample-database/releases/latest' -Headers @{'Accept'='application/vnd.github+json'; 'User-Agent'='BeatOS-install-check'; 'Authorization'="Bearer $env:GH_TOKEN"}
+          $release = Invoke-RestMethod 'https://api.github.com/repos/Astro1Deep/BeatOS-TheMakerLicious/releases/latest' -Headers @{'Accept'='application/vnd.github+json'; 'User-Agent'='BeatOS-install-check'; 'Authorization'="Bearer $env:GH_TOKEN"}
           $assets = @($release.assets | Where-Object { $_.name -like 'BeatOS-*.zip' })
           if ($assets.Count -ne 1) { throw 'Expected one stable BeatOS installer' }
           $digest = $assets[0].digest -replace '^sha256:', ''
