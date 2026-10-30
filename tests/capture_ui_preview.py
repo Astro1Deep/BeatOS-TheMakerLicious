@@ -55,7 +55,10 @@ def synthetic_records():
 def build_page(language, tab):
     template=(ROOT / "templates" / "catalogo.html").read_text(encoding="utf-8")
     rendered=render_catalog(template, synthetic_records(), {"projects":[], "expansions":[]})
-    if language not in ("en","es") or tab not in ("samples","rack"):
+    # The release installs assets under BeatOS/docs; the source checkout keeps
+    # those identical image files under docs/. Remap only preview URLs.
+    rendered=rendered.replace('src="BeatOS/docs/assets/', 'src="docs/assets/')
+    if language not in ("en","es") or tab not in ("samples","rack","hero"):
         raise ValueError("Invalid preview configuration")
     # Locale preference is set before BeatOS reads it. No navigation to remote URLs.
     setup=("<script>try{localStorage.setItem('mpc_lang'," +
@@ -67,6 +70,15 @@ document.addEventListener('DOMContentLoaded', () => {
   if ("RACK" === "rack") {
     const button=document.getElementById('tabBtnRack');
     switchTab('tab-rack', button);
+  }
+  if ("RACK" !== "hero") {
+    const target = ("RACK" === "rack")
+      ? document.getElementById('tab-rack')
+      : document.querySelector('.rack-assignment-dock');
+    if (target) setTimeout(() => {
+      const top=target.getBoundingClientRect().top+window.scrollY-90;
+      window.scrollTo({top:Math.max(0,top),behavior:'instant'});
+    },900);
   }
   const badge=document.createElement('div');
   badge.textContent='DEMO · Synthetic sample data · No connected hardware';
@@ -88,6 +100,22 @@ def preview_server():
     class QuietHandler(SimpleHTTPRequestHandler):
         def log_message(self,*args):
             pass
+        def do_GET(self):
+            from urllib.parse import urlsplit
+            endpoint=urlsplit(self.path).path
+            if endpoint in ("/api/status", "/api/po33_backups"):
+                import json
+                data=({"status":"online","root_dir":"DEMO_LIBRARY (synthetic, read-only)",
+                       "card_mounted":False,"disk_free_gb":12.0,"disk_total_gb":24.0}
+                      if endpoint=="/api/status" else {"success":True,"backups":[]})
+                body=json.dumps(data).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type","application/json")
+                self.send_header("Content-Length",str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            super().do_GET()
     handler=lambda *args, **kwargs: QuietHandler(*args,directory=str(ROOT),**kwargs)
     server=ThreadingHTTPServer(("127.0.0.1",0),handler)
     thread=Thread(target=server.serve_forever, daemon=True)
@@ -128,6 +156,7 @@ def main():
     if not browser:
         raise SystemExit("Chrome/Chromium unavailable; screenshot is NOT verified")
     items=[
+        ("beatos-hero-en.png","en","hero"),
         ("beatos-overview-en.png","en","samples"),
         ("beatos-overview-es.png","es","samples"),
         ("beatos-rack-en.png","en","rack"),
