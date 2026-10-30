@@ -62,8 +62,8 @@ class APILanguageTests(unittest.TestCase):
             "Port 8888 is busy; this library uses port 8889."
         )
         self.assertEqual(
-            translate_text("\\n🎉 Indexación completada con éxito. Inicia BeatOS/ABRIR_BEATOS.command o el instalador de tu carpeta de código.", "en"),
-            "\\n🎉 Indexing completed successfully. Start BeatOS/ABRIR_BEATOS.command or the installer in your code folder."
+            translate_text("\n🎉 Indexación completada con éxito. Inicia BeatOS/ABRIR_BEATOS.command o el instalador de tu carpeta de código.", "en"),
+            "\n🎉 Indexing completed successfully. Start BeatOS/ABRIR_BEATOS.command or the installer in your code folder."
         )
 
     def test_english_cookie_localizes_api_error_without_modifying_original(self):
