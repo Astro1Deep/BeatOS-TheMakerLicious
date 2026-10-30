@@ -49,11 +49,13 @@ window.addEventListener('load', () => {
     setTimeout(() => {
       const enOK = recording.textContent.trim() === '⏺ Record backup' &&
           document.documentElement.lang === 'en' &&
+          document.cookie.includes('beatos_locale=en') &&
           localeNodes.every(x => x.node.nodeValue.trim() === x.en);
       setLanguage('es');
       setTimeout(() => {
         const esOK = recording.textContent.trim() === '⏺ Grabar backup' &&
             document.documentElement.lang === 'es' &&
+            document.cookie.includes('beatos_locale=es') &&
             localeNodes.every(x => x.node.nodeValue.trim() === x.es);
         const fileOK = probe.textContent === 'MyCustom-Sample_90bpm.wav';
         reporter.textContent = enOK && esOK && fileOK
