@@ -7,6 +7,9 @@ on:
       - 'templates/catalogo.html'
       - '.github/workflows/capture-ui-preview.yml'
   workflow_dispatch:
+concurrency:
+  group: beatos-capture-ui-main
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -56,5 +59,18 @@ jobs:
             echo 'Screenshots are already current.'
           else
             git commit -m 'docs(ui): publish real ES/EN Chrome interface screenshots [skip ci]'
-            git push origin HEAD:main
+            # A newer main commit can land while Chrome renders. Never publish a stale capture.
+            for attempt in 1 2 3; do
+              git fetch origin main
+              if [ "$(git rev-parse HEAD^)" != "$(git rev-parse origin/main)" ]; then
+                echo "::notice::Skipping stale screenshot commit: main changed during capture."
+                exit 0
+              fi
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+              sleep 2
+            done
+            echo "::error::Screenshot push could not complete after three attempts."
+            exit 1
           fi
