@@ -3158,6 +3158,12 @@ function localizeUiMessage(message) {
     const elapsed = raw.slice(recorderPrefix.length, -recorderSuffix.length);
     return 'Recording ' + elapsed + ' s · stereo PCM · press WRITE + SOUND + PLAY on the PO. Stop only after transmission ends.';
   }
+  const failedArchivePrefix = 'No se archivó en BeatOS: ';
+  const failedArchiveSuffix = '. Usa el enlace de descarga de la grabación que permanece arriba. No cierres esta página antes de guardarla.';
+  if (raw.startsWith(failedArchivePrefix) && raw.endsWith(failedArchiveSuffix)) {
+    const technicalError = raw.slice(failedArchivePrefix.length, -failedArchiveSuffix.length);
+    return 'Could not archive in BeatOS: ' + technicalError + '. Use the recording download link above. Keep this page open until you save the file.';
+  }
   if (Object.prototype.hasOwnProperty.call(BEATOS_MESSAGES_EN, raw)) return BEATOS_MESSAGES_EN[raw];
   for (const [prefix, translated] of Object.entries(BEATOS_MESSAGES_EN)) {
     if (raw.startsWith(prefix)) return translated + raw.slice(prefix.length);
