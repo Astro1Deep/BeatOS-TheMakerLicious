@@ -37,6 +37,10 @@ This is the **actual BeatOS web interface** captured in headless Chrome with a s
 
 ![BeatOS 16-pad drum rack, rendered in actual Chrome](docs/assets/screenshots/beatos-rack-en.png)
 
+**Original BeatOS branding / Portada visual original**
+
+![Real BeatOS browser screenshot of the original hardware blueprint hero banner](docs/assets/screenshots/beatos-hero-en.png)
+
 **Interfaz en español / Spanish overview**
 
 ![BeatOS: explorador de samples en español, captura real con datos sintéticos](docs/assets/screenshots/beatos-overview-es.png)
