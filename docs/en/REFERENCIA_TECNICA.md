@@ -77,7 +77,7 @@ WHERE status IN ('ATTENTION','ERROR');
 
 ## 4. Rack and API validation
 
-Rack payloads contain **occupied pads**, numbered 1–16, with paths resolved inside the selected library. The API validates finite **volume 0–1**, **pan 0–1** (center 0.5), **tune −36…+36 semitones**, **mute group 0–32**, and **tempo 30–300 BPM** (default 120). The browser pitch editor is narrower (±24 semitones). Web **100%** volume corresponds to approximately **0.707946** linear gain, not a measured dBFS level; values above approximately 141% may exceed the API maximum.
+Rack payloads contain **occupied pads**, numbered 1–16, with paths resolved inside the selected library. The API validates finite **volume 0–1**, **pan 0–1** (center 0.5), **tune −36…+36 semitones**, **mute group 0–32**, and **tempo 30–300 BPM** (default 120). The browser pitch editor is narrower (±24 semitones). Web **100%** volume corresponds to approximately **0.707946** linear gain, not a measured dBFS level; the UI slider is capped at 141% so its maximum remains within API validation.
 
 PO options are `max_total_sec` (1–40 seconds) and `gap_ms` (0–500 milliseconds), defaults 40 seconds and 150 ms. The presence of an occupied pad does not certify that the source file can be decoded by an export target.
 
