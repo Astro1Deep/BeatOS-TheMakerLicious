@@ -78,4 +78,22 @@ assert.equal(fakeDoc.documentElement.lang,'en');
 const gainSlider=html.match(/<input[^>]+id="padEditVol"[^>]+max="([0-9.]+)"/);
 assert.ok(gainSlider, 'pad volume slider exists');
 assert.ok(Number(gainSlider[1]) / 141.25 <= 1, 'maximum slider gain must not exceed the API limit');
+
+const poSummaryStart = html.indexOf('function beatosPoBackupInfoText(');
+assert.ok(poSummaryStart >= 0, 'PO backup metadata needs a locale-safe formatter');
+const poSummaryEnd = html.indexOf('async function loadPo33BackupsList(', poSummaryStart);
+assert.ok(poSummaryEnd > poSummaryStart, 'PO backup formatter boundary');
+const poContext=vm.createContext({});
+vm.runInContext('let currentLang="en";\\n' + html.slice(poSummaryStart,poSummaryEnd) + ';this.poText=beatosPoBackupInfoText;this.setLanguage=(lang)=>{currentLang=lang;}',poContext);
+const sampleBackup={duration_sec:2,channels:2,bit_depth:16,sample_rate:44100,audio_compatible:false,clipping:true};
+const enDetail=poContext.poText(sampleBackup);
+assert.match(enDetail,/channels/);
+assert.match(enDetail,/Modem payload NOT verified/);
+assert.match(enDetail,/Unsupported format or incomplete/);
+assert.doesNotMatch(enDetail,/canales|Datos del módem/);
+poContext.setLanguage('es');
+const esDetail=poContext.poText(sampleBackup);
+assert.match(esDetail,/canales/);
+assert.match(esDetail,/Datos del módem NO verificados/);
+
 console.log('BeatOS ES/EN: reversible texts, tooltips and messages; sample paths unchanged OK');
