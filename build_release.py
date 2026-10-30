@@ -76,7 +76,7 @@ def build_release(destination):
     documentation = [p for p in (source / 'docs').rglob('*.md') if p.is_file() and not p.is_symlink()]
     references = payload['templates/catalogo.html'].decode() + '\n' + '\n'.join(p.read_text(encoding='utf-8') for p in documentation)
     for path in (source / 'docs').rglob('*'):
-        if path.is_file() and not path.name.startswith('.') and not path.is_symlink() and path.suffix.lower() in {'.md', '.svg', '.jpg', '.png', '.webp'}:
+        if path.is_file() and not path.name.startswith('.') and not path.is_symlink() and (path.suffix.lower() in {'.md', '.svg', '.jpg', '.png', '.webp'} or path.relative_to(source).as_posix() in {'docs/index.html', 'docs/index-es.html', 'docs/sitemap.xml', 'docs/robots.txt', 'docs/llms.txt'}):
             if 'branding' in path.parts and 'creator' not in path.parts and path.stem not in references:
                 continue
             payload[path.relative_to(source).as_posix()] = path.read_bytes()
