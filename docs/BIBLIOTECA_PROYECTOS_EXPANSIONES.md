@@ -1,4 +1,6 @@
-# Biblioteca de proyectos y expansiones · BeatOS 3.7.0
+# Biblioteca de proyectos y expansiones · BeatOS 3.8.0
+
+**Idioma:** Español · [English version](en/BIBLIOTECA_PROYECTOS_EXPANSIONES.md)
 
 Los botones principales abren una copia en el rack o los programas de una expansión. Mostrar en Finder y Copiar ruta trabajan con el archivo original. Sus ubicaciones se pueden desplegar sin saturar las tarjetas.
 
@@ -20,7 +22,7 @@ El diálogo mantiene búsqueda y tipo al recargar la misma expansión. Se puede 
 
 Desde el rack puedes volver al proyecto o al catálogo de origen. Los menús muestran un acceso con el nombre de la copia que permanece cargada. Volver a esa copia no vuelve a importarla ni borra ajustes. El acceso TE Hub usa los pads actuales para el flujo PO-33/PO-133 o EP-133.
 
-Cambiar de pista o cargar otro origen sustituye la copia de trabajo: exporta primero si quieres conservarla. Se mantienen los límites de importación y exportación de la revisión 3.6.0: primera capa activa y 16 pads visibles por kit nuevo; no se transforma un proyecto completo con secuencias y efectos.
+Cambiar de pista o cargar otro origen sustituye la copia de trabajo: exporta primero si quieres conservarla. Se mantienen los límites de importación y exportación del funcionamiento actual: primera capa activa y 16 pads visibles por kit nuevo; no se transforma un proyecto completo con secuencias y efectos.
 
 Las operaciones que requieren servidor muestran su estado de trabajo y bloquean el botón mientras se procesan. No se añaden permisos de red ni se modifican archivos musicales para cambiar de vista o filtrar.
 
