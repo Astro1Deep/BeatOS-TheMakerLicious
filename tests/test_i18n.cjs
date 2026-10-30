@@ -58,7 +58,8 @@ const phrases = [
   ['⬅ Anterior','⬅ Previous'],
   ['Modo Mover','Move mode'],
   ['Arrastra muestra aquí','Drop sample here'],
-  ['⚡ Auto-avanzar Pad','⚡ Auto-advance pad']
+  ['⚡ Auto-avanzar Pad','⚡ Auto-advance pad'],
+  ['🎛️ Ver Rack (','🎛️ View rack (']
 ];
 for (const [spanish,english] of phrases) {
   const actual=vm.runInContext('beatosTranslateExact('+JSON.stringify(spanish)+')',ctx);
