@@ -12,7 +12,7 @@ from index_mpc_library import render_catalog
 from beatos_paths import entry_html, ENTRY_NAMES, CATALOG_REL
 
 
-FILES = ('serve_mpc.py', 'hardware_kit_builder.py', 'index_mpc_library.py', 'beatos_paths.py',
+FILES = ('serve_mpc.py', 'hardware_kit_builder.py', 'index_mpc_library.py', 'beatos_paths.py', 'beatos_i18n.py',
          'installer.py', 'install.sh', 'schema.sql', 'LICENSE', 'LICENSE.md',
          'README.md', 'GUIA_INSTALACION.md', 'GUIA_INSTALACION_EN.md', 'build_release.py',
          'templates/catalogo.html', 'docs/assets/po33-capture-worklet.js', 'templates/template_drum.xpm',
