@@ -20,6 +20,18 @@ Export formats and supported parameters vary by destination; producing an export
 
 Versión **3.8.0**. [Instaladores y versiones](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases) · [Guía de instalación](GUIA_INSTALACION.md) · 
 
+## Documentation / Documentación (ES · EN)
+
+| Topic / Tema | English | Español |
+| --- | --- | --- |
+| Installation / Instalación | [Quick start](GUIA_INSTALACION_EN.md) | [Guía de instalación](GUIA_INSTALACION.md) |
+| Complete manual / Manual completo | [20-chapter user manual](docs/en/MANUAL_COMPLETO.md) | [Manual de 20 capítulos](docs/MANUAL_COMPLETO.md) |
+| Hardware support / Compatibilidad | [Device loading & limits](docs/en/COMPATIBILIDAD_HARDWARE.md) | [Modelos y formatos](docs/COMPATIBILIDAD_HARDWARE.md) |
+| Technical details / Referencia técnica | [CLI, SQLite & HTTP API](docs/en/REFERENCIA_TECNICA.md) | [CLI, SQLite y API](docs/REFERENCIA_TECNICA.md) |
+| Wiki / Guías temáticas | [English guide index](docs/wiki/Home_EN.md) | [Inicio en español](docs/wiki/Home.md) |
+
+**For producers and beatmakers:** sample library management, 16-pad drum kit creation, Akai MPC Drum programs, Maschine, SP-404MKII, PO-33/PO-133 and EP-133 export workflows. BeatOS runs locally; the ES/EN UI selector covers supported labels, while some runtime texts remain in Spanish. Sample names and your private audio files are never translated.
+
 ## Manual del sistema
 
 - **[Manual completo por módulos](docs/MANUAL_COMPLETO.md):** instalación, bibliotecas, identificación, búsqueda, escucha, rack, proyectos, expansiones, hubs, exportación, mantenimiento y diagnóstico.
