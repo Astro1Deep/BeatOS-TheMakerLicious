@@ -123,6 +123,19 @@ assert.match(spanishDialog,/KIT CREADO CON ÉXITO/);
 assert.match(spanishDialog,/Akai MPC Proyectos/);
 assert.match(dialogCtx.offline(),/¿Quieres descargar/);
 
+// Dynamic playback, processing and rack states must not mix ES text into EN.
+const dynamicStates = [
+  ['Pausado: Kick.wav','Paused: Kick.wav'],
+  ['Cargando: Kick.wav','Loading: Kick.wav'],
+  ['Grupo 7','Group 7'],
+  ['⏳ Procesando…','⏳ Processing…'],
+  ['⚡ Auto-avance de pad ACTIVADO','⚡ Auto-advance enabled'],
+  ['⏸ Auto-avance de pad DESACTIVADO','⏸ Auto-advance disabled']
+];
+for (const [es,en] of dynamicStates) {
+  assert.equal(vm.runInContext('beatosTranslateExact('+JSON.stringify(es)+')',ctx),en);
+}
+
 // Regression: visible labels in the delivered catalog need genuine EN equivalents.
 // These keys were previously omitted even though the main ES/EN switch existed.
 const missingVisibleTranslations = [
