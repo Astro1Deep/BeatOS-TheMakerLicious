@@ -49,7 +49,16 @@ const phrases = [
   ['🔄 Ejecutar Reindexación Completa','🔄 Reindex entire library'],
   ['🧹 Optimización para Hardware MPC & SP-404','🧹 MPC & SP-404 maintenance'],
   ['🔄 Comprobar conexión EP Hub','🔄 Check EP Hub connection'],
-  ['🎛️ Asignación Específica por Sampler:','🎛️ Sampler-specific mapping:']
+  ['🎛️ Asignación Específica por Sampler:','🎛️ Sampler-specific mapping:'],
+  ['808s & Sub Bajos','808s & sub bass'],
+  ['Instrumentos tonales','Tonal instruments'],
+  ['❓ Sin identificar','❓ Unidentified'],
+  ['-- Cambiar Kit (.xpm) --','-- Switch kit (.xpm) --'],
+  ['▶ Siguiente','▶ Next'],
+  ['⬅ Anterior','⬅ Previous'],
+  ['Modo Mover','Move mode'],
+  ['Arrastra muestra aquí','Drop sample here'],
+  ['⚡ Auto-avanzar Pad','⚡ Auto-advance pad']
 ];
 for (const [spanish,english] of phrases) {
   const actual=vm.runInContext('beatosTranslateExact('+JSON.stringify(spanish)+')',ctx);
