@@ -42,6 +42,14 @@ class InstallerLanguageTests(unittest.TestCase):
             installer.main()
             self.assertEqual(os.environ.get("BEATOS_LANG"), "es")
 
+    def test_documentation_menu_uses_language_specific_wiki(self):
+        with patch.object(sys,"argv",["installer.py"]), patch.dict(os.environ,{"BEATOS_LANG":""}), patch("builtins.input",return_value="5"), patch("installer.open_url_or_file") as open_doc, patch("builtins.print"):
+            installer.main()
+            self.assertIn("Home_EN.md",open_doc.call_args.args[0])
+        with patch.object(sys,"argv",["installer.py","--lang","es"]), patch("builtins.input",return_value="5"), patch("installer.open_url_or_file") as open_doc, patch("builtins.print"):
+            installer.main()
+            self.assertIn("Home.md",open_doc.call_args.args[0])
+
     def test_english_from_environment(self):
         with patch.object(sys,"argv",["installer.py"]), patch.dict(os.environ,{"BEATOS_LANG":"en"}):
             self.assertEqual(installer.get_language(),"en")
