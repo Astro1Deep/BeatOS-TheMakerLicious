@@ -1,5 +1,7 @@
 # Comprobación de la entrega
 
+**Idioma:** Español · [English version](en/VERIFICACION_ENTREGA.md)
+
 BeatOS 3.8.0 incluye un catálogo vacío, plantillas MPC saneadas y un manifiesto SHA-256 dentro de BeatOS/. El ZIP se construye desde una lista explícita; no incluye bibliotecas musicales, bases SQLite, backups ni configuraciones del autor.
 
 ## Descarga e integridad
@@ -14,8 +16,8 @@ En Linux usa `sha256sum -c` con ese mismo archivo. En PowerShell, `Get-FileHash 
 
 ## Pruebas realizadas
 
-- 61 pruebas Python y cuatro suites JavaScript; la entrega incluye las pruebas de regresión.
-- GitHub Actions comprueba Python 3.11 y 3.14, lógica JavaScript y generación del instalador.
+- Suite Python de regresión, pruebas JavaScript y auditoría de enlaces bilingües; consulta el recuento y los resultados de la ejecución de CI del commit correspondiente.
+- GitHub Actions comprueba Python 3.11 y 3.14, lógica JavaScript, idiomas ES/EN, enlaces locales, una prueba real de navegador Chrome y generación del instalador; la versión estable anterior no incorpora automáticamente nuevas funciones.
 - Instalación en carpeta con espacios y biblioteca separada; indexación repetida, un catálogo único, recursos y preescucha por HTTP.
 - Inspector de proyectos, pistas/bancos, acceso a XPJ de expansiones y flujo de carga al rack; fallos que conservan la copia anterior.
 - Exportaciones sobre fixtures sintéticos, rollback ante error y rechazo de rutas privadas, archivos ausentes y parámetros inválidos.
