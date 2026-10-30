@@ -63,3 +63,27 @@ El pipeline `checks.yml` incorpora:
 **NO se considera completada una certificación integral mientras queden P0/P1 sin pruebas.** Para cerrar deben existir: tests que induzcan errores en ambos idiomas; ejecución CI verde del commit final; revisión gráfica y de accesibilidad; ZIP de nueva release con SHA-256 comprobado; pruebas físicas documentadas para los dispositivos que se pretendan anunciar como certificados.
 
 El objetivo es publicar software usable por beatmakers y productores sin confundir archivo generado, proyecto nativo, firmware compatible o restauración validada. Esta auditoría registra cambios y límites de manera explícita, sin convertir hipótesis o una CI verde en garantía universal.
+
+## 6. Adenda — segunda auditoría y ejecución de pruebas (30/10/2026)
+
+**Commit con CI completamente superada:** `db6101c15ed4c7e5c38ec498f6b51cc34f5d425c`. [Ejecución GitHub Actions #41094521144](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/actions/runs/41094521144): Python 3.11, Python 3.14, Chrome headless ES→EN→ES, Windows y generación de ZIP de desarrollo terminan correctamente. Hay artefactos `BeatOS-main-py3.11` y `BeatOS-main-py3.14`; **no constituyen un nuevo release estable**.
+
+### 6.1 Fallos adicionales reproducidos y corregidos
+
+- **API-LOCALE-01:** errores JSON y estado de tareas solo en español. `beatos_i18n.py` y el serializador JSON del servidor presentan un error traducido por petición cuando la preferencia es EN, y conservan el original en `error_es`; los registros originales permanecen en `logs_es`. La preferencia se transmite mediante cookie de idioma `beatos_locale` con SameSite=Strict o cabecera explícita `X-BeatOS-Language` (prioritaria). Ningún nombre de sample o ruta de origen se traduce. La traducción es por reglas reconocidas; los errores desconocidos devuelven texto genérico en inglés y el detalle original en `error_es`.
+- **INDEX-LOCALE-02:** salida del indexador en español aunque el instalador se seleccionase en inglés. El indexador admite `--lang es|en` o `BEATOS_LANG`; se traducen las fases principales, rutas informativas, nombres de campos de proyectos y expansiones; el instalador transmite temporalmente la preferencia al indexador y al servidor y restaura el entorno anterior al terminar.
+- **CLI-REGRESSION-03:** la primera implementación del helper de salida entraba en recursión, lo que impedía indexar también en Windows. El error fue reproducido por CI y corregido en el código real; los tests de indexación y entrega posteriores ya pasan.
+- **SERVER-LOCALE-04:** mensajes de inicio/parada del servidor con nombres de carpeta y estado de conexión españoles; traducidos cuando el entorno se selecciona en inglés.
+- **VALIDATION-LOCALE-05:** errores comunes de exportador sin traducción (tempo, ganancia/pad, ausencia de samples, WAV, FFmpeg); se añadieron traducciones específicas y tests de preservación de números e identificadores.
+- **BROWSER-LOCALE-06:** la prueba de Chrome verifica que la cookie ES/EN se actualiza al cambiar de idioma y que se conservan los nombres de samples.
+
+**Cobertura de regresión:** `tests/test_server_language.py`, `tests/test_index_language.py`, `tests/test_installer_language.py`, `tests/test_i18n.cjs` y `tests/smoke_browser_i18n.py`. Los resultados deben asociarse al commit indicado, no inferirse de un estado anterior.
+
+### 6.2 Declaración de alcance y pendientes que no deben ocultarse
+
+- **La interfaz no está certificada al 100 %:** la cobertura estructural de la plantilla y la prueba en Chrome son positivas, pero no existe todavía un recorrido exhaustivo de todas las variantes dinámicas, accesibilidad/teclado y navegadores en cada plataforma.
+- **Los detalles internos de errores desconocidos del backend no están traducidos exhaustivamente:** para EN se presenta un mensaje genérico en inglés y el diagnóstico original en `error_es`; algunas líneas de salida técnica de procesos auxiliares pueden conservar español en `logs` si no existe correspondencia. Evitar anunciar «100 % localizado» hasta cubrir casos raros con pruebas de errores inducidos.
+- **Falta una release estable revisada y firmada:** los ZIP de Actions son builds de desarrollo y se deben tratar como tales. Deben publicarse una versión nueva y su SHA-256 verificable, preservando la release anterior para rollback.
+- **No se certifica compatibilidad física en todos los samplers/firmwares:** los tests actuales son sintéticos; cargar en MPC, Maschine, SP-404, PO y EP y verificar guardado/reapertura requiere dispositivos reales y registro de modelo/firmware.
+
+**Regla de cierre:** «CI verde» acredita que las pruebas existentes pasan; no demuestra ausencia absoluta de defectos, localización total ni seguridad de cada dispositivo. Se recomienda no etiquetar como estable una nueva versión antes de cerrar los P0 realmente observables y probar el ZIP final descargable.
