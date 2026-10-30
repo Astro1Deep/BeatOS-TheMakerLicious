@@ -22,11 +22,13 @@ class InstallerLanguageTests(unittest.TestCase):
         translated=installer.locale_text(question, "en")
         self.assertEqual(translated, "\nOpen the catalog in your browser now? (y/n): ")
 
-    def test_spanish_default(self):
+    def test_english_default_and_explicit_spanish_override(self):
         with patch.object(sys,"argv",["installer.py"]), patch.dict(os.environ,{"BEATOS_LANG":""}), patch("builtins.input",return_value="6"), patch("builtins.print") as printed:
-            self.assertEqual(installer.get_language(),"es")
+            self.assertEqual(installer.get_language(),"en")
             installer.main()
-            self.assertIn("Saliendo.",str(printed.call_args_list))
+            self.assertIn("Exiting.",str(printed.call_args_list))
+        with patch.object(sys,"argv",["installer.py","--lang","es"]), patch.dict(os.environ,{"BEATOS_LANG":""}):
+            self.assertEqual(installer.get_language(),"es")
     def test_indexer_inherits_english_without_changing_command_path(self):
         import tempfile
         with tempfile.TemporaryDirectory() as folder, patch.object(sys, "argv", ["installer.py", "--lang", "en"]), patch("builtins.input", side_effect=["1", folder]), patch("builtins.print"), patch("installer.subprocess.run") as run:
