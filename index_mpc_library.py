@@ -249,7 +249,7 @@ def render_catalog(template, records, metadata):
         category = 'Sesión MPC' if kind == 'sessions' else 'Kit / otro proyecto'
         project_cards.append(f'''<article class="card library-card" data-name="{title}" data-tempo="{tempo}" data-count="{count}" data-kind="{kind}" data-path="{path}" data-search="{title} {path}">
           <div class="library-card-heading"><span class="library-kind">{category}</span><span class="library-state {'warning' if warning else ''}">{label}</span></div>
-          <h3>{title}</h3><dl><dt>Tempo</dt><dd>{tempo} BPM</dd><dt>Muestras referenciadas</dt><dd>{count}</dd><dt>Ausentes en el índice</dt><dd>{missing}</dd></dl>
+          <h3 translate="no">{title}</h3><dl><dt>Tempo</dt><dd>{tempo} BPM</dd><dt>Muestras referenciadas</dt><dd>{count}</dd><dt>Ausentes en el índice</dt><dd>{missing}</dd></dl>
           <details class="library-location"><summary>Ubicación del proyecto</summary><code>{path}</code></details>
           <div class="card-actions"><button type="button" class="po33-btn-secondary library-action primary" data-project="{title}" data-path="{path}" onclick="loadProjectToRack(this.dataset.project,this.dataset.path,null,this)">🎛️ Editar copia en rack</button>
           <button type="button" class="po33-btn-secondary library-action" data-path="{path}" onclick="revealLibraryPath(this.dataset.path,this)">📁 Mostrar en Finder</button>
@@ -269,7 +269,7 @@ def render_catalog(template, records, metadata):
         samples = esc(expansion.get('samples', expansion.get('samples_count')))
         expansion_cards.append(f'''<article class="card library-card" data-name="{title}" data-count="{programs}" data-samples="{samples}" data-search="{title} {manufacturer} {path}">
           <div class="library-cover">{picture}</div><div class="library-card-heading"><span class="library-kind">Expansión MPC</span><span class="library-state">{programs} programas · {project_count} proyectos</span></div>
-          <h3>{title}</h3><p class="library-manufacturer">{manufacturer}</p>
+          <h3 translate="no">{title}</h3><p class="library-manufacturer" translate="no">{manufacturer}</p>
           <dl><dt>Samples</dt><dd>{samples}</dd><dt>Tamaño</dt><dd>{esc(expansion.get('size_mb'))} MB</dd></dl>
           <details class="library-location"><summary>Ubicación de la expansión</summary><code>{path}</code></details>
           <div class="card-actions"><button type="button" class="po33-btn-secondary library-action primary" data-expansion="{folder}" onclick="openExpansionBrowser(this.dataset.expansion)">🎛️ Ver programas</button>
