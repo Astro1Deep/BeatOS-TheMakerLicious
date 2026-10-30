@@ -40,6 +40,22 @@ assert.equal(sample.nodeValue,'My private sample.wav');
 assert.equal(attrs.title,'Play active pad sample');
 assert.equal(ctx.locale.message('No se pudo reproducir: Kick.wav'),'Could not play: Kick.wav');
 assert.equal(ctx.locale.message('⚠️ Asigna al menos 1 sonido a los pads antes de exportar.'),'⚠️ Assign at least one sample before exporting.');
+// Regression: each major producer workflow must have translated text in English.
+const phrases = [
+  ['Quitar filtro de expansión','Clear expansion filter'],
+  ['📻 Módem FSK & Restauración de Backups','📻 FSK modem & backup restore'],
+  ['⏺ Grabar backup','⏺ Record backup'],
+  ['🎹 Mapeo Físico de Teclas EP-133 (12 Teclas por Grupo):','🎹 EP-133 physical key map (12 keys per group):'],
+  ['🔄 Ejecutar Reindexación Completa','🔄 Reindex entire library'],
+  ['🧹 Optimización para Hardware MPC & SP-404','🧹 MPC & SP-404 maintenance'],
+  ['🔄 Comprobar conexión EP Hub','🔄 Check EP Hub connection'],
+  ['🎛️ Asignación Específica por Sampler:','🎛️ Sampler-specific mapping:']
+];
+for (const [spanish,english] of phrases) {
+  const actual=vm.runInContext('beatosTranslateExact('+JSON.stringify(spanish)+')',ctx);
+  assert.equal(actual,english,'Missing EN translation for: '+spanish);
+}
+assert.equal(ctx.locale.message('Restaurar en el PO-33 BORRA todos sus sonidos y patrones actuales. ¿Has conservado su backup y quieres preparar la reproducción?'), 'Restoring on the PO-33 ERASES all its current sounds and patterns. Have you backed up the device and do you want to prepare playback?');
 ctx.change('es');
 ctx.locale.refresh();
 assert.equal(text.nodeValue,' Guardar Ajustes ');
