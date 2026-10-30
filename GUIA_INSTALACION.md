@@ -1,5 +1,7 @@
 # BeatOS
 
+**Idioma:** Español · [English installation guide](GUIA_INSTALACION_EN.md)
+
 **The MakerLicious**
 
 [universal beatmaker station]
