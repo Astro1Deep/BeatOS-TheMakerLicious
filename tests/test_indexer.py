@@ -19,6 +19,22 @@ class IndexerTests(unittest.TestCase):
         self.assertEqual(preview, render_catalog(template, [], {}),
                          'Checked-in preview must match current ES/EN engine')
 
+    def test_zip_installer_contains_the_same_bilingual_catalog_that_the_server_uses(self):
+        import zipfile
+        import build_release
+        from beatos_paths import CATALOG_REL
+        with tempfile.TemporaryDirectory(prefix='BeatOS archive i18n ') as tmp:
+            archive = Path(tmp) / 'BeatOS.zip'
+            build_release.build_release(archive)
+            prefix = f'BeatOS-{build_release.VERSION}/'
+            with zipfile.ZipFile(archive) as bundle:
+                source = bundle.read(prefix + 'BeatOS/templates/catalogo.html').decode('utf-8')
+                installed = bundle.read(prefix + CATALOG_REL).decode('utf-8')
+            self.assertEqual(installed, render_catalog(source, [], {}),
+                             'Shipped executable catalog must be generated from the bilingual source')
+            self.assertIn('"🎛️ Editar Pads en Rack":"🎛️ Edit pads in rack"', installed)
+            self.assertIn('"Reproductor y símbolos de Astro1Deep":"Player and Astro1Deep symbols"', installed)
+
     def test_user_supplied_project_and_expansion_titles_are_not_translated(self):
         root = Path(__file__).resolve().parents[1]
         template = (root / 'templates/catalogo.html').read_text(encoding='utf-8')

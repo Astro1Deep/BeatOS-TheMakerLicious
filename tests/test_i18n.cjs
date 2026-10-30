@@ -99,6 +99,40 @@ vm.runInContext('let currentLang="es";\n'+setterSource+';\nthis.switchLang=setLa
 assert.doesNotThrow(()=>setterCtx.switchLang('en'));
 assert.equal(fakeDoc.documentElement.lang,'en');
 
+// Regression: visible labels in the delivered catalog need genuine EN equivalents.
+// These keys were previously omitted even though the main ES/EN switch existed.
+const missingVisibleTranslations = [
+  ['🎛️ Expansiones Oficiales', '🎛️ Official expansions'],
+  ['🎛️ Editar Pads en Rack', '🎛️ Edit pads in rack'],
+  ['⚡ Generar Kit EP-133', '⚡ Generate EP-133 kit'],
+  ['📁 Revelar en Finder', '📁 Show in Finder'],
+  ["Avanza automáticamente al siguiente pad tras asignar una muestra para armar tu kit con rapidez", "Automatically advance to the next pad after assigning a sample to build your kit faster"],
+  ["Restablecer todos los filtros y búsqueda", "Reset all filters and search"],
+  ["Cargar programa anterior de esta expansión", "Load the previous program from this expansion"],
+  ["Cargar siguiente programa de esta expansión", "Load the next program from this expansion"],
+  ["Abrir catálogo visual con los programas de esta expansión", "Open the visual catalog of programs in this expansion"],
+  ["Modo Mover: Haz clic en dos pads consecutivamente para intercambiarlos de sitio de forma rápida", "Move mode: click two pads in succession to swap their positions quickly"],
+  ["Reproductor y símbolos de Astro1Deep", "Player and Astro1Deep symbols"],
+  ['Haz clic en', 'Click'],
+  ['"Revelar en Finder"', '"Show in Finder"'],
+  ['Tipo y formato: estimados por nombre y carpeta de instrumento. Tonalidad: etiqueta del archivo; «nota» no confirma mayor/menor. Camelot sólo con modo declarado. Energía: nivel RMS aproximado de tres ventanas PCM (baja < −24, media hasta −12, alta ≥ −12 dBFS); no mide intensidad musical. Sin evidencia se indica sin identificar o sin medir.',
+   'Type and format are estimated from filenames and instrument folders. The key label comes from the filename; a note alone does not establish major/minor mode. Camelot requires an explicit mode. Energy estimates RMS from three PCM windows (low < −24, medium to −12, high ≥ −12 dBFS); it does not measure perceived loudness. Missing evidence is shown as unidentified or unmeasured.']
+];
+for (const [es,en] of missingVisibleTranslations) {
+  assert.equal(vm.runInContext('beatosTranslateExact('+JSON.stringify(es)+')',ctx),en,'Untranslated visible UI: '+es);
+}
+
+// Every static Spanish title/ARIA instruction must be localizable; test the
+// markup itself so new controls cannot silently evade the fixed-key cases.
+const staticMarkup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'')
+  .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,'');
+for (const match of staticMarkup.matchAll(/\b(?:title|aria-label)="([^"]+)"/g)) {
+  const source = match[1].replaceAll('&amp;', '&').replaceAll('&quot;', '"');
+  if (!/[áéíóúñ]|\b(?:Restablecer|Avanza|Cargar|Abrir|Modo Mover|Reproducir|Borrar|Selecciona|Haz clic|Buscar)\b/i.test(source)) continue;
+  const result = vm.runInContext('beatosTranslateExact('+JSON.stringify(source)+')',ctx);
+  assert.notEqual(result,source,'Missing English translation of visible title/ARIA: '+source);
+}
+
 // Regression: the visible gain slider must never produce an export-invalid gain.
 const gainSlider=html.match(/<input[^>]+id="padEditVol"[^>]+max="([0-9.]+)"/);
 assert.ok(gainSlider, 'pad volume slider exists');

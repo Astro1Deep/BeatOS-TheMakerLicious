@@ -45,6 +45,25 @@ class ServerSecurityTests(unittest.TestCase):
             self.assertEqual(self.request(url + '/inside.txt'), (200, b'library file'))
             self.assertEqual(self.request(url + '/inside.txt', headers={'Range': 'bytes=0-2'}), (206, b'lib'))
 
+    def test_http_root_serves_the_generated_bilingual_catalog_not_a_stale_entry(self):
+        from index_mpc_library import render_catalog
+        source = (Path(__file__).resolve().parents[1] / 'templates/catalogo.html').read_text(encoding='utf-8')
+        expected = render_catalog(source, [], {})
+        with self.server() as (url, parent):
+            root = parent / 'library'
+            deployed = root / 'BeatOS/data/catalogo.html'
+            deployed.parent.mkdir(parents=True)
+            deployed.write_text(expected, encoding='utf-8')
+            (root / 'catalogo_universal.html').write_text('<html>OUTDATED UI</html>', encoding='utf-8')
+            (root / 'catalogo_mpc_sample.html').write_text('<html>OUTDATED UI</html>', encoding='utf-8')
+            for endpoint in ('/', '/catalogo', '/catalogo.html', '/BeatOS/data/catalogo.html'):
+                with self.subTest(endpoint=endpoint):
+                    status, payload = self.request(url + endpoint)
+                    self.assertEqual(status, 200)
+                    self.assertEqual(payload.decode('utf-8'), expected)
+            self.assertIn('const BEATOS_UI_EN = ', expected)
+            self.assertIn('"⚡ Generar Kit EP-133":"⚡ Generate EP-133 kit"', expected)
+
     def test_kit_download_streams_large_files_and_preserves_utf8_filename(self):
         from unittest.mock import patch
         from urllib.parse import quote
