@@ -113,4 +113,28 @@ assert.match(poStatusEl.textContent,/ERASES/);
 poStatusCtx.lang('es');
 poStatusCtx.report('La grabación está vacía; no se ha guardado.');
 assert.equal(poStatusEl.textContent,'La grabación está vacía; no se ha guardado.');
+
+// Expansion kit cards are generated HTML, not static labels; verify both full renders.
+const cardsStart=html.indexOf('function renderExpansionProgramsList(');
+const cardsEnd=html.indexOf('function previewExpansionSample(',cardsStart);
+assert.ok(cardsStart>=0&&cardsEnd>cardsStart,'Expansion program renderer found');
+const expansionNode={innerHTML:''};
+const expansionCtx=vm.createContext({
+  document:{getElementById:id=>id==='expansionProgramsGrid'?expansionNode:null},
+  currentExpansionPrograms:[{rel_path:'kits/Kick.xpm'}],
+  currentLoadedKitRelPath:'',
+  currentExpansionName:'Artist Samples',
+  escapeHtml:s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;'),
+});
+vm.runInContext('let currentLang="en";\n'+html.slice(cardsStart,cardsEnd)+'\nthis.draw=renderExpansionProgramsList;this.lang=v=>{currentLang=v;}',expansionCtx);
+const kit={rel_path:'kits/Kick.xpm',program_type:'drum',name:'User Original Kick Kit',sub_category:'Artist Samples',pad_count:1,first_sample_rel:'samples/Kick.wav'};
+expansionCtx.draw([kit]);
+assert.match(expansionNode.innerHTML,/Edit copy in rack/);
+assert.match(expansionNode.innerHTML,/Listen to sample/);
+assert.match(expansionNode.innerHTML,/User Original Kick Kit/);
+assert.doesNotMatch(expansionNode.innerHTML,/Editar copia|Escuchar muestra|Mostrar archivo|Copiar ruta/);
+expansionCtx.lang('es');
+expansionCtx.draw([kit]);
+assert.match(expansionNode.innerHTML,/Editar copia en rack/);
+assert.match(expansionNode.innerHTML,/User Original Kick Kit/);
 console.log('BeatOS ES/EN: reversible texts, tooltips and messages; sample paths unchanged OK');
