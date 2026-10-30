@@ -1,0 +1,60 @@
+name: Capture real BeatOS web interface preview
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tests/capture_ui_preview.py'
+      - 'templates/catalogo.html'
+      - '.github/workflows/capture-ui-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  screenshot:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.11'
+      - name: Render authentic ES/EN Chrome screenshots using synthetic sample data
+        run: python -B tests/capture_ui_preview.py
+      - name: Check screenshot metadata and privacy
+        run: |
+          python -B - <<'PY'
+          from pathlib import Path
+          from struct import unpack
+          expected=('beatos-overview-en.png','beatos-overview-es.png','beatos-rack-en.png')
+          root=Path('docs/assets/screenshots')
+          for item in expected:
+              file=root/item
+              data=file.read_bytes()
+              assert data.startswith(b'\x89PNG\r\n\x1a\n') and len(data)>12000
+              w,h=unpack('>II',data[16:24])
+              assert w>=1100 and h>=700
+              print(item,w,h,len(data))
+          assert not list(Path('.').glob('__beatos_visual_preview_*.html'))
+          PY
+      - name: Publish screenshot ZIP for direct review
+        uses: actions/upload-artifact@v4
+        with:
+          name: BeatOS-authentic-browser-screenshots
+          path: docs/assets/screenshots/*.png
+          if-no-files-found: error
+      - name: Commit verified PNGs so GitHub README and Pages can display them
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/assets/screenshots/*.png
+          if git diff --cached --quiet; then
+            echo 'Screenshots are already current.'
+          else
+            git commit -m 'docs(ui): publish real ES/EN Chrome interface screenshots [skip ci]'
+            git push origin HEAD:main
+          fi
