@@ -96,4 +96,21 @@ const esDetail=poContext.poText(sampleBackup);
 assert.match(esDetail,/canales/);
 assert.match(esDetail,/Datos del módem NO verificados/);
 
+
+// PO-33 critical recorder/restore states must be localized (not just static UI labels).
+const poStatusStart=html.indexOf('function setPo33BackupStatus(');
+const poStatusEnd=html.indexOf('function po33PcmWav(',poStatusStart);
+assert.ok(poStatusStart>0 && poStatusEnd>poStatusStart,'PO backup status function found');
+const poStatusEl={textContent:''};
+const poStatusCtx=vm.createContext({document:{getElementById:()=>poStatusEl}});
+vm.runInContext('let currentLang="en";\n'+html.slice(start,end)+'\n'+html.slice(poStatusStart,poStatusEnd)+';this.report=setPo33BackupStatus;this.lang=(value)=>{currentLang=value;};',poStatusCtx);
+poStatusCtx.report('La grabación está vacía; no se ha guardado.');
+assert.equal(poStatusEl.textContent,'The recording is empty; nothing was saved.');
+poStatusCtx.report('WAV guardado sin modificar. SHA-256: abc123. Datos del módem no verificados.');
+assert.equal(poStatusEl.textContent,'Original WAV saved unmodified. SHA-256: abc123. Modem data not verified.');
+poStatusCtx.report('Restaurar en el PO-33 BORRA todos sus sonidos y patrones actuales. ¿Has conservado su backup y quieres preparar la reproducción?');
+assert.match(poStatusEl.textContent,/ERASES/);
+poStatusCtx.lang('es');
+poStatusCtx.report('La grabación está vacía; no se ha guardado.');
+assert.equal(poStatusEl.textContent,'La grabación está vacía; no se ha guardado.');
 console.log('BeatOS ES/EN: reversible texts, tooltips and messages; sample paths unchanged OK');
