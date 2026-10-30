@@ -54,6 +54,33 @@ class HubWorkflows(unittest.TestCase):
         info=kits.import_po33_backup(self.root,name,self.audio.read_bytes())
         self.assertTrue(info['capture_interrupted'])
         self.assertTrue(kits.scan_po33_backups([self.root/'BeatOS/data/po33_backups'])[0]['capture_interrupted'])
+    def test_po_backup_rejects_extreme_sample_rate_and_bounds_inspection(self):
+        raw=bytearray(self.audio.read_bytes());struct.pack_into('<I',raw,24,1000000000)
+        with self.assertRaises(ValueError): kits.import_po33_backup(self.root,'extreme.wav',bytes(raw))
+        extreme=self.root/'extreme.wav';extreme.write_bytes(raw)
+        original=wave.Wave_read.readframes;requested=[]
+        def read(wav,frames):
+            requested.append(frames);return original(wav,frames)
+        with patch.object(wave.Wave_read,'readframes',read): info=kits.inspect_po33_backup(extreme)
+        self.assertLessEqual(max(requested),192000);self.assertFalse(info['audio_compatible'])
+    def test_po_backup_publication_failure_is_retryable_and_concurrent_imports_match(self):
+        from concurrent.futures import ThreadPoolExecutor
+        folder=self.root/'BeatOS/data/po33_backups';raw=self.audio.read_bytes()
+        with patch.object(kits.os,'replace',side_effect=OSError('disk error')):
+            with self.assertRaises(OSError): kits.import_po33_backup(self.root,'take.wav',raw)
+        self.assertEqual(list(folder.iterdir()),[])
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            first,second=list(executor.map(lambda _:kits.import_po33_backup(self.root,'take.wav',raw),range(2)))
+        self.assertEqual(first['path'],second['path']);self.assertEqual(Path(first['path']).read_bytes(),raw)
+        self.assertEqual(len(list(folder.iterdir())),1)
+    def test_po_inventory_reuses_unchanged_inspection_and_invalidates_modified_files(self):
+        cache={}
+        with patch.object(kits,'inspect_po33_backup',wraps=kits.inspect_po33_backup) as inspect:
+            first=kits.scan_po33_backups([self.root],cache)
+            kits.scan_po33_backups([self.root],cache);self.assertEqual(inspect.call_count,1)
+            raw=bytearray(self.audio.read_bytes());raw[-2:]=b'\x00\x00';self.audio.write_bytes(raw)
+            second=kits.scan_po33_backups([self.root],cache);self.assertEqual(inspect.call_count,2)
+        self.assertNotEqual(first[0]['sha256'],second[0]['sha256'])
     def test_po_backup_preserves_mono_but_does_not_offer_stereo_restore(self):
         path=self.root/'mono.wav'
         with wave.open(str(path),'wb') as wav:

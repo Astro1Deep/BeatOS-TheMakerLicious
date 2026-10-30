@@ -59,6 +59,7 @@ class ServerSecurityTests(unittest.TestCase):
             for headers in ({'Origin': 'https://untrusted.example'}, {'Host': 'untrusted.example'}):
                 self.assertEqual(self.request(url + '/inside.txt', headers=headers)[0], 403)
             self.assertEqual(self.request(url + '/inside.txt', headers={'Origin': url})[0], 200)
+            self.assertEqual(self.request(url + '/api/po33_backups', headers={'Sec-Fetch-Site':'cross-site'})[0],403)
 
     def test_rejects_oversized_or_negative_request_lengths(self):
         with self.server() as (url, _):

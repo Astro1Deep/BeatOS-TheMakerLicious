@@ -56,6 +56,8 @@ mimetypes.add_type("application/json", ".json")
 
 # Estado global de tareas en segundo plano
 TASK_LOCK = threading.Lock()
+PO_BACKUP_LOCK = threading.Lock()
+PO_BACKUP_CACHE = {}
 TASK_STATE = {
     "running": False,
     "task_name": "",
@@ -267,7 +269,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             valid_origin = not origin or (parsed_origin.scheme == 'http' and parsed_origin.netloc == host)
         except ValueError:
             valid_host = valid_origin = False
-        if not valid_host or not valid_origin:
+        if not valid_host or not valid_origin or self.headers.get('Sec-Fetch-Site') == 'cross-site':
             self.send_error(403, 'Use la interfaz local de BeatOS')
             return False
         return True
@@ -329,7 +331,8 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             kit_mod = get_hardware_kit_builder(self.server.root_dir)
             if kit_mod and hasattr(kit_mod, "scan_po33_backups"):
                 try:
-                    backups = kit_mod.scan_po33_backups(kit_mod.po33_backup_dirs(self.server.root_dir))
+                    with PO_BACKUP_LOCK:
+                        backups = kit_mod.scan_po33_backups(kit_mod.po33_backup_dirs(self.server.root_dir), cache=PO_BACKUP_CACHE)
                     self.wfile.write(json.dumps({"success": True, "backups": backups}, ensure_ascii=False).encode("utf-8"))
                 except Exception as e:
                     self.wfile.write(json.dumps({"success": False, "error": str(e), "backups": []}).encode("utf-8"))
@@ -356,14 +359,15 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": "Audio de backup no encontrado."}).encode("utf-8"))
                 return
             try:
-                data = target_path.read_bytes()
+                size = target_path.stat().st_size
                 self.send_response(200)
                 self.send_header("Content-Type", "audio/wav")
-                self.send_header("Content-Length", str(len(data)))
+                self.send_header("Content-Length", str(size))
                 self.send_header("Content-Disposition", "inline; filename*=UTF-8''" + urllib.parse.quote(target_path.name, safe=''))
                 self.send_cors_headers()
                 self.end_headers()
-                self.wfile.write(data)
+                with target_path.open('rb') as source:
+                    shutil.copyfileobj(source, self.wfile, length=64 * 1024)
             except Exception:
                 self.send_response(500)
                 self.end_headers()
@@ -429,7 +433,8 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 if len(data) != length:
                     raise ValueError('Transferencia incompleta')
                 kit_mod = get_hardware_kit_builder(self.server.root_dir)
-                result = kit_mod.import_po33_backup(self.server.root_dir, filename, data)
+                with PO_BACKUP_LOCK:
+                    result = kit_mod.import_po33_backup(self.server.root_dir, filename, data)
                 response, code = {'success': True, 'backup': result}, 200
             except (ValueError, EOFError) as error:
                 response, code = {'success': False, 'error': str(error)}, 400

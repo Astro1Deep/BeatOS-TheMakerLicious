@@ -33,6 +33,8 @@ import shutil
 import struct
 import subprocess
 import sys
+import tempfile
+import threading
 import time
 import wave
 import zipfile
@@ -44,11 +46,13 @@ logger = logging.getLogger(__name__)
 
 # Directorio por defecto de backups de Pocket Operator
 DEFAULT_PO_DIR = Path.home() / "Documents" / "PO- POCKET OPERATORS"
+PO_IMPORT_LOCK = threading.Lock()
 
 
 def po33_backup_dirs(root: str | Path) -> list[Path]:
     return [Path(root) / 'BeatOS/data/po33_backups', DEFAULT_PO_DIR,
-            Path(root) / 'PO_BACKUPS', Path.home() / 'Music/Pocket_Operator_Backups']
+            Path(root) / 'PO_BACKUPS', Path('/Volumes/MPCSMPL/PO_BACKUPS'),
+            Path.home() / 'Music/Pocket_Operator_Backups']
 
 
 def import_po33_backup(root: str | Path, filename: str, data: bytes) -> dict:
@@ -57,6 +61,8 @@ def import_po33_backup(root: str | Path, filename: str, data: bytes) -> dict:
         raise ValueError('Selecciona un WAV PCM de hasta 128 MiB')
     try:
         with wave.open(io.BytesIO(data), 'rb') as wav:
+            if not 8000 <= wav.getframerate() <= 384000 or not 1 <= wav.getnchannels() <= 8:
+                raise ValueError('Parámetros WAV no admitidos: usa PCM entre 8 y 384 kHz y de 1 a 8 canales')
             expected = wav.getnframes() * wav.getnchannels() * wav.getsampwidth()
             actual = 0
             while chunk := wav.readframes(65536):
@@ -75,18 +81,26 @@ def import_po33_backup(root: str | Path, filename: str, data: bytes) -> dict:
         raise ValueError('Carpeta de respaldos fuera de la biblioteca')
     folder.mkdir(parents=True, exist_ok=True)
     target = folder / f'{name}_{digest}.wav'
-    try:
-        output = target.open('xb')
-    except FileExistsError:
-        if target.is_symlink() or hashlib.sha256(target.read_bytes()).hexdigest() != digest:
-            raise ValueError('Existe otro archivo en el destino; no se ha sustituido')
-    else:
-        try:
-            with output:
-                output.write(data)
-        except BaseException:
-            target.unlink(missing_ok=True)
-            raise
+    with PO_IMPORT_LOCK:
+        if target.exists() or target.is_symlink():
+            if target.is_symlink():
+                raise ValueError('Existe un enlace en el destino; no se ha sustituido')
+            with target.open('rb') as existing:
+                existing_digest = hashlib.file_digest(existing, 'sha256').hexdigest()
+            if existing_digest != digest:
+                raise ValueError('Existe otro archivo en el destino; no se ha sustituido')
+        else:
+            temporary = None
+            try:
+                with tempfile.NamedTemporaryFile(dir=folder, prefix='.po33-upload-', suffix='.tmp', delete=False) as output:
+                    temporary = Path(output.name)
+                    output.write(data)
+                    output.flush()
+                    os.fsync(output.fileno())
+                os.replace(temporary, target)
+            finally:
+                if temporary is not None:
+                    temporary.unlink(missing_ok=True)
     return inspect_po33_backup(target)
 
 # ==============================================================================
@@ -1343,6 +1357,8 @@ def inspect_po33_backup(wav_path: str | Path) -> dict:
         return {"valid": False, "error": f"Archivo no encontrado: {wav_path}"}
 
     try:
+        if p.stat().st_size > 128 * 1024 * 1024:
+            return {'valid': False, 'error': 'El límite de inspección es 128 MiB; el original sigue disponible para descargar'}
         with wave.open(str(p), "rb") as wf:
             n_ch = wf.getnchannels()
             sw = wf.getsampwidth()
@@ -1351,13 +1367,12 @@ def inspect_po33_backup(wav_path: str | Path) -> dict:
             duration = n_frames / fr
 
             # Leer una porción representativa para análisis de amplitud y señal
-            sample_frames_to_read = min(n_frames, fr * 4)  # primeros 4 segundos
+            sample_frames_to_read = min(n_frames, fr * 4, 48000 * 4) if n_ch == 2 and sw == 2 else 0
             raw_sample = wf.readframes(sample_frames_to_read)
-
-            actual_bytes = len(raw_sample)
-            while chunk := wf.readframes(65536):
-                actual_bytes += len(chunk)
-        complete = n_frames > 0 and actual_bytes == n_frames * n_ch * sw
+            complete = False
+            if n_frames:
+                wf.setpos(n_frames - 1)
+                complete = len(wf.readframes(1)) == n_ch * sw and not wf.readframes(1)
         is_stereo = n_ch == 2
         is_16bit = sw == 2
         audio_compatible = complete and is_stereo and is_16bit and fr in (44100, 48000)
@@ -1399,7 +1414,7 @@ def inspect_po33_backup(wav_path: str | Path) -> dict:
             "capture_interrupted": '_INCOMPLETO_' in p.name.upper(),
             "sha256": digest,
             "payload_verified": False,
-            "inspection_scope": "Estructura WAV completa y amplitud de los primeros 4s; no verifica datos del módem",
+            "inspection_scope": "Estructura WAV y amplitud inicial (hasta 4s y 192000 frames); no verifica datos del módem",
             "filename": p.name,
             "path": str(p),
             "size_mb": round(p.stat().st_size / (1024 * 1024), 2),
@@ -1417,18 +1432,20 @@ def inspect_po33_backup(wav_path: str | Path) -> dict:
         return {"valid": False, "error": str(e)}
 
 
-def scan_po33_backups(search_dirs: Optional[list[str | Path]] = None) -> list[dict]:
+def scan_po33_backups(search_dirs: Optional[list[str | Path]] = None, cache: Optional[dict] = None) -> list[dict]:
     """
     Escanea directorios en busca de backups PO-33 y devuelve el catálogo ordenado.
     """
     if search_dirs is None:
         search_dirs = [
             DEFAULT_PO_DIR,
+            Path('/Volumes/MPCSMPL/PO_BACKUPS'),
             Path.home() / "Music" / "Pocket_Operator_Backups",
         ]
 
     results = []
     seen_paths = set()
+    cache = {} if cache is None else cache
 
     for d in search_dirs:
         p_dir = Path(d)
@@ -1441,11 +1458,20 @@ def scan_po33_backups(search_dirs: Optional[list[str | Path]] = None) -> list[di
             if not wav.is_relative_to(p_dir.resolve()) or wav in seen_paths:
                 continue
             seen_paths.add(wav)
-            info = inspect_po33_backup(wav)
+            stat = wav.stat()
+            signature = (stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+            previous = cache.get(wav)
+            if previous and previous[0] == signature:
+                info = dict(previous[1])
+            else:
+                info = inspect_po33_backup(wav)
+                cache[wav] = (signature, dict(info))
             info["filename"] = wav.name
             info["path"] = str(wav.resolve())
             results.append(info)
 
+    for stale in cache.keys() - seen_paths:
+        del cache[stale]
     return sorted(results, key=lambda x: x.get("filename", ""))
 
 

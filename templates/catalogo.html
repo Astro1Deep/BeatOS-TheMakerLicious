@@ -2395,8 +2395,8 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
         </div>
 
         <div class="card-actions">
-          <label>Memoria disponible para el reel (s) <input id="poBudget" type="number" min="1" max="40" step="0.1" value="40"></label>
-          <label>Pausa entre golpes (ms) <input id="poGap" type="number" min="0" max="500" step="10" value="150"></label>
+          <label>Memoria disponible para el reel (s) <input id="poBudget" type="number" min="1" max="40" step="0.1" value="40" oninput="updatePo33StudioView()"></label>
+          <label>Pausa entre golpes (ms) <input id="poGap" type="number" min="0" max="500" step="10" value="150" oninput="updatePo33StudioView()"></label>
           <p>Introduce el tiempo libre que muestra tu PO. El exportador recorta si hace falta; no borra muestras del dispositivo. Los mutes y el paneo del rack no se transfieren al PO.</p>
         </div>
         <!-- VISUALIZADOR DE REPRODUCCIÓN / CUENTA ATRÁS -->
@@ -2450,6 +2450,7 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
           <button type="button" id="po33RecordStop" class="po33-btn-secondary" onclick="stopPo33Recording()" disabled>⏹ Finalizar y guardar</button>
         </div>
         <p id="po33BackupStatus" role="status" aria-live="polite" style="font-size:12px; margin-top:10px; overflow-wrap:anywhere;">Los WAV se guardan en BeatOS/data/po33_backups/. No se sobrescriben grabaciones anteriores.</p>
+        <div id="po33RecoveryDownloads" style="display:flex; flex-direction:column; gap:8px; overflow-wrap:anywhere;"></div>
         <p style="font-size:12px; color:var(--text-muted);">Para grabar: PO LINE OUT → entrada de línea estéreo. Inicia la grabación, pulsa WRITE + SOUND + PLAY en el PO y espera a que termine el envío antes de finalizar. Se captura WAV PCM estéreo, sin compresión ni monitorización; se solicitan desactivados eco, reducción de ruido y ganancia automática. Máximo 10 minutos. Conserva la copia descargada.</p>
 
         <div style="margin-top:16px;">
@@ -5212,9 +5213,8 @@ function testPlayCurrentPad() {
 
 function getPadDurationSec(p) {
   if (!p) return 0;
-  if (typeof p.durationSec === 'number' && p.durationSec > 0) return p.durationSec;
-  if (typeof p.duration === 'number' && p.duration > 0) return p.duration;
-  return 0;
+  const duration = p.durationSec > 0 ? p.durationSec : p.duration > 0 ? p.duration : 0;
+  return duration / Math.pow(2, (Number(p.tune) || 0) / 12);
 }
 
 function updatePo33StudioView() {
@@ -5239,23 +5239,28 @@ function updatePo33StudioView() {
   }
 
   const activeCount = activePadsList.length;
+  const totalCap = Number(document.getElementById('poBudget').value);
+  const gapMs = Number(document.getElementById('poGap').value);
+  if (!Number.isFinite(totalCap) || totalCap < 1 || totalCap > 40 || !Number.isInteger(gapMs) || gapMs < 0 || gapMs > 500 || activeCount * gapMs / 1000 >= totalCap) {
+    budgetText.textContent = 'Revisa presupuesto (1–40 s) y pausas (0–500 ms): debe quedar tiempo para el audio.';
+    budgetBar.style.width = '0%'; freeTimeText.textContent = 'Presupuesto no válido'; tableBody.textContent = ''; return;
+  }
   if (activePadsList.some(p => !p.dur)) {
-    tableBody.innerHTML = activePadsList.map(p => `<tr><td>Pad ${p.padNum}</td><td>${escapeHtml(p.item.filename)}</td><td>${escapeHtml(p.item.soundType || 'SAMPLE')}</td><td>150 ms</td><td>Se calcula al exportar</td></tr>`).join('');
+    tableBody.innerHTML = activePadsList.map(p => `<tr><td>Pad ${p.padNum}</td><td>${escapeHtml(p.item.filename)}</td><td>${escapeHtml(p.item.soundType || 'SAMPLE')}</td><td>${gapMs} ms</td><td>Se calcula al exportar</td></tr>`).join('');
     countBadge.textContent = activeCount; budgetBar.style.width = '0%';
-    budgetText.textContent = 'Duración pendiente de decodificar; el exportador comprueba el límite de 40s.';
+    budgetText.textContent = `Duración pendiente de decodificar; presupuesto elegido ${totalCap}s y pausas ${gapMs} ms. El exportador comprueba el límite.`;
     freeTimeText.textContent = 'No consultada en el dispositivo'; return;
   }
-  const gapPerPad = 0.15;
+  const gapPerPad = gapMs / 1000;
   const totalGapSec = activeCount * gapPerPad;
   const rawTotalSec = totalRawSoundSec + totalGapSec;
-  const totalCap = 40.0;
-  const maxAvailableSoundSec = Math.max(0.5, totalCap - totalGapSec);
+  const maxAvailableSoundSec = totalCap - totalGapSec;
   const exceedsCapacity = rawTotalSec > totalCap;
 
   // Algoritmo Water-Filling idéntico a hardware_kit_builder.py
   let capSec = 999.0;
   if (exceedsCapacity && activePadsList.length > 0) {
-    let low = 0.05;
+    let low = 0;
     let high = Math.max(...activePadsList.map(x => x.dur));
     for (let it = 0; it < 35; it++) {
       let mid = (low + high) / 2.0;
@@ -5282,7 +5287,7 @@ function updatePo33StudioView() {
       '<td><strong style="color:var(--mpc-cyan);">Pad ' + obj.padNum + '</strong></td>' +
       '<td>' + escapeHtml(obj.item.filename) + '</td>' +
       '<td><span class="badge" style="font-size:10px;">' + (obj.item.soundType || 'SAMPLE') + '</span></td>' +
-      '<td>150 ms</td>' +
+      '<td>' + gapMs + ' ms</td>' +
       '<td>' + durLabel + '</td>' +
     '</tr>';
   });
@@ -5302,7 +5307,7 @@ function updatePo33StudioView() {
   if (exceedsCapacity) {
     budgetBar.style.background = 'var(--mpc-gold)';
     if (budgetText) {
-      budgetText.innerHTML = `<span style="color:var(--mpc-gold); font-weight:800;">${displayTotalSec.toFixed(2)}s / ${totalCap.toFixed(2)}s (${pct.toFixed(0)}% RAM)</span> <span style="font-size:11px; color:var(--text-muted);">[Audio original ${rawTotalSec.toFixed(2)}s ajustado con Smart Trim para caber en 40s]</span>`;
+      budgetText.innerHTML = `<span style="color:var(--mpc-gold); font-weight:800;">${displayTotalSec.toFixed(2)}s / ${totalCap.toFixed(2)}s (${pct.toFixed(0)}% del presupuesto)</span> <span style="font-size:11px; color:var(--text-muted);">[Estimación con Smart Trim; se confirma al exportar]</span>`;
     }
     if (freeTimeText) {
       freeTimeText.innerHTML = `<strong style="color:var(--mpc-gold);">${(totalCap - displayTotalSec).toFixed(2)}s libre</strong>`;
@@ -5321,6 +5326,8 @@ function updatePo33StudioView() {
 
 // PO-33 backup capture and archive: independent of the musical rack audio graph.
 let po33Recorder = null;
+let po33PendingArchives = 0;
+const po33UnsavedCaptures = new Set();
 function setPo33BackupStatus(message) {
   document.getElementById('po33BackupStatus').textContent = message;
 }
@@ -5335,13 +5342,17 @@ function po33PcmWav(chunks, sampleRate) {
   return new Blob([header, ...chunks], {type:'audio/wav'});
 }
 async function archivePo33Backup(blob, name) {
-  const response = await fetch(getApiBaseUrl() + '/api/po33_backups?name=' + encodeURIComponent(name), {
-    method:'POST', headers:{'Content-Type':'audio/wav'}, body:blob
-  });
-  const result = await response.json();
-  if (!response.ok || !result.success) throw new Error(result.error || 'No se pudo archivar el WAV');
-  setPo33BackupStatus('WAV guardado sin modificar. SHA-256: ' + result.backup.sha256 + '. Datos del módem no verificados.');
-  await loadPo33BackupsList();
+  po33PendingArchives++;
+  try {
+    const response = await fetch(getApiBaseUrl() + '/api/po33_backups?name=' + encodeURIComponent(name), {
+      method:'POST', headers:{'Content-Type':'audio/wav'}, body:blob
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) throw new Error(result.error || 'No se pudo archivar el WAV');
+    setPo33BackupStatus('WAV guardado sin modificar. SHA-256: ' + result.backup.sha256 + '. Datos del módem no verificados.');
+    await loadPo33BackupsList();
+    return result.backup;
+  } finally { po33PendingArchives--; }
 }
 async function importPo33BackupFile(input) {
   const file = input.files[0];
@@ -5388,13 +5399,17 @@ async function finishPo33Recording(recording) {
   const name = (document.getElementById('po33RecordingName').value.trim() || 'PO33_Backup') + (recording.interrupted ? '_INCOMPLETO_' : '_') + new Date().toISOString().replace(/[:.]/g, '-') + '.wav';
   // Keep a local recovery copy even if the SD is unplugged before the upload.
   const url = URL.createObjectURL(wav), link = document.createElement('a');
-  link.href = url; link.download = name; link.click(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+  po33UnsavedCaptures.add(url);
+  link.href = url; link.download = name; link.textContent = 'Descargar grabación: ' + name; link.className = 'po33-btn-secondary';
+  document.getElementById('po33RecoveryDownloads').append(link); link.click();
   setPo33BackupStatus('Grabación finalizada. Guardando el WAV; conserva también la descarga…');
   try {
-    await archivePo33Backup(wav, name);
+    const backup = await archivePo33Backup(wav, name);
+    link.href = getApiBaseUrl() + '/api/po33_backup_audio?file=' + encodeURIComponent(backup.path);
+    po33UnsavedCaptures.delete(url); URL.revokeObjectURL(url);
     if (recording.interrupted) setPo33BackupStatus('La captura se interrumpió. Se ha conservado el WAV parcial como INCOMPLETO; no lo uses para restaurar sin revisar y repetir la grabación.');
   }
-  catch(error) { setPo33BackupStatus('No se archivó en BeatOS: ' + error.message + '. Conserva el WAV descargado e impórtalo después.'); }
+  catch(error) { setPo33BackupStatus('No se archivó en BeatOS: ' + error.message + '. Usa el enlace de descarga de la grabación que permanece arriba. No cierres esta página antes de guardarla.'); }
   finally { document.getElementById('po33RecordStart').disabled = !!po33Recorder; }
 }
 function stopPo33Recording() {
@@ -5460,16 +5475,19 @@ function preparePo33Restore(backup) {
   setPo33BackupStatus('Reproducción preparada, todavía detenida. Conecta LINE IN y activa recepción en el PO antes de pulsar reproducir.');
 }
 window.addEventListener('beforeunload', event => {
-  if (po33Recorder) { event.preventDefault(); event.returnValue = ''; }
+  if (po33Recorder || po33PendingArchives || po33UnsavedCaptures.size) { event.preventDefault(); event.returnValue = ''; }
 });
 
 // Carga de inventario de backups desde la API local
+let po33BackupScan = 0;
 async function loadPo33BackupsList() {
+  const scan = ++po33BackupScan;
   const container = document.getElementById('po33BackupsList');
   container.textContent = 'Buscando archivos de respaldo…';
   try {
     const response = await fetch(getApiBaseUrl() + '/api/po33_backups');
     const data = await response.json();
+    if (scan !== po33BackupScan) return;
     if (!response.ok || !data.success) throw new Error(data.error || 'Servidor no disponible');
     po33BackupsCache = data.backups;
     container.replaceChildren();
@@ -5485,7 +5503,7 @@ async function loadPo33BackupsList() {
       const restore = document.createElement('button'); restore.type = 'button'; restore.className = 'po33-btn-secondary'; restore.textContent = backup.capture_interrupted ? 'Captura interrumpida: repetir' : 'Preparar restauración'; restore.disabled = !backup.audio_compatible || backup.capture_interrupted; restore.onclick = () => preparePo33Restore(backup);
       card.append(title, info, hash, link, restore); container.append(card);
     }
-  } catch (error) { container.textContent = 'No se pudo consultar: ' + error.message + '. Inicia el servidor local de BeatOS.'; }
+  } catch (error) { if (scan === po33BackupScan) container.textContent = 'No se pudo consultar: ' + error.message + '. Inicia el servidor local de BeatOS.'; }
 }
 
 let poReelBusy = false;
