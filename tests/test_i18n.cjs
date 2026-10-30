@@ -74,4 +74,8 @@ vm.runInContext('let currentLang="es";\n'+setterSource+';\nthis.switchLang=setLa
 assert.doesNotThrow(()=>setterCtx.switchLang('en'));
 assert.equal(fakeDoc.documentElement.lang,'en');
 
+// Regression: the visible gain slider must never produce an export-invalid gain.
+const gainSlider=html.match(/<input[^>]+id="padEditVol"[^>]+max="([0-9.]+)"/);
+assert.ok(gainSlider, 'pad volume slider exists');
+assert.ok(Number(gainSlider[1]) / 141.25 <= 1, 'maximum slider gain must not exceed the API limit');
 console.log('BeatOS ES/EN: reversible texts, tooltips and messages; sample paths unchanged OK');
