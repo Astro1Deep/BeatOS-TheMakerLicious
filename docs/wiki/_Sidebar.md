@@ -2,6 +2,10 @@
 *Edition: The MakerLicious*
 
 * **[🏠 Inicio / Home](Home.md)**
+* **[🇬🇧 English documentation](Home_EN.md)**
+* **[English full manual](../en/MANUAL_COMPLETO.md)**
+* **[English hardware guide](../en/COMPATIBILIDAD_HARDWARE.md)**
+* **[English technical reference](../en/REFERENCIA_TECNICA.md)**
 * **[Manual completo por módulos](../MANUAL_COMPLETO.md)**
 * **[Compatibilidad y carga por hardware](../COMPATIBILIDAD_HARDWARE.md)**
 * **[Referencia técnica y API](../REFERENCIA_TECNICA.md)**
@@ -21,5 +25,5 @@
 
 #### 🔗 Enlaces Rápidos
 * [Repositorio GitHub](https://github.com/Astro1Deep/mpc-sample-database)
-* [Reportar un Fallo / Issue](https://github.com/Astro1Deep/mpc-sample-database/issues)
+* [Reportar un Fallo / Issue](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/issues)
 * [Perfil de Astro1Deep](https://github.com/Astro1Deep)
