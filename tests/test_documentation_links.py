@@ -1,8 +1,4 @@
-"""Audit all local Markdown links in the bilingual BeatOS documentation.
-
-Also accepts nested parentheses in legacy chapter filenames; external links and
-GitHub heading fragments are not checked for availability in this test.
-"""
+"""Validate relative links in both language editions without following external URLs."""
 from pathlib import Path
 from urllib.parse import unquote
 import re
@@ -11,13 +7,13 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 
 def destinations(md):
-    text = re.sub(r"```[\\s\\S]*?```", "", md)
-    for m in re.finditer(r"\\]\\(", text):
-        i, depth, start = m.end(), 1, m.end()
+    text = re.sub(r"(?s)\x60{3}.*?\x60{3}", "", md)
+    for m in re.finditer(r"\]\(", text):
+        i, start, depth = m.end(), m.end(), 1
         while i < len(text) and depth:
-            if text[i] == "(" and (i == 0 or text[i-1] != "\\\\"):
+            if text[i] == "(" and (i == 0 or text[i-1] != "\\"):
                 depth += 1
-            elif text[i] == ")" and (i == 0 or text[i-1] != "\\\\"):
+            elif text[i] == ")" and (i == 0 or text[i-1] != "\\"):
                 depth -= 1
             i += 1
         if depth == 0:
@@ -25,23 +21,23 @@ def destinations(md):
 
 class DocumentationLinks(unittest.TestCase):
     def test_internal_file_links_resolve(self):
-        missing=[]
-        count=0
-        for file in sorted(ROOT.rglob("*.md")):
-            if ".git" in file.parts:
+        missing = []
+        total = 0
+        for document in sorted(ROOT.rglob("*.md")):
+            if ".git" in document.parts:
                 continue
-            for link in destinations(file.read_text(encoding="utf-8")):
-                if not link or link.startswith(("#", "http://", "https://", "mailto:", "data:")):
+            for href in destinations(document.read_text(encoding="utf-8")):
+                if not href or href.startswith(("#", "http://", "https://", "mailto:", "data:")):
                     continue
-                relative=unquote(link.split("#",1)[0].split("?",1)[0].strip("<>"))
-                if not relative or relative.startswith("plugin://"):
+                path = unquote(href.split("#", 1)[0].split("?", 1)[0].strip("<>"))
+                if not path or path.startswith("plugin://"):
                     continue
-                count += 1
-                target=(file.parent/relative).resolve()
+                total += 1
+                target = (document.parent / path).resolve()
                 if not target.is_relative_to(ROOT) or not target.is_file():
-                    missing.append(f"{file.relative_to(ROOT)} -> {relative}")
-        self.assertFalse(missing, "Broken local Markdown paths:\\n" + "\\n".join(missing))
-        self.assertGreater(count, 60, "Unexpectedly few local links audited")
+                    missing.append(f"{document.relative_to(ROOT)} -> {path}")
+        self.assertFalse(missing, "Broken local Markdown links:\n" + "\n".join(missing))
+        self.assertGreater(total, 60, "Link scan appears incomplete")
 
 if __name__ == "__main__":
     unittest.main()
