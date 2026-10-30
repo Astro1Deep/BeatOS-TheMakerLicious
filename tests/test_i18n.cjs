@@ -136,6 +136,9 @@ for (const [es,en] of dynamicStates) {
   assert.equal(vm.runInContext('beatosTranslateExact('+JSON.stringify(es)+')',ctx),en);
 }
 
+// Native warnings must never bypass the locale boundary.
+assert.doesNotMatch(html,/\\b(?:alert|confirm)\\s*\\(\\s*['"]/,'Native browser dialogs must use locale helpers');
+
 // Regression: visible labels in the delivered catalog need genuine EN equivalents.
 // These keys were previously omitted even though the main ES/EN switch existed.
 const missingVisibleTranslations = [
