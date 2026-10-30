@@ -35,6 +35,7 @@ EXACT_EN = {
     "Abre la herramienta oficial en un navegador con Web MIDI": "Open the official tool in a Web MIDI compatible browser.",
     "Script sync_master_dashboard.py no encontrado.": "Optional sync_master_dashboard.py script not found.",
     "🚀 Iniciando reindexación de MPC Sample Database...": "🚀 Starting MPC sample database reindex…",
+    "🎛️  AKAI MPC SAMPLE DATABASE & FINDER TOOLKIT": "🎛️  BEATOS — The MakerLicious — Sample library indexer",
     "❌ No se encontró el script de indexación.": "❌ The indexing script was not found.",
     "✔ Proceso finalizado correctamente.": "✔ Process completed successfully.",
     "❌ Error en el proceso de reindexación.": "❌ Reindexing failed.",
@@ -106,11 +107,14 @@ def get_request_language(headers):
 def translate_text(value, lang="es"):
     if lang != "en" or not isinstance(value, str):
         return value
-    if value in EXACT_EN:
-        return EXACT_EN[value]
+    # Preserve leading line breaks from console progress without losing translations.
+    indentation = value[:len(value) - len(value.lstrip("\\r\\n"))]
+    body = value[len(indentation):]
+    if body in EXACT_EN:
+        return indentation + EXACT_EN[body]
     for prefix, english in _SORTED_PREFIXES:
-        if value.startswith(prefix):
-            return english + value[len(prefix):]
+        if body.startswith(prefix):
+            return indentation + english + body[len(prefix):]
     return value
 
 
