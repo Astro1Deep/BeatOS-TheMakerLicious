@@ -3064,7 +3064,7 @@ function selectPadFromPopover(pNum) {
 // ==============================================================================
 // MOTOR BILINGÜE UNIVERSAL (ESPAÑOL / ENGLISH)
 // ==============================================================================
-let currentLang = localStorage.getItem('mpc_lang') || 'es';
+let currentLang = (() => { try { return localStorage.getItem('mpc_lang') || 'es'; } catch (error) { return 'es'; } })();
 
 const I18N = {
   es: {
@@ -3212,7 +3212,7 @@ function refreshBeatOsLocale() {
 
 function setLanguage(lang) {
   currentLang = (lang === 'en') ? 'en' : 'es';
-  localStorage.setItem('mpc_lang', currentLang);
+  try { localStorage.setItem('mpc_lang', currentLang); } catch (error) { /* Incognito or restricted storage: current session still works. */ }
   const t = I18N[currentLang];
 
   document.documentElement.lang = currentLang;
