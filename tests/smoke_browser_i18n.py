@@ -31,7 +31,11 @@ window.addEventListener('load', () => {
     ['🔄 Ejecutar Reindexación Completa','🔄 Reindex entire library'],
     ['🧹 Optimización para Hardware MPC & SP-404','🧹 MPC & SP-404 maintenance'],
     ['💾 Memoria & Capacidad','💾 Memory & capacity'],
-    ['Guardar Ajustes','Save settings']
+    ['Guardar Ajustes','Save settings'],
+    ['🔊 808s & Sub Bajos','🔊 808s & sub bass'],
+    ['📂 Explorar Kits','📂 Browse kits'],
+    ['🔀 Modo Mover','🔀 Move mode'],
+    ['(Banco A: Pads 1 al 16)','(Bank A: pads 1–16)']
   ];
   const findNode = phrase => {
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
