@@ -10,7 +10,7 @@
 
 El flujo central es **explorar tu biblioteca → montar y ajustar un kit → elegir destino → generar los archivos → cargarlos en el aparato o software correspondiente**. Puedes partir de samples sueltos sin tener una MPC. La inspección de proyectos XPJ y programas XPM es una función adicional para recuperar referencias y editar copias de kits del ecosistema Akai.
 
-Versión **3.8.0**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc-sample-database/releases) · [Guía de instalación](GUIA_INSTALACION.md) · [Identidad del creador](docs/IDENTIDAD_DEL_CREADOR.md)
+Versión **3.8.0**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc-sample-database/releases) · [Guía de instalación](GUIA_INSTALACION.md) · 
 
 ## Manual del sistema
 
