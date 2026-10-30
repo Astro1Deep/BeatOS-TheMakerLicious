@@ -8,7 +8,7 @@
 
 Biblioteca de samples, inspector de proyectos MPC y rack de 16 pads. Creado por **Astro1Deep** para explorar bibliotecas propias, preparar kits y revisar referencias antes de llevarlos al sampler.
 
-Versión **3.7.1**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc-sample-database/releases) · [Guía de instalación](GUIA_INSTALACION.md) · [Identidad del creador](docs/IDENTIDAD_DEL_CREADOR.md)
+Versión **3.8.0**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc-sample-database/releases) · [Guía de instalación](GUIA_INSTALACION.md) · [Identidad del creador](docs/IDENTIDAD_DEL_CREADOR.md)
 
 ![Banner de hardware de BeatOS](docs/assets/branding/user_blueprint_sheet_dark_4k.jpg)
 
@@ -16,7 +16,7 @@ Versión **3.7.1**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc
 
 Requiere **Python 3.11 o superior**. El catálogo y el servidor usan la biblioteca estándar. FFmpeg es opcional para convertir audio y necesario en determinados formatos, frecuencias y ajustes de afinación. El sistema se ejecuta en el ordenador; no instala firmware en el sampler.
 
-Descarga el archivo **BeatOS-3.7.1.zip** de [la versión estable](https://github.com/Astro1Deep/mpc-sample-database/releases/latest), junto a su archivo SHA-256. El ZIP adjunto a la versión es el instalador organizado; «Source code» descarga el repositorio de desarrollo, cuya estructura es distinta.
+Descarga el archivo **BeatOS-3.8.0.zip** de [la versión estable](https://github.com/Astro1Deep/mpc-sample-database/releases/latest), junto a su archivo SHA-256. El ZIP adjunto a la versión es el instalador organizado; «Source code» descarga el repositorio de desarrollo, cuya estructura es distinta.
 
 Descomprime en una carpeta nueva y abre una terminal en la carpeta que contiene `BeatOS/`:
 
@@ -72,7 +72,7 @@ Rack de 16 pads con volumen, paneo, afinación, intercambio de pads y grupos de 
 | PO-33 / PO-133 | Reel WAV, mapa y pausa ajustable de 0–500 ms dentro del presupuesto elegido de 1–40 s. La memoria libre real se comprueba en el dispositivo. |
 | EP-133 K.O. II | WAV, mapa JSON y ZIP de transporte para la herramienta oficial; no es un backup nativo. |
 
-La inspección de backups PO describe su cabecera/señal, sin certificar los datos internos. Los ajustes que no admite un destino deben aplicarse en el hardware. Las pruebas automáticas verifican estructura y audio sintético; la compatibilidad final depende del modelo y firmware.
+El Hub PO permite grabar WAV estéreo sin compresión, importar, archivar y descargar respaldos originales con SHA-256, y preparar su restauración con confirmación. Conserva sonidos y patrones mediante el volcado de audio del propio PO; no convierte proyectos MPC a proyectos nativos del PO. [Flujo y requisitos](docs/wiki/09-Pocket-Operator-PO-33-KO-Studio-y-FSK-Modem.md). La inspección no certifica los datos del módem. Los ajustes que no admite un destino deben aplicarse en el hardware. Las pruebas automáticas verifican estructura y audio sintético; la compatibilidad final depende del modelo y firmware.
 
 ## Seguridad y datos
 
