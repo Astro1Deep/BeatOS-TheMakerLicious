@@ -2,7 +2,7 @@
 
 [Manual completo: instalación y arranque](../MANUAL_COMPLETO.md#2-instalación-y-primer-arranque)
 
-Requiere Python 3.11 o superior. Descarga el ZIP adjunto en [Releases](https://github.com/Astro1Deep/mpc-sample-database/releases/latest) y su checksum. Descomprime en una carpeta nueva. La biblioteca inicial está vacía: no incluye samples comerciales, proyectos personales ni una base de datos del autor.
+Requiere Python 3.11 o superior. Descarga el ZIP adjunto en [Releases](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases/latest) y su checksum. Descomprime en una carpeta nueva. La biblioteca inicial está vacía: no incluye samples comerciales, proyectos personales ni una base de datos del autor.
 
 | Origen de la descarga | Menú de instalación | Inicio del servidor |
 | --- | --- | --- |
