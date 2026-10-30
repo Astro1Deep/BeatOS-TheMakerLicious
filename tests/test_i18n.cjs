@@ -77,6 +77,9 @@ for (const [spanish,english] of phrases) {
   const actual=vm.runInContext('beatosTranslateExact('+JSON.stringify(spanish)+')',ctx);
   assert.equal(actual,english,'Missing EN translation for: '+spanish);
 }
+
+const wrappedEpHelp = '\\n  Exporta los 16 pads activos de tu Beatmaker Rack directamente formateados para el EP-133 K.O. II:\\n  muestras individuales convertidas en  ';
+assert.match(vm.runInContext('beatosTranslateExact('+JSON.stringify(wrappedEpHelp)+')',ctx),/Export all 16 active pads/);
 assert.equal(ctx.locale.message('Restaurar en el PO-33 BORRA todos sus sonidos y patrones actuales. ¿Has conservado su backup y quieres preparar la reproducción?'), 'Restoring on the PO-33 ERASES all its current sounds and patterns. Have you backed up the device and do you want to prepare playback?');
 ctx.change('es');
 ctx.locale.refresh();
