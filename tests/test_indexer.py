@@ -12,6 +12,24 @@ from index_mpc_library import render_catalog
 
 
 class IndexerTests(unittest.TestCase):
+    def test_checked_in_blank_catalog_uses_latest_bilingual_template(self):
+        root = Path(__file__).resolve().parents[1]
+        template = (root / 'templates/catalogo.html').read_text(encoding='utf-8')
+        preview = (root / 'BeatOS/data/catalogo.html').read_text(encoding='utf-8')
+        self.assertEqual(preview, render_catalog(template, [], {}),
+                         'Checked-in preview must match current ES/EN engine')
+
+    def test_user_supplied_project_and_expansion_titles_are_not_translated(self):
+        root = Path(__file__).resolve().parents[1]
+        template = (root / 'templates/catalogo.html').read_text(encoding='utf-8')
+        result = render_catalog(template, [], {
+            'projects': [{'name': 'Nombre', 'rel_path': 'Projects/demo.xpj'}],
+            'expansions': [{'title': 'Archivo', 'path': 'Expansions/Archivo', 'mfg': 'Nombre'}]
+        })
+        self.assertIn('<h3 translate="no">Nombre</h3>', result)
+        self.assertIn('<h3 translate="no">Archivo</h3>', result)
+        self.assertIn('class="library-manufacturer" translate="no">Nombre</p>', result)
+
     def test_catalog_counts_and_cards_use_current_metadata(self):
         template = (Path(__file__).resolve().parents[1] / 'templates/catalogo.html').read_text()
         rendered = render_catalog(template, [], {'projects': [{'name': '<private & project>', 'rel_path':'Projects/session.xpj'}, {'name':'Kit', 'rel_path':'Samples/kit.xpj'}],
