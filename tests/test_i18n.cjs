@@ -106,6 +106,8 @@ const poStatusCtx=vm.createContext({document:{getElementById:()=>poStatusEl}});
 vm.runInContext('let currentLang="en";\n'+html.slice(start,end)+'\n'+html.slice(poStatusStart,poStatusEnd)+';this.report=setPo33BackupStatus;this.refresh=refreshPo33BackupStatus;this.lang=(value)=>{currentLang=value;};',poStatusCtx);
 poStatusCtx.report('La grabación está vacía; no se ha guardado.');
 assert.equal(poStatusEl.textContent,'The recording is empty; nothing was saved.');
+poStatusCtx.report('No se archivó en BeatOS: disk full. Usa el enlace de descarga de la grabación que permanece arriba. No cierres esta página antes de guardarla.');
+assert.equal(poStatusEl.textContent,'Could not archive in BeatOS: disk full. Use the recording download link above. Keep this page open until you save the file.');
 poStatusCtx.report('WAV guardado sin modificar. SHA-256: abc123. Datos del módem no verificados.');
 assert.equal(poStatusEl.textContent,'Original WAV saved unmodified. SHA-256: abc123. Modem data not verified.');
 poStatusCtx.report('Restaurar en el PO-33 BORRA todos sus sonidos y patrones actuales. ¿Has conservado su backup y quieres preparar la reproducción?');
