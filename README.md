@@ -10,20 +10,6 @@
 
 El flujo central es **explorar tu biblioteca → montar y ajustar un kit → elegir destino → generar los archivos → cargarlos en el aparato o software correspondiente**. Puedes partir de samples sueltos sin tener una MPC. La inspección de proyectos XPJ y programas XPM es una función adicional para recuperar referencias y editar copias de kits del ecosistema Akai.
 
-## English overview — BeatOS / The MakerLicious
-
-**BeatOS** is a local, Python-based **sample library browser and 16-pad beatmaking toolkit** for music producers, DJs and hardware sampler users. Browse and audition samples, assemble drum kits, inspect supported Akai MPC projects, and prepare destination-specific exports for **Akai MPC, Native Instruments Maschine, Roland SP-404MKII / SP-404A / SP-404SX, Teenage Engineering PO-33 / PO-133 and EP-133 K.O. II**.
-
-Export formats and supported parameters vary by destination; producing an export does **not** guarantee native project compatibility with every model or firmware. BeatOS runs on a computer and does not install sampler firmware. See [hardware compatibility](docs/COMPATIBILIDAD_HARDWARE.md), [technical reference](docs/REFERENCIA_TECNICA.md) and the [installation guide](GUIA_INSTALACION.md).
-
-**Related music software:** [DJProducerTools](https://github.com/Astro1Deep/DjProducerTool) — macOS DJ music-library organization, metadata workflows, audio-file auditing and duplicate analysis.
-
-Versión **3.8.0**. [Instaladores y versiones](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases) · [Guía de instalación](GUIA_INSTALACION.md) · 
-
-> **Release status / Estado de distribución:** Bilingual UI fixes and documentation on `main` may be newer than the existing stable ZIP. GitHub Actions publishes a **development-only** clean ZIP for the current commit; it is not a replacement for an officially tagged stable release. See the [bilingual QA audit and remaining validation gates](docs/AUDITORIA_INTEGRAL_BILINGUE_2026-10-30.md).
->
-> **Estado técnico:** la interfaz funciona en ES/EN en las pruebas automatizadas, pero todavía **no se certifica una localización del 100 % de los mensajes del backend** ni compatibilidad universal con todos los firmwares.
-
 ## Interface preview / Vista real de la interfaz
 
 This is the **actual BeatOS web interface** captured in headless Chrome with a synthetic demonstration library. It is not an AI concept image, and it does not contain real users' samples. / Captura **real** del catálogo HTML de BeatOS con datos de demostración, sin bibliotecas privadas ni hardware conectado.
@@ -51,6 +37,20 @@ This is the **actual BeatOS web interface** captured in headless Chrome with a s
 **Searchable topics / Etiquetas:** `sample-library` · `beatmaking` · `music-production` · `akai-mpc` · `maschine` · `sp-404` · `po-33` · `ep-133` · `drum-kits` · `sampling`. GitHub uses repository **Topics** for discovery; plain hashtags are better suited to social announcements.
 
 **Website & discoverability:** [SEO / indexation checklist](docs/SEO_DISCOVERY.md) · [Pages landing (English source)](docs/index.html) · [Presentación en español (source)](docs/index-es.html). **GitHub Pages must be enabled before claiming these URLs are public.**
+
+## English overview — BeatOS / The MakerLicious
+
+**BeatOS** is a local, Python-based **sample library browser and 16-pad beatmaking toolkit** for music producers, DJs and hardware sampler users. Browse and audition samples, assemble drum kits, inspect supported Akai MPC projects, and prepare destination-specific exports for **Akai MPC, Native Instruments Maschine, Roland SP-404MKII / SP-404A / SP-404SX, Teenage Engineering PO-33 / PO-133 and EP-133 K.O. II**.
+
+Export formats and supported parameters vary by destination; producing an export does **not** guarantee native project compatibility with every model or firmware. BeatOS runs on a computer and does not install sampler firmware. See [hardware compatibility](docs/COMPATIBILIDAD_HARDWARE.md), [technical reference](docs/REFERENCIA_TECNICA.md) and the [installation guide](GUIA_INSTALACION.md).
+
+**Related music software:** [DJProducerTools](https://github.com/Astro1Deep/DjProducerTool) — macOS DJ music-library organization, metadata workflows, audio-file auditing and duplicate analysis.
+
+Versión **3.8.0**. [Instaladores y versiones](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases) · [Guía de instalación](GUIA_INSTALACION.md) · 
+
+> **Release status / Estado de distribución:** Bilingual UI fixes and documentation on `main` may be newer than the existing stable ZIP. GitHub Actions publishes a **development-only** clean ZIP for the current commit; it is not a replacement for an officially tagged stable release. See the [bilingual QA audit and remaining validation gates](docs/AUDITORIA_INTEGRAL_BILINGUE_2026-10-30.md).
+>
+> **Estado técnico:** la interfaz funciona en ES/EN en las pruebas automatizadas, pero todavía **no se certifica una localización del 100 % de los mensajes del backend** ni compatibilidad universal con todos los firmwares.
 
 ## Documentation / Documentación (ES · EN)
 
