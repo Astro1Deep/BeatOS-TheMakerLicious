@@ -38,6 +38,21 @@ class APILanguageTests(unittest.TestCase):
         except urllib.error.HTTPError as err:
             return err.code, json.loads(err.read())
 
+    def test_dynamic_server_and_indexer_text_is_fully_english(self):
+        from beatos_i18n import translate_text
+        self.assertEqual(
+            translate_text("✔ Purgados 3 archivos ocultos de metadatos AppleDouble (._* y .DS_Store).", "en"),
+            "✔ Removed 3 AppleDouble/.DS_Store metadata files."
+        )
+        self.assertEqual(
+            translate_text("Puerto 8888 ocupado por otra biblioteca o servicio; esta biblioteca usa 8889.", "en"),
+            "Port 8888 is busy; this library uses port 8889."
+        )
+        self.assertEqual(
+            translate_text("\\n🎉 Indexación completada con éxito. Inicia BeatOS/ABRIR_BEATOS.command o el instalador de tu carpeta de código.", "en"),
+            "\\n🎉 Indexing completed successfully. Start BeatOS/ABRIR_BEATOS.command or the installer in your code folder."
+        )
+
     def test_english_cookie_localizes_api_error_without_modifying_original(self):
         with self.server() as url:
             status, payload = self.request(url + "/api/load_project", data=b"{}", headers={
