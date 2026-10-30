@@ -1,5 +1,7 @@
 # Compatibilidad y carga por hardware · BeatOS 3.8.0
 
+**Idioma:** Español · [English hardware guide](en/COMPATIBILIDAD_HARDWARE.md)
+
 Revisión: **30 de octubre de 2026**. [Manual completo](MANUAL_COMPLETO.md) · [Inicio](../README.md) · [Referencia técnica](REFERENCIA_TECNICA.md).
 
 ## Cómo interpretar la compatibilidad
