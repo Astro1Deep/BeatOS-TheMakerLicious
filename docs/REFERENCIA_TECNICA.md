@@ -124,7 +124,7 @@ En la web cada posición ocupada contiene ruta relativa, nombre, tipo, volumen, 
 | PO | Cortes consecutivos, con relación al pad en JSON. | Volumen/tono procesados en mono y normalización de conjunto; sin panorama/mutes. |
 | EP-133 | Slot, grupo y tecla propuestos en `meta.json`. | Valores en mapa; WAV sin procesar esos ajustes. |
 
-Las escalas numéricas del mapa no garantizan que el control del fabricante use la misma unidad visual. En el editor web, 100% de volumen equivale aproximadamente a 0,707946 y el máximo visual puede superar la ganancia 1 que acepta el servidor. No traduzcas `volume=0.7` automáticamente a «70 dB» ni a un porcentaje de pico del WAV.
+Las escalas numéricas del mapa no garantizan que el control del fabricante use la misma unidad visual. En el editor web, 100% de volumen equivale aproximadamente a 0,707946 y el máximo visual actual queda dentro de la ganancia 0–1 que acepta el servidor. No traduzcas `volume=0.7` automáticamente a «70 dB» ni a un porcentaje de pico del WAV.
 
 ## 5. Parsers y resolución de muestras
 
