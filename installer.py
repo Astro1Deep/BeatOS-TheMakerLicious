@@ -127,7 +127,9 @@ def main():
         print(locale_text("✔ Base de datos SQLite creada con éxito en: {db_path}").format(db_path=db_path))
         
     elif choice == "5":
-        wiki_url = "https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/wiki/Home.md"
+        wiki_url = ("https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/wiki/Home.md"
+                    if get_language() == "es" else
+                    "https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/wiki/Home_EN.md")
         print(locale_text("Abriendo Wiki: {wiki_url}").format(wiki_url=wiki_url))
         open_url_or_file(wiki_url)
         
