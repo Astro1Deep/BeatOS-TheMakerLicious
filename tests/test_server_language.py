@@ -63,6 +63,21 @@ class APILanguageTests(unittest.TestCase):
             })
             self.assertIn("Missing", en["error"])
 
+    def test_server_console_honors_english_environment(self):
+        import contextlib
+        import io
+        import os
+        from unittest.mock import MagicMock, patch
+        with tempfile.TemporaryDirectory() as tmp:
+            fake = MagicMock()
+            fake.serve_forever.side_effect = KeyboardInterrupt()
+            output = io.StringIO()
+            with patch.dict(os.environ, {"BEATOS_LANG": "en"}), patch.object(serve_mpc, "HTTPServer", return_value=fake), patch("serve_mpc.find_available_port", return_value=8888), contextlib.redirect_stdout(output):
+                serve_mpc.run_server(tmp, port=8888, auto_open=False)
+            self.assertIn("Media library root", output.getvalue())
+            self.assertIn("Press Ctrl+C", output.getvalue())
+            self.assertNotIn("Raíz de Medios", output.getvalue())
+
     def test_task_logs_are_localized_per_request_not_mutated_globally(self):
         logs_before = list(serve_mpc.TASK_STATE["logs"])
         try:
