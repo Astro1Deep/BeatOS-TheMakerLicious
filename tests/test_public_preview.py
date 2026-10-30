@@ -38,7 +38,7 @@ class PublicPreviewChecks(unittest.TestCase):
             url=base+"/BeatOS/docs/assets/branding/user_blueprint_sheet_dark_4k.jpg"
             with urllib.request.urlopen(url,timeout=5) as response:
                 self.assertEqual(response.status,200)
-                self.assertEqual(response.read(3),b"\\xff\\xd8\\xff")
+                self.assertEqual(response.read(3),b"\xff\xd8\xff")
 
     def test_bilingual_pages_have_canonical_and_hreflang(self):
         for name in ("index.html","index-es.html"):
