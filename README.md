@@ -20,6 +20,10 @@ Export formats and supported parameters vary by destination; producing an export
 
 Versión **3.8.0**. [Instaladores y versiones](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases) · [Guía de instalación](GUIA_INSTALACION.md) · 
 
+> **Release status / Estado de distribución:** Bilingual UI fixes and documentation on `main` may be newer than the existing stable ZIP. GitHub Actions publishes a **development-only** clean ZIP for the current commit; it is not a replacement for an officially tagged stable release. See the [bilingual QA audit and remaining validation gates](docs/AUDITORIA_INTEGRAL_BILINGUE_2026-10-30.md).
+>
+> **Estado técnico:** la interfaz funciona en ES/EN en las pruebas automatizadas, pero todavía **no se certifica una localización del 100 % de los mensajes del backend** ni compatibilidad universal con todos los firmwares.
+
 ## Documentation / Documentación (ES · EN)
 
 | Topic / Tema | English | Español |
