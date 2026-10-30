@@ -42,6 +42,7 @@ import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer as HTTPServer
 from pathlib import Path
 from beatos_paths import CATALOG_REL, config_dir, database_path, default_library_root
+from beatos_i18n import get_request_language, localize_api_payload
 
 mimetypes.init()
 mimetypes.add_type("audio/wav", ".wav")
@@ -245,6 +246,11 @@ def resolve_library_path(root_dir: str, value: str) -> Path:
 class MPCAudioRequestHandler(BaseHTTPRequestHandler):
     server_version = "MPCAudioStreamer/3.8.0"
 
+    def _api_json_dumps(self, payload, **kwargs):
+        """Localize user-facing API messages by this request's ES/EN preference."""
+        localized = localize_api_payload(payload, get_request_language(self.headers))
+        return json.dumps(localized, **kwargs)
+
     def send_cors_headers(self):
         origin = self.headers.get('Origin')
         if origin and urllib.parse.urlsplit(origin).netloc == self.headers.get('Host'):
@@ -295,7 +301,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_cors_headers()
             self.end_headers()
             data = get_system_status(self.server.root_dir)
-            self.wfile.write(json.dumps(data, ensure_ascii=False).encode("utf-8"))
+            self.wfile.write(self._api_json_dumps(data, ensure_ascii=False).encode("utf-8"))
             return
 
         elif clean_path == "/api/task_status":
@@ -303,7 +309,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_cors_headers()
             self.end_headers()
-            self.wfile.write(json.dumps(TASK_STATE, ensure_ascii=False).encode("utf-8"))
+            self.wfile.write(self._api_json_dumps(TASK_STATE, ensure_ascii=False).encode("utf-8"))
             return
 
         elif clean_path == "/api/theme":
@@ -320,7 +326,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                         current_theme = data.get("theme", "te-arcade")
                 except Exception:
                     pass
-            self.wfile.write(json.dumps({"success": True, "theme": current_theme}, ensure_ascii=False).encode("utf-8"))
+            self.wfile.write(self._api_json_dumps({"success": True, "theme": current_theme}, ensure_ascii=False).encode("utf-8"))
             return
 
         elif clean_path == "/api/po33_backups":
@@ -333,11 +339,11 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 try:
                     with PO_BACKUP_LOCK:
                         backups = kit_mod.scan_po33_backups(kit_mod.po33_backup_dirs(self.server.root_dir), cache=PO_BACKUP_CACHE)
-                    self.wfile.write(json.dumps({"success": True, "backups": backups}, ensure_ascii=False).encode("utf-8"))
+                    self.wfile.write(self._api_json_dumps({"success": True, "backups": backups}, ensure_ascii=False).encode("utf-8"))
                 except Exception as e:
-                    self.wfile.write(json.dumps({"success": False, "error": str(e), "backups": []}).encode("utf-8"))
+                    self.wfile.write(self._api_json_dumps({"success": False, "error": str(e), "backups": []}).encode("utf-8"))
             else:
-                self.wfile.write(json.dumps({"success": False, "error": "Módulo hardware_kit_builder no disponible.", "backups": []}).encode("utf-8"))
+                self.wfile.write(self._api_json_dumps({"success": False, "error": "Módulo hardware_kit_builder no disponible.", "backups": []}).encode("utf-8"))
             return
 
         elif clean_path == "/api/po33_backup_audio":
@@ -356,7 +362,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.send_cors_headers()
                 self.end_headers()
-                self.wfile.write(json.dumps({"error": "Audio de backup no encontrado."}).encode("utf-8"))
+                self.wfile.write(self._api_json_dumps({"error": "Audio de backup no encontrado."}).encode("utf-8"))
                 return
             try:
                 size = target_path.stat().st_size
@@ -386,7 +392,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.send_cors_headers()
                 self.end_headers()
-                self.wfile.write(json.dumps({"error": "Archivo no encontrado."}).encode("utf-8"))
+                self.wfile.write(self._api_json_dumps({"error": "Archivo no encontrado."}).encode("utf-8"))
                 return
             try:
                 data = target_path.read_bytes()
@@ -444,7 +450,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.send_cors_headers()
             self.end_headers()
-            self.wfile.write(json.dumps(response, ensure_ascii=False).encode('utf-8'))
+            self.wfile.write(self._api_json_dumps(response, ensure_ascii=False).encode('utf-8'))
             return
 
         elif clean_api == "/api/create_kit":
@@ -476,14 +482,14 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.send_cors_headers()
                 self.end_headers()
-                self.wfile.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
+                self.wfile.write(self._api_json_dumps(result, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.send_cors_headers()
                 self.end_headers()
                 err_resp = {"success": False, "error": str(e)}
-                self.wfile.write(json.dumps(err_resp).encode("utf-8"))
+                self.wfile.write(self._api_json_dumps(err_resp).encode("utf-8"))
             return
 
         elif clean_api == "/api/reveal_in_finder":
@@ -513,7 +519,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_cors_headers()
             self.end_headers()
-            self.wfile.write(json.dumps(resp, ensure_ascii=False).encode("utf-8"))
+            self.wfile.write(self._api_json_dumps(resp, ensure_ascii=False).encode("utf-8"))
             return
 
         elif clean_api == "/api/launch_ep_tool":
@@ -534,7 +540,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_cors_headers()
             self.end_headers()
-            self.wfile.write(json.dumps(resp, ensure_ascii=False).encode("utf-8"))
+            self.wfile.write(self._api_json_dumps(resp, ensure_ascii=False).encode("utf-8"))
             return
 
         elif clean_api == "/api/reindex":
@@ -545,7 +551,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                     self.send_cors_headers()
                     self.end_headers()
                     self.wfile.write(
-                        json.dumps(
+                        self._api_json_dumps(
                             {
                                 "success": False,
                                 "message": "Ya hay una reindexación en ejecución en segundo plano.",
@@ -565,7 +571,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_cors_headers()
             self.end_headers()
             self.wfile.write(
-                json.dumps(
+                self._api_json_dumps(
                     {
                         "success": True,
                         "message": "🚀 Reindexación iniciada en segundo plano con éxito.",
@@ -582,7 +588,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_cors_headers()
             self.end_headers()
-            self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            self.wfile.write(self._api_json_dumps(res, ensure_ascii=False).encode("utf-8"))
             return
 
         elif clean_api == "/api/sync_dashboard":
@@ -591,7 +597,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_cors_headers()
             self.end_headers()
-            self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            self.wfile.write(self._api_json_dumps(res, ensure_ascii=False).encode("utf-8"))
             return
 
         elif clean_api == "/api/load_project":
@@ -620,7 +626,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_cors_headers()
             self.end_headers()
-            self.wfile.write(json.dumps(resp, ensure_ascii=False).encode("utf-8"))
+            self.wfile.write(self._api_json_dumps(resp, ensure_ascii=False).encode("utf-8"))
             return
 
         elif clean_api == "/api/list_expansion_programs":
@@ -646,7 +652,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_cors_headers()
             self.end_headers()
-            self.wfile.write(json.dumps(resp, ensure_ascii=False).encode("utf-8"))
+            self.wfile.write(self._api_json_dumps(resp, ensure_ascii=False).encode("utf-8"))
             return
 
         elif clean_api == "/api/load_xpm_program":
@@ -682,7 +688,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_cors_headers()
             self.end_headers()
-            self.wfile.write(json.dumps(resp, ensure_ascii=False).encode("utf-8"))
+            self.wfile.write(self._api_json_dumps(resp, ensure_ascii=False).encode("utf-8"))
             return
 
         elif clean_api == "/api/download_xpa":
@@ -727,7 +733,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.send_cors_headers()
                 self.end_headers()
                 err_resp = {"success": False, "error": str(e)}
-                self.wfile.write(json.dumps(err_resp).encode("utf-8"))
+                self.wfile.write(self._api_json_dumps(err_resp).encode("utf-8"))
             return
 
         elif clean_api == "/api/theme":
@@ -758,13 +764,13 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.send_cors_headers()
                 self.end_headers()
-                self.wfile.write(json.dumps({"success": True, "theme": theme_name}, ensure_ascii=False).encode("utf-8"))
+                self.wfile.write(self._api_json_dumps({"success": True, "theme": theme_name}, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.send_cors_headers()
                 self.end_headers()
-                self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode("utf-8"))
+                self.wfile.write(self._api_json_dumps({"success": False, "error": str(e)}).encode("utf-8"))
             return
 
         self.send_response(404)
