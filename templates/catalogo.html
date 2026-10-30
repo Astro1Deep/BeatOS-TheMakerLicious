@@ -4983,8 +4983,9 @@ function onExpansionBackdropClick(e) {
 function filterExpansionKits(term) {
   const clean = (term || '').toLowerCase().trim();
   const type = document.getElementById('expansionTypeFilter').value;
-  const list = currentExpansionPrograms.filter(k => (!type || k.program_type.toLowerCase() === type) &&
-    [k.name,k.sub_category,k.program_type].some(v => (v || '').toLowerCase().includes(clean)));
+  const list = currentExpansionPrograms.filter(k =>
+    (!type || String(k.program_type || '').toLowerCase() === type) &&
+    [k.name, k.sub_category, k.program_type].some(v => String(v || '').toLowerCase().includes(clean)));
   renderExpansionProgramsList(list);
 }
 
