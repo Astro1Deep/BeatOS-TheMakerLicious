@@ -32,6 +32,14 @@ class PublicPreviewChecks(unittest.TestCase):
         self.assertIn("switchTab('tab-rack'",rack)
         self.assertIn("localStorage.setItem('mpc_lang',",rack)
 
+    def test_installed_asset_path_resolves_to_repo_branding(self):
+        import urllib.request
+        with capture_ui_preview.preview_server() as base:
+            url=base+"/BeatOS/docs/assets/branding/user_blueprint_sheet_dark_4k.jpg"
+            with urllib.request.urlopen(url,timeout=5) as response:
+                self.assertEqual(response.status,200)
+                self.assertEqual(response.read(3),b"\\xff\\xd8\\xff")
+
     def test_bilingual_pages_have_canonical_and_hreflang(self):
         for name in ("index.html","index-es.html"):
             html=(ROOT/"docs"/name).read_text(encoding="utf-8")
