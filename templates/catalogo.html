@@ -3190,6 +3190,8 @@ function beatosTranslateTree(root) {
   while ((node = walker.nextNode())) {
     const el = node.parentElement;
     if (!el || ['SCRIPT','STYLE','CODE','PRE','TEXTAREA'].includes(el.tagName)) continue;
+    // Do not translate third-party names, library metadata or paths explicitly marked as user content.
+    if (typeof el.closest === 'function' && el.closest('[translate="no"],[data-no-i18n]')) continue;
     let old = beatosLocaleTextState.get(node);
     let source = old ? old.source : node.nodeValue;
     if (old && node.nodeValue !== old.last && node.nodeValue !== old.source) source = node.nodeValue;
