@@ -45,6 +45,27 @@ class ServerSecurityTests(unittest.TestCase):
             self.assertEqual(self.request(url + '/inside.txt'), (200, b'library file'))
             self.assertEqual(self.request(url + '/inside.txt', headers={'Range': 'bytes=0-2'}), (206, b'lib'))
 
+    def test_kit_download_streams_large_files_and_preserves_utf8_filename(self):
+        from unittest.mock import patch
+        from urllib.parse import quote
+        with self.server() as (url, parent):
+            folder = parent / 'library' / 'Custom_Kits'
+            folder.mkdir()
+            name = 'Percusión_Kit_á.zip'
+            file = folder / name
+            payload = b'BEATOS_KIT_' * 1024 * 128
+            file.write_bytes(payload)
+            # A download must stream rather than load an entire music pack into RAM.
+            with patch.object(Path, 'read_bytes', side_effect=AssertionError('eager read_bytes prohibited')):
+                req = urllib.request.Request(url + '/api/download_file?path=' + quote('Custom_Kits/' + name))
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    self.assertEqual(response.status, 200)
+                    self.assertEqual(int(response.headers['Content-Length']), len(payload))
+                    disposition = response.headers['Content-Disposition']
+                    self.assertIn("filename*=UTF-8''", disposition)
+                    self.assertIn(quote(name, safe=''), disposition)
+                    self.assertEqual(response.read(), payload)
+
     def test_rejects_traversal_symlinks_and_absolute_downloads(self):
         with self.server() as (url, parent):
             for path in ('/%2e%2e/outside.txt', '/escape.txt',
