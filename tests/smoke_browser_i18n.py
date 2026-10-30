@@ -33,7 +33,12 @@ window.addEventListener('load', () => {
     ['🔊 808s & Sub Bajos','🔊 808s & sub bass'],
     ['📂 Explorar Kits','📂 Browse kits'],
     ['🔀 Modo Mover','🔀 Move mode'],
-    ['(Banco A: Pads 1 al 16)','(Bank A: pads 1–16)']
+    ['(Banco A: Pads 1 al 16)','(Bank A: pads 1–16)'],
+    ['🎛️ Editar Pads en Rack','🎛️ Edit pads in rack'],
+    ['⚡ Generar Kit EP-133','⚡ Generate EP-133 kit'],
+    ['📁 Revelar en Finder','📁 Show in Finder'],
+    ['Tipo y formato: estimados por nombre y carpeta de instrumento. Tonalidad: etiqueta del archivo; «nota» no confirma mayor/menor. Camelot sólo con modo declarado. Energía: nivel RMS aproximado de tres ventanas PCM (baja < −24, media hasta −12, alta ≥ −12 dBFS); no mide intensidad musical. Sin evidencia se indica sin identificar o sin medir.',
+     'Type and format are estimated from filenames and instrument folders. The key label comes from the filename; a note alone does not establish major/minor mode. Camelot requires an explicit mode. Energy estimates RMS from three PCM windows (low < −24, medium to −12, high ≥ −12 dBFS); it does not measure perceived loudness. Missing evidence is shown as unidentified or unmeasured.']
   ];
   const findNode = phrase => {
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -79,7 +84,7 @@ def local_site(html):
         catalog.parent.mkdir(parents=True)
         if "</body>" not in html:
             raise RuntimeError("Catalog missing body")
-        catalog.write_text(html.replace("</body>", PROBE + "\\n</body>", 1), encoding="utf-8")
+        catalog.write_text(html.replace("</body>", PROBE + "\n</body>", 1), encoding="utf-8")
         server = serve_mpc.HTTPServer(("127.0.0.1", 0), serve_mpc.MPCAudioRequestHandler)
         server.root_dir = str(root)
         thread = Thread(target=server.serve_forever, daemon=True)
@@ -112,7 +117,7 @@ def main():
             ]
             result = subprocess.run(command, capture_output=True, text=True, timeout=50)
             if result.returncode or "BEATOS_BROWSER_ES_EN_PASS" not in result.stdout:
-                detail = result.stdout[-1500:] + "\\n" + result.stderr[-900:]
+                detail = result.stdout[-1500:] + "\n" + result.stderr[-900:]
                 raise SystemExit("Browser UI locale smoke FAILED (" + label + "): " + detail)
     print("PASS: actual BeatOS HTTP routes (generated and checked-in) switched ES→EN→ES without touching sample filenames")
 
