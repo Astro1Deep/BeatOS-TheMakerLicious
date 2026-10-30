@@ -7,6 +7,7 @@ Do not use these translations as a substitute for stable machine error codes.
 from __future__ import annotations
 
 from http.cookies import SimpleCookie
+import re
 
 EXACT_EN = {
     "Falta parámetro 'rel_path'": "Missing parameter 'rel_path'",
@@ -120,6 +121,14 @@ def translate_text(value, lang="es"):
     body = value[len(indentation):]
     if body in EXACT_EN:
         return indentation + EXACT_EN[body]
+    if body == "🎉 Indexación completada con éxito. Inicia BeatOS/ABRIR_BEATOS.command o el instalador de tu carpeta de código.":
+        return indentation + "🎉 Indexing completed successfully. Start BeatOS/ABRIR_BEATOS.command or the installer in your code folder."
+    cleanup = re.fullmatch(r"✔ Purgados (\\d+) archivos ocultos de metadatos AppleDouble \\(\\._\\* y \\.DS_Store\\)\\.", body)
+    if cleanup:
+        return indentation + f"✔ Removed {cleanup.group(1)} AppleDouble/.DS_Store metadata files."
+    port = re.fullmatch(r"Puerto (\\d+) ocupado por otra biblioteca o servicio; esta biblioteca usa (\\d+)\\.", body)
+    if port:
+        return indentation + f"Port {port.group(1)} is busy; this library uses port {port.group(2)}."
     for prefix, english in _SORTED_PREFIXES:
         if body.startswith(prefix):
             return indentation + english + body[len(prefix):]
