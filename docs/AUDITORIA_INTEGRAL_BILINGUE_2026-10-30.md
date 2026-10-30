@@ -126,3 +126,34 @@ Esta ampliación se realizó sobre el último estado auditado y registra los def
 **Límite de estas pruebas:** se ejecutan en el servidor de pruebas de GitHub con archivos sintéticos. No equivalen a un ensayo de rendimiento con bibliotecas multimillonarias de samples ni a una descarga real en Safari/iOS. La versión ZIP estable previamente publicada sigue sin sustituirse.
 
 **Política de cierre:** solo atribuir éxito a la ejecución GitHub Actions del **commit final**; un éxito de un commit anterior no valida correcciones posteriores.
+
+
+## 9. Revisión visual, distribución y descubribilidad — 30/10/2026
+
+Esta sección revisa el sistema a partir de la interfaz **renderizada realmente en Chrome** con datos exclusivamente sintéticos. No representa un mockup, un montaje de hardware conectado ni un proyecto de terceros.
+
+### Hallazgos
+
+| ID | Diagnóstico | Cambio realizado | Estado de verificación |
+| --- | --- | --- | --- |
+| VIS-001 | El README no mostraba vistas reales del catálogo, por lo que un productor no podía ver cómo sería el entorno antes de descargarlo. | Se añadieron vistas PNG reales de Chrome al repositorio y al README: explorador EN/ES, rack EN y banner original. | Workflow `capture-ui-preview.yml`: capturas validadas en resolución 1500×1050 y subidas como artefactos y ficheros del repositorio. |
+| VIS-002 | La primera ejecución de captura mostraba elementos gráficos rotos debido a que el ZIP instalado usa `BeatOS/docs/assets` y el repositorio fuente conserva los mismos archivos en `docs/assets`. | El servidor de captura reproduce esta equivalencia de rutas sin modificar los JPG/PNG originales de BeatOS. | Prueba HTTP de recursos y observación visual del banner original íntegro. |
+| VIS-003 | La prueba de Chrome inicial no revelaba cadenas españolas en controles del rack, resultados paginados, búsqueda y estado de conexión. | Se añadieron traducciones para filtros, estado del servidor, contadores, mensajes de resultados y etiquetas compuestas de pads. | Regresiones en `tests/test_i18n.cjs` y vistas EN; algunas etiquetas secundarias pueden seguir sin estar cubiertas por todos los recorridos. |
+| VIS-004 | Las capturas de un servidor de catálogo vacío podían presentar un aviso de desconexión que no corresponde a una instalación normal. | El servidor de demostración responde a estado y backups con **metadatos simulados, de solo lectura**, claramente identificados como `DEMO_LIBRARY`. No incluye samples, audio real ni operaciones de hardware. | Código y pruebas en `tests/capture_ui_preview.py` y `tests/test_public_preview.py`. |
+| DISC-001 | No existía una página pública propia con estructura SEO bilingüe; GitHub Pages estaba desactivado en la fecha de consulta. | Se prepararon `docs/index.html`, `docs/index-es.html`, `docs/sitemap.xml`, `docs/robots.txt` y `docs/llms.txt`, así como una guía de publicación `docs/SEO_DISCOVERY.md`. | HTML, enlaces, `hreflang`, JSON-LD y XML se validan mediante tests; **no se declara indexación efectiva**. |
+| DISC-002 | Etiquetas de hardware y público objetivo poco visibles en el README inicial. | Se añadieron capturas y descripción del flujo real, géneros de usuarios y nombres de dispositivos. | El repositorio ya tenía 14 Topics relevantes, que permanecen preservados. No se han añadido Topics mediante ninguna API sin permisos para hacerlo. |
+
+### Capturas publicadas
+
+- [Portada original / branding](assets/screenshots/beatos-hero-en.png)
+- [Explorador de samples — EN](assets/screenshots/beatos-overview-en.png)
+- [Explorador de samples — ES](assets/screenshots/beatos-overview-es.png)
+- [Beatmaker rack de 16 pads — EN](assets/screenshots/beatos-rack-en.png)
+
+**Procedencia:** Chromium ejecuta el HTML de `templates/catalogo.html` con 16 filas de muestras sintéticas cuya denominación comienza por `DEMO_`. Las imágenes están destinadas a demostrar el aspecto visual. Los controles de audio, previews y exportación no se certifican por el mero hecho de mostrarse en una imagen.
+
+### Publicación web pendiente
+
+**GitHub Pages no se ha activado desde esta sesión.** El titular debe habilitar **Settings → Pages → Deploy from a branch → main → /docs**, comprobar visualmente la dirección pública y solicitar inspección en Google Search Console/Bing Webmaster Tools si desea acelerar su descubrimiento. La inclusión en los índices de Google o en respuestas de IA depende de los sistemas externos y no se garantiza.
+
+**Auditoría de estabilidad:** la regresión del pipeline debe comprobarse en el commit exacto final. Los ZIP compilados desde `main` son artefactos de desarrollo, no reemplazan silenciosamente la última release estable. No se han realizado pruebas físicas de carga/guardado en MPC, Maschine, Roland ni Pocket Operator.
