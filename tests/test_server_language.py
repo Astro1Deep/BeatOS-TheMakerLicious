@@ -38,6 +38,19 @@ class APILanguageTests(unittest.TestCase):
         except urllib.error.HTTPError as err:
             return err.code, json.loads(err.read())
 
+    def test_hardware_errors_are_translated_without_modifying_pad_number(self):
+        from beatos_i18n import translate_text
+        cases = {
+            "Tempo fuera de rango (30–300 BPM)": "Tempo out of range (30–300 BPM)",
+            "Pad 5: muestra ausente o fuera de la biblioteca": "Pad 5: sample missing or outside the library",
+            "Pad 7: tune fuera de rango": "Pad 7: tune out of range",
+            "Parámetros WAV no admitidos: usa PCM entre 8 y 384 kHz y de 1 a 8 canales": "Unsupported WAV parameters: use PCM at 8–384 kHz with 1–8 channels",
+        }
+        for spanish, english in cases.items():
+            with self.subTest(spanish=spanish):
+                self.assertEqual(translate_text(spanish, "en"), english)
+                self.assertEqual(translate_text(spanish, "es"), spanish)
+
     def test_dynamic_server_and_indexer_text_is_fully_english(self):
         from beatos_i18n import translate_text
         self.assertEqual(
