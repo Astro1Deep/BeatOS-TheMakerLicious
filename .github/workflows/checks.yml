@@ -34,6 +34,23 @@ jobs:
           node tests/test_i18n.cjs
       - name: Build clean installer
         run: python build_release.py "${{ runner.temp }}/BeatOS.zip"
+      - name: Upload bilingual source build (not the stable release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: BeatOS-main-py${{ matrix.python }}
+          path: ${{ runner.temp }}/BeatOS.zip
+          if-no-files-found: error
+
+  browser-locale:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e # v7.1.0
+        with:
+          python-version: '3.11'
+      - name: Test actual ES/EN browser interactions
+        run: python -B tests/smoke_browser_i18n.py
   windows-release-install:
     runs-on: windows-latest
     timeout-minutes: 10
