@@ -2,6 +2,8 @@
 
 # BeatOS
 
+**Idioma:** Español · [English documentation / Guías en inglés](Home_EN.md) · [Manual en inglés](../en/MANUAL_COMPLETO.md)
+
 **The MakerLicious**
 
 [universal beatmaker station]
@@ -10,7 +12,7 @@ BeatOS se ejecuta en el ordenador para explorar samples propios, preparar kits e
 
 El recorrido es biblioteca → rack → destino → archivos exportados → carga en el equipo o software. [Sigue el primer kit paso a paso](../../README.md#de-la-biblioteca-al-aparato-primer-kit) y consulta los formatos y límites antes de transferirlo. La aplicación no instala firmware en los samplers.
 
-[Descargar instalador estable](https://github.com/Astro1Deep/mpc-sample-database/releases/latest) · [Instalación paso a paso](../../GUIA_INSTALACION.md) · [Compatibilidad y destinos](../../README.md#rack-y-destinos)
+[Descargar instalador estable](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases/latest) · [Instalación paso a paso](../../GUIA_INSTALACION.md) · [Compatibilidad y destinos](../../README.md#rack-y-destinos)
 
 ## Manual completo y compatibilidad
 
