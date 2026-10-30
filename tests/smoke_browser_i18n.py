@@ -25,19 +25,36 @@ window.addEventListener('load', () => {
   document.body.appendChild(probe);
   const controls = [...document.querySelectorAll('button')];
   const recording = controls.find(b => b.textContent.trim() === '⏺ Grabar backup');
+  const expected = [
+    ['📻 Módem FSK & Restauración de Backups','📻 FSK modem & backup restore'],
+    ['🎹 Mapeo Físico de Teclas EP-133 (12 Teclas por Grupo):','🎹 EP-133 physical key map (12 keys per group):'],
+    ['🔄 Ejecutar Reindexación Completa','🔄 Reindex entire library'],
+    ['🧹 Optimización para Hardware MPC & SP-404','🧹 MPC & SP-404 maintenance'],
+    ['💾 Memoria & Capacidad','💾 Memory & capacity'],
+    ['Guardar Ajustes','Save settings']
+  ];
+  const findNode = phrase => {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node=walker.nextNode())) if (node.nodeValue.trim() === phrase) return node;
+    return null;
+  };
+  const localeNodes = expected.map(([es,en]) => ({es,en,node:findNode(es)}));
   const reporter = document.createElement('output');
   reporter.id = 'i18n-browser-result';
   document.body.appendChild(reporter);
-  if (!recording) {reporter.textContent = 'FAIL:no backup button'; return;}
+  if (!recording || localeNodes.some(x => !x.node)) {reporter.textContent = 'FAIL:missing locale test nodes'; return;}
   try {
     setLanguage('en');
     setTimeout(() => {
       const enOK = recording.textContent.trim() === '⏺ Record backup' &&
-          document.documentElement.lang === 'en';
+          document.documentElement.lang === 'en' &&
+          localeNodes.every(x => x.node.nodeValue.trim() === x.en);
       setLanguage('es');
       setTimeout(() => {
         const esOK = recording.textContent.trim() === '⏺ Grabar backup' &&
-            document.documentElement.lang === 'es';
+            document.documentElement.lang === 'es' &&
+            localeNodes.every(x => x.node.nodeValue.trim() === x.es);
         const fileOK = probe.textContent === 'MyCustom-Sample_90bpm.wav';
         reporter.textContent = enOK && esOK && fileOK
           ? 'BEATOS_BROWSER_ES_EN_PASS' : 'FAIL:en=' + enOK + ',es=' + esOK + ',file=' + fileOK;
