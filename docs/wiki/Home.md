@@ -1,4 +1,4 @@
-<p align="center"><img src="../assets/branding/creator/eye-mirror-wide.png" alt="Símbolo de Astro1Deep" width="360"></p>
+<p align="center"><img src="../assets/branding/creator/astro1deep-banner.png" alt="Ojo y lágrima de Astro1Deep — BeatOS" width="100%"></p>
 
 # BeatOS
 
@@ -6,9 +6,9 @@
 
 [universal beatmaker station]
 
-![Hardware de BeatOS](../assets/branding/user_blueprint_sheet_dark_4k.jpg)
+BeatOS se ejecuta en el ordenador para explorar samples propios, preparar kits en un rack de 16 pads y exportarlos a Akai MPC, Native Instruments Maschine, Roland SP-404MK2, SP-404A/SX, PO-33/PO-133 y EP-133 K.O. II. Puedes trabajar desde muestras sueltas; la importación e inspección de XPJ/XPM es una vía adicional del ecosistema Akai.
 
-BeatOS se ejecuta en el ordenador y combina un catálogo de samples propios, un inspector de proyectos MPC y un rack de 16 pads. Esta guía describe funciones verificadas en el código y sus límites; la aplicación no instala firmware en los samplers.
+El recorrido es biblioteca → rack → destino → archivos exportados → carga en el equipo o software. [Sigue el primer kit paso a paso](../../README.md#de-la-biblioteca-al-aparato-primer-kit) y consulta los formatos y límites antes de transferirlo. La aplicación no instala firmware en los samplers.
 
 [Descargar instalador estable](https://github.com/Astro1Deep/mpc-sample-database/releases/latest) · [Instalación paso a paso](../../GUIA_INSTALACION.md) · [Compatibilidad y destinos](../../README.md#rack-y-destinos)
 
@@ -34,6 +34,6 @@ Las pruebas automatizadas cubren los formatos generados, navegación y fixtures 
 
 ## English
 
-BeatOS is a desktop-hosted sample catalog, MPC project inspector and 16-pad kit rack. Download the release attachment for the organized installer and run `python3 BeatOS/installer.py` (`py BeatOS/installer.py` on Windows). Source checkouts keep the scripts at repository root. Index your own library, then serve that same location. Some labels and the terminal remain in Spanish. Native project playback, effects and multilayer editing require the manufacturer's software or hardware.
+BeatOS is a desktop-hosted sample library and 16-pad kit workstation with export paths for Akai MPC, Native Instruments Maschine, Roland SP-404MK2, SP-404A/SX, PO-33/PO-133 and EP-133 K.O. II. Start from loose samples or import a copy of an MPC drum kit, then export the required format and load it into the destination device or software. Some exports require manual sample assignment; they are not native project backups. Download the release attachment for the organized installer and run `python3 BeatOS/installer.py` (`py BeatOS/installer.py` on Windows). Source checkouts keep the scripts at repository root. Index your own library, then serve that same location. Some labels and the terminal remain in Spanish. Native project playback, effects and multilayer editing require the manufacturer's software or hardware.
 
 Creado por [Astro1Deep](https://github.com/Astro1Deep). Licencia [CC BY-NC-ND 4.0](../../LICENSE). [Apoyar el desarrollo](../../README.md#apoyo).

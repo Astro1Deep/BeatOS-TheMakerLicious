@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/assets/branding/creator/eye-mirror-wide.png" alt="Ojo y lágrima de Astro1Deep" width="420"></p>
+<p align="center"><img src="docs/assets/branding/creator/astro1deep-banner.png" alt="Ojo y lágrima de Astro1Deep — BeatOS" width="100%"></p>
 
 # BeatOS
 
@@ -6,11 +6,11 @@
 
 [universal beatmaker station]
 
-Biblioteca de samples, inspector de proyectos MPC y rack de 16 pads. Creado por **Astro1Deep** para explorar bibliotecas propias, preparar kits y revisar referencias antes de llevarlos al sampler.
+**BeatOS es una estación de preparación de kits para varios samplers y entornos de producción musical**, creada por **Astro1Deep**. Reúne una biblioteca de samples con búsqueda y preescucha, un rack de 16 pads y exportadores para **Akai MPC, Native Instruments Maschine, Roland SP-404MK2, SP-404A/SX, Teenage Engineering PO-33/PO-133 y EP-133 K.O. II**.
+
+El flujo central es **explorar tu biblioteca → montar y ajustar un kit → elegir destino → generar los archivos → cargarlos en el aparato o software correspondiente**. Puedes partir de samples sueltos sin tener una MPC. La inspección de proyectos XPJ y programas XPM es una función adicional para recuperar referencias y editar copias de kits del ecosistema Akai.
 
 Versión **3.7.1**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc-sample-database/releases) · [Guía de instalación](GUIA_INSTALACION.md) · [Identidad del creador](docs/IDENTIDAD_DEL_CREADOR.md)
-
-![Banner de hardware de BeatOS](docs/assets/branding/user_blueprint_sheet_dark_4k.jpg)
 
 ## Instalación
 
@@ -61,18 +61,37 @@ La biblioteca musical conserva sus carpetas y rutas. Los kits creados quedan en 
 
 ## Rack y destinos
 
-Rack de 16 pads con volumen, paneo, afinación, intercambio de pads y grupos de mute. Por defecto bombo=1, hi-hat=2, caja=3; el resto queda libre. El grupo 0 y los grupos personalizados 1–32 se conservan al importar/exportar cuando el formato lo permite.
+El mismo rack sirve como origen para todos los exportadores. Elige un destino para generar sólo su entrega, o **Bundle Universal** para crear las seis entregas en una misma operación. Cada una adapta el kit a su formato; los parámetros que el aparato no recibe con el archivo se ajustan allí manualmente.
 
-| Destino | Entrega |
-| --- | --- |
-| Akai MPC | Programa `.xpm`, proyecto `.xpj` y WAV con posiciones de pad y ajustes. |
-| Roland SP-404MK2 | WAV y mapa de banco; conversión a 48 kHz cuando corresponde. |
-| Roland SP-404A/SX | WAV y mapa de 12 pads. |
-| Native Instruments Maschine | WAV y mapa JSON para asignación; no se genera un `.mxgrp` nativo. |
-| PO-33 / PO-133 | Reel WAV, mapa y pausa ajustable de 0–500 ms dentro del presupuesto elegido de 1–40 s. La memoria libre real se comprueba en el dispositivo. |
-| EP-133 K.O. II | WAV, mapa JSON y ZIP de transporte para la herramienta oficial; no es un backup nativo. |
+| Destino | Archivos que genera BeatOS | Cómo continuar y límites |
+| --- | --- | --- |
+| **Akai MPC** | Programa Drum `.xpm`, proyecto `.xpj` y samples enlazados. | Carga el programa o proyecto con sus muestras. Se conservan posiciones y ajustes implementados; no se trasladan secuencias, plugins, efectos ni cuatro capas por pad. |
+| **Native Instruments Maschine** | WAV en `Samples/Group_A/` y mapa `Groups/*_Maschine_Map.json`. | Carga los WAV y asigna sonidos y parámetros siguiendo el mapa. No se genera un grupo `.mxgrp` nativo. |
+| **Roland SP-404MK2** | WAV PCM 16-bit/48 kHz para hasta 16 pads y `sp404mk2_manifest.json`. | Transfiere las muestras e impórtalas con el procedimiento del equipo; comprueba la asignación. No es un proyecto o backup nativo, y el manifiesto no transmite ajustes del rack. |
+| **Roland SP-404A/SX** | WAV PCM 16-bit/44.1 kHz, nombrados `A01.wav`–`A12.wav`. | Prepara la importación con el procedimiento del modelo. **Sólo se exportan los pads 1–12**: mueve antes los sonidos de los pads 13–16 si los necesitas. No se genera un mapa JSON ni se transfieren los ajustes del rack. |
+| **PO-33 / PO-133** | Un reel WAV mono PCM 16-bit/44.1 kHz y manifiesto de cortes. | Reproduce y graba el reel por la entrada de audio del PO; revisa cortes y TRIM. Volumen y afinación se procesan en el audio y el conjunto se normaliza; panorama y mutes no se transfieren. |
+| **EP-133 K.O. II** | WAV PCM 16-bit/44.1 kHz mono/estéreo, `meta.json`, guía de carga y ZIP de transporte. | Extrae el ZIP e importa los WAV con EP Sample Tool. El mapa propone las 12 teclas de A y las primeras cuatro de B; asignación, volumen, panorama, tono y mutes se aplican manualmente. No es un backup nativo. |
 
-La inspección de backups PO describe su cabecera/señal, sin certificar los datos internos. Los ajustes que no admite un destino deben aplicarse en el hardware. Las pruebas automáticas verifican estructura y audio sintético; la compatibilidad final depende del modelo y firmware.
+### De la biblioteca al aparato: primer kit
+
+1. **Abre la biblioteca conectada.** Indexa tu carpeta de samples e inicia el servidor con esa misma ruta. Comprueba en pantalla qué biblioteca está activa; las exportaciones se escriben allí, aunque el código esté instalado en otra carpeta.
+2. **Busca y escucha.** Filtra las muestras y asígnalas al rack. También puedes abrir una copia de un XPM Drum o de una pista de batería XPJ. En ese caso, el rack toma la primera capa activa y exporta los 16 pads del banco visible A–H; no exporta todo el proyecto.
+3. **Prepara los pads.** Cambia posiciones, volumen, panorama, afinación y grupos de mute. El grupo 0 permite superposición; los valores predeterminados son bombo=1, hi-hat=2 y caja=3. Revisa la tabla para saber qué ajustes viajan al destino. Shuffle rellena por categorías, por lo que conviene escuchar el resultado.
+4. **Elige el formato.** En «Exportar Kit», escribe un nombre y selecciona «Destino de Hardware». Para un SP-404A/SX, concentra el kit en los primeros 12 pads. Para PO, usa el Hub PO si necesitas ajustar presupuesto de memoria y pausas: admite 1–40 s y 0–500 ms; la exportación normal del rack usa 40 s y 150 ms.
+5. **Genera y localiza la entrega.** Pulsa «Generar Kit en Tarjeta MicroSD». El nombre del botón no obliga a usar una tarjeta: la salida se guarda en `Custom_Kits/<nombre>/` dentro de la biblioteca activa. El aviso de resultado muestra las rutas. Si ya existe ese kit, utiliza otro nombre para conservarlo.
+6. **Transfiere y comprueba.** Usa los archivos de la subcarpeta de tu destino según la tabla anterior. Escucha los pads, revisa asignaciones, niveles, afinación y mutes en el equipo o software. Exporta tu trabajo antes de cambiar de origen o cerrar la página.
+
+Por ejemplo, un kit de ocho golpes creado desde WAV sueltos puede salir como programa MPC, muestras para Maschine, archivos para SP-404, reel PO o paquete EP-133 sin importar previamente ningún proyecto Akai. «Universal» ejecuta todos los exportadores: no crea un único archivo que todos los aparatos puedan abrir.
+
+### Dónde queda cada entrega
+
+Con el bundle universal, `Custom_Kits/<nombre>/` contiene `Akai_MPC/`, `NI_Maschine/`, `Roland_SP404MK2/`, `Roland_SP404A/`, `Pocket_Operator_PO33/` y `Teenage_Engineering_EP133/`. Al elegir un destino individual sólo se crea su subcarpeta. Las carpetas internas y manifiestos concretos se detallan en la [guía del rack y exportación](docs/wiki/08-Universal-Hardware-Beatmaker-Rack-(MPC-Maschine-SP404-PO33).md).
+
+### Conversión y errores de exportación
+
+FFmpeg permite convertir formatos o frecuencias distintos y procesar afinación en el reel PO. Sin él sólo se admiten las fuentes PCM compatibles con la conversión solicitada; por ejemplo, pasar de 44.1 a 48 kHz para SP-404MK2 requiere FFmpeg. Si falla una conversión, se informa del error y se retira la entrega parcial. En el bundle universal, el fallo de un destino cancela el conjunto: si sólo necesitas un aparato, selecciona ese destino.
+
+Para PO, introduce la memoria que tengas libre: BeatOS no puede consultarla. El reel puede recortar muestras con fade-out para caber en el presupuesto, y las pausas cuentan dentro de él. Consulta la [guía de PO-33/PO-133 y EP-133](docs/wiki/09-Pocket-Operator-PO-33-KO-Studio-y-FSK-Modem.md) antes de cargar audio o manejar respaldos.
 
 ## Seguridad y datos
 

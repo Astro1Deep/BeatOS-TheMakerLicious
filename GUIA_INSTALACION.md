@@ -6,7 +6,7 @@
 
 ## Instalación limpia
 
-Edición 3.7.1. Herramientas de biblioteca y sampling para ejecutar en el ordenador; no es firmware ni sustituye el sistema de un MPC.
+Edición 3.7.1. Biblioteca de samples y rack de 16 pads para preparar kits destinados a MPC, Maschine, SP-404MK2, SP-404A/SX, PO-33/PO-133 y EP-133 K.O. II. Se ejecuta en el ordenador y no instala firmware en los aparatos. No necesitas una MPC para trabajar desde samples sueltos.
 
 Requiere Python 3.11 o superior. No incluye samples comerciales, proyectos personales, bases de datos de Iván, claves ni configuraciones privadas. La biblioteca inicial está vacía.
 
@@ -21,6 +21,12 @@ El servidor escucha en 127.0.0.1. No lo publiques mediante un túnel o un proxy 
 Los kits se generan dentro de `Custom_Kits` en la biblioteca seleccionada. Guarda una copia de tu tarjeta antes de cualquier modificación. Las exportaciones están verificadas por pruebas de estructura y audio sintético, pero deben probarse en el modelo y firmware de hardware de destino.
 
 Desde la carpeta del código (BeatOS/ en el ZIP o la raíz del clon), pruebas locales sin hardware: `python3 -B -m unittest discover -s tests -v`. El ZIP contiene un manifiesto SHA-256 para comprobar sus archivos; los hashes comprueban integridad, no identidad del editor.
+
+## Primer kit después de instalar
+
+Abre el catálogo por HTTP, busca y escucha tus samples, asígnalos al rack y elige un destino en «Exportar Kit». Las entregas se guardan en `Custom_Kits/<nombre>/` dentro de la biblioteca activa. El bundle universal genera las seis variantes; para un solo equipo, elige su formato. La carga final depende del destino: programa MPC, WAV para asignar en Maschine o SP-404, reel de audio para PO, o WAV y mapa para EP-133.
+
+Sigue el [recorrido paso a paso y la tabla de formatos](README.md#rack-y-destinos). Ahí se explica qué ajustes se transfieren, cuáles se aplican manualmente y por qué SP-404A/SX sólo recibe los pads 1–12.
 
 ## Conexión y formatos de audio
 
