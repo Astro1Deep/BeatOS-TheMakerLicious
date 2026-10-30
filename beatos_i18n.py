@@ -108,7 +108,7 @@ def translate_text(value, lang="es"):
     if lang != "en" or not isinstance(value, str):
         return value
     # Preserve leading line breaks from console progress without losing translations.
-    indentation = value[:len(value) - len(value.lstrip("\\r\\n"))]
+    indentation = value[:len(value) - len(value.lstrip("\r\n"))]
     body = value[len(indentation):]
     if body in EXACT_EN:
         return indentation + EXACT_EN[body]
