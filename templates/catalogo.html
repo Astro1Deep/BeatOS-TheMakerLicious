@@ -3213,6 +3213,8 @@ function refreshBeatOsLocale() {
 function setLanguage(lang) {
   currentLang = (lang === 'en') ? 'en' : 'es';
   try { localStorage.setItem('mpc_lang', currentLang); } catch (error) { /* Incognito or restricted storage: current session still works. */ }
+  // Only a non-sensitive ES/EN preference; keeps local API diagnostics in sync.
+  try { if (typeof location !== 'undefined' && /^https?:$/.test(location.protocol)) document.cookie = 'beatos_locale=' + currentLang + '; Path=/; SameSite=Strict'; } catch (error) { /* file:// or browser policy */ }
   const t = I18N[currentLang];
 
   document.documentElement.lang = currentLang;
