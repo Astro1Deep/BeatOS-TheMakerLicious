@@ -1,6 +1,6 @@
 # Proyectos MPC: inspección, bancos y ajustes
 
-Abre BeatOS por HTTP desde `00_ABRIR_BEATOS/ABRIR_BEATOS.command`. Las páginas abiertas como archivo permiten explorar el catálogo, pero el servidor rechaza sus operaciones. La interfaz muestra la biblioteca activa para distinguir el Mac de la tarjeta.
+Abre BeatOS por HTTP desde `BeatOS/ABRIR_BEATOS.command`. Las páginas abiertas como archivo permiten explorar el catálogo, pero el servidor rechaza sus operaciones. La interfaz muestra la biblioteca activa para distinguir el Mac de la tarjeta.
 
 La pestaña Proyectos permite buscar, recargar el catálogo, mostrar/copiar la ruta e inspeccionar pistas de batería. Se carga la ruta registrada, sin adivinar ubicaciones ni sustituirla por muestras elegidas por nombre.
 
@@ -10,4 +10,4 @@ Volumen, panorama, afinación y mutes se ajustan por pad. El tempo elegido se ex
 
 El estado del índice informa de referencias de archivo, no certifica reproducción física. `ERROR` señala un archivo que no se pudo leer; `ATTENTION`, referencias ausentes; `INDEX_OK`, referencias encontradas por el indexador. La inspección en vivo comprueba las muestras de la pista seleccionada. Una referencia ambigua no se sustituye por otra muestra con el mismo nombre.
 
-«Recargar proyectos» vuelve a leer el catálogo guardado sin vaciar el rack. «Reindexar» reconstruye metadatos y actualiza ambos nombres de catálogo (`catalogo_mpc_sample.html` y `catalogo_universal.html`), incluidas las copias de navegación. No modifica los proyectos ni ejecuta reparaciones del sistema.
+«Recargar proyectos» vuelve a leer el catálogo guardado sin vaciar el rack. «Reindexar» reconstruye metadatos y actualiza el catálogo único en BeatOS/data/ y sus dos accesos HTML en la raíz. No modifica los proyectos ni ejecuta reparaciones del sistema.

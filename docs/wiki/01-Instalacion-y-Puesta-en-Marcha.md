@@ -1,16 +1,16 @@
 # Instalación y puesta en marcha
 
-Requiere Python 3.11+. Descarga el ZIP de [Releases](https://github.com/Astro1Deep/mpc-sample-database/releases) o clona el repositorio. Descomprime en una carpeta nueva y sigue la [guía de instalación actual](../../GUIA_INSTALACION.md).
+Requiere Python 3.11 o superior. Descarga el ZIP adjunto en [Releases](https://github.com/Astro1Deep/mpc-sample-database/releases/latest) y su checksum. Descomprime en una carpeta nueva. La biblioteca inicial está vacía: no incluye samples comerciales, proyectos personales ni una base de datos del autor.
 
-Ejecuta `python3 installer.py` (Windows: `py installer.py`). Opción 1: indexar tu propia biblioteca. Opción 2: iniciar el servidor sobre esa misma biblioteca. El programa no incluye samples comerciales ni datos personales. En macOS/Linux puede usarse `./install.sh`.
+| Origen de la descarga | Menú de instalación | Inicio del servidor |
+| --- | --- | --- |
+| ZIP BeatOS adjunto a la versión | `python3 BeatOS/installer.py` | `python3 BeatOS/serve_mpc.py "/ruta/a/biblioteca"` |
+| Clon / «Source code» de GitHub | `python3 installer.py` | `python3 serve_mpc.py "/ruta/a/biblioteca"` |
 
-Para código y biblioteca separados:
+En Windows sustituye `python3` por `py`. Elige la opción 1 para indexar tus propios samples y la 2 para servir esa misma biblioteca. No necesita que la tarjeta tenga un nombre concreto ni una cuenta del autor. FFmpeg es necesario para conversiones y ciertos destinos/ajustes; el instalador no lo descarga automáticamente.
 
-```bash
-python3 index_mpc_library.py --path "/ruta/a/tu/biblioteca"
-python3 serve_mpc.py "/ruta/a/tu/biblioteca" --port 8888
-```
+En macOS, el ZIP incluye `BeatOS/ABRIR_BEATOS.command`. Si macOS no permite abrirlo, usa el comando Python anterior desde Terminal; no necesitas desactivar la seguridad del sistema.
 
-Abre la URL que muestra el servidor. El puerto puede variar si lo ocupa otro servicio. La reproducción y las acciones dependen de que el servidor esté activo, de los formatos de audio y del navegador; no se garantiza reproducción de cualquier formato. FFmpeg habilita conversiones y ciertos ajustes/destinos.
+Abre la dirección HTTP que imprime el servidor y comprueba la biblioteca activa. El puerto puede variar si está ocupado. Abrir un HTML como archivo no habilita las acciones locales. El código puede estar en una carpeta y la biblioteca en otra.
 
-La limpieza de metadatos elimina auxiliares de macOS y es opcional; no instala el sistema ni mejora el audio. No requiere ejecutar supervisores automáticos. No sobrescribas una biblioteca anterior ni restaures backups antiguos para instalar una entrega nueva.
+[Guía completa](../../GUIA_INSTALACION.md) · [Mapa de archivos](../ESTRUCTURA_BIBLIOTECA.md)

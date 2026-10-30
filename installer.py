@@ -7,6 +7,8 @@ Permite indexación rápida, servidor web local sin restricciones, limpieza y ge
 
 import os
 import sys
+sys.dont_write_bytecode = True
+from beatos_paths import data_dir, default_library_root
 import subprocess
 import shutil
 import time
@@ -24,7 +26,7 @@ def main():
     
     print("=" * 70)
     print("🎛️  AKAI MPC SAMPLE DATABASE & FINDER TOOLKIT - INSTALADOR UNIVERSAL")
-    print("    BeatOS 3.6.5 • Astro1Deep • Compatible con Akai MPC Standalone")
+    print("    BeatOS 3.7.0 • Astro1Deep • Compatible con Akai MPC Standalone")
     print("=" * 70)
     print("1. 🚀 Indexar tarjeta Micro SD o carpeta de samples para MPC")
     print("2. 🌐 Iniciar Servidor Web Local y Abrir Catálogo (Audio y herramientas locales)")
@@ -39,7 +41,7 @@ def main():
     if choice == "1":
         path = input("Ingresa la ruta de la tarjeta SD / samples (Enter para carpeta actual): ").strip()
         if not path:
-            path = script_dir
+            path = str(default_library_root(script_dir))
         
             
         cmd = [sys.executable, os.path.join(script_dir, "index_mpc_library.py"), "--path", path]
@@ -59,7 +61,7 @@ def main():
         path = input("Ingresa la ruta de la tarjeta SD (Enter para carpeta de instalación): ").strip()
         try:
             import serve_mpc
-            serve_mpc.run_server(path if path else script_dir)
+            serve_mpc.run_server(path if path else str(default_library_root(script_dir)))
         except ImportError:
             # Fallback inline si serve_mpc no estuviera disponible
             subprocess.run([sys.executable, os.path.join(script_dir, "serve_mpc.py"), path if path else ""])
@@ -67,7 +69,7 @@ def main():
     elif choice == "3":
         path = input("Ingresa la ruta a limpiar (Enter para carpeta actual): ").strip()
         if not path:
-            path = script_dir
+            path = str(default_library_root(script_dir))
         print(f"Limpiando archivos en: {path}...")
         count = 0
         for root, dirs, files in os.walk(path):
@@ -81,7 +83,9 @@ def main():
         print(f"✔ Se eliminaron {count} archivos innecesarios de metadatos.")
         
     elif choice == "4":
-        db_path = os.path.join(script_dir, "mpc_sample_master.db")
+        output = data_dir(default_library_root(script_dir))
+        output.mkdir(parents=True, exist_ok=True)
+        db_path = output / "mpc_sample.db"
         schema_path = os.path.join(script_dir, "schema.sql")
         import sqlite3
         conn = sqlite3.connect(db_path)

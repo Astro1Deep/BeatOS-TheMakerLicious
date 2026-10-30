@@ -31,6 +31,7 @@ import socket
 import sqlite3
 import subprocess
 import sys
+sys.dont_write_bytecode = True
 import tempfile
 import threading
 import time
@@ -40,6 +41,7 @@ import webbrowser
 import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer as HTTPServer
 from pathlib import Path
+from beatos_paths import CATALOG_REL, config_dir, database_path, default_library_root
 
 mimetypes.init()
 mimetypes.add_type("audio/wav", ".wav")
@@ -65,11 +67,8 @@ TASK_STATE = {
 
 def get_hardware_kit_builder(root_dir: str):
     """Carga de forma dinámica y tolerante a fallos el módulo hardware_kit_builder."""
-    candidates = [
-        os.path.join(root_dir, "hardware_kit_builder.py"),
-        os.path.join(root_dir, "_INDEX_MPC_SAMPLE", "hardware_kit_builder.py"),
-        os.path.join(os.path.dirname(__file__), "hardware_kit_builder.py"),
-    ]
+    candidates = [os.path.join(os.path.dirname(__file__), "hardware_kit_builder.py"),
+                  os.path.join(root_dir, "BeatOS", "hardware_kit_builder.py")]
     for cand in candidates:
         if os.path.isfile(cand):
             try:
@@ -92,8 +91,8 @@ def run_reindex_thread(root_dir: str):
     TASK_STATE["finished_at"] = 0
     TASK_STATE["success"] = None
 
-    candidates = [os.path.join(root_dir, "index_mpc_library.py"),
-                  os.path.join(os.path.dirname(__file__), "index_mpc_library.py")]
+    candidates = [os.path.join(os.path.dirname(__file__), "index_mpc_library.py"),
+                  os.path.join(root_dir, "BeatOS", "index_mpc_library.py")]
     script_path = None
     for cand in candidates:
         if os.path.isfile(cand):
@@ -109,7 +108,7 @@ def run_reindex_thread(root_dir: str):
 
     try:
         proc = subprocess.Popen(
-            [sys.executable, script_path, "--path", root_dir],
+            [sys.executable, "-B", script_path, "--path", root_dir],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -172,15 +171,12 @@ def get_system_status(root_dir: str):
     card_mounted = os.path.isdir("/Volumes/MPCSMPL")
     disk_stat = shutil.disk_usage(root_dir) if os.path.exists(root_dir) else None
 
-    db_candidates = [
-        os.path.join(root_dir, "SQLITE_DATABASE", "mpc_sample.db"),
-        os.path.join(root_dir, "_INDEX_MPC_SAMPLE", "mpc_sample.db"),
-    ]
+    db_candidates = [database_path(root_dir)]
     sample_count = 0
     for cand in db_candidates:
         if os.path.isfile(cand):
             try:
-                conn = sqlite3.connect(cand)
+                conn = sqlite3.connect(Path(cand).as_uri() + "?mode=ro", uri=True)
                 c = conn.cursor()
                 c.execute("SELECT COUNT(*) FROM samples")
                 row = c.fetchone()
@@ -203,6 +199,9 @@ def get_system_status(root_dir: str):
 
 def find_card_root(start_dir: str) -> str:
     """Detecta la raíz de la tarjeta SD o el repositorio local donde residen los samples."""
+    installed_root = default_library_root(start_dir)
+    if installed_root != Path(start_dir).resolve():
+        return str(installed_root)
     if os.path.isdir(os.path.join(start_dir, "MPC-Sample")) or os.path.isdir(os.path.join(start_dir, "Expansions")):
         return os.path.abspath(start_dir)
 
@@ -236,13 +235,13 @@ def resolve_library_path(root_dir: str, value: str) -> Path:
     candidate = Path(value)
     candidate = (candidate if candidate.is_absolute() else root / candidate).resolve()
     relative = candidate.relative_to(root)
-    if any(part.startswith('.') for part in relative.parts):
+    if any(part.startswith('.') for part in relative.parts) or (relative.parts and relative.parts[0] == 'BeatOS'):
         raise ValueError('Las rutas privadas no están disponibles por HTTP')
     return candidate
 
 
 class MPCAudioRequestHandler(BaseHTTPRequestHandler):
-    server_version = "MPCAudioStreamer/3.6.2-metadata.20261029"
+    server_version = "MPCAudioStreamer/3.7.0-layout.20261029"
 
     def send_cors_headers(self):
         origin = self.headers.get('Origin')
@@ -723,7 +722,9 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 with open(theme_file, "w", encoding="utf-8") as f:
                     json.dump(theme_data, f, indent=2)
                 
-                local_theme = os.path.join(self.server.root_dir, "theme_config.json")
+                local_dir = config_dir(self.server.root_dir)
+                local_dir.mkdir(parents=True, exist_ok=True)
+                local_theme = local_dir / "theme_config.json"
                 with open(local_theme, "w", encoding="utf-8") as f:
                     json.dump(theme_data, f, indent=2)
 
@@ -752,15 +753,25 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
         clean_path = urllib.parse.unquote(parsed.path).lstrip("/")
 
         if clean_path in ("", "index.html", "catalogo", "catalogo.html"):
-            for candidate in ("catalogo_universal.html", "catalogo_mpc_sample.html", "SQLITE_DATABASE/catalogo_mpc_sample.html"):
+            for candidate in (CATALOG_REL, "catalogo_universal.html", "catalogo_mpc_sample.html", "SQLITE_DATABASE/catalogo_mpc_sample.html"):
                 if os.path.isfile(os.path.join(self.server.root_dir, candidate)):
                     clean_path = candidate
                     break
 
         file_root = self.server.root_dir
-        if clean_path.startswith('docs/assets/') and not os.path.isfile(os.path.join(file_root,clean_path)):
-            file_root = os.path.join(os.path.dirname(__file__),'docs','assets')
-            clean_path = clean_path[len('docs/assets/'):]
+        if clean_path == CATALOG_REL:
+            file_root = os.path.join(self.server.root_dir, 'BeatOS', 'data')
+            clean_path = 'catalogo.html'
+        elif clean_path in {'SQLITE_DATABASE/catalogo_mpc_sample.html', 'SQLITE_DATABASE/catalogo_universal.html',
+                            '_INDEX_MPC_SAMPLE/catalogo_mpc_sample.html', '_INDEX_MPC_SAMPLE/catalogo_universal.html'} and os.path.isfile(os.path.join(self.server.root_dir,CATALOG_REL)):
+            file_root = os.path.join(self.server.root_dir, 'BeatOS', 'data')
+            clean_path = 'catalogo.html'
+        else:
+            for prefix in ('BeatOS/docs/assets/', 'docs/assets/'):
+                if clean_path.startswith(prefix):
+                    file_root = os.path.join(os.path.dirname(__file__),'docs','assets')
+                    clean_path = clean_path[len(prefix):]
+                    break
 
         try:
             target_path = str(resolve_library_path(file_root, clean_path))
@@ -875,7 +886,7 @@ def run_server(custom_path: str | None = None, port: int | None = None, auto_ope
     port = find_available_port(desired_port)
 
     catalog_rel = None
-    for cand in ("catalogo_universal.html", "catalogo_mpc_sample.html", "SQLITE_DATABASE/catalogo_mpc_sample.html"):
+    for cand in (CATALOG_REL, "catalogo_universal.html", "catalogo_mpc_sample.html", "SQLITE_DATABASE/catalogo_mpc_sample.html"):
         if os.path.isfile(os.path.join(target_root, cand)):
             catalog_rel = cand
             break

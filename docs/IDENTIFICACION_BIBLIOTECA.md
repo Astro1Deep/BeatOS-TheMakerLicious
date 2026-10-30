@@ -1,4 +1,4 @@
-# Identificación de la biblioteca — BeatOS 3.6.2
+# Identificación de la biblioteca — BeatOS
 
 Véase GUIA_INSTALACION.md para las reglas, umbrales y límites. Los desconocidos se conservan explícitamente; no se asigna automáticamente percusión, mayor o energía media a un archivo sin evidencia. El contrato del catálogo mantiene sus 12 columnas para conservar la compatibilidad del rack, filtros y exportación.
 

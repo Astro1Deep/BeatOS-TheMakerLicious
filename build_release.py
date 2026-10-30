@@ -1,5 +1,7 @@
 """Build a source-only BeatOS distribution from an explicit allowlist."""
 import argparse
+import sys
+sys.dont_write_bytecode = True
 import hashlib
 import gzip
 import json
@@ -7,16 +9,17 @@ from pathlib import Path
 import zipfile
 import xml.etree.ElementTree as ET
 from index_mpc_library import render_catalog
+from beatos_paths import entry_html, ENTRY_NAMES, CATALOG_REL
 
 
-FILES = ('serve_mpc.py', 'hardware_kit_builder.py', 'index_mpc_library.py',
+FILES = ('serve_mpc.py', 'hardware_kit_builder.py', 'index_mpc_library.py', 'beatos_paths.py',
          'installer.py', 'install.sh', 'schema.sql', 'LICENSE', 'LICENSE.md',
          'README.md', 'GUIA_INSTALACION.md', 'build_release.py',
          'templates/catalogo.html', 'templates/template_drum.xpm',
          'templates/template_project.xpj', 'tests/test_hardware_kit_builder.py',
          'tests/test_serve_mpc.py', 'tests/test_indexer.py', 'tests/test_metadata.py', 'tests/test_installer.py', 'tests/test_mute_groups.py',
-         'tests/test_pad_audio.cjs', 'tests/test_library_ui.cjs', 'tests/test_creator_identity.cjs', '00_ABRIR_BEATOS/ABRIR_BEATOS.command', '00_ABRIR_BEATOS/LEEME.txt', 'tests/test_hub_workflows.py', 'docs/assets/hardware/sources.json')
-VERSION = '3.6.5-layout.20261029'
+         'tests/test_pad_audio.cjs', 'tests/test_library_ui.cjs', 'tests/test_creator_identity.cjs', 'ABRIR_BEATOS.command', 'tests/test_hub_workflows.py', 'docs/assets/hardware/sources.json')
+VERSION = '3.7.0-layout.20261029'
 
 
 def blank_templates(payload):
@@ -70,14 +73,21 @@ def blank_templates(payload):
 def build_release(destination):
     source = Path(__file__).resolve().parent
     payload = {name: (source / name).read_bytes() for name in FILES}
+    documentation = [p for p in (source / 'docs').rglob('*.md') if p.is_file() and not p.is_symlink()]
+    references = payload['templates/catalogo.html'].decode() + '\n' + '\n'.join(p.read_text() for p in documentation)
     for path in (source / 'docs').rglob('*'):
         if path.is_file() and not path.name.startswith('.') and not path.is_symlink() and path.suffix.lower() in {'.md', '.svg', '.jpg', '.png', '.webp'}:
+            if 'branding' in path.parts and 'creator' not in path.parts and path.stem not in references:
+                continue
             payload[path.relative_to(source).as_posix()] = path.read_bytes()
-    payload['catalogo_universal.html'] = render_catalog(payload['templates/catalogo.html'].decode(), [], {}).encode()
-    payload['VERSION'] = (VERSION + '\n').encode()
+    empty_catalog = render_catalog(payload['templates/catalogo.html'].decode(), [], {}).encode()
     blank_templates(payload)
+    payload = {'BeatOS/' + name: data for name, data in payload.items()}
+    payload[CATALOG_REL] = empty_catalog
+    payload.update({name: entry_html().encode() for name in ENTRY_NAMES})
+    payload['BeatOS/VERSION'] = (VERSION + '\n').encode()
     manifest = {name: hashlib.sha256(data).hexdigest() for name, data in sorted(payload.items())}
-    payload['MANIFEST.sha256.json'] = (json.dumps(manifest, indent=2) + '\n').encode()
+    payload['BeatOS/MANIFEST.sha256.json'] = (json.dumps(manifest, indent=2) + '\n').encode()
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = destination.with_suffix('.zip.new')

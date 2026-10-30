@@ -1,65 +1,39 @@
-# 🎛️ BeatOS — The MakerLicious
-### The system ★ [universal beatmaker station]
-> `│ ref: pocket operator · ep-133 · akai mpc sample · roland sp-404mk2 · ni maschine │`  
-> **Universal Beatmaker Hub & Multi-Sampler Toolkit**
+<p align="center"><img src="../assets/branding/creator/eye-mirror-wide.png" alt="Símbolo de Astro1Deep" width="360"></p>
 
-> **Idioma / Language**: [Español (ES)](#-español) | [English (EN)](#-english)
+# BeatOS
 
----
+**The MakerLicious**
 
-## 🇪🇸 Español
+[universal beatmaker station]
 
-**BeatOS — The MakerLicious** (*The system ★ [universal beatmaker station]*) es un ecosistema abierto de alto rendimiento diseñado para maximizar la velocidad de navegación, la estabilidad y la creación de kits musicales en hardware **Teenage Engineering Pocket Operator (PO-20 / PO-33 / PO-133)** & **EP-133 K.O. II**, **Akai Professional MPC Sample & Standalone**, **Roland SP-404MK2 / SP-404A**, y **Native Instruments Maschine**.
+![Hardware de BeatOS](../assets/branding/user_blueprint_sheet_dark_4k.jpg)
 
-### 📌 ¿Por qué este proyecto?
-El hardware musical autónomo cuenta con recursos de memoria dedicados. Cuando conectamos tarjetas Micro SD con decenas de miles de samples desordenados o con residuos `._*` de macOS, surgen problemas críticos:
-1. **Lentitud extrema en el Browser del hardware**.
-2. **Pérdida de muestras en proyectos (`Missing Samples`)**.
-3. **Dificultad para ensamblar drum kits compatibles con múltiples samplers**.
+BeatOS se ejecuta en el ordenador y combina un catálogo de samples propios, un inspector de proyectos MPC y un rack de 16 pads. Esta guía describe funciones verificadas en el código y sus límites; la aplicación no instala firmware en los samplers.
 
-Este toolkit resuelve estos desafíos combinando **SQLite 3**, un indexador autónomo en **Python 3**, un **servidor de streaming RFC 7233 Range Requests** y un **Catálogo Web Bilingüe en HTML5** con Beatmaker Kit Rack interactivo de 16 pads.
+[Descargar instalador estable](https://github.com/Astro1Deep/mpc-sample-database/releases/latest) · [Instalación paso a paso](../../GUIA_INSTALACION.md) · [Compatibilidad y destinos](../../README.md#rack-y-destinos)
 
----
+| Capítulo | Contenido |
+| --- | --- |
+| [1. Instalación](01-Instalacion-y-Puesta-en-Marcha.md) | ZIP organizado, código fuente, requisitos y arranque. |
+| [2. Organización de la biblioteca](02-Organizacion-MicroSD-para-MPC.md) | Código y estado bajo BeatOS/, rutas musicales conservadas. |
+| [3. Identificación de audio](03-Taxonomia-y-Deteccion-de-Audio.md) | Tipo por etiquetas, tonalidad declarada y nivel RMS aproximado. |
+| [4. Proyectos MPC](04-Auditoria-de-Proyectos-MPC-(xpj).md) | Referencias, pistas de batería, bancos y edición de copias. |
+| [5. Expansiones](05-Expansiones-Oficiales-Akai.md) | Programas XPM, proyectos XPJ, demos, samples y carátulas. |
+| [6. Catálogo y preescucha](06-Catalogo-Web-y-Audio-Player.md) | Vista por HTTP, recarga y errores de conexión. |
+| [7. SQLite](07-Consultas-Avanzadas-SQLite.md) | Esquema y consultas sobre la base de tu biblioteca. |
+| [8. Rack y exportación](08-Universal-Hardware-Beatmaker-Rack-(MPC-Maschine-SP404-PO33).md) | Ajustes y alcance real de cada destino. |
+| [9. PO-33, PO-133 y EP-133](09-Pocket-Operator-PO-33-KO-Studio-y-FSK-Modem.md) | Reels, WAV de intercambio e inspección limitada de respaldos. |
+| [10. Idiomas](10-Manual-Bilingue-y-Selector-de-Idioma-(ES-EN).md) | Traducción parcial de la interfaz y preferencias del navegador. |
+| [11. Discos e integraciones](11-Auto-Reconocimiento-y-Onboarding-de-Discos.md) | Biblioteca elegida e integración opcional con Cerebro. |
 
-## 🗺️ Índice de la Wiki / Wiki Chapters
+## Comprobar una instalación
 
-| Módulo / Chapter | Descripción / Description |
-| :--- | :--- |
-| **[🚀 1. Instalación y Puesta en Marcha](01-Instalacion-y-Puesta-en-Marcha.md)** | Requisitos mínimos, instalador interactivo multiplataforma en macOS, Linux y Windows. |
-| **[📁 2. Organización MicroSD para MPC](02-Organizacion-MicroSD-para-MPC.md)** | Las 7 macro-categorías canónicas, formato ExFAT y purga de archivos `._*`. |
-| **[🎹 3. Taxonomía y Detección de Audio](03-Taxonomia-y-Deteccion-de-Audio.md)** | 12 tipos de sonido, rangos BPM (Lo-Fi a DnB), rueda armónica Camelot y energía. |
-| **[🔍 4. Auditoría de Proyectos (.xpj)](04-Auditoria-de-Proyectos-MPC-(xpj).md)** | Inspección interna JSON, verificación contra `_[ProjectData]` y estados HEALTHY. |
-| **[📦 5. Expansiones Oficiales Akai](05-Expansiones-Oficiales-Akai.md)** | Parseo de `Expansion.xml`, programas `.xpm` / `.pgm` y carátulas gráficas. |
-| **[🌐 6. Catálogo Web y Audio Player](06-Catalogo-Web-y-Audio-Player.md)** | Catálogo interactivo HTML5, streaming local y botón de copiado de rutas. |
-| **[📊 7. Consultas Avanzadas SQLite](07-Consultas-Avanzadas-SQLite.md)** | Consultas SQL prácticas para beatmakers y exportaciones a CSV/JSON. |
-| **[🎛️ 8. Universal Beatmaker Rack](08-Universal-Hardware-Beatmaker-Rack-(MPC-Maschine-SP404-PO33).md)** | Rack de 16 pads, afinación, choke groups, pad swap y exportación multi-sampler (MPC, EP-133, SP-404, Maschine, PO-33). |
-| **[🕹️ 9. Pocket Operator PO-33 Studio](09-Pocket-Operator-PO-33-KO-Studio-y-FSK-Modem.md)** | Drum Reels con silencios de 150 ms (≤ 40s) y inspección de audio sin decodificar respaldos. |
-| **[🌐 10. Manual Bilingüe (ES / EN)](10-Manual-Bilingue-y-Selector-de-Idioma-(ES-EN).md)** | Selector dinámico de idioma, persistencia en localStorage y workflow internacional. |
-| **[🔌 11. Auto-Reconocimiento de Discos](11-Auto-Reconocimiento-y-Onboarding-de-Discos.md)** | Motor forense para diagnosticar y estructurar cualquier disco externo nuevo. |
+La entrega comienza vacía. Indexa tus archivos, abre la interfaz conectada y comprueba la ruta activa. En Expansiones, «Ver proyectos» abre los XPJ de ese paquete; «Editar copia en rack» carga su pista de batería y muestra el banco visible. Los originales permanecen en su ubicación.
 
----
+Las pruebas automatizadas cubren los formatos generados, navegación y fixtures de audio. No equivalen a una certificación de todos los modelos, navegadores o versiones de firmware. Consulta los límites antes de exportar.
 
-## ☕ Apoyo al Desarrollo / Support the Project
+## English
 
-BeatOS es 100% independiente, autónomo y libre de telemetría. Puedes apoyar el proyecto mediante microdonaciones:
-* ☕ **[Invitar a un café en Ko-fi ](https://ko-fi.com/astro1deep)**
-* 💖 **[Patrocinar en GitHub Sponsors](https://github.com/sponsors/Astro1Deep)**
+BeatOS is a desktop-hosted sample catalog, MPC project inspector and 16-pad kit rack. Download the release attachment for the organized installer and run `python3 BeatOS/installer.py` (`py BeatOS/installer.py` on Windows). Source checkouts keep the scripts at repository root. Index your own library, then serve that same location. Some labels and the terminal remain in Spanish. Native project playback, effects and multilayer editing require the manufacturer's software or hardware.
 
----
-
-## 🇬🇧 English
-
-### Overview
-**BeatOS (The System)** — *Edition: The MakerLicious* is a lightweight, zero-dependency open source ecosystem (**Universal Beatmaker Hub & Multi-Sampler Toolkit**) built with **Python 3, SQLite 3, and HTML5**. It provides instant local sample search, automatic sonic taxonomy, project integrity auditing, and a 16-pad **Universal Beatmaker Kit Rack** that exports programs and kits natively to:
-* **Akai Professional MPC Sample & Standalone** (`.xpm` Drum Programs & `.xpj` Projects)
-* **Teenage Engineering EP-133 K.O. II** (WAV + BeatOS ZIP; manual import via EP Sample Tool)
-* **Native Instruments Maschine** (WAV + JSON mapping)
-* **Roland SP-404MK2 & SP-404A / SX** (Bank A/B import folders)
-* **Teenage Engineering PO-33 / PO-133** (Adjustable Drum Reels & backup audio inspection)
-
----
-
-## 📄 Licencia / License
-
-Distribuido bajo licencia **Creative Commons Atribución-NoComercial-SinDerivadas 4.0 Internacional (CC BY-NC-ND 4.0)**.
-Mantenido por **[Astro1Deep](https://github.com/Astro1Deep)**.
+Creado por [Astro1Deep](https://github.com/Astro1Deep). Licencia [CC BY-NC-ND 4.0](../../LICENSE). [Apoyar el desarrollo](../../README.md#apoyo).

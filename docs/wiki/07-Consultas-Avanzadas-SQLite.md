@@ -1,6 +1,6 @@
 # 📊 7. Consultas Avanzadas SQLite
 
-La base de datos `mpc_sample.db` es un archivo relacional estándar de **SQLite 3**. Esto significa que puedes abrirlo con cualquier cliente gráfico (como *DB Browser for SQLite*, *TablePlus* o *DBeaver*) o lanzar consultas analíticas ultrarrápidas desde la terminal.
+La base de datos `mpc_sample.db` es un archivo relacional estándar de **SQLite 3**. Esto significa que puedes abrirlo con cualquier cliente gráfico (como *DB Browser for SQLite*, *TablePlus* o *DBeaver*) o lanzar consultas analíticas desde la terminal.
 
 ---
 
@@ -13,6 +13,7 @@ La base de datos cuenta con 5 tablas relacionales optimizadas con índices por t
 CREATE TABLE samples (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     filename TEXT NOT NULL,
+    sample_format TEXT DEFAULT 'ONE_SHOT',
     sound_type TEXT NOT NULL,
     macro_category TEXT,
     sub_pack TEXT,
@@ -107,12 +108,12 @@ ORDER BY cantidad DESC;
 
 ## 🐍 Scripting en Python con la Base de Datos
 
-Puedes integrar `mpc_sample.db` en tus propios scripts de Python en menos de 5 líneas de código:
+Puedes integrar `mpc_sample.db` en tus propios scripts de Python con la biblioteca estándar:
 
 ```python
 import sqlite3
 
-conn = sqlite3.connect("SQLITE_DATABASE/mpc_sample.db")
+conn = sqlite3.connect("file:BeatOS/data/mpc_sample.db?mode=ro", uri=True)
 cur = conn.cursor()
 
 # Obtener 5 bombos aleatorios para crear un kit

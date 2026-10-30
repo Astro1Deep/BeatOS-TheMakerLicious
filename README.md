@@ -1,35 +1,51 @@
-# BeatOS — The MakerLicious
+<p align="center"><img src="docs/assets/branding/creator/eye-mirror-wide.png" alt="Ojo y lágrima de Astro1Deep" width="420"></p>
+
+# BeatOS
+
+**The MakerLicious**
 
 [universal beatmaker station]
 
-Biblioteca de samples, inspector de proyectos MPC y rack de 16 pads. Diseño y desarrollo de **Astro1Deep**. El ojo y el cohete del creador forman una firma gráfica discreta en la barra inferior, adaptada a los ocho temas.
+Biblioteca de samples, inspector de proyectos MPC y rack de 16 pads. Creado por **Astro1Deep** para explorar bibliotecas propias, preparar kits y revisar referencias antes de llevarlos al sampler.
 
-Versión **3.6.5-layout.20261029**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc-sample-database/releases) · [Guía de instalación](GUIA_INSTALACION.md) · [Identidad del creador](docs/IDENTIDAD_DEL_CREADOR.md)
+Versión **3.7.0-layout.20261029**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc-sample-database/releases) · [Guía de instalación](GUIA_INSTALACION.md) · [Identidad del creador](docs/IDENTIDAD_DEL_CREADOR.md)
+
+![Banner de hardware de BeatOS](docs/assets/branding/user_blueprint_sheet_dark_4k.jpg)
 
 ## Instalación
 
 Requiere **Python 3.11 o superior**. El catálogo y el servidor usan la biblioteca estándar. FFmpeg es opcional para convertir audio y necesario en determinados formatos, frecuencias y ajustes de afinación. El sistema se ejecuta en el ordenador; no instala firmware en el sampler.
 
-```bash
-git clone https://github.com/Astro1Deep/mpc-sample-database.git
-cd mpc-sample-database
-python3 installer.py
-```
+Descarga el archivo **BeatOS-3.7.0-layout.20261029.zip** de [la versión estable](https://github.com/Astro1Deep/mpc-sample-database/releases/latest), junto a su archivo SHA-256. El ZIP adjunto a la versión es el instalador organizado; «Source code» descarga el repositorio de desarrollo, cuya estructura es distinta.
 
-En Windows puede usarse `py installer.py`. También se ofrece `./install.sh` en macOS/Linux.
-
-1. Elige la opción 1 e indica la carpeta de tus propios samples para crear su índice.
-2. Elige la opción 2 e indica esa misma carpeta para abrir la interfaz conectada.
-3. Usa la dirección local que imprime el servidor. Abrir el HTML por `file://` permite explorar el catálogo, pero las acciones necesitan el servidor.
-
-Código y biblioteca pueden estar en ubicaciones diferentes:
+Descomprime en una carpeta nueva y abre una terminal en la carpeta que contiene `BeatOS/`:
 
 ```bash
-python3 index_mpc_library.py --path "/ruta/a/tu/biblioteca"
-python3 serve_mpc.py "/ruta/a/tu/biblioteca" --port 8888
+python3 BeatOS/installer.py
 ```
+
+En Windows usa `py BeatOS/installer.py`. En macOS también puedes abrir `BeatOS/ABRIR_BEATOS.command` después de indexar la biblioteca. En macOS/Linux, `./BeatOS/install.sh` abre el mismo menú.
+
+1. Opción 1: indica la carpeta de tus propios samples y espera a que termine la indexación.
+2. Opción 2: indica esa misma carpeta para abrir la interfaz conectada.
+3. Comprueba la biblioteca activa en pantalla antes de generar un kit. Abrir el HTML por `file://` permite consultar el catálogo; las acciones necesitan el servidor.
+
+Para servir una biblioteca separada:
+
+```bash
+python3 BeatOS/index_mpc_library.py --path "/ruta/a/tu/biblioteca"
+python3 BeatOS/serve_mpc.py "/ruta/a/tu/biblioteca" --port 8888
+```
+
+Si prefieres clonar el repositorio, los scripts están en su raíz: `python3 installer.py`, `python3 index_mpc_library.py --path "/ruta/a/tu/biblioteca"` y `python3 serve_mpc.py "/ruta/a/tu/biblioteca"`. Los comandos anteriores con `BeatOS/` corresponden al ZIP organizado.
 
 El repositorio y el instalador empiezan con una biblioteca vacía y templates MPC sin contenido personal. No incluyen samples comerciales, proyectos del autor ni una base de datos personal.
+
+## Estructura limpia de la biblioteca
+
+La entrega comprimida contiene sólo dos accesos HTML en la raíz y una carpeta `BeatOS/`. Dentro están el código, el lanzador `ABRIR_BEATOS.command`, la documentación, `data/` (base, CSV, JSON y un solo catálogo) y `config/` (preferencias locales). La reindexación no crea carpetas SQL/índices heredadas ni multiplica los HTML. Se omiten del instalador las ilustraciones históricas que ya no usa la interfaz.
+
+La biblioteca musical conserva sus carpetas y rutas. Los kits creados quedan en `Custom_Kits/`. En el repositorio de desarrollo los scripts siguen en la raíz; allí se ejecuta `python3 installer.py`. En el ZIP organizado se ejecuta `python3 BeatOS/installer.py`.
 
 ## Biblioteca y menús
 
@@ -38,10 +54,10 @@ El repositorio y el instalador empiezan con una biblioteca vacía y templates MP
 - Tonalidad por etiquetas explícitas. Una nota de multisample no determina mayor/menor. Camelot sólo se muestra cuando se declara el modo.
 - Energía como nivel RMS aproximado de tres ventanas de WAV PCM: baja < −24 dBFS, media < −12, alta ≥ −12. No representa intensidad musical ni LUFS. Formatos no leídos indican «Sin medir».
 - Proyectos MPC: búsqueda, ordenación, paginación e inspección de pistas y bancos A–H. El rack edita una copia de la primera capa activa de cada pad; conserva el original.
-- Expansiones: carátulas, exploración de programas y samples, preescucha y edición de copias Drum. Keygroup, PGM y AKP requieren su aplicación nativa.
+- Expansiones: carátulas, programas, proyectos XPJ —incluidos demos y plantillas de subcarpetas— y samples. El acceso «Ver proyectos» filtra la carpeta exacta de la expansión; «Ver todos los proyectos» recupera la biblioteca completa. Preescucha y edición de copias Drum. Keygroup, PGM y AKP requieren su aplicación nativa.
 - Recarga de proyectos/expansiones sin descartar el rack; reindexación manual desde la interfaz conectada.
 
-[Reglas de identificación y límites](docs/IDENTIFICACION_BIBLIOTECA.md) · [Proyectos y expansiones](docs/BIBLIOTECA_PROYECTOS_EXPANSIONES.md)
+[Manual por capítulos](docs/wiki/Home.md) · [Reglas de identificación y límites](docs/IDENTIFICACION_BIBLIOTECA.md) · [Proyectos y expansiones](docs/BIBLIOTECA_PROYECTOS_EXPANSIONES.md)
 
 ## Rack y destinos
 

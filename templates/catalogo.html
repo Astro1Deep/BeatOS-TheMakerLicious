@@ -7,11 +7,11 @@
 <script>
 (function () {
   const root = new URL('./', location.href);
-  root.pathname = root.pathname.replace(/(?:SQLITE_DATABASE|_INDEX_MPC_SAMPLE)\/$/, '');
+  root.pathname = root.pathname.replace(/(?:BeatOS\/data|SQLITE_DATABASE|_INDEX_MPC_SAMPLE)\/$/, '');
   document.getElementById('catalogAssetBase').href = root.href;
 })();
 </script>
-<title>BeatOS (The System) • Edition: The MakerLicious</title>
+<title>BeatOS · The MakerLicious · universal beatmaker station</title>
 <script>
   (function() {
     try {
@@ -1908,13 +1908,13 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
 :root[data-theme="makerlicious-bone"] .creator-mark,
 :root[data-theme="mpc-vintage"] .creator-mark { filter:invert(1); mix-blend-mode:multiply; opacity:.7; }
 .player-track-info { flex:1 1 240px; }
-.audio-player-bar .player-controls { display:grid; grid-template-columns:48px minmax(160px,300px) 72px; align-items:center; gap:14px; min-width:0; }
+.audio-player-bar .player-controls { display:grid; grid-template-columns:72px minmax(160px,300px) 48px; align-items:center; gap:14px; min-width:0; }
 .audio-player-bar audio { width:100%; min-width:0; }
 .audio-player-bar #btnCopyPlayer { grid-column:2; justify-self:center; }
 @media(max-width:760px) {
  .audio-player-bar { display:grid; grid-template-columns:minmax(0,1fr); gap:6px; }
  .audio-player-bar .player-track-info { min-width:0; }
- .audio-player-bar .player-controls { grid-template-columns:32px minmax(0,1fr) 50px; gap:10px; }
+ .audio-player-bar .player-controls { grid-template-columns:50px minmax(0,1fr) 32px; gap:10px; }
  .creator-mark { width:32px; height:34px; }
  .creator-mark--label { width:50px; }
 }
@@ -1997,13 +1997,13 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
 </header>
 <section class="hero-banner" aria-label="Banner central BeatOS">
   <div class="hero-backdrop" id="heroBackdrop" aria-hidden="true">
-    <img id="heroBackdropImg" src="docs/assets/branding/studio_patchbay_cable_mosaic_matrix.jpg" alt="">
+    <img id="heroBackdropImg" src="BeatOS/docs/assets/branding/studio_patchbay_cable_mosaic_matrix.jpg" alt="">
   </div>
   <div class="banner-controls">
     <button type="button" onclick="cycleBackdropStyle()" id="btnBackdropToggle">🔌 Mosaico Patchbay</button>
     <button type="button" onclick="toggleBannerExpand()" id="btnToggleBannerExpand" aria-expanded="false" aria-controls="heroBannerImg">⛶ Ampliar banner</button>
   </div>
-  <img id="heroBannerImg" src="docs/assets/branding/user_blueprint_sheet_dark_4k.jpg" alt="Banner blueprint original de BeatOS con MPC One, MPC Sample, Maschine+, SP-404MKII, EP-133 y PO-33" decoding="async" onclick="toggleBannerExpand()">
+  <img id="heroBannerImg" src="BeatOS/docs/assets/branding/user_blueprint_sheet_dark_4k.jpg" alt="Banner blueprint original de BeatOS con MPC One, MPC Sample, Maschine+, SP-404MKII, EP-133 y PO-33" decoding="async" onclick="toggleBannerExpand()">
 </section>
 
 <div class="header-metrics-bar">
@@ -2031,7 +2031,7 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
 </div>
 
 <div class="notice-banner">
-  <span id="noticeBannerText">💡 <strong>Consejo de Reproducción:</strong> Si tu navegador restringe la reproducción de archivos locales (protocolo <code>file://</code>), abre la interfaz conectada iniciando: <code>00_ABRIR_BEATOS/ABRIR_BEATOS.command</code> o utiliza el botón <strong>📋 Copiar Ruta</strong> para cargar al instante en tu hardware MPC.</span>
+  <span id="noticeBannerText">💡 <strong>Consejo de Reproducción:</strong> Si tu navegador restringe la reproducción de archivos locales (protocolo <code>file://</code>), abre la interfaz conectada iniciando: <code>BeatOS/ABRIR_BEATOS.command</code> o utiliza el botón <strong>📋 Copiar Ruta</strong> para cargar al instante en tu hardware MPC.</span>
 </div>
 
 <div id="connectionNotice" class="card" role="status">
@@ -2176,7 +2176,7 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
 <!-- TAB: BEATMAKER KIT RACK (16 PADS UNIVERSAL) -->
 <div id="tab-rack" class="tab-pane">
 <div id="rackSourcePanel" class="card" hidden>
-  <div class="library-header-actions"><strong id="rackSourceTitle"></strong><button type="button" id="rackReturnToSource" class="po33-btn-secondary library-action" onclick="returnToSourceLibrary()">← Volver al origen</button><button type="button" class="po33-btn-secondary library-action" onclick="reloadImportedSource()">🔄 Recargar origen</button><button type="button" class="po33-btn-secondary library-action" onclick="switchTab('tab-po33',document.getElementById('tabBtnPO'))">🕹️ Abrir TE Hub</button></div>
+  <div class="library-header-actions"><strong id="rackSourceTitle" tabindex="-1"></strong><button type="button" id="rackReturnToSource" class="po33-btn-secondary library-action" onclick="returnToSourceLibrary()">← Volver al origen</button><button type="button" class="po33-btn-secondary library-action" onclick="reloadImportedSource()">🔄 Recargar origen</button><button type="button" class="po33-btn-secondary library-action" onclick="switchTab('tab-po33',document.getElementById('tabBtnPO'))">🕹️ Abrir TE Hub</button></div>
   <label>Pista <select id="rackTrack" onchange="changeSourceTrack(this.value)"></select></label>
   <label>Banco <select id="rackBank" onchange="mountSourceBank(Number(this.value))"></select></label>
   <p id="rackSourceNotice" role="status"></p>
@@ -2268,6 +2268,7 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
 
 <!-- TAB 2: PROYECTOS -->
 <div id="tab-projects" class="tab-pane library-section" data-page="1">
+ <div id="projectLibraryScope" class="library-context" hidden><strong id="projectLibraryScopeTitle"></strong><button type="button" class="po33-btn-secondary library-action" onclick="clearProjectLibraryScope()">Ver todos los proyectos</button><button type="button" class="po33-btn-secondary library-action" onclick="switchTab('tab-expansions',document.getElementById('tabBtnExpansions'))">← Expansiones</button></div>
  <div class="library-header"><div><h2>Proyectos MPC</h2><p>Localiza una sesión o un kit, comprueba sus referencias y abre una copia en el rack para ajustar pistas y pads.</p></div><div class="library-header-actions"><button type="button" class="po33-btn-secondary library-action" onclick="refreshLibraryMenu('tab-projects',this)">🔄 Recargar proyectos</button><button type="button" class="po33-btn-secondary library-action library-rack-shortcut" onclick="switchTab('tab-rack',document.getElementById('tabBtnRack'))">🎛️ Ir al rack</button></div></div>
  <button type="button" id="projectsRackLink" class="po33-btn-secondary library-action library-context" hidden onclick="switchTab('tab-rack',document.getElementById('tabBtnRack'))"></button>
  <div class="library-toolbar"><label class="library-search">Buscar proyectos<input class="library-query" type="search" oninput="filterLibraryCards('tab-projects')" placeholder="Nombre, carpeta…"></label><label>Contenido<select class="library-kind-filter" onchange="filterLibraryCards('tab-projects')"><option value="">Todos los XPJ</option><option value="sessions">Carpeta Projects · sesiones</option><option value="kits">Kits y otros proyectos</option></select></label><label>Ordenar<select class="library-sort" onchange="filterLibraryCards('tab-projects')"><option value="name">Nombre A–Z</option><option value="tempo">Tempo</option><option value="count">Más muestras</option></select></label><button type="button" class="po33-btn-secondary library-action" onclick="resetLibraryFilters('tab-projects')">Restablecer</button></div>
@@ -2275,7 +2276,7 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
  <p class="library-empty" hidden>No hay coincidencias. Prueba otro nombre o restablece los filtros.</p>
  <div class="grid-cards"><!--PROJECT_CARDS--></div></div>
 <div id="tab-expansions" class="tab-pane library-section" data-page="1">
- <div class="library-header"><div><h2>Expansiones MPC</h2><p>Explora sus programas o abre sus samples en el explorador. Desde el rack podrás preparar una copia para tu hardware.</p></div><div class="library-header-actions"><button type="button" class="po33-btn-secondary library-action" onclick="refreshLibraryMenu('tab-expansions',this)">🔄 Recargar expansiones</button><button type="button" class="po33-btn-secondary library-action library-rack-shortcut" onclick="switchTab('tab-rack',document.getElementById('tabBtnRack'))">🎛️ Ir al rack</button></div></div>
+ <div class="library-header"><div><h2>Expansiones MPC</h2><p>Explora sus programas, proyectos preparados y samples. Desde el rack podrás preparar una copia para tu hardware.</p></div><div class="library-header-actions"><button type="button" class="po33-btn-secondary library-action" onclick="refreshLibraryMenu('tab-expansions',this)">🔄 Recargar expansiones</button><button type="button" class="po33-btn-secondary library-action library-rack-shortcut" onclick="switchTab('tab-rack',document.getElementById('tabBtnRack'))">🎛️ Ir al rack</button></div></div>
  <button type="button" id="expansionsRackLink" class="po33-btn-secondary library-action library-context" hidden onclick="switchTab('tab-rack',document.getElementById('tabBtnRack'))"></button>
  <div class="library-toolbar"><label class="library-search">Buscar expansiones<input class="library-query" type="search" oninput="filterLibraryCards('tab-expansions')" placeholder="Nombre, carpeta, fabricante…"></label><label>Ordenar<select class="library-sort" onchange="filterLibraryCards('tab-expansions')"><option value="name">Nombre A–Z</option><option value="count">Más programas</option><option value="samples">Más samples</option></select></label><button type="button" class="po33-btn-secondary library-action" onclick="resetLibraryFilters('tab-expansions')">Restablecer</button></div>
  <div class="library-summary"><span class="library-results" role="status" aria-live="polite"></span><div class="library-pages"><button type="button" class="po33-btn-secondary library-action library-prev" onclick="changeLibraryPage('tab-expansions',-1)">← Anterior</button><span class="library-page"></span><button type="button" class="po33-btn-secondary library-action library-next" onclick="changeLibraryPage('tab-expansions',1)">Siguiente →</button></div></div>
@@ -2721,7 +2722,7 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
     <div class="maint-card accent-red">
       <div>
         <h3>🚀 Reindexar Tarjeta Completa</h3>
-        <p>Escanea y analiza los __SAMPLE_COUNT__ archivos de audio, regenera el índice SQLite FTS5, clasifica One-Shots vs Loops vs Stems, detecta BPM, tonalidad Camelot, energía sonora y actualiza las estadísticas del catálogo.</p>
+        <p>Escanea y analiza los __SAMPLE_COUNT__ archivos de audio, actualiza la base SQLite y el catálogo único en BeatOS/data. Revisa tipos y formatos por etiquetas, convierte Camelot sólo con modo declarado y estima el nivel RMS compatible.</p>
       </div>
       <button class="maint-btn maint-btn-red" onclick="executeLibraryAction('reindex')">
         🔄 Ejecutar Reindexación Completa
@@ -2811,9 +2812,9 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
     <span class="player-track-path" id="nowPlayingPath">Haz clic en ▶ Play en cualquier sonido</span>
   </div>
   <div class="player-controls" role="group" aria-label="Reproductor y símbolos de Astro1Deep">
-    <span class="creator-mark" data-art="eye-mirror-compact"><img id="creatorArtistMark" src="docs/assets/branding/creator/eye-mirror-compact.png" width="48" height="48" alt="Símbolo de Astro1Deep: ojo y lágrima" decoding="async"></span>
+    <span class="creator-mark creator-mark--label"><img src="BeatOS/docs/assets/branding/creator/label-rocket.png" width="72" height="48" alt="Cohete del sello digital" decoding="async"></span>
     <audio id="audioPlayer" controls></audio>
-    <span class="creator-mark creator-mark--label"><img src="docs/assets/branding/creator/label-rocket.png" width="72" height="48" alt="Cohete del sello digital" decoding="async"></span>
+    <span class="creator-mark" data-art="eye-mirror-compact"><img id="creatorArtistMark" src="BeatOS/docs/assets/branding/creator/eye-mirror-compact.png" width="48" height="48" alt="Símbolo de Astro1Deep: ojo y lágrima" decoding="async"></span>
     <button id="btnCopyPlayer" class="btn-copy" style="display:none;" onclick="copyActivePath()">📋 Copiar Ruta MPC</button>
   </div>
 </div>
@@ -2826,8 +2827,8 @@ let isBannerExpanded = false;
 
 
 const BACKDROP_STYLES = [
-  { id: 'matrix', name: '🔌 Mosaico Patchbay', file: 'docs/assets/branding/studio_patchbay_cable_mosaic_matrix.jpg', opacity: '0.85' },
-  { id: 'rack', name: '🎛️ Mosaico Cables', file: 'docs/assets/branding/studio_patchbay_cable_mosaic_rack.jpg', opacity: '0.85' },
+  { id: 'matrix', name: '🔌 Mosaico Patchbay', file: 'BeatOS/docs/assets/branding/studio_patchbay_cable_mosaic_matrix.jpg', opacity: '0.85' },
+  { id: 'rack', name: '🎛️ Mosaico Cables', file: 'BeatOS/docs/assets/branding/studio_patchbay_cable_mosaic_rack.jpg', opacity: '0.85' },
   { id: 'off', name: '⏹️ Fondo Liso', file: '', opacity: '0' }
 ];
 let currentBackdropIdx = 0;
@@ -3055,7 +3056,7 @@ const I18N = {
     tabExpansions: '🎛️ Expansiones Oficiales (9)',
     tabStats: '📊 Distribución Sonora',
     tabMaintenance: '⚙️ Acciones & Ajustes de Librería',
-    noticeText: '💡 <strong>Consejo de Reproducción:</strong> Si tu navegador restringe la reproducción de archivos locales (protocolo <code>file://</code>), abre la interfaz conectada iniciando: <code>00_ABRIR_BEATOS/ABRIR_BEATOS.command</code> o utiliza el botón <strong>📋 Copiar Ruta</strong> para cargar al instante en tu hardware MPC.',
+    noticeText: '💡 <strong>Consejo de Reproducción:</strong> Si tu navegador restringe la reproducción de archivos locales (protocolo <code>file://</code>), abre la interfaz conectada iniciando: <code>BeatOS/ABRIR_BEATOS.command</code> o utiliza el botón <strong>📋 Copiar Ruta</strong> para cargar al instante en tu hardware MPC.',
     dockTitle: 'Selector de Pad Beatmaker (Akai MPC & Roland SP-404MK2)',
     dockSubtitle: 'Elige en qué Pad se montarán las muestras que selecciones en el explorador.',
     searchPlaceholder: '🔍 Buscar por nombre de sample, instrumento, pack, BPM...',
@@ -3177,6 +3178,7 @@ function toggleLanguage() {
 }
 
 let sampleLibraryScope = null;
+let projectLibraryScope = null;
 let currentFilterType = '';
 let currentPage = 1;
 let filteredSamples = SAMPLES.slice();
@@ -3541,25 +3543,9 @@ function playUnifiedAudio(relPath, filename = '', padLabel = '', btn = null) {
   }
 
   const encodedPath = relPath.split('/').map(seg => encodeURIComponent(seg)).join('/');
-  const isSubdir = window.location.pathname.includes('/SQLITE_DATABASE/');
-
-  let primaryUrl = '';
-  let fallbackUrl = '';
-  let altHttpUrl = '';
-
-  if (window.location.protocol.startsWith('http')) {
-    primaryUrl = '/' + encodedPath;
-    fallbackUrl = (isSubdir ? '../' : './') + encodedPath;
-  } else {
-    primaryUrl = (isSubdir ? '../' : './') + encodedPath;
-    let baseUri = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-    if (isSubdir) {
-      const sqlIdx = baseUri.indexOf('SQLITE_DATABASE/');
-      if (sqlIdx !== -1) baseUri = baseUri.substring(0, sqlIdx);
-    }
-    fallbackUrl = baseUri + encodedPath;
-    altHttpUrl = 'http://127.0.0.1:8888/' + encodedPath;
-  }
+  const primaryUrl = new URL(encodedPath, document.baseURI).href;
+  const fallbackUrl = primaryUrl;
+  const altHttpUrl = window.location.protocol.startsWith('http') ? '' : 'http://127.0.0.1:8888/' + encodedPath;
 
   const titleEl = document.getElementById('nowPlayingTitle');
   const pathEl = document.getElementById('nowPlayingPath');
@@ -3579,7 +3565,7 @@ function playUnifiedAudio(relPath, filename = '', padLabel = '', btn = null) {
     if (titleEl) {
       if (window.location.protocol === 'file:') {
         titleEl.innerHTML =
-          '⚠️ <strong>' + escapeHtml(dispName) + '</strong>: El navegador bloquea archivos locales (file://). Inicia el servidor con <code>00_ABRIR_BEATOS/ABRIR_BEATOS.command</code> o pulsa 📋 Copiar Ruta.';
+          '⚠️ <strong>' + escapeHtml(dispName) + '</strong>: El navegador bloquea archivos locales (file://). Inicia el servidor con <code>BeatOS/ABRIR_BEATOS.command</code> o pulsa 📋 Copiar Ruta.';
       } else {
         titleEl.innerHTML =
           '⚠️ <strong>' + escapeHtml(dispName) + '</strong>: No se pudo reproducir este archivo. Pulsa 📋 Copiar Ruta para cargarlo en tu hardware MPC.';
@@ -4375,7 +4361,7 @@ function exportOfflineCommandScript() {
 // ==================== CENTRO DE OPERACIONES Y MANTENIMIENTO API ====================
 function requireConnectedView() {
   if (location.protocol === 'file:') {
-    showToast('Abre «BeatOS conectado» para cargar proyectos o exportar. Inicia 00_ABRIR_BEATOS/ABRIR_BEATOS.command si no abre.');
+    showToast('Abre «BeatOS conectado» para cargar proyectos o exportar. Inicia BeatOS/ABRIR_BEATOS.command si no abre.');
     document.getElementById('connectionNotice').scrollIntoView({block:'center'});
     return false;
   }
@@ -4432,7 +4418,7 @@ function checkServerHealth(manual = false) {
     })
     .catch(err => {
       isConnectedToApi = false;
-      summary.textContent = 'Sin conexión: inicia 00_ABRIR_BEATOS/ABRIR_BEATOS.command y abre BeatOS conectado.';
+      summary.textContent = 'Sin conexión: inicia BeatOS/ABRIR_BEATOS.command y abre BeatOS conectado.';
       if (descEl) descEl.innerText = 'No hay respuesta del servidor de esta página. Inicia ABRIR_BEATOS.command.';
       if (infoEl) {
         infoEl.innerHTML = '⚠️ Sin conexión con el servidor. No se ha ejecutado ninguna acción.';
@@ -4490,7 +4476,7 @@ function executeLibraryAction(actionType) {
     .catch(err => {
       statusEl.innerText = 'La acción no se completó';
       outputEl.innerText += NL + '⚠️ La acción no se completó en ' + base + ': ' + err.message + NL + NL +
-        'Abre una terminal en tu carpeta de instalación BeatOS y ejecuta python3 installer.py (Windows: py installer.py).' + NL +
+        'Abre una terminal en la carpeta del código (la que contiene installer.py) y ejecuta python3 installer.py (Windows: py installer.py).' + NL +
         'Elige la opción 2 e indica tu biblioteca para iniciar el servidor; después vuelve a intentar la acción.' + NL +
         (actionType === 'sync_dashboard' ? 'La sincronización requiere una instalación local de Cerebro con su script de dashboard.' + NL : '');
     });
@@ -4535,10 +4521,7 @@ function openTerminalModal(title) {
   const reloadBtn = document.getElementById('btnReloadCatalog');
   if (reloadBtn) reloadBtn.style.display = 'none';
   if (titleEl) titleEl.innerText = 'Cerebro OS Action Runner: ' + title;
-  if (modal) {
-    if (modal.style.display !== 'flex') expansionReturnFocus = document.activeElement;
-    modal.style.display = 'flex'; searchInput?.focus();
-  }
+  if (modal) modal.style.display = 'flex';
 }
 
 function closeTerminalModal() {
@@ -4623,9 +4606,12 @@ async function revealLibraryPath(path, button = null) {
   } catch(error) { showToast('No se abrió la ruta: '+error.message); }
   finally { setLibraryButtonBusy(button,false); }
 }
-function getLibraryView(cards, query, kind, sort, page) {
+function matchesLibraryPath(path, scope) {
+  return !scope || String(path || '').startsWith(scope.path.replace(/\/+$/,'') + '/');
+}
+function getLibraryView(cards, query, kind, sort, page, scope = null) {
   const words = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
-  const matches = cards.filter(card => (!kind || card.dataset.kind === kind) &&
+  const matches = cards.filter(card => matchesLibraryPath(card.dataset.path,scope) && (!kind || card.dataset.kind === kind) &&
     words.every(word => (card.dataset.search || '').toLocaleLowerCase().includes(word)));
   matches.sort((a,b) => {
     if (sort === 'name') return a.dataset.name.localeCompare(b.dataset.name, 'es', {numeric:true,sensitivity:'base'});
@@ -4643,7 +4629,7 @@ function filterLibraryCards(id, query = null, resetPage = true) {
   if (query !== null) input.value = query;
   const cards = [...pane.querySelectorAll('.library-card')];
   const view = getLibraryView(cards,input.value,pane.querySelector('.library-kind-filter')?.value || '',
-    pane.querySelector('.library-sort').value,resetPage ? 1 : Number(pane.dataset.page));
+    pane.querySelector('.library-sort').value,resetPage ? 1 : Number(pane.dataset.page),id === 'tab-projects' ? projectLibraryScope : null);
   pane.dataset.page = view.page;
   const visible = new Set(view.visible);
   cards.forEach(card => {card.hidden = !visible.has(card);});
@@ -4666,10 +4652,30 @@ function resetLibraryFilters(id) {
 }
 function setLibraryButtonBusy(button,busy) {
   if (!button) return;
+  if (busy && !button.disabled) {
+    button.dataset.idleLabel = button.textContent;
+    button.textContent = '⏳ Procesando…';
+  } else if (!busy && button.dataset.idleLabel !== undefined) {
+    button.textContent = button.dataset.idleLabel;
+    delete button.dataset.idleLabel;
+  }
   button.disabled = busy; button.setAttribute('aria-busy',String(busy));
 }
 function matchesSampleLibraryScope(item, scope) {
-  return !scope || String(item[10] || '').startsWith(scope.path.replace(/\/+$/,'') + '/');
+  return matchesLibraryPath(item[10], scope);
+}
+function viewExpansionProjects(path,title) {
+  closeExpansionBrowser();
+  projectLibraryScope = {path,title};
+  document.getElementById('projectLibraryScope').hidden = false;
+  document.getElementById('projectLibraryScopeTitle').textContent = 'Proyectos de ' + title;
+  resetLibraryFilters('tab-projects');
+  switchTab('tab-projects',document.getElementById('tabBtnProjects'));
+}
+function clearProjectLibraryScope() {
+  projectLibraryScope = null;
+  document.getElementById('projectLibraryScope').hidden = true;
+  resetLibraryFilters('tab-projects');
 }
 function viewExpansionSamples(path,title,folder) {
   closeExpansionBrowser();
@@ -4744,6 +4750,9 @@ function setImportedSource(source, path, kind) {
   updateLibraryRackLinks();
   mountSourceBank(banks[0], false);
   switchTab('tab-rack', document.getElementById('tabBtnRack'));
+  document.getElementById('rackSourcePanel').scrollIntoView({block:'start'});
+  document.getElementById('rackSourceTitle').focus({preventScroll:true});
+  showToast('Cargado: ' + name + ' · ' + RACK_PADS.filter(Boolean).length + '/16 pads en el banco visible');
 }
 function changeSourceTrack(value) {
   if (importedSource?.kind === 'project') loadProjectToRack(importedSource.project_name, importedSource.path, Number(value));
@@ -4756,11 +4765,11 @@ async function loadProjectToRack(projectName, relPath, trackIndex = null, button
   try {
     const response = await fetch(getApiBaseUrl() + '/api/load_project', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({rel_path:relPath, track_index:trackIndex})
+      body:JSON.stringify({rel_path:relPath, track_index:trackIndex}), signal:AbortSignal.timeout(15000)
     });
     const data = await response.json();
     if (request !== sourceRequest) return;
-    if (!data.success) throw new Error(data.error || 'No se pudo leer el proyecto');
+    if (!response.ok || !data.success) throw new Error(data.error || 'No se pudo leer el proyecto');
     currentLoadedKitRelPath = ''; currentLoadedKitName = ''; currentExpansionName = ''; currentExpansionPrograms = [];
     updateRackKitSelectorUI();
     setImportedSource(data.project, relPath, 'project');
@@ -4791,7 +4800,10 @@ function openExpansionBrowser(expansionName) {
   if (container) {
     container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-muted);"><span style="display:inline-block; animation:spin 1s infinite linear; font-size:24px; margin-bottom:10px;">⏳</span><br>Escaneando programas (.xpm) de la expansión...</div>';
   }
-  if (modal) modal.style.display = 'flex';
+  if (modal) {
+    if (modal.style.display !== 'flex') expansionReturnFocus = document.activeElement;
+    modal.style.display = 'flex'; searchInput?.focus();
+  }
 
   fetch(getApiBaseUrl() + '/api/list_expansion_programs', {
     method: 'POST',
@@ -5445,14 +5457,14 @@ async function launchEpSampleTool() {
 // SISTEMA DE TEMAS GLOBALES SINCRONIZADOS (Cerebro OS / TE / MPC / SP-404 / Maschine)
 // ==========================================
 const ECOSYSTEM_THEMES = [
-  { id: 'te-arcade', creatorArt: 'eye-mirror-compact', name: 'TE PO-20 Arcade', shortName: 'PO-20 Arcade', icon: '🕹️', accent: '#8b5cf6', borderActive: '#8b5cf6', banner: 'docs/assets/branding/user_blueprint_sheet_dark_4k.jpg' },
-  { id: 'te-ko', creatorArt: 'eye-mirror-portrait', name: 'TE PO-33 K.O.!', shortName: 'PO-33 K.O.!', icon: '🥊', accent: '#ff6600', borderActive: '#ff6600', banner: 'docs/assets/branding/user_blueprint_sheet_dark_4k.jpg' },
-  { id: 'mpc-vintage', creatorArt: 'eye-black-relief', name: 'Akai MPC 60 / 2000XL', shortName: 'MPC Vintage', icon: '🎛️', accent: '#c8102e', borderActive: '#c8102e', banner: 'docs/assets/branding/blueprint_sheet_mpc-vintage.jpg' },
-  { id: 'mpc-blue-le', creatorArt: 'eye-mirror-wide', name: 'Akai MPC 2000XL Blue LE', shortName: 'MPC Blue LE', icon: '🔷', accent: '#38bdf8', borderActive: '#38bdf8', banner: 'docs/assets/branding/blueprint_sheet_mpc-blue-le.jpg' },
-  { id: 'sp404-studio', creatorArt: 'eye-minimal-wide', name: 'Roland SP-404MK2', shortName: 'SP-404MK2', icon: '🎚️', accent: '#f59e0b', borderActive: '#f59e0b', banner: 'docs/assets/branding/blueprint_sheet_sp404-studio.jpg' },
-  { id: 'maschine-studio', creatorArt: 'eye-minimal-wide', name: 'NI Maschine Studio', shortName: 'Maschine', icon: '🎹', accent: '#3b82f6', borderActive: '#3b82f6', banner: 'docs/assets/branding/blueprint_sheet_maschine-studio.jpg' },
-  { id: 'makerlicious-bone', creatorArt: 'eye-mirror-wide', name: 'The MakerLicious Bone', shortName: 'Bone Glitch', icon: '🦴', accent: '#ff6600', borderActive: '#ff6600', banner: 'docs/assets/branding/blueprint_bone_sin_marcas.png' },
-  { id: 'cerebro-neon', creatorArt: 'eye-mirror-compact', name: 'Cerebro OS Neon', shortName: 'Cerebro Neon', icon: '⚡', accent: '#00f0ff', borderActive: '#00f0ff', banner: 'docs/assets/branding/user_blueprint_sheet_dark_4k.jpg' }
+  { id: 'te-arcade', creatorArt: 'eye-mirror-compact', name: 'TE PO-20 Arcade', shortName: 'PO-20 Arcade', icon: '🕹️', accent: '#8b5cf6', borderActive: '#8b5cf6', banner: 'BeatOS/docs/assets/branding/user_blueprint_sheet_dark_4k.jpg' },
+  { id: 'te-ko', creatorArt: 'eye-mirror-portrait', name: 'TE PO-33 K.O.!', shortName: 'PO-33 K.O.!', icon: '🥊', accent: '#ff6600', borderActive: '#ff6600', banner: 'BeatOS/docs/assets/branding/user_blueprint_sheet_dark_4k.jpg' },
+  { id: 'mpc-vintage', creatorArt: 'eye-black-relief', name: 'Akai MPC 60 / 2000XL', shortName: 'MPC Vintage', icon: '🎛️', accent: '#c8102e', borderActive: '#c8102e', banner: 'BeatOS/docs/assets/branding/blueprint_sheet_mpc-vintage.jpg' },
+  { id: 'mpc-blue-le', creatorArt: 'eye-mirror-wide', name: 'Akai MPC 2000XL Blue LE', shortName: 'MPC Blue LE', icon: '🔷', accent: '#38bdf8', borderActive: '#38bdf8', banner: 'BeatOS/docs/assets/branding/blueprint_sheet_mpc-blue-le.jpg' },
+  { id: 'sp404-studio', creatorArt: 'eye-minimal-wide', name: 'Roland SP-404MK2', shortName: 'SP-404MK2', icon: '🎚️', accent: '#f59e0b', borderActive: '#f59e0b', banner: 'BeatOS/docs/assets/branding/blueprint_sheet_sp404-studio.jpg' },
+  { id: 'maschine-studio', creatorArt: 'eye-minimal-wide', name: 'NI Maschine Studio', shortName: 'Maschine', icon: '🎹', accent: '#3b82f6', borderActive: '#3b82f6', banner: 'BeatOS/docs/assets/branding/blueprint_sheet_maschine-studio.jpg' },
+  { id: 'makerlicious-bone', creatorArt: 'eye-mirror-wide', name: 'The MakerLicious Bone', shortName: 'Bone Glitch', icon: '🦴', accent: '#ff6600', borderActive: '#ff6600', banner: 'BeatOS/docs/assets/branding/blueprint_bone_sin_marcas.png' },
+  { id: 'cerebro-neon', creatorArt: 'eye-mirror-compact', name: 'Cerebro OS Neon', shortName: 'Cerebro Neon', icon: '⚡', accent: '#00f0ff', borderActive: '#00f0ff', banner: 'BeatOS/docs/assets/branding/user_blueprint_sheet_dark_4k.jpg' }
 ];
 let currentThemeId = 'te-arcade';
 let isThemeSyncEnabled = true;
@@ -5482,7 +5494,7 @@ function setEcosystemTheme(themeKey, syncWithServer = true) {
 
   const creatorMark = document.getElementById('creatorArtistMark');
   if (creatorMark) {
-    creatorMark.src = 'docs/assets/branding/creator/' + themeObj.creatorArt + '.png';
+    creatorMark.src = 'BeatOS/docs/assets/branding/creator/' + themeObj.creatorArt + '.png';
     creatorMark.parentElement.dataset.art = themeObj.creatorArt;
   }
 
@@ -5752,6 +5764,7 @@ window.addEventListener('DOMContentLoaded', () => {
       <label class="library-search">Buscar programa<input id="expansionSearchInput" type="search" placeholder="Nombre o categoría…" oninput="filterExpansionKits(this.value)"></label>
       <label>Tipo<select id="expansionTypeFilter" onchange="filterExpansionKits(document.getElementById('expansionSearchInput').value)"><option value="">Todos</option><option value="drum">Batería editable</option><option value="keygroup">Keygroup · motor MPC</option></select></label>
       <button type="button" class="po33-btn-secondary library-action" onclick="openExpansionBrowser(currentExpansionName)">🔄 Recargar programas</button>
+      <button type="button" class="po33-btn-secondary library-action" onclick="viewExpansionProjects('Expansions/'+currentExpansionName,currentExpansionName)">📁 Ver proyectos</button>
       <button type="button" class="po33-btn-secondary library-action" onclick="quickLoadExpansionRandomKit()">🎲 Kit sorpresa</button>
     </div>
 

@@ -1,4 +1,4 @@
-# Biblioteca de proyectos y expansiones · BeatOS 3.6.1
+# Biblioteca de proyectos y expansiones · BeatOS 3.7.0
 
 Los botones principales abren una copia en el rack o los programas de una expansión. Mostrar en Finder y Copiar ruta trabajan con el archivo original. Sus ubicaciones se pueden desplegar sin saturar las tarjetas.
 
@@ -10,7 +10,7 @@ Los estados se refieren al índice de rutas, no certifican carga física ni capa
 
 ## Expansiones
 
-«Ver programas» abre el catálogo XPM. «Explorar samples» aplica al explorador el directorio exacto de esa expansión. Se conservan las acciones de preescucha y asignación a pads. El botón para quitar el filtro devuelve el catálogo completo sin vaciar el rack. Sólo se muestran las muestras indexadas; Mostrar en Finder permite revisar los demás archivos.
+«Ver programas» abre el catálogo XPM. «Ver proyectos» muestra los XPJ de la carpeta exacta de la expansión, incluidos demos y plantillas anidados; «Ver todos los proyectos» devuelve la biblioteca completa. «Explorar samples» aplica al explorador el directorio exacto de esa expansión. Se conservan las acciones de preescucha y asignación a pads. El botón para quitar el filtro devuelve el catálogo completo sin vaciar el rack. Sólo se muestran las muestras indexadas; Mostrar en Finder permite revisar los demás archivos.
 
 En el catálogo de programas hay búsqueda, filtro de tipo, recarga y preescucha de una muestra. Los programas Drum permiten editar una copia. Keygroup conserva las acciones de preescucha y archivo, pero necesita el motor MPC para reproducir su comportamiento completo. Los botones anterior, siguiente y sorpresa del rack recorren sólo programas de batería.
 
@@ -23,3 +23,5 @@ Desde el rack puedes volver al proyecto o al catálogo de origen. Los menús mue
 Cambiar de pista o cargar otro origen sustituye la copia de trabajo: exporta primero si quieres conservarla. Se mantienen los límites de importación y exportación de la revisión 3.6.0: primera capa activa y 16 pads visibles por kit nuevo; no se transforma un proyecto completo con secuencias y efectos.
 
 Las operaciones que requieren servidor muestran su estado de trabajo y bloquean el botón mientras se procesan. No se añaden permisos de red ni se modifican archivos musicales para cambiar de vista o filtrar.
+
+Al terminar una importación, el rack se activa y se desplaza a la vista con el nombre del origen y confirmación de pads. Recargar tarjetas no sustituye el JavaScript de una página ya abierta: tras actualizar BeatOS hay que recargar la página completa.
