@@ -2,13 +2,10 @@
 
 Only reads a synthetic empty catalog. Does not touch real sample libraries or hardware.
 """
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Thread
 from contextlib import contextmanager
 from tempfile import TemporaryDirectory
-from functools import partial
-import os
 import shutil
 import subprocess
 import sys
@@ -16,6 +13,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from index_mpc_library import render_catalog
+import serve_mpc
 
 PROBE = r"""
 <script>
@@ -72,20 +70,22 @@ window.addEventListener('load', () => {
 """
 
 @contextmanager
-def local_site():
+def local_site(html):
+    # Exercise the actual BeatOS server and catalog route, not an isolated
+    # SimpleHTTPRequestHandler test copy of the template.
     with TemporaryDirectory(prefix="beatos-i18n-smoke-") as folder:
-        template = (ROOT / "templates" / "catalogo.html").read_text(encoding="utf-8")
-        html = render_catalog(template, [], {})
+        root = Path(folder)
+        catalog = root / "BeatOS" / "data" / "catalogo.html"
+        catalog.parent.mkdir(parents=True)
         if "</body>" not in html:
             raise RuntimeError("Catalog missing body")
-        (Path(folder) / "index.html").write_text(html.replace("</body>", PROBE + "\n</body>", 1), encoding="utf-8")
-        handler = partial(SimpleHTTPRequestHandler, directory=folder)
-        server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
-        server.daemon_threads = True
+        catalog.write_text(html.replace("</body>", PROBE + "\\n</body>", 1), encoding="utf-8")
+        server = serve_mpc.HTTPServer(("127.0.0.1", 0), serve_mpc.MPCAudioRequestHandler)
+        server.root_dir = str(root)
         thread = Thread(target=server.serve_forever, daemon=True)
         thread.start()
         try:
-            yield "http://127.0.0.1:" + str(server.server_port) + "/index.html"
+            yield "http://127.0.0.1:" + str(server.server_port)
         finally:
             server.shutdown()
             server.server_close()
@@ -95,19 +95,26 @@ def main():
     browser = next((shutil.which(x) for x in ("google-chrome", "chromium", "chromium-browser") if shutil.which(x)), None)
     if not browser:
         raise SystemExit("Chrome/Chromium missing: real-browser verification cannot be marked passed")
-    with local_site() as url, TemporaryDirectory(prefix="beatos-chrome-profile-") as profile:
-        command = [
-            browser, "--headless=new", "--no-sandbox", "--disable-gpu",
-            "--disable-dev-shm-usage", "--disable-extensions",
-            "--disable-background-networking", "--no-first-run",
-            "--user-data-dir=" + profile, "--virtual-time-budget=4500",
-            "--dump-dom", url
-        ]
-        result = subprocess.run(command, capture_output=True, text=True, timeout=50)
-        if result.returncode or "BEATOS_BROWSER_ES_EN_PASS" not in result.stdout:
-            detail = result.stdout[-1500:] + "\n" + result.stderr[-900:]
-            raise SystemExit("Browser UI locale smoke FAILED: " + detail)
-        print("PASS: real headless Chrome toggled ES→EN→ES over HTTP and preserved sample name")
+    template = (ROOT / "templates" / "catalogo.html").read_text(encoding="utf-8")
+    checked_in = (ROOT / "BeatOS" / "data" / "catalogo.html").read_text(encoding="utf-8")
+    scenarios = (
+        ("generated", render_catalog(template, [], {}), "/"),
+        ("checked-in", checked_in, "/BeatOS/data/catalogo.html"),
+    )
+    for label, html, endpoint in scenarios:
+        with local_site(html) as base, TemporaryDirectory(prefix="beatos-chrome-profile-") as profile:
+            command = [
+                browser, "--headless=new", "--no-sandbox", "--disable-gpu",
+                "--disable-dev-shm-usage", "--disable-extensions",
+                "--disable-background-networking", "--no-first-run",
+                "--user-data-dir=" + profile, "--virtual-time-budget=4500",
+                "--dump-dom", base + endpoint
+            ]
+            result = subprocess.run(command, capture_output=True, text=True, timeout=50)
+            if result.returncode or "BEATOS_BROWSER_ES_EN_PASS" not in result.stdout:
+                detail = result.stdout[-1500:] + "\\n" + result.stderr[-900:]
+                raise SystemExit("Browser UI locale smoke FAILED (" + label + "): " + detail)
+    print("PASS: actual BeatOS HTTP routes (generated and checked-in) switched ES→EN→ES without touching sample filenames")
 
 if __name__ == "__main__":
     main()
