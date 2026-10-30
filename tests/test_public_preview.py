@@ -57,6 +57,26 @@ class PublicPreviewChecks(unittest.TestCase):
         self.assertEqual(len(urls),2)
         self.assertTrue(all("astro1deep.github.io/BeatOS-TheMakerLicious/" in u for u in urls))
 
+    def test_clean_zip_includes_readme_linked_landing_pages_and_screenshots(self):
+        from build_release import build_release
+        import tempfile
+        import zipfile
+        with tempfile.TemporaryDirectory(prefix="beatos-release-preview-") as folder:
+            archive=Path(folder)/"BeatOS-source.zip"
+            build_release(archive)
+            with zipfile.ZipFile(archive) as z:
+                names=set(z.namelist())
+                prefix="BeatOS-3.8.0/BeatOS/"
+                for relative in (
+                    "docs/index.html", "docs/index-es.html",
+                    "docs/assets/screenshots/beatos-overview-en.png",
+                    "docs/assets/screenshots/beatos-overview-es.png",
+                    "docs/assets/screenshots/beatos-rack-en.png",
+                    "docs/assets/screenshots/beatos-hero-en.png",
+                    "docs/SEO_DISCOVERY.md",
+                ):
+                    self.assertIn(prefix+relative,names,relative)
+
     def test_llm_pointer_disclaims_non_native_exports(self):
         txt=(ROOT/"docs"/"llms.txt").read_text(encoding="utf-8")
         self.assertIn("not native hardware backups",txt)
