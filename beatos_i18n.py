@@ -53,6 +53,8 @@ EXACT_EN = {
     "Esta conversión necesita FFmpeg. Instálalo o usa WAV PCM 16-bit/44.1kHz.": "This conversion requires FFmpeg. Install it or use 16-bit/44.1 kHz PCM WAV.",
     "Se requiere audio mono o estéreo no vacío": "Nonempty mono or stereo audio is required",
     "Audio vacío": "Audio is empty",
+    "Tempo fuera de rango (30–300 BPM)": "Tempo out of range (30–300 BPM)",
+    "Parámetros WAV no admitidos: usa PCM entre 8 y 384 kHz y de 1 a 8 canales": "Unsupported WAV parameters: use PCM at 8–384 kHz with 1–8 channels",
     "Separación PO: entre 0 y 500 ms": "PO gap must be between 0 and 500 ms",
     "Las pausas ocupan todo el presupuesto; reduce su duración": "The gaps exceed the time budget; reduce their duration",
     "Destino de exportación no reconocido": "Unrecognized export target",
@@ -129,6 +131,12 @@ def translate_text(value, lang="es"):
     port = re.fullmatch(r"Puerto (\d+) ocupado por otra biblioteca o servicio; esta biblioteca usa (\d+)\.", body)
     if port:
         return indentation + f"Port {port.group(1)} is busy; this library uses port {port.group(2)}."
+    pad_missing = re.fullmatch(r"Pad (\d+): muestra ausente o fuera de la biblioteca", body)
+    if pad_missing:
+        return indentation + f"Pad {pad_missing.group(1)}: sample missing or outside the library"
+    pad_range = re.fullmatch(r"Pad (\d+): (volume|pan|tune|mute_group|tempo) fuera de rango", body)
+    if pad_range:
+        return indentation + f"Pad {pad_range.group(1)}: {pad_range.group(2)} out of range"
     for prefix, english in _SORTED_PREFIXES:
         if body.startswith(prefix):
             return indentation + english + body[len(prefix):]
