@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://astro1deep.github.io/BeatOS-TheMakerLicious/sitemap.xml
