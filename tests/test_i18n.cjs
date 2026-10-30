@@ -115,6 +115,7 @@ assert.match(englishDialog,/Akai MPC projects/);
 assert.doesNotMatch(englishDialog,/Proyectos|Programas|guardado/);
 assert.match(englishDialog,/\/mnt\/Samples\/Kick.wav/,'sample paths must stay literal');
 assert.match(dialogCtx.offline(),/local server API/);
+assert.ok(dialogCtx.offline().includes('\n\n'), 'offline dialog should have proper paragraphs');
 assert.doesNotMatch(dialogCtx.offline(),/¿Quieres|La API del/);
 dialogCtx.setLang('es');
 const spanishDialog=dialogCtx.lines(resultPaths).join('\n');
