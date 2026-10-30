@@ -1,5 +1,7 @@
 # Referencia técnica · BeatOS 3.8.0
 
+**Idioma:** Español · [English API reference](en/REFERENCIA_TECNICA.md)
+
 Revisión: 30 de octubre de 2026. [Manual de uso](MANUAL_COMPLETO.md) · [Compatibilidad por hardware](COMPATIBILIDAD_HARDWARE.md) · [Inicio](../README.md).
 
 Esta referencia describe la implementación incluida, no una API pública versionada con garantía de estabilidad para clientes externos.
