@@ -131,7 +131,7 @@ Keyboard mapping:
 
 **Pad editor:** volume, pan, pitch in semitones and mute group. A mute group of **0** means unrestricted layering; positive groups 1–32 cut one another. Default grouping uses kick=1, hi-hat=2, snare=3 and otherwise 0, unless an imported kit explicitly provides different values.
 
-The web volume scale is not dBFS: **100% is approximately gain 0.707946**. The UI slider reaches 150%, but the exporter validates volume **0–1**; visually exceeding approximately **141%** may fail validation. Use ≤100% for a conservative workflow. The editor supports pitch ±24 semitones; the API validates ±36. The rack's web session is **not saved to disk by “Save” in the editor**.
+The web volume scale is not dBFS: **100% is approximately gain 0.707946**. The UI slider reaches 141%, but the exporter validates volume **0–1**; visually exceeding approximately **141%** may fail validation. Use ≤100% for a conservative workflow. The editor supports pitch ±24 semitones; the API validates ±36. The rack's web session is **not saved to disk by “Save” in the editor**.
 
 Supported imported MPC material may expose banks A–H, but each export uses **only the currently visible 16 pads**. Export every bank you want to keep under a distinct kit name before changing project, track, source, or reloading the page. Shuffle uses sample categories and may repeat sources; it is not generative AI.
 
