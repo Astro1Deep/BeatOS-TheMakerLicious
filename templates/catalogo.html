@@ -4412,8 +4412,8 @@ function beatosExportDialogLines(data) {
 }
 function beatosOfflineConfirmText() {
   return currentLang === 'en'
-    ? '💡 The local server API is not active in this browser session (this can happen when opening the HTML directly via file://).\\n\\nDownload an offline macOS installation script (.command) instead?'
-    : '💡 La API del servidor local no está activa en esta sesión web (común si abriste el archivo con doble clic directo file://).\\n\\n¿Quieres descargar el Script de Instalación (.command) para crearlo con 1 clic en tu Mac?';
+    ? '💡 The local server API is not active in this browser session (this can happen when opening the HTML directly via file://).\n\nDownload an offline macOS installation script (.command) instead?'
+    : '💡 La API del servidor local no está activa en esta sesión web (común si abriste el archivo con doble clic directo file://).\n\n¿Quieres descargar el Script de Instalación (.command) para crearlo con 1 clic en tu Mac?';
 }
 
 function exportKitToHardware() {
@@ -5766,7 +5766,7 @@ function revealLastEp133KitInFinder() {
     if (data.success) {
       showToast('📂 Carpeta abierta en Finder');
     } else {
-      alert('No se pudo abrir la carpeta en Finder: ' + (data.error || ''));
+      alert(localizeUiMessage('No se pudo abrir la carpeta en Finder: ' + (data.error || '')));
     }
   })
   .catch(() => {
