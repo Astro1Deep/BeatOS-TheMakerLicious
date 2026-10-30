@@ -145,4 +145,29 @@ expansionCtx.lang('es');
 expansionCtx.draw([kit]);
 assert.match(expansionNode.innerHTML,/Editar copia en rack/);
 assert.match(expansionNode.innerHTML,/User Original Kick Kit/);
+
+// Regression: expansion metadata from third-party XPM may omit classification fields.
+// Filtering must not crash, including when a user selects a type filter.
+const expansionFilterStart=html.indexOf('function filterExpansionKits(');
+const expansionFilterEnd=html.indexOf('function renderExpansionProgramsList(', expansionFilterStart);
+assert.ok(expansionFilterStart>0 && expansionFilterEnd>expansionFilterStart);
+const filterState={value:'drum'};
+let visiblePrograms=null;
+const filterCtx=vm.createContext({
+  document:{getElementById:id=>id==='expansionTypeFilter'?filterState:null},
+  currentExpansionPrograms:[
+    {name:'Mystery Drum',rel_path:'x/mystery.xpm',program_type:null,sub_category:null},
+    {name:'Drum 01',rel_path:'x/drum.xpm',program_type:'Drum',sub_category:null}
+  ],
+  renderExpansionProgramsList:items=>{visiblePrograms=items;}
+});
+vm.runInContext(html.slice(expansionFilterStart,expansionFilterEnd),filterCtx);
+assert.doesNotThrow(()=>vm.runInContext('filterExpansionKits("drum")',filterCtx));
+assert.equal(visiblePrograms.length,1);
+assert.equal(visiblePrograms[0].name,'Drum 01');
+filterState.value='';
+assert.doesNotThrow(()=>vm.runInContext('filterExpansionKits("mystery")',filterCtx));
+assert.equal(visiblePrograms.length,1);
+assert.equal(visiblePrograms[0].name,'Mystery Drum');
+
 console.log('BeatOS ES/EN: reversible texts, tooltips and messages; sample paths unchanged OK');
