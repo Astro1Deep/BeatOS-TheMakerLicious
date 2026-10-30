@@ -14,6 +14,7 @@ import os
 import sys
 sys.dont_write_bytecode = True
 from beatos_paths import data_dir as library_data_dir, write_catalog
+from beatos_i18n import translate_text
 import sqlite3
 import json
 import csv
@@ -283,7 +284,11 @@ def main():
     parser = argparse.ArgumentParser(description="Indexador Universal de Samples y Proyectos para Akai MPC")
     parser.add_argument("--path", "-p", default=".", help="Ruta de la tarjeta SD, USB o carpeta de samples (por defecto: directorio actual)")
     parser.add_argument("--output", "-o", default="", help="Ruta de salida para la base de datos y catálogo (por defecto: [PATH]/BeatOS/data)")
+    parser.add_argument("--lang", choices=("es", "en"), default=os.environ.get("BEATOS_LANG", "es") if os.environ.get("BEATOS_LANG") in ("es", "en") else "es", help="Console language (es/en)")
     args = parser.parse_args()
+
+    def emit(value):
+        emit(translate_text(str(value), args.lang))
 
     root_path = os.path.abspath(args.path)
     if not Path(root_path).is_dir():
@@ -297,12 +302,12 @@ def main():
     html_root_path = os.path.join(root_path, "catalogo_mpc_sample.html")
     html_sqlite_path = os.path.join(root_path, "BeatOS", "data", "catalogo.html")
 
-    print("=" * 65)
-    print("🎛️  AKAI MPC SAMPLE DATABASE & FINDER TOOLKIT")
-    print("=" * 65)
-    print(f"Ruta de Origen : {root_path}")
-    print(f"Ruta de Salida : {output_dir}")
-    print(f"Base de Datos  : {db_path}")
+    emit("=" * 65)
+    emit("🎛️  AKAI MPC SAMPLE DATABASE & FINDER TOOLKIT")
+    emit("=" * 65)
+    emit(f"Ruta de Origen : {root_path}")
+    emit(f"Ruta de Salida : {output_dir}")
+    emit(f"Base de Datos  : {db_path}")
 
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
@@ -330,7 +335,7 @@ def main():
         cur.execute(f'DELETE FROM {table}')
 
     # 1. Escanear Proyectos MPC (.xpj)
-    print("\n🔍 1. Buscando y analizando proyectos MPC (.xpj)...")
+    emit("\n🔍 1. Buscando y analizando proyectos MPC (.xpj)...")
     total_projects = 0
     projects_list = []
     for r, dirs, files in os.walk(root_path):
@@ -375,10 +380,10 @@ def main():
                 """, (p_name, xpj_path, tempo, key, len(unique_paths), missing_count, status, sz_kb))
                 total_projects += 1
                 projects_list.append({"name": p_name, "tempo": round(tempo, 1), "key": key, "samples": len(unique_paths), "missing": missing_count, "status": status, "size_kb": sz_kb, "rel_path": os.path.relpath(xpj_path, root_path)})
-                print(f"  ✔ Proyecto: {p_name} | {round(tempo, 1)} BPM | Clave: {key} | Samples: {len(unique_paths)} | Estado: {status}")
+                emit(f"  ✔ Proyecto: {p_name} | {round(tempo, 1)} BPM | Clave: {key} | Samples: {len(unique_paths)} | Estado: {status}")
 
     # 2. Escanear Expansiones Oficiales
-    print("\n📦 2. Buscando Expansiones Oficiales MPC...")
+    emit("\n📦 2. Buscando Expansiones Oficiales MPC...")
     total_expansions = 0
     expansions_list = []
     for r, dirs, files in os.walk(root_path):
@@ -421,10 +426,10 @@ def main():
             """, (title, title.lower(), mfg, etype, "1.0", cover_img, p_count, s_count, sz_mb, r))
             total_expansions += 1
             expansions_list.append({"title": title, "mfg": mfg, "type": etype, "programs": p_count, "samples": s_count, "size_mb": sz_mb, "path": os.path.relpath(r, root_path), "cover_url": os.path.relpath(os.path.join(r, cover_img), root_path) if cover_img and os.path.isfile(os.path.join(r, cover_img)) else ""})
-            print(f"  ✔ Expansión: {title} ({mfg}) | {p_count} Programas | {s_count} Samples")
+            emit(f"  ✔ Expansión: {title} ({mfg}) | {p_count} Programas | {s_count} Samples")
 
     # 3. Escanear Samples de Audio
-    print("\n🔊 3. Escaneando y clasificando muestras de audio...")
+    emit("\n🔊 3. Escaneando y clasificando muestras de audio...")
     AUDIO_EXTS = {".wav", ".aif", ".aiff", ".mp3", ".flac"}
     batch = []
     total_samples = 0
@@ -474,12 +479,12 @@ def main():
         INSERT INTO samples (filename, sound_type, sample_format, macro_category, sub_pack, bpm, bpm_tier, musical_key, camelot, energy_level, extension, size_mb, full_path, rel_path)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, batch)
-    print(f"\n✔ Total muestras de audio: {total_samples:,} ({total_bytes / (1024**3):.2f} GB)")
+    emit(f"\n✔ Total muestras de audio: {total_samples:,} ({total_bytes / (1024**3):.2f} GB)")
 
     conn.commit()
 
     # 4. Generar CSV y JSON
-    print("\n📊 4. Generando archivos de exportación...")
+    emit("\n📊 4. Generando archivos de exportación...")
     with open(csv_path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(["ID", "Nombre", "Tipo_Sonido", "Categoria", "Pack", "BPM", "Rango_BPM", "Clave", "Camelot", "Energia", "Tam_MB", "Ruta_Relativa"])
@@ -506,7 +511,7 @@ def main():
         json.dump(json_payload, f, indent=2, ensure_ascii=False)
 
     # 5. Generar Catálogo HTML5
-    print("\n🌐 5. Generando Catálogo Web HTML5 interactivo...")
+    emit("\n🌐 5. Generando Catálogo Web HTML5 interactivo...")
     cur.execute("""
     SELECT filename, sound_type, sample_format, macro_category, sub_pack, COALESCE(bpm, 0), COALESCE(musical_key, '-'), COALESCE(camelot, '-'), energy_level, size_mb, rel_path, id
     FROM samples
@@ -528,10 +533,10 @@ def main():
 
     write_catalog(root_path, html_code)
 
-    print(f"✔ Catálogo en Raíz: {html_root_path}")
-    print(f"✔ Catálogo en Carpeta SQLite: {html_sqlite_path}")
-    print(f"✔ Base de Datos SQLite: {db_path}")
-    print("\n🎉 Indexación completada con éxito. Inicia BeatOS/ABRIR_BEATOS.command o el instalador de tu carpeta de código.")
+    emit(f"✔ Catálogo en Raíz: {html_root_path}")
+    emit(f"✔ Catálogo en Carpeta SQLite: {html_sqlite_path}")
+    emit(f"✔ Base de Datos SQLite: {db_path}")
+    emit("\n🎉 Indexación completada con éxito. Inicia BeatOS/ABRIR_BEATOS.command o el instalador de tu carpeta de código.")
     conn.close()
 
 if __name__ == "__main__":
