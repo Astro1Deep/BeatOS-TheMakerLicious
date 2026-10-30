@@ -395,18 +395,30 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(self._api_json_dumps({"error": "Archivo no encontrado."}).encode("utf-8"))
                 return
             try:
-                data = target_path.read_bytes()
-                mime = mimetypes.guess_type(target_path.name)[0] or "application/octet-stream"
-                self.send_response(200)
-                self.send_header("Content-Type", mime)
-                self.send_header("Content-Length", str(len(data)))
-                self.send_header("Content-Disposition", f'attachment; filename="{target_path.name}"')
-                self.send_cors_headers()
-                self.end_headers()
-                self.wfile.write(data)
+                # Stream from disk in bounded chunks: kits may contain many large samples.
+                with target_path.open("rb") as source:
+                    length = os.fstat(source.fileno()).st_size
+                    mime = mimetypes.guess_type(target_path.name)[0] or "application/octet-stream"
+                    quoted_name = urllib.parse.quote(target_path.name, safe="")
+                    ascii_name = "".join(
+                        c if c.isascii() and (c.isalnum() or c in "._-") else "_"
+                        for c in target_path.name
+                    )[:120] or "download"
+                    self.send_response(200)
+                    self.send_header("Content-Type", mime)
+                    self.send_header("Content-Length", str(length))
+                    self.send_header("Content-Disposition",
+                                     f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{quoted_name}")
+                    self.send_cors_headers()
+                    self.end_headers()
+                    shutil.copyfileobj(source, self.wfile, length=64 * 1024)
+            except (BrokenPipeError, ConnectionResetError):
+                # A user canceling a download is not a server-side export failure.
+                pass
             except Exception:
-                self.send_response(500)
-                self.end_headers()
+                # Headers may already have been written; never send a second HTTP status.
+                if not self.wfile.closed:
+                    self.close_connection = True
             return
 
         self.handle_request(send_body=True)
