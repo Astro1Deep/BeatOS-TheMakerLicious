@@ -14,9 +14,14 @@ class InstallerLanguageTests(unittest.TestCase):
             installer.main()
             answer.assert_called_once()
             all_lines="\n".join(str(a) for call in printed.call_args_list for a in call.args)
-            self.assertIn("Choose an option",all_lines) if False else None
+            self.assertEqual(answer.call_args.args[0], "Choose an option (1-6): ")
             self.assertIn("Exiting.",all_lines)
             self.assertIn("Universal installer",all_lines)
+    def test_english_yes_no_question_contains_real_line_break(self):
+        question="\\n¿Deseas abrir el catálogo en tu navegador ahora? (s/n): "
+        translated=installer.locale_text(question, "en")
+        self.assertEqual(translated, "\\nOpen the catalog in your browser now? (y/n): ")
+
     def test_spanish_default(self):
         with patch.object(sys,"argv",["installer.py"]), patch.dict(os.environ,{"BEATOS_LANG":""}), patch("builtins.input",return_value="6"), patch("builtins.print") as printed:
             self.assertEqual(installer.get_language(),"es")
