@@ -5559,6 +5559,17 @@ window.addEventListener('beforeunload', event => {
 
 // Carga de inventario de backups desde la API local
 let po33BackupScan = 0;
+function beatosPoBackupInfoText(backup) {
+  const en = currentLang === 'en';
+  const audioState = backup.audio_compatible
+    ? (en ? 'Complete WAV in a supported playback format' : 'WAV completo en formato de reproducción admitido')
+    : (en ? 'Unsupported format or incomplete/unreadable file' : 'Formato no admitido o archivo incompleto/ilegible');
+  const modem = en ? 'Modem payload NOT verified.' : 'Datos del módem NO verificados.';
+  const clipping = backup.clipping
+    ? (en ? 'Possible clipping in the first 4 seconds.' : 'Posible saturación en los primeros 4 s.')
+    : '';
+  return `${backup.duration_sec ?? '?'} s · ${backup.channels ?? '?'} ${en ? 'channels' : 'canales'} · ${backup.bit_depth ?? '?'} bits · ${backup.sample_rate ?? '?'} Hz. ${audioState}. ${modem} ${clipping}`;
+}
 async function loadPo33BackupsList() {
   const scan = ++po33BackupScan;
   const container = document.getElementById('po33BackupsList');
@@ -5575,7 +5586,7 @@ async function loadPo33BackupsList() {
       const card = document.createElement('div'); card.className = 'card';
       const title = document.createElement('strong'); title.textContent = backup.filename.replace('_' + backup.sha256, '');
       const info = document.createElement('p');
-      info.textContent = `${backup.duration_sec ?? '?'} s · ${backup.channels ?? '?'} canales · ${backup.bit_depth ?? '?'} bits · ${backup.sample_rate ?? '?'} Hz. ${backup.audio_compatible ? 'WAV completo en formato de reproducción admitido' : 'Formato no admitido o archivo incompleto/ilegible'}. Datos del módem NO verificados. ${backup.clipping ? 'Posible saturación en los primeros 4 s.' : ''}`;
+      info.textContent = beatosPoBackupInfoText(backup);
       const link = document.createElement('a'); link.textContent = 'Descargar WAV original'; link.download = backup.filename; link.className = 'po33-btn-secondary';
       link.href = getApiBaseUrl() + '/api/po33_backup_audio?file=' + encodeURIComponent(backup.path);
       const hash = document.createElement('p'); hash.style.overflowWrap = 'anywhere'; hash.textContent = 'SHA-256: ' + (backup.sha256 || 'no disponible');
