@@ -1,6 +1,6 @@
 {
-  "default": "es",
-  "autoDetect": true,
+  "default": "en",
+  "autoDetect": false,
   "supported": ["es", "en"],
   "labels": {
     "es": "Español",
