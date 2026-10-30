@@ -1,0 +1,28 @@
+# BeatOS — The MakerLicious (Astro1Deep)
+
+> Open-source local-first sample library browser, Akai MPC project inspector, and 16-pad beatmaking kit workspace with ES/EN web interface. Developer: Astro1Deep. Repository: https://github.com/Astro1Deep/BeatOS-TheMakerLicious
+
+Important: BeatOS runs on the user's computer and does not install sampler firmware. The hardware export targets differ in compatibility; WAV/JSON transport bundles are not native hardware backups. Indexing estimates BPM/key from names and energy from a small number of PCM RMS windows, not full-file beat/key or loudness recognition. Download a release ZIP rather than assuming GitHub's source ZIP is an installer.
+
+## Primary references
+
+- Repository and source: https://github.com/Astro1Deep/BeatOS-TheMakerLicious
+- Latest stable release: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases/latest
+- Complete English manual: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/en/MANUAL_COMPLETO.md
+- Manual completo en español: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/MANUAL_COMPLETO.md
+- Hardware compatibility EN: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/en/COMPATIBILIDAD_HARDWARE.md
+- Compatibilidad hardware ES: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/COMPATIBILIDAD_HARDWARE.md
+- Technical reference and API: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/en/REFERENCIA_TECNICA.md
+- Supported documentation index: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/tree/main/docs/wiki/en
+- Evidence-based QA report: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/AUDITORIA_INTEGRAL_BILINGUE_2026-10-30.md
+
+## Hardware export workflows
+
+- Akai MPC: Drum XPM and XPJ based on a specific MPC Sample AC50 template. Not a certified universal MPC project.
+- Native Instruments Maschine: WAV audio plus JSON mapping, not native MXGRP.
+- Roland SP-404MKII: WAV16/48 kHz import files, pad placement subject to firmware workflow.
+- Roland SP-404A / SX: 12-pad WAV16/44.1 kHz files.
+- Teenage Engineering PO-33 / PO-133: audio sampling reel, not an FSK modem-data backup.
+- Teenage Engineering EP-133 K.O. II: WAV/ZIP transport and mapping, not a native project backup.
+
+This document is an optional factual pointer for machine-readable discovery. It does not guarantee that any particular search engine or AI system will crawl or use it.
