@@ -42,7 +42,7 @@ import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer as HTTPServer
 from pathlib import Path
 from beatos_paths import CATALOG_REL, config_dir, database_path, default_library_root
-from beatos_i18n import get_request_language, localize_api_payload
+from beatos_i18n import get_request_language, localize_api_payload, translate_text
 
 mimetypes.init()
 mimetypes.add_type("audio/wav", ".wav")
@@ -909,10 +909,13 @@ def existing_library_root(port):
         return None
 
 def run_server(custom_path: str | None = None, port: int | None = None, auto_open: bool = True):
+    def emit(message):
+        print(translate_text(str(message), os.environ.get("BEATOS_LANG", "es")))
+
     script_dir = os.path.dirname(os.path.abspath(__file__))
     target_root = str(Path(custom_path).expanduser().resolve()) if custom_path else find_card_root(script_dir)
     if not Path(target_root).is_dir():
-        raise ValueError(f"La biblioteca no existe: {target_root}")
+        raise ValueError(translate_text(f"La biblioteca no existe: {target_root}", os.environ.get("BEATOS_LANG", "es")))
 
     desired_port = port or 8888
     port = find_available_port(desired_port)
@@ -932,7 +935,7 @@ def run_server(custom_path: str | None = None, port: int | None = None, auto_ope
     if port != desired_port and existing_library_root(desired_port) == Path(target_root):
         existing_url = f"http://127.0.0.1:{desired_port}/" + (catalog_rel if catalog_rel else "")
         if auto_open:
-            print(f"✔ El servidor BeatOS ya está activo en segundo plano en {existing_url} — abriendo navegador...")
+            emit(f"✔ El servidor BeatOS ya está activo en segundo plano en {existing_url} — abriendo navegador...")
             try:
                 if sys.platform == "darwin":
                     subprocess.run(["open", existing_url], check=False)
@@ -941,24 +944,24 @@ def run_server(custom_path: str | None = None, port: int | None = None, auto_ope
             except Exception:
                 pass
         else:
-            print(f"✔ El servidor BeatOS ya está activo en segundo plano en {existing_url} — omitiendo instancia duplicada.")
+            emit(f"✔ El servidor BeatOS ya está activo en segundo plano en {existing_url} — omitiendo instancia duplicada.")
         return
 
     if port != desired_port:
-        print(f"Puerto {desired_port} ocupado por otra biblioteca o servicio; esta biblioteca usa {port}.")
+        emit(f"Puerto {desired_port} ocupado por otra biblioteca o servicio; esta biblioteca usa {port}.")
     url = f"http://127.0.0.1:{port}/" + (catalog_rel if catalog_rel else "")
 
-    print("\n" + "=" * 70)
-    print("🔊 BeatOS — The MakerLicious")
-    print("   The system ★ [universal beatmaker station]")
-    print("   │ ref: mpc · sp-404 · pocket operator · maschine · ep-133 k.o. ii │")
-    print("=" * 70)
-    print(f"  📁 Raíz de Medios / Repositorio: {target_root}")
-    print(f"  🌐 URL del Catálogo Web:         {url}")
-    print(f"  ⚡ Streaming RFC 7233:           HTTP 206 Partial Content (Safari, Chrome, Arc)")
-    print(f"  🎛️ Multi-Sampler API:            Akai MPC, Roland SP-404MK2, NI Maschine, PO-33, EP-133 K.O. II")
-    print("=" * 70)
-    print("  💡 Presiona Ctrl+C en esta terminal para detener el servidor.\n")
+    emit("\n" + "=" * 70)
+    emit("🔊 BeatOS — The MakerLicious")
+    emit("   The system ★ [universal beatmaker station]")
+    emit("   │ ref: mpc · sp-404 · pocket operator · maschine · ep-133 k.o. ii │")
+    emit("=" * 70)
+    emit(f"  📁 Raíz de Medios / Repositorio: {target_root}")
+    emit(f"  🌐 URL del Catálogo Web:         {url}")
+    emit(f"  ⚡ Streaming RFC 7233:           HTTP 206 Partial Content (Safari, Chrome, Arc)")
+    emit(f"  🎛️ Multi-Sampler API:            Akai MPC, Roland SP-404MK2, NI Maschine, PO-33, EP-133 K.O. II")
+    emit("=" * 70)
+    emit("  💡 Presiona Ctrl+C en esta terminal para detener el servidor.\n")
 
     server_address = ("127.0.0.1", port)
     httpd = HTTPServer(server_address, MPCAudioRequestHandler)
@@ -980,7 +983,7 @@ def run_server(custom_path: str | None = None, port: int | None = None, auto_ope
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print("\n✔ Servidor web detenido correctamente.")
+        emit("\n✔ Servidor web detenido correctamente.")
     finally:
         httpd.server_close()
 
