@@ -61,4 +61,17 @@ ctx.locale.refresh();
 assert.equal(text.nodeValue,' Guardar Ajustes ');
 assert.equal(sample.nodeValue,'My private sample.wav');
 assert.equal(attrs.title,'Reproducir muestra del pad activo');
+// Denied browser storage must not stop the audio UI from loading or switching languages.
+const deniedStorage={getItem(){throw new Error('storage disabled');},setItem(){throw new Error('storage disabled');}};
+const initSource=html.slice(html.indexOf('let currentLang = '),html.indexOf('\n\nconst I18N ='));
+const initCtx=vm.createContext({localStorage:deniedStorage});
+assert.doesNotThrow(()=>vm.runInContext(initSource+'; this.detected=currentLang;',initCtx));
+assert.equal(initCtx.detected,'es');
+const setterSource=html.slice(html.indexOf('const I18N ='),html.indexOf('function toggleLanguage()'));
+const fakeDoc={documentElement:{lang:'es'},getElementById(){return null;}};
+const setterCtx=vm.createContext({localStorage:deniedStorage,document:fakeDoc,refreshBeatOsLocale(){}});
+vm.runInContext('let currentLang="es";\n'+setterSource+';\nthis.switchLang=setLanguage;',setterCtx);
+assert.doesNotThrow(()=>setterCtx.switchLang('en'));
+assert.equal(fakeDoc.documentElement.lang,'en');
+
 console.log('BeatOS ES/EN: reversible texts, tooltips and messages; sample paths unchanged OK');
