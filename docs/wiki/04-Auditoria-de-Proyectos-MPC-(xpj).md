@@ -10,4 +10,4 @@ Volumen, panorama, afinación y mutes se ajustan por pad. El tempo elegido se ex
 
 El estado del índice informa de referencias de archivo, no certifica reproducción física. `ERROR` señala un archivo que no se pudo leer; `ATTENTION`, referencias ausentes; `INDEX_OK`, referencias encontradas por el indexador. La inspección en vivo comprueba las muestras de la pista seleccionada. Una referencia ambigua no se sustituye por otra muestra con el mismo nombre.
 
-«Recargar proyectos» vuelve a leer el catálogo guardado sin vaciar el rack. «Reindexar» reconstruye metadatos y actualiza ambos nombres de catálogo (`catalogo_mpc_sample.html` y `catalogo_universal.html`), incluidas las copias de navegación. No modifica los proyectos ni ejecuta reparaciones del sistema.
+«Recargar proyectos» vuelve a leer el catálogo guardado sin vaciar el rack. «Reindexar» reconstruye metadatos y actualiza el catálogo único en BeatOS/data/ y sus dos accesos HTML en la raíz. No modifica los proyectos ni ejecuta reparaciones del sistema.

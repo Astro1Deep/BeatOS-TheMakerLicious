@@ -1,4 +1,10 @@
-# BeatOS — instalación limpia
+# BeatOS
+
+**The MakerLicious**
+
+[universal beatmaker station]
+
+## Instalación limpia
 
 Edición 3.7.0-layout.20261029. Herramientas de biblioteca y sampling para ejecutar en el ordenador; no es firmware ni sustituye el sistema de un MPC.
 
@@ -14,7 +20,7 @@ El servidor escucha en 127.0.0.1. No lo publiques mediante un túnel o un proxy 
 
 Los kits se generan dentro de `Custom_Kits` en la biblioteca seleccionada. Guarda una copia de tu tarjeta antes de cualquier modificación. Las exportaciones están verificadas por pruebas de estructura y audio sintético, pero deben probarse en el modelo y firmware de hardware de destino.
 
-Pruebas locales sin hardware: `python3 -B -m unittest discover -s tests -v`. El ZIP contiene un manifiesto SHA-256 para comprobar sus archivos; los hashes comprueban integridad, no identidad del editor.
+Desde la carpeta del código (BeatOS/ en el ZIP o la raíz del clon), pruebas locales sin hardware: `python3 -B -m unittest discover -s tests -v`. El ZIP contiene un manifiesto SHA-256 para comprobar sus archivos; los hashes comprueban integridad, no identidad del editor.
 
 ## Conexión y formatos de audio
 

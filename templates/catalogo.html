@@ -11,7 +11,7 @@
   document.getElementById('catalogAssetBase').href = root.href;
 })();
 </script>
-<title>BeatOS (The System) • Edition: The MakerLicious</title>
+<title>BeatOS · The MakerLicious · universal beatmaker station</title>
 <script>
   (function() {
     try {
@@ -2176,7 +2176,7 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
 <!-- TAB: BEATMAKER KIT RACK (16 PADS UNIVERSAL) -->
 <div id="tab-rack" class="tab-pane">
 <div id="rackSourcePanel" class="card" hidden>
-  <div class="library-header-actions"><strong id="rackSourceTitle"></strong><button type="button" id="rackReturnToSource" class="po33-btn-secondary library-action" onclick="returnToSourceLibrary()">← Volver al origen</button><button type="button" class="po33-btn-secondary library-action" onclick="reloadImportedSource()">🔄 Recargar origen</button><button type="button" class="po33-btn-secondary library-action" onclick="switchTab('tab-po33',document.getElementById('tabBtnPO'))">🕹️ Abrir TE Hub</button></div>
+  <div class="library-header-actions"><strong id="rackSourceTitle" tabindex="-1"></strong><button type="button" id="rackReturnToSource" class="po33-btn-secondary library-action" onclick="returnToSourceLibrary()">← Volver al origen</button><button type="button" class="po33-btn-secondary library-action" onclick="reloadImportedSource()">🔄 Recargar origen</button><button type="button" class="po33-btn-secondary library-action" onclick="switchTab('tab-po33',document.getElementById('tabBtnPO'))">🕹️ Abrir TE Hub</button></div>
   <label>Pista <select id="rackTrack" onchange="changeSourceTrack(this.value)"></select></label>
   <label>Banco <select id="rackBank" onchange="mountSourceBank(Number(this.value))"></select></label>
   <p id="rackSourceNotice" role="status"></p>
@@ -4652,6 +4652,13 @@ function resetLibraryFilters(id) {
 }
 function setLibraryButtonBusy(button,busy) {
   if (!button) return;
+  if (busy && !button.disabled) {
+    button.dataset.idleLabel = button.textContent;
+    button.textContent = '⏳ Procesando…';
+  } else if (!busy && button.dataset.idleLabel !== undefined) {
+    button.textContent = button.dataset.idleLabel;
+    delete button.dataset.idleLabel;
+  }
   button.disabled = busy; button.setAttribute('aria-busy',String(busy));
 }
 function matchesSampleLibraryScope(item, scope) {
@@ -4743,6 +4750,9 @@ function setImportedSource(source, path, kind) {
   updateLibraryRackLinks();
   mountSourceBank(banks[0], false);
   switchTab('tab-rack', document.getElementById('tabBtnRack'));
+  document.getElementById('rackSourcePanel').scrollIntoView({block:'start'});
+  document.getElementById('rackSourceTitle').focus({preventScroll:true});
+  showToast('Cargado: ' + name + ' · ' + RACK_PADS.filter(Boolean).length + '/16 pads en el banco visible');
 }
 function changeSourceTrack(value) {
   if (importedSource?.kind === 'project') loadProjectToRack(importedSource.project_name, importedSource.path, Number(value));
@@ -4755,11 +4765,11 @@ async function loadProjectToRack(projectName, relPath, trackIndex = null, button
   try {
     const response = await fetch(getApiBaseUrl() + '/api/load_project', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({rel_path:relPath, track_index:trackIndex})
+      body:JSON.stringify({rel_path:relPath, track_index:trackIndex}), signal:AbortSignal.timeout(15000)
     });
     const data = await response.json();
     if (request !== sourceRequest) return;
-    if (!data.success) throw new Error(data.error || 'No se pudo leer el proyecto');
+    if (!response.ok || !data.success) throw new Error(data.error || 'No se pudo leer el proyecto');
     currentLoadedKitRelPath = ''; currentLoadedKitName = ''; currentExpansionName = ''; currentExpansionPrograms = [];
     updateRackKitSelectorUI();
     setImportedSource(data.project, relPath, 'project');
