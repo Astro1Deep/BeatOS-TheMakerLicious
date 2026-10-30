@@ -71,15 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const button=document.getElementById('tabBtnRack');
     switchTab('tab-rack', button);
   }
-  if ("RACK" !== "hero") {
-    const target = ("RACK" === "rack")
-      ? document.getElementById('tab-rack')
-      : document.querySelector('.rack-assignment-dock');
-    if (target) setTimeout(() => {
-      const top=target.getBoundingClientRect().top+window.scrollY-90;
-      window.scrollTo({top:Math.max(0,top),behavior:'instant'});
-    },900);
-  }
   const badge=document.createElement('div');
   badge.textContent='DEMO · Synthetic sample data · No connected hardware';
   Object.assign(badge.style,{
@@ -91,6 +82,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 """).replace('"RACK"',json.dumps(tab))
+    if tab != "hero":
+        # A focused screenshot of the real workflow: only the tall decorative
+        # header is hidden; the toolbar, controls and data are untouched.
+        rendered=rendered.replace("</head>",
+            "<style>header.beatos-brand,section.hero-banner{display:none!important}</style></head>",1)
     rendered=rendered.replace("</body>",preview_script+"</body>",1)
     return rendered
 
@@ -137,7 +133,7 @@ def save_preview(browser, url, destination, label):
     destination.parent.mkdir(parents=True,exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="beatos-preview-chrome-") as profile:
         command=[
-            browser,"--headless=new","--no-sandbox","--disable-dev-shm-usage",
+            browser,"--headless=new","--no-sandbox","--disable-gpu","--disable-dev-shm-usage",
             "--no-first-run","--disable-background-networking","--disable-extensions",
             "--hide-scrollbars","--window-size=1500,1050",
             "--force-device-scale-factor=1","--virtual-time-budget=5500",
