@@ -25,7 +25,7 @@ def get_language(argv=None, environ=None):
             return "en" if argv[i + 1].lower() == "en" else "es"
         if arg.startswith("--lang="):
             return "en" if arg.partition("=")[2].lower() == "en" else "es"
-    return "en" if environ.get("BEATOS_LANG", "en").lower() == "en" else "es"
+    return "es" if environ.get("BEATOS_LANG", "").strip().lower() == "es" else "en"
 
 def locale_text(message, lang=None):
     return _INSTALLER_EN.get(message, message) if (lang or get_language()) == "en" else message
