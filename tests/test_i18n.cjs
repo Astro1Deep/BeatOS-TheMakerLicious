@@ -84,7 +84,7 @@ assert.ok(poSummaryStart >= 0, 'PO backup metadata needs a locale-safe formatter
 const poSummaryEnd = html.indexOf('async function loadPo33BackupsList(', poSummaryStart);
 assert.ok(poSummaryEnd > poSummaryStart, 'PO backup formatter boundary');
 const poContext=vm.createContext({});
-vm.runInContext('let currentLang="en";\\n' + html.slice(poSummaryStart,poSummaryEnd) + ';this.poText=beatosPoBackupInfoText;this.setLanguage=(lang)=>{currentLang=lang;}',poContext);
+vm.runInContext('let currentLang="en";\n' + html.slice(poSummaryStart,poSummaryEnd) + ';this.poText=beatosPoBackupInfoText;this.setLanguage=(lang)=>{currentLang=lang;}',poContext);
 const sampleBackup={duration_sec:2,channels:2,bit_depth:16,sample_rate:44100,audio_compatible:false,clipping:true};
 const enDetail=poContext.poText(sampleBackup);
 assert.match(enDetail,/channels/);
