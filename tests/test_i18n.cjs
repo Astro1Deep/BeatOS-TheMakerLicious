@@ -59,7 +59,13 @@ const phrases = [
   ['Modo Mover','Move mode'],
   ['Arrastra muestra aquí','Drop sample here'],
   ['⚡ Auto-avanzar Pad','⚡ Auto-advance pad'],
-  ['🎛️ Ver Rack (','🎛️ View rack (']
+  ['🎛️ Ver Rack (','🎛️ View rack ('],
+  ['🔊 808s & Sub Bajos','🔊 808s & sub bass'],
+  ['📂 Explorar Kits','📂 Browse kits'],
+  ['🔀 Modo Mover','🔀 Move mode'],
+  ['(Banco A: Pads 1 al 16)','(Bank A: pads 1–16)'],
+  ['💡 Guía de Carga en Hardware:','💡 Hardware loading guide:'],
+  ['🔊 Reproducir muestra','🔊 Play sample']
 ];
 for (const [spanish,english] of phrases) {
   const actual=vm.runInContext('beatosTranslateExact('+JSON.stringify(spanish)+')',ctx);
