@@ -4,7 +4,7 @@ BeatOS 3.8.0 incluye un catálogo vacío, plantillas MPC saneadas y un manifiest
 
 ## Descarga e integridad
 
-Descarga el ZIP adjunto a la [versión estable](https://github.com/Astro1Deep/mpc-sample-database/releases/latest) y su archivo de sumas. «Source code» es el repositorio de desarrollo, no el instalador organizado. En macOS, desde la carpeta de descargas:
+Descarga el ZIP adjunto a la [versión estable](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases/latest) y su archivo de sumas. «Source code» es el repositorio de desarrollo, no el instalador organizado. En macOS, desde la carpeta de descargas:
 
 ```bash
 shasum -a 256 -c BeatOS-3.8.0-SHA256SUMS.txt
@@ -21,7 +21,7 @@ En Linux usa `sha256sum -c` con ese mismo archivo. En PowerShell, `Get-FileHash 
 - Exportaciones sobre fixtures sintéticos, rollback ante error y rechazo de rutas privadas, archivos ausentes y parámetros inválidos.
 - Backups PO: importación/descarga byte a byte, SHA-256, detección de WAV truncado, rechazo de escapes de ruta, separación estéreo PCM y restauración con confirmación y sin autoplay. Captura probada en Chrome con una entrada estéreo sintética; no equivale a probar un volcado físico del PO.
 
-Los resultados se ven en la pestaña [Actions](https://github.com/Astro1Deep/mpc-sample-database/actions). El alcance no incluye una certificación de hardware físico ni una instalación real en todos los sistemas operativos. Los formatos de audio admitidos por el navegador y los recursos de cada proyecto pueden variar.
+Los resultados se ven en la pestaña [Actions](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/actions). El alcance no incluye una certificación de hardware físico ni una instalación real en todos los sistemas operativos. Los formatos de audio admitidos por el navegador y los recursos de cada proyecto pueden variar.
 
 ## Instalación y actualización
 
