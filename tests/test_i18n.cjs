@@ -186,4 +186,18 @@ assert.doesNotThrow(()=>vm.runInContext('filterExpansionKits("mystery")',filterC
 assert.equal(visiblePrograms.length,1);
 assert.equal(visiblePrograms[0].name,'Mystery Drum');
 
+// User-authored titles that happen to equal an interface label must never be translated.
+const protectedTitle={nodeValue:'Nombre',parentElement:{
+  tagName:'H3',closest(selector){return selector.includes('[translate="no"]')?this:null;}
+}};
+const originalTreeWalker=ctx.document.createTreeWalker;
+ctx.document.createTreeWalker=()=>{const nodes=[protectedTitle];return {nextNode:()=>nodes.shift()||null};};
+ctx.change('en');
+ctx.locale.refresh();
+assert.equal(protectedTitle.nodeValue,'Nombre','protected project title must remain literal');
+ctx.change('es');
+ctx.locale.refresh();
+assert.equal(protectedTitle.nodeValue,'Nombre','protected project title must survive ES restoration');
+ctx.document.createTreeWalker=originalTreeWalker;
+
 console.log('BeatOS ES/EN: reversible texts, tooltips and messages; sample paths unchanged OK');
