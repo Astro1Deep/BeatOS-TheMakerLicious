@@ -1,5 +1,7 @@
 # PO-33, PO-133 y EP-133: alcance real de BeatOS
 
+[Manual completo: Hub PO y respaldos](../MANUAL_COMPLETO.md#11-hub-po-33-y-po-133) · [Carga por modelo](../COMPATIBILIDAD_HARDWARE.md)
+
 ## PO-33 / PO-133
 
 El reel reúne los pads ocupados del rack en audio mono PCM 16-bit/44.1 kHz. Ese es el formato del archivo de intercambio, no una afirmación sobre la electrónica interna. Volumen y afinación se procesan en el audio y luego se normaliza el conjunto; panorama y mutes no se transfieren al PO.

@@ -1,5 +1,7 @@
 # Proyectos MPC: inspección, bancos y ajustes
 
+[Manual completo: proyectos](../MANUAL_COMPLETO.md#8-proyectos-mpc) · [Compatibilidad MPC Sample, One y Live](../COMPATIBILIDAD_HARDWARE.md#1-mpc-sample-frente-a-mpc-one-y-mpc-live)
+
 Abre BeatOS por HTTP desde `BeatOS/ABRIR_BEATOS.command`. Las páginas abiertas como archivo permiten explorar el catálogo, pero el servidor rechaza sus operaciones. La interfaz muestra la biblioteca activa para distinguir el Mac de la tarjeta.
 
 La pestaña Proyectos permite buscar, recargar el catálogo, mostrar/copiar la ruta e inspeccionar pistas de batería. Se carga la ruta registrada, sin adivinar ubicaciones ni sustituirla por muestras elegidas por nombre.

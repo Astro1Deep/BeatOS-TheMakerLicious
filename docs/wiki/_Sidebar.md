@@ -2,6 +2,9 @@
 *Edition: The MakerLicious*
 
 * **[🏠 Inicio / Home](Home.md)**
+* **[Manual completo por módulos](../MANUAL_COMPLETO.md)**
+* **[Compatibilidad y carga por hardware](../COMPATIBILIDAD_HARDWARE.md)**
+* **[Referencia técnica y API](../REFERENCIA_TECNICA.md)**
 * **[🚀 1. Instalación y Puesta en Marcha](01-Instalacion-y-Puesta-en-Marcha.md)**
 * **[📁 2. Organización de la biblioteca](02-Organizacion-MicroSD-para-MPC.md)**
 * **[🎹 3. Taxonomía y Detección de Audio](03-Taxonomia-y-Deteccion-de-Audio.md)**

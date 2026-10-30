@@ -1,5 +1,7 @@
 # Expansiones MPC
 
+[Manual completo: expansiones](../MANUAL_COMPLETO.md#9-expansiones)
+
 BeatOS lee los metadatos disponibles de Expansion.xml y cataloga sus archivos. La tarjeta conserva las carpetas existentes. El navegador de programas del servidor busca bajo `Expansions/`; no instala ni redistribuye packs comerciales.
 
 Cada tarjeta de expansión permite:

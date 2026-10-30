@@ -1,5 +1,7 @@
 # Rack de 16 pads y exportación para varios samplers
 
+[Manual completo: rack](../MANUAL_COMPLETO.md#7-rack-de-16-pads) · [Compatibilidad por hardware](../COMPATIBILIDAD_HARDWARE.md)
+
 El rack es el punto común de preparación para MPC, Maschine, SP-404MK2, SP-404A/SX, PO-33/PO-133 y EP-133 K.O. II. No necesitas importar un proyecto MPC: puedes montar el kit desde muestras de tu biblioteca. [Primer kit paso a paso y comparación de destinos](../../README.md#rack-y-destinos).
 
 Asigna samples desde el explorador o importa una copia de una pista de batería XPJ / programa XPM Drum. Elige banco A–H cuando exista. El rack usa la primera capa activa y exporta los 16 pads visibles; no es un motor completo de reproducción MPC.
@@ -8,7 +10,7 @@ Ajusta volumen, panorama, afinación y grupo de mute desde el inspector del pad.
 
 | Destino | Resultado y límites |
 | --- | --- |
-| MPC | XPM Drum, XPJ y muestras. Conserva posiciones y ajustes implementados; no replica secuencias, efectos, plugins o edición de cuatro capas. |
+| MPC | XPM Drum y XPJ de plantilla AC50/Sample con muestras; [distinguir modelo, motor y versión](../COMPATIBILIDAD_HARDWARE.md#1-mpc-sample-frente-a-mpc-one-y-mpc-live). No replica la canción original ni constituye una conversión universal entre MPC. |
 | Maschine | WAV y mapa JSON de asignación; no genera MXGRP nativo. |
 | SP-404MK2 | Archivos de banco con conversión a PCM 16-bit/48 kHz cuando corresponde. No restaura un proyecto nativo completo. |
 | SP-404A/SX | WAV `A01.wav`–`A12.wav`; sólo pads 1–12, sin mapa JSON. Los pads 13–16 quedan fuera de esta entrega. |
@@ -33,7 +35,7 @@ Las rutas siguientes son relativas a `Custom_Kits/<nombre>/`. `<nombre>` represe
 
 | Carpeta de destino | Qué encontrarás | Qué haces después |
 | --- | --- | --- |
-| `Akai_MPC/` | `<nombre>.xpm` con WAV junto al programa; además, `<nombre>/<nombre>.xpj` y su carpeta `<nombre>_[ProjectData]/`. | Conserva las muestras y la estructura de carpetas al copiar. Abre el programa o proyecto en MPC y comprueba las referencias y pads. |
+| `Akai_MPC/` | `<nombre>.xpm` con WAV junto al programa; además, `<nombre>/<nombre>.xpj` y su carpeta `<nombre>_[ProjectData]/`. | Conserva las muestras y la estructura de carpetas al copiar. Distingue el programa XPM del XPJ de procedencia Sample y sigue el procedimiento para el modelo/versión de la [matriz MPC](../COMPATIBILIDAD_HARDWARE.md#1-mpc-sample-frente-a-mpc-one-y-mpc-live). Comprueba referencias y pads. |
 | `NI_Maschine/<nombre>/` | `Samples/Group_A/` y `Groups/<nombre>_Maschine_Map.json`. | Carga los WAV en los slots indicados. Aplica manualmente volumen, panorama, afinación y choke group del mapa; Maschine no importa este JSON como un `.mxgrp`. |
 | `Roland_SP404MK2/<nombre>/` | `PAD_01_*.wav`–`PAD_16_*.wav` para los pads ocupados y `sp404mk2_manifest.json`. | Importa los WAV siguiendo el procedimiento del modelo. El manifiesto relaciona pad, archivo y original; no contiene una sesión ni traslada los parámetros del rack. |
 | `Roland_SP404A/<nombre>/` | `A01.wav`–`A12.wav` para los pads ocupados de ese rango. | Prepara la carga con el procedimiento de importación de A/SX; verifica posiciones. No se generan archivos para los pads 13–16 ni un manifiesto de ajustes. |

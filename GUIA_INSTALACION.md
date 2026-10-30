@@ -4,6 +4,8 @@
 
 [universal beatmaker station]
 
+[Manual completo del sistema](docs/MANUAL_COMPLETO.md) · [Compatibilidad por hardware](docs/COMPATIBILIDAD_HARDWARE.md)
+
 ## Instalación limpia
 
 Edición 3.8.0. Biblioteca de samples y rack de 16 pads para preparar kits destinados a MPC, Maschine, SP-404MK2, SP-404A/SX, PO-33/PO-133 y EP-133 K.O. II. Se ejecuta en el ordenador y no instala firmware en los aparatos. No necesitas una MPC para trabajar desde samples sueltos.

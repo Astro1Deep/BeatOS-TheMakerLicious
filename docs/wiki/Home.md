@@ -12,6 +12,12 @@ El recorrido es biblioteca → rack → destino → archivos exportados → carg
 
 [Descargar instalador estable](https://github.com/Astro1Deep/mpc-sample-database/releases/latest) · [Instalación paso a paso](../../GUIA_INSTALACION.md) · [Compatibilidad y destinos](../../README.md#rack-y-destinos)
 
+## Manual completo y compatibilidad
+
+[Manual por módulos](../MANUAL_COMPLETO.md) · [Hardware, modelos y formatos MPC](../COMPATIBILIDAD_HARDWARE.md) · [Referencia técnica y API](../REFERENCIA_TECNICA.md)
+
+El XPJ exportado por BeatOS procede de una plantilla AC50/Sample. No se presenta como un proyecto genérico idéntico para Sample, One y Live; consulta los procedimientos y requisitos de versión en la matriz.
+
 | Capítulo | Contenido |
 | --- | --- |
 | [1. Instalación](01-Instalacion-y-Puesta-en-Marcha.md) | ZIP organizado, código fuente, requisitos y arranque. |

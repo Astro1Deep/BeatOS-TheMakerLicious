@@ -18,6 +18,6 @@ El menú no promete «1 €» mientras el cobro real no esté acreditado. No se 
 
 Por defecto: bombo 1, hi-hat 2, caja 3 y resto 0 (libre). Los ajustes explícitos del usuario, incluido 0, se respetan al importar y exportar kits nuevos. El editor permite otros grupos. Un mismo grupo positivo se corta entre sí; grupos distintos pueden sonar a la vez.
 
-MPC XPM/XPJ guarda grupos nativos. Maschine se entrega como WAV y mapa JSON, no como grupo .mxgrp. EP-133 recibe WAV normalizados, mapa y ZIP de transporte, no un backup nativo del fabricante; sus asignaciones deben trasladarse al equipo. Roland recibe audio ordenado y los grupos se ajustan en el hardware. El reel de PO-33 es audio para muestrear, no transmite metadatos de mute. Las pruebas de archivos no sustituyen una prueba de carga y ejecución en cada equipo físico.
+MPC XPM/XPJ guarda grupos nativos. Maschine se entrega como WAV y mapa JSON, no como grupo .mxgrp. EP-133 recibe WAV con niveles originales, mapa y ZIP de transporte, no un backup nativo del fabricante; sus asignaciones deben trasladarse al equipo. Roland recibe audio ordenado y los grupos se ajustan en el hardware. El reel de PO-33 es audio para muestrear, no transmite metadatos de mute. Las pruebas de archivos no sustituyen una prueba de carga y ejecución en cada equipo físico.
 
 El rack importa y reexporta la primera capa activa por pad. No es un editor completo de programas multicapa; el archivo original conserva todas sus capas.

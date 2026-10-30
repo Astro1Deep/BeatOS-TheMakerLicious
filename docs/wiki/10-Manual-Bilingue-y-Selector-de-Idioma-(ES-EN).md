@@ -1,5 +1,7 @@
 # Idiomas de la interfaz
 
+[Manual completo: temas e idiomas](../MANUAL_COMPLETO.md#16-temas-idiomas-y-apoyo)
+
 El botón ES/EN cambia las etiquetas conectadas al diccionario de la interfaz y guarda la preferencia en localStorage (`mpc_lang`). Los nombres de muestras, programas y proyectos conservan el texto del archivo original.
 
 La traducción es parcial: varios menús, mensajes de error, ayudas y el instalador de terminal permanecen en español. No se garantiza una interfaz ni un manual completamente traducidos. Los comandos y rutas de instalación son los mismos en ambos idiomas.

@@ -1,12 +1,14 @@
 # 📊 7. Consultas Avanzadas SQLite
 
+[Referencia técnica: datos y tablas](../REFERENCIA_TECNICA.md#3-datos-generados)
+
 La base de datos `mpc_sample.db` es un archivo relacional estándar de **SQLite 3**. Esto significa que puedes abrirlo con cualquier cliente gráfico (como *DB Browser for SQLite*, *TablePlus* o *DBeaver*) o lanzar consultas analíticas desde la terminal.
 
 ---
 
 ## 🏛️ Esquema de Tablas (`schema.sql`)
 
-La base de datos cuenta con 5 tablas relacionales optimizadas con índices por tipo de sonido, tempo, clave y energía:
+El esquema define cinco tablas: sound_categories, samples, projects, expansions y packs. El indexador actual no rellena packs; macro_category y sub_pack se guardan en samples. Las tablas de contenido se reconstruyen al reindexar y sus IDs no son identificadores permanentes. Este fragmento muestra tres de las tablas; consulta schema.sql para el esquema completo:
 
 ```sql
 -- 1. Tabla de Samples Individuales

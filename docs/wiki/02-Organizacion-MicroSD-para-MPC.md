@@ -1,4 +1,6 @@
-# Organización de MicroSD
+# Organización de la biblioteca, discos y tarjetas
+
+[Manual completo: bibliotecas y archivos](../MANUAL_COMPLETO.md#3-bibliotecas-rutas-y-archivos)
 
 La raíz de una biblioteca organizada contiene dos accesos HTML y la carpeta BeatOS del sistema. Las carpetas de música existentes conservan su ubicación para mantener referencias de programas y proyectos. No es obligatorio renombrarlas ni usar macro-categorías concretas.
 

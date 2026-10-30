@@ -1,5 +1,7 @@
 # Catálogo web y reproductor
 
+[Manual completo: explorador y escucha](../MANUAL_COMPLETO.md#5-explorador-de-samples)
+
 El catálogo se guarda una sola vez en `BeatOS/data/catalogo.html`. Los dos HTML de la raíz son accesos ligeros. El servidor conserva las URL de catálogos antiguos sin volver a crear sus carpetas ni duplicar el contenido.
 
 Abre BeatOS desde el servidor local para preescuchar, inspeccionar proyectos, crear kits o reindexar. La interfaz muestra la biblioteca activa. Una página `file://` puede consultar el catálogo, pero sus acciones locales están bloqueadas; inicia el servidor y utiliza la URL HTTP que muestra.

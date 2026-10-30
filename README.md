@@ -12,6 +12,14 @@ El flujo central es **explorar tu biblioteca → montar y ajustar un kit → ele
 
 Versión **3.8.0**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc-sample-database/releases) · [Guía de instalación](GUIA_INSTALACION.md) · [Identidad del creador](docs/IDENTIDAD_DEL_CREADOR.md)
 
+## Manual del sistema
+
+- **[Manual completo por módulos](docs/MANUAL_COMPLETO.md):** instalación, bibliotecas, identificación, búsqueda, escucha, rack, proyectos, expansiones, hubs, exportación, mantenimiento y diagnóstico.
+- **[Compatibilidad y carga por hardware](docs/COMPATIBILIDAD_HARDWARE.md):** MPC Sample frente a One/Live, modelos y versiones, Maschine, SP-404, PO-33/PO-133 y EP-133.
+- **[Referencia técnica](docs/REFERENCIA_TECNICA.md):** formatos, parámetros, estructura de datos, API, comandos y límites conocidos.
+
+**MPC Sample no debe confundirse con MPC One/Live.** El XPJ de BeatOS deriva de una plantilla AC50/Sample; el XPM es una entrega Drum diferente. El intercambio con otros motores MPC depende de su versión y del procedimiento de Akai. Consulta la matriz antes de cargar un proyecto: generar el archivo no certifica su carga en todos los modelos.
+
 ## Instalación
 
 Requiere **Python 3.11 o superior**. El catálogo y el servidor usan la biblioteca estándar. FFmpeg es opcional para convertir audio y necesario en determinados formatos, frecuencias y ajustes de afinación. El sistema se ejecuta en el ordenador; no instala firmware en el sampler.
@@ -65,7 +73,7 @@ El mismo rack sirve como origen para todos los exportadores. Elige un destino pa
 
 | Destino | Archivos que genera BeatOS | Cómo continuar y límites |
 | --- | --- | --- |
-| **Akai MPC** | Programa Drum `.xpm`, proyecto `.xpj` y samples enlazados. | Carga el programa o proyecto con sus muestras. Se conservan posiciones y ajustes implementados; no se trasladan secuencias, plugins, efectos ni cuatro capas por pad. |
+| **Akai MPC: distinguir Sample y otros motores** | Programa Drum `.xpm` y proyecto `.xpj` derivado de plantilla **AC50/Sample**, cada uno con sus muestras. | No son proyectos intercambiables por compartir marca/extensión. Revisa [modelo, versión y procedimiento de carga](docs/COMPATIBILIDAD_HARDWARE.md#1-mpc-sample-frente-a-mpc-one-y-mpc-live). BeatOS no ejecuta la conversión oficial MPC3→Sample ni preserva la canción original. |
 | **Native Instruments Maschine** | WAV en `Samples/Group_A/` y mapa `Groups/*_Maschine_Map.json`. | Carga los WAV y asigna sonidos y parámetros siguiendo el mapa. No se genera un grupo `.mxgrp` nativo. |
 | **Roland SP-404MK2** | WAV PCM 16-bit/48 kHz para hasta 16 pads y `sp404mk2_manifest.json`. | Transfiere las muestras e impórtalas con el procedimiento del equipo; comprueba la asignación. No es un proyecto o backup nativo, y el manifiesto no transmite ajustes del rack. |
 | **Roland SP-404A/SX** | WAV PCM 16-bit/44.1 kHz, nombrados `A01.wav`–`A12.wav`. | Prepara la importación con el procedimiento del modelo. **Sólo se exportan los pads 1–12**: mueve antes los sonidos de los pads 13–16 si los necesitas. No se genera un mapa JSON ni se transfieren los ajustes del rack. |

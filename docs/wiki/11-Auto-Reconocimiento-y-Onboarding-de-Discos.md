@@ -1,5 +1,7 @@
 # Discos e integración con el ecosistema
 
+[Manual completo: mantenimiento e integraciones](../MANUAL_COMPLETO.md#15-acciones-y-ajustes)
+
 BeatOS usa la carpeta que eliges al indexar y arrancar el servidor. La tarjeta no tiene que llamarse MPCSMPL. Comprueba la biblioteca activa en la interfaz antes de generar kits o lanzar una reindexación.
 
 Las herramientas históricas «Auto-Disk Recon» y «Onboarding Wizard» pertenecen al dashboard externo del autor; no forman parte del instalador autónomo de BeatOS ni de sus garantías de compatibilidad. Tampoco se realiza un diagnóstico físico de inodos, salud del soporte o memoria del sampler desde el catálogo.

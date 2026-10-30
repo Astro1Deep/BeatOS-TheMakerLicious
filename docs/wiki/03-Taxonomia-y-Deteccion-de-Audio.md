@@ -1,5 +1,7 @@
 # Taxonomía e identificación de audio
 
+[Manual completo: indexación e identificación](../MANUAL_COMPLETO.md#4-indexación-e-identificación)
+
 La versión actual separa identificación por etiquetas y medición del nivel del audio. [Guía completa](../../GUIA_INSTALACION.md) · [Reglas y límites](../IDENTIFICACION_BIBLIOTECA.md).
 
 El nombre del archivo tiene prioridad sobre carpetas específicas de instrumento. Las categorías generales de género no determinan su sonido. Los tipos son KICK, SNARE, CLAP, HIHAT, CYMBAL, PERCUSSION, BASS_808, KEYS_SYNTH, MELODIC_LOOP, DRUM_LOOP, VOCAL, FX, STEM y ROLL_FILL; UNKNOWN indica que no hay evidencia suficiente. Shakers y panderetas son PERCUSSION.
