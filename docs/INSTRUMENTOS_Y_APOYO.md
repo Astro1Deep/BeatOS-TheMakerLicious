@@ -1,5 +1,7 @@
 # Banner original y apoyo a BeatOS
 
+**Idioma:** Español · [English version](en/INSTRUMENTOS_Y_APOYO.md)
+
 El encabezado centrado sobre el banner muestra BeatOS, The MakerLicious y [universal beatmaker station] como texto real del navegador. Se recupera el banner central blueprint y sus ocho temas, con los fondos originales Patchbay, Cables y Liso. Las láminas oscuras y Bone usan las fuentes existentes de 3840 píxeles; las otras conservan sus originales. «Ampliar banner» permite ver los detalles a mayor tamaño.
 
 No se ha aprobado ninguna restauración generativa: la prueba introdujo controles distintos de las referencias y se descartó. Se preservan los píxeles de los originales. Eso evita introducir nuevos botones, pero no convierte los rótulos borrosos o inexactos que ya contenía el arte en documentación técnica fiable. Para corregirlos sin reconstrucción especulativa hace falta un original editable o un dibujo técnico auténtico. Las fotografías se conservan sólo como referencia documental, fuera del banner.
