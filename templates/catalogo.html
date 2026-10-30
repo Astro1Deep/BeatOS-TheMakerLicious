@@ -4933,7 +4933,7 @@ function openExpansionBrowser(expansionName) {
     if (currentExpansionName !== expansionName) return;
     if (data.success && data.programs) {
       currentExpansionPrograms = data.programs;
-      if (countEl) countEl.innerText = data.programs.length + ' programas de kits (.xpm)';
+      if (countEl) countEl.innerText = data.programs.length + (currentLang === 'en' ? ' kit programs (.xpm)' : ' programas de kits (.xpm)');
       filterExpansionKits(document.getElementById('expansionSearchInput').value);
       updateRackKitSelectorUI();
     } else {
@@ -4980,27 +4980,30 @@ function filterExpansionKits(term) {
 function renderExpansionProgramsList(programs) {
   const container = document.getElementById('expansionProgramsGrid');
   if (!container) return;
+  const en = currentLang === 'en';
   if (!programs.length) {
-    container.innerHTML = '<p class="library-empty" style="grid-column:1/-1">No hay programas con estos filtros.</p>'; return;
+    container.innerHTML = '<p class="library-empty" style="grid-column:1/-1">' +
+      (en ? 'No programs match these filters.' : 'No hay programas con estos filtros.') + '</p>';
+    return;
   }
   container.innerHTML = programs.map(kit => {
     const idx = currentExpansionPrograms.findIndex(item => item.rel_path === kit.rel_path);
     const drum = (kit.program_type || '').toLowerCase() === 'drum';
     const active = kit.rel_path === currentLoadedKitRelPath;
+    const t = (es,english) => en ? english : es;
     return `<article class="card library-card expansion-program-card ${active ? 'active-kit' : ''}">
-      <div class="library-card-heading"><span class="library-kind">${escapeHtml(kit.program_type || 'Programa')}</span>${active ? '<span class="library-state">En el rack</span>' : ''}</div>
+      <div class="library-card-heading"><span class="library-kind">${escapeHtml(kit.program_type || t('Programa','Program'))}</span>${active ? '<span class="library-state">' + t('En el rack','In the rack') + '</span>' : ''}</div>
       <h4 style="margin:0;font-size:16px">${escapeHtml(kit.name)}</h4>
       <span class="library-manufacturer">${escapeHtml(kit.sub_category || currentExpansionName)} · ${kit.pad_count ?? 0} pads</span>
-      ${!drum ? '<p class="library-manufacturer">Motor Keygroup: abre el archivo en MPC para conservar su comportamiento.</p>' : ''}
+      ${!drum ? '<p class="library-manufacturer">' + t('Motor Keygroup: abre el archivo en MPC para conservar su comportamiento.','Keygroup engine: open this file in MPC to preserve its behavior.') + '</p>' : ''}
       <div class="card-actions">
-        <button type="button" class="po33-btn-secondary library-action primary" ${drum ? '' : 'disabled'} onclick="selectAndLoadExpansionKit(${idx},this)">${drum ? '🎛️ Editar copia en rack' : 'Requiere el motor MPC'}</button>
-        ${kit.first_sample_rel ? `<button type="button" class="po33-btn-secondary library-action" onclick="previewExpansionSample(${idx},this)" aria-label="Escuchar muestra de ${escapeHtml(kit.name)}">▶ Escuchar muestra</button>` : ''}
-        <button type="button" class="po33-btn-secondary library-action" onclick="revealLibraryPath(currentExpansionPrograms[${idx}].rel_path,this)">📁 Mostrar archivo</button>
-        <button type="button" class="po33-btn-secondary library-action" onclick="copyLibraryPath(currentExpansionPrograms[${idx}].rel_path)">📋 Copiar ruta</button>
+        <button type="button" class="po33-btn-secondary library-action primary" ${drum ? '' : 'disabled'} onclick="selectAndLoadExpansionKit(${idx},this)">${drum ? t('🎛️ Editar copia en rack','🎛️ Edit copy in rack') : t('Requiere el motor MPC','Requires MPC engine')}</button>
+        ${kit.first_sample_rel ? `<button type="button" class="po33-btn-secondary library-action" onclick="previewExpansionSample(${idx},this)" aria-label="${t('Escuchar muestra de ','Listen to sample from ')}${escapeHtml(kit.name)}">${t('▶ Escuchar muestra','▶ Listen to sample')}</button>` : ''}
+        <button type="button" class="po33-btn-secondary library-action" onclick="revealLibraryPath(currentExpansionPrograms[${idx}].rel_path,this)">${t('📁 Mostrar archivo','📁 Show file')}</button>
+        <button type="button" class="po33-btn-secondary library-action" onclick="copyLibraryPath(currentExpansionPrograms[${idx}].rel_path)">${t('📋 Copiar ruta','📋 Copy path')}</button>
       </div></article>`;
   }).join('');
 }
-
 function previewExpansionSample(idx, button) {
   const kit = currentExpansionPrograms[idx];
   if (kit?.first_sample_rel) playUnifiedAudio(kit.first_sample_rel, kit.first_sample, 'Preview: '+kit.name, button);
