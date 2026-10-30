@@ -14,7 +14,7 @@ from beatos_paths import entry_html, ENTRY_NAMES, CATALOG_REL
 
 FILES = ('serve_mpc.py', 'hardware_kit_builder.py', 'index_mpc_library.py', 'beatos_paths.py', 'beatos_i18n.py',
          'installer.py', 'install.sh', 'schema.sql', 'LICENSE', 'LICENSE.md',
-         'README.md', 'GUIA_INSTALACION.md', 'GUIA_INSTALACION_EN.md', 'build_release.py',
+         'README.md', 'README_ES.md', 'language_config.json', 'GUIA_INSTALACION.md', 'GUIA_INSTALACION_EN.md', 'build_release.py',
          'templates/catalogo.html', 'docs/assets/po33-capture-worklet.js', 'templates/template_drum.xpm',
          'templates/template_project.xpj', 'tests/test_hardware_kit_builder.py',
          'tests/test_serve_mpc.py', 'tests/test_indexer.py', 'tests/test_metadata.py', 'tests/test_installer.py', 'tests/test_mute_groups.py',

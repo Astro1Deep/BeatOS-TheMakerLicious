@@ -157,3 +157,20 @@ Esta sección revisa el sistema a partir de la interfaz **renderizada realmente 
 **GitHub Pages no se ha activado desde esta sesión.** El titular debe habilitar **Settings → Pages → Deploy from a branch → main → /docs**, comprobar visualmente la dirección pública y solicitar inspección en Google Search Console/Bing Webmaster Tools si desea acelerar su descubrimiento. La inclusión en los índices de Google o en respuestas de IA depende de los sistemas externos y no se garantiza.
 
 **Auditoría de estabilidad:** la regresión del pipeline debe comprobarse en el commit exacto final. Los ZIP compilados desde `main` son artefactos de desarrollo, no reemplazan silenciosamente la última release estable. No se han realizado pruebas físicas de carga/guardado en MPC, Maschine, Roland ni Pocket Operator.
+
+
+## 2026-10-30 · Complemento English-first (PR #9)
+
+**Estado al preparar este complemento:** cambio propuesto en rama `feat/english-default-i18n-release-readiness`; no presupone publicación ni aprobación automática. Debe verificarse el resultado de CI en el **SHA final**, no en una ejecución intermedia.
+
+**Cambios sujetos a validación:**
+
+- Se establece inglés como primer idioma cuando no existe preferencia explícita, incluso con almacenamiento web restringido, cookie ausente o variable de entorno vacía. La selección de español mediante el botón, `--lang es`, variable `BEATOS_LANG=es` o cookie válida debe conservarse.
+- Se localizan los diálogos nativos de confirmación y exportación de kits sin traducir nombres propios, rutas ni referencias de audio. Los mensajes cambiantes de reproducción, autoavance, mute-group y progreso se comprueban con regresiones.
+- GitHub adopta `README.md` inglés y `README_ES.md` español; los documentos operativos específicos permanecen disponibles en ambos idiomas.
+- Las entregas para EP-133 incluyen guía de carga inglesa principal y traducción española en el mismo ZIP; el reel PO incorpora además una guía de carga inglesa sin borrar la española anterior.
+- Dos documentos adicionales describen protocolos de exportación y pruebas físicas: [EN](en/HARDWARE_EXPORT_PROTOCOLS.md) / [ES](HARDWARE_EXPORT_PROTOCOLS.md).
+
+**Criterios de salida sin excepciones:** Python 3.11 y 3.14, Node i18n, Chromium real por HTTP, comprobación del ZIP, smoke de instalación nativa Windows y manuales/enlaces. **No basta** un test sobre HTML fuente si el servidor entrega otro archivo.
+
+**No certificados:** traducción integral de *todos* los errores externos y nombres de plugins; compatibilidad física universal de XPM/XPJ/Maschine/SP-404/PO/EP; conservación de patrones/efectos propietarios; carga en firmwares no probados. Para declarar soporte por hardware deben adjuntarse evidencias del modelo, versión, importación, escucha por pad, guardado, reinicio y recarga. El ZIP estable 3.8.0 **no queda actualizado por esta rama**. La publicación de una versión posterior requiere un release identificable, suma SHA-256 y prueba de instalación sobre su artefacto concreto.

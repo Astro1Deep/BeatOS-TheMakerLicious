@@ -27,12 +27,12 @@ def database_path(root):
 
 
 def entry_html():
-    return ('<!doctype html><html lang="es"><meta charset="utf-8">'
+    return ('<!doctype html><html lang="en"><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width, initial-scale=1">'
             '<title>BeatOS</title><meta http-equiv="refresh" content="0;url=' + CATALOG_REL + '">'
             '<p><a href="' + CATALOG_REL + '">Abrir BeatOS</a></p>'
             '<p>Para las acciones locales inicia BeatOS/ABRIR_BEATOS.command '
-            'o ejecuta Python en BeatOS/installer.py.</p></html>')
+            'or run BeatOS/installer.py.</p></html>')
 
 
 def write_catalog(root, html):

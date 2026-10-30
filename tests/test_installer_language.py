@@ -22,11 +22,13 @@ class InstallerLanguageTests(unittest.TestCase):
         translated=installer.locale_text(question, "en")
         self.assertEqual(translated, "\nOpen the catalog in your browser now? (y/n): ")
 
-    def test_spanish_default(self):
+    def test_english_default_and_explicit_spanish_override(self):
         with patch.object(sys,"argv",["installer.py"]), patch.dict(os.environ,{"BEATOS_LANG":""}), patch("builtins.input",return_value="6"), patch("builtins.print") as printed:
-            self.assertEqual(installer.get_language(),"es")
+            self.assertEqual(installer.get_language(),"en")
             installer.main()
-            self.assertIn("Saliendo.",str(printed.call_args_list))
+            self.assertIn("Exiting.",str(printed.call_args_list))
+        with patch.object(sys,"argv",["installer.py","--lang","es"]), patch.dict(os.environ,{"BEATOS_LANG":""}):
+            self.assertEqual(installer.get_language(),"es")
     def test_indexer_inherits_english_without_changing_command_path(self):
         import tempfile
         with tempfile.TemporaryDirectory() as folder, patch.object(sys, "argv", ["installer.py", "--lang", "en"]), patch("builtins.input", side_effect=["1", folder]), patch("builtins.print"), patch("installer.subprocess.run") as run:
@@ -39,6 +41,14 @@ class InstallerLanguageTests(unittest.TestCase):
             start.side_effect = lambda *_args, **_kwargs: self.assertEqual(os.environ.get("BEATOS_LANG"), "en")
             installer.main()
             self.assertEqual(os.environ.get("BEATOS_LANG"), "es")
+
+    def test_documentation_menu_uses_language_specific_wiki(self):
+        with patch.object(sys,"argv",["installer.py"]), patch.dict(os.environ,{"BEATOS_LANG":""}), patch("builtins.input",return_value="5"), patch("installer.open_url_or_file") as open_doc, patch("builtins.print"):
+            installer.main()
+            self.assertIn("Home_EN.md",open_doc.call_args.args[0])
+        with patch.object(sys,"argv",["installer.py","--lang","es"]), patch("builtins.input",return_value="5"), patch("installer.open_url_or_file") as open_doc, patch("builtins.print"):
+            installer.main()
+            self.assertIn("Home.md",open_doc.call_args.args[0])
 
     def test_english_from_environment(self):
         with patch.object(sys,"argv",["installer.py"]), patch.dict(os.environ,{"BEATOS_LANG":"en"}):

@@ -1037,7 +1037,7 @@ def export_ep133_ko2_kit(
     with open(meta_file, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
 
-    readme_content = f"""================================================================================
+    readme_es_content = f"""================================================================================
 TEENAGE ENGINEERING EP-133 K.O. II — KIT DE SAMPLES (BeatOS The MakerLicious)
 ================================================================================
 Kit: {clean_kit_name}
@@ -1073,8 +1073,35 @@ MAPEO DE PADS A TECLAS EP-133:
 - Pad 16 -> Grupo B, Tecla 4
 ================================================================================
 """
+    readme_en_content = f"""================================================================================
+TEENAGE ENGINEERING EP-133 K.O. II — BEATOS SAMPLE KIT
+================================================================================
+Kit: {clean_kit_name}
+Samples: {copied_count} / 16
+
+IMPORT INSTRUCTIONS:
+1. Connect EP-133 K.O. II to the computer with a USB-C data cable.
+2. Open https://teenage.engineering/apps/ep-sample-tool in a compatible
+   desktop browser and authorize the connected device.
+3. Extract the BeatOS transport ZIP. Drag the WAV files from sounds/
+   to the desired sound slots using the official Sample Tool.
+4. Use meta.json as an assignment reference; its gain, pan, tuning and
+   choke-group fields are not automatically restored to the hardware.
+5. Audition all assigned keys and save changes through the device.
+6. The ZIP is NOT a native EP-133 backup. Never use its backup-restore
+   feature to install a BeatOS transport archive.
+
+BEATOS PAD → EP-133 GROUP / KEY:
+  01=A/1   02=A/2   03=A/3   04=A/4
+  05=A/5   06=A/6   07=A/7   08=A/8
+  09=A/9   10=A/.   11=A/0   12=A/ENTER
+  13=B/1   14=B/2   15=B/3   16=B/4
+================================================================================
+"""
     with open(kit_dir / "README_EP133_KO_II.txt", "w", encoding="utf-8") as f:
-        f.write(readme_content)
+        f.write(readme_en_content)
+    with open(kit_dir / "README_EP133_KO_II_ES.txt", "w", encoding="utf-8") as f:
+        f.write(readme_es_content)
 
     # ZIP de transporte de BeatOS; los backups nativos del fabricante tienen otro esquema.
     pak_file = kit_dir.parent / f"{clean_kit_name}_EP133.zip"
@@ -1085,6 +1112,7 @@ MAPEO DE PADS A TECLAS EP-133:
                 continue
             z.write(s_file, arcname=f"sounds/{s_file.name}")
         z.write(kit_dir / "README_EP133_KO_II.txt", arcname="README_EP133_KO_II.txt")
+        z.write(kit_dir / "README_EP133_KO_II_ES.txt", arcname="README_EP133_KO_II_ES.txt")
 
     return str(kit_dir), str(pak_file)
 
@@ -1339,6 +1367,29 @@ Para volcado de BACKUP COMPLETO (duración variable; reemplaza muestras y patron
 ========================================================================
 """
     guide_path.write_text(guide_text, encoding="utf-8")
+    guide_en_path = out_dir / f"{kit_name}_PO33_Loading_Guide_EN.txt"
+    guide_en_text = f"""========================================================================
+TEENAGE ENGINEERING PO-33 / PO-133 — BEATOS AUDIO REEL LOADING GUIDE
+Kit: {kit_name} | Reel: {total_duration_sec:.2f}s | Budget: {MAX_TOTAL_SEC:.2f}s
+Smart trim: {'YES (shortened to fit the chosen budget)' if is_trimmed else 'NO (within chosen budget)'}
+========================================================================
+
+IMPORT PROCEDURE (AUDIO RECORDING, NOT MODEM RESTORE):
+1. Connect the computer/audio interface line output to the PO-33 LINE IN.
+2. On the PO-33, start sampling into the intended DRUM pad (9–16).
+3. Play '{out_file.name}' at a safe level, avoiding clipping.
+4. Check each detected slice and correct its boundaries using TRIM.
+5. Audition the sounds and verify that the device has sufficient free memory.
+
+The JSON slice positions are approximate; sample separation is not
+guaranteed. BeatOS cannot read the PO's real remaining recording memory.
+This WAV is NOT a full device backup and contains no verified FSK payload.
+
+For the original hardware modem backup/restore workflow use your PO's
+manufacturer documentation. Keep the original backup audio unmodified.
+========================================================================
+"""
+    guide_en_path.write_text(guide_en_text, encoding="utf-8")
 
     return str(out_file), round(total_duration_sec, 2), slices_meta
 

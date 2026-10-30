@@ -131,6 +131,15 @@ class TestHardwareKitBuilder(unittest.TestCase):
         self.assertEqual(len(meta["sounds"]), 4)
         
         # Verify .pak is a valid zip archive
+        # Exported kit instructions are deliverables too: EN is first, ES remains complete.
+        english_guide = (Path(kit_dir) / "README_EP133_KO_II.txt").read_text(encoding="utf-8")
+        spanish_guide = (Path(kit_dir) / "README_EP133_KO_II_ES.txt").read_text(encoding="utf-8")
+        self.assertIn("IMPORT INSTRUCTIONS",english_guide)
+        self.assertNotIn("INSTRUCCIONES DE IMPORTACIÓN",english_guide)
+        self.assertIn("INSTRUCCIONES DE IMPORTACIÓN",spanish_guide)
+        with zipfile.ZipFile(pak_path) as bundle:
+            self.assertIn("README_EP133_KO_II.txt",bundle.namelist())
+            self.assertIn("README_EP133_KO_II_ES.txt",bundle.namelist())
         self.assertTrue(zipfile.is_zipfile(pak_path))
         with zipfile.ZipFile(pak_path, "r") as z:
             names = z.namelist()
@@ -140,6 +149,11 @@ class TestHardwareKitBuilder(unittest.TestCase):
     def test_07_export_po33_drum_reel(self):
         out_dir = self.test_dir / "out_po33"
         reel_path, total_dur, slices = export_po33_drum_reel("TestReel_PO33", self.pads_data, out_dir)
+        english_po_guide = Path(out_dir) / "TestReel_PO33_PO33_Loading_Guide_EN.txt"
+        self.assertTrue(english_po_guide.is_file())
+        self.assertIn("IMPORT PROCEDURE",english_po_guide.read_text(encoding="utf-8"))
+        self.assertIn("GUÍA DE CARGA RÁPIDA",(Path(out_dir) / "TestReel_PO33_PO33_Carga_Guia.txt").read_text(encoding="utf-8"))
+
         self.assertTrue(Path(reel_path).exists())
         self.assertGreater(total_dur, 0.0)
         self.assertLessEqual(total_dur, 40.0)

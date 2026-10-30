@@ -284,7 +284,7 @@ def main():
     parser = argparse.ArgumentParser(description="Indexador Universal de Samples y Proyectos para Akai MPC")
     parser.add_argument("--path", "-p", default=".", help="Ruta de la tarjeta SD, USB o carpeta de samples (por defecto: directorio actual)")
     parser.add_argument("--output", "-o", default="", help="Ruta de salida para la base de datos y catálogo (por defecto: [PATH]/BeatOS/data)")
-    parser.add_argument("--lang", choices=("es", "en"), default=os.environ.get("BEATOS_LANG", "es") if os.environ.get("BEATOS_LANG") in ("es", "en") else "es", help="Console language (es/en)")
+    parser.add_argument("--lang", choices=("es", "en"), default=os.environ.get("BEATOS_LANG", "en") if os.environ.get("BEATOS_LANG") in ("es", "en") else "en", help="Console language (es/en)")
     args = parser.parse_args()
 
     def emit(value):

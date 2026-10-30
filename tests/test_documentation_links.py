@@ -20,6 +20,15 @@ def destinations(md):
             yield text[start:i-1].strip()
 
 class DocumentationLinks(unittest.TestCase):
+    def test_github_readme_english_first_and_spanish_alternative(self):
+        english = (ROOT / 'README.md').read_text(encoding='utf-8')
+        spanish = (ROOT / 'README_ES.md').read_text(encoding='utf-8')
+        self.assertIn('**Language: English (default)', english)
+        self.assertIn('[Español / Spanish README](README_ES.md)',english)
+        self.assertIn('**Idioma: Español', spanish)
+        self.assertIn('[English / presentación principal](README.md)',spanish)
+        self.assertIn('HARDWARE_EXPORT_PROTOCOLS.md',english)
+
     def test_internal_file_links_resolve(self):
         missing = []
         total = 0

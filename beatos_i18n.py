@@ -112,10 +112,10 @@ def get_request_language(headers):
             return cookie.value.lower()
     except (ValueError, TypeError):
         pass
-    return "es"
+    return "en"
 
 
-def translate_text(value, lang="es"):
+def translate_text(value, lang="en"):
     if lang != "en" or not isinstance(value, str):
         return value
     # Preserve leading line breaks from console progress without losing translations.
@@ -143,7 +143,7 @@ def translate_text(value, lang="es"):
     return value
 
 
-def localize_api_payload(payload, lang="es"):
+def localize_api_payload(payload, lang="en"):
     """Return a new shallow JSON dictionary without editing global state or path fields."""
     if lang != "en" or not isinstance(payload, dict):
         return payload

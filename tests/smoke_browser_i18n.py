@@ -22,7 +22,7 @@ window.addEventListener('load', () => {
   probe.textContent = 'MyCustom-Sample_90bpm.wav';
   document.body.appendChild(probe);
   const controls = [...document.querySelectorAll('button')];
-  const recording = controls.find(b => b.textContent.trim() === '⏺ Grabar backup');
+  const recording = controls.find(b => b.textContent.trim() === '⏺ Record backup');
   const expected = [
     ['📻 Módem FSK & Restauración de Backups','📻 FSK modem & backup restore'],
     ['🎹 Mapeo Físico de Teclas EP-133 (12 Teclas por Grupo):','🎹 EP-133 physical key map (12 keys per group):'],
@@ -48,7 +48,7 @@ window.addEventListener('load', () => {
     while ((node=walker.nextNode())) if (node.nodeValue.trim() === phrase) return node;
     return null;
   };
-  const localeNodes = expected.map(([es,en]) => ({es,en,node:findNode(es)}));
+  const localeNodes = expected.map(([es,en]) => ({es,en,node:findNode(en)}));
   const attributeExpected = [
     ['title','Restablecer todos los filtros y búsqueda','Reset all filters and search'],
     ['title','Modo Mover: Haz clic en dos pads consecutivamente para intercambiarlos de sitio de forma rápida','Move mode: click two pads in succession to swap their positions quickly'],
@@ -56,33 +56,41 @@ window.addEventListener('load', () => {
   ];
   const localeAttrs = attributeExpected.map(([attr,es,en]) => ({
     attr,es,en,
-    node:[...document.querySelectorAll('['+attr+']')].find(el => el.getAttribute(attr) === es)
+    node:[...document.querySelectorAll('['+attr+']')].find(el => el.getAttribute(attr) === en)
   }));
   const reporter = document.createElement('output');
   reporter.id = 'i18n-browser-result';
   document.body.appendChild(reporter);
   if (!recording || localeNodes.some(x => !x.node) || localeAttrs.some(x => !x.node)) {reporter.textContent = 'FAIL:missing locale test nodes'; return;}
   try {
-    setLanguage('en');
+    const initialEnglish = document.documentElement.lang === 'en' &&
+      document.cookie.includes('beatos_locale=en') &&
+      recording.textContent.trim() === '⏺ Record backup' &&
+      localeNodes.every(x => x.node.nodeValue.trim() === x.en) &&
+      localeAttrs.every(x => x.node.getAttribute(x.attr) === x.en);
+    setLanguage('es');
     setTimeout(() => {
-      const enOK = recording.textContent.trim() === '⏺ Record backup' &&
+      const spanishOK = recording.textContent.trim() === '⏺ Grabar backup' &&
+        document.documentElement.lang === 'es' &&
+        document.cookie.includes('beatos_locale=es') &&
+        localeNodes.every(x => x.node.nodeValue.trim() === x.es) &&
+        localeAttrs.every(x => x.node.getAttribute(x.attr) === x.es);
+      setLanguage('en');
+      setTimeout(() => {
+        const englishOK = recording.textContent.trim() === '⏺ Record backup' &&
           document.documentElement.lang === 'en' &&
           document.cookie.includes('beatos_locale=en') &&
+          localStorage.getItem('mpc_lang') === 'en' &&
           localeNodes.every(x => x.node.nodeValue.trim() === x.en) &&
           localeAttrs.every(x => x.node.getAttribute(x.attr) === x.en);
-      setLanguage('es');
-      setTimeout(() => {
-        const esOK = recording.textContent.trim() === '⏺ Grabar backup' &&
-            document.documentElement.lang === 'es' &&
-            document.cookie.includes('beatos_locale=es') &&
-            localeNodes.every(x => x.node.nodeValue.trim() === x.es) &&
-            localeAttrs.every(x => x.node.getAttribute(x.attr) === x.es);
-        const fileOK = probe.textContent === 'MyCustom-Sample_90bpm.wav';
-        reporter.textContent = enOK && esOK && fileOK
-          ? 'BEATOS_BROWSER_ES_EN_PASS' : 'FAIL:en=' + enOK + ',es=' + esOK + ',file=' + fileOK;
-      }, 80);
-    }, 80);
+        const filenameOK = probe.textContent === 'MyCustom-Sample_90bpm.wav';
+        reporter.textContent = initialEnglish && spanishOK && englishOK && filenameOK
+          ? 'BEATOS_BROWSER_ES_EN_PASS'
+          : 'FAIL:initial=' + initialEnglish + ',es=' + spanishOK + ',en=' + englishOK + ',filename=' + filenameOK;
+      }, 100);
+    }, 100);
   } catch (error) {reporter.textContent = 'FAIL:' + error.message;}
+
 });
 </script>
 """
@@ -132,7 +140,7 @@ def main():
             if result.returncode or "BEATOS_BROWSER_ES_EN_PASS" not in result.stdout:
                 detail = result.stdout[-1500:] + "\n" + result.stderr[-900:]
                 raise SystemExit("Browser UI locale smoke FAILED (" + label + "): " + detail)
-    print("PASS: actual BeatOS HTTP routes (generated and checked-in) switched ES→EN→ES without touching sample filenames")
+    print("PASS: actual BeatOS HTTP routes (generated and checked-in) switched default EN→ES→EN without touching sample filenames")
 
 if __name__ == "__main__":
     main()

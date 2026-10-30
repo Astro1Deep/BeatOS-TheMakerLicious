@@ -25,7 +25,7 @@ def get_language(argv=None, environ=None):
             return "en" if argv[i + 1].lower() == "en" else "es"
         if arg.startswith("--lang="):
             return "en" if arg.partition("=")[2].lower() == "en" else "es"
-    return "en" if environ.get("BEATOS_LANG", "es").lower() == "en" else "es"
+    return "es" if environ.get("BEATOS_LANG", "").strip().lower() == "es" else "en"
 
 def locale_text(message, lang=None):
     return _INSTALLER_EN.get(message, message) if (lang or get_language()) == "en" else message
@@ -127,7 +127,9 @@ def main():
         print(locale_text("✔ Base de datos SQLite creada con éxito en: {db_path}").format(db_path=db_path))
         
     elif choice == "5":
-        wiki_url = "https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/wiki/Home.md"
+        wiki_url = ("https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/wiki/Home.md"
+                    if get_language() == "es" else
+                    "https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/wiki/Home_EN.md")
         print(locale_text("Abriendo Wiki: {wiki_url}").format(wiki_url=wiki_url))
         open_url_or_file(wiki_url)
         

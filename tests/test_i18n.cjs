@@ -91,13 +91,53 @@ const deniedStorage={getItem(){throw new Error('storage disabled');},setItem(){t
 const initSource=html.slice(html.indexOf('let currentLang = '),html.indexOf('\n\nconst I18N ='));
 const initCtx=vm.createContext({localStorage:deniedStorage});
 assert.doesNotThrow(()=>vm.runInContext(initSource+'; this.detected=currentLang;',initCtx));
-assert.equal(initCtx.detected,'es');
+assert.equal(initCtx.detected,'en');
+const savedSpanishCtx=vm.createContext({localStorage:{getItem:()=> 'es'}});
+vm.runInContext(initSource+';this.detected=currentLang;',savedSpanishCtx);
+assert.equal(savedSpanishCtx.detected,'es','user Spanish preference must survive reload');
 const setterSource=html.slice(html.indexOf('const I18N ='),html.indexOf('function toggleLanguage()'));
 const fakeDoc={documentElement:{lang:'es'},getElementById(){return null;}};
 const setterCtx=vm.createContext({localStorage:deniedStorage,document:fakeDoc,refreshBeatOsLocale(){}});
 vm.runInContext('let currentLang="es";\n'+setterSource+';\nthis.switchLang=setLanguage;',setterCtx);
 assert.doesNotThrow(()=>setterCtx.switchLang('en'));
 assert.equal(fakeDoc.documentElement.lang,'en');
+
+// Native dialogs must localize all operator-facing labels while preserving paths and kit names.
+const dialogStart=html.indexOf('function beatosExportDialogLines(');
+const dialogEnd=html.indexOf('function exportKitToHardware(',dialogStart);
+assert.ok(dialogStart>0 && dialogEnd>dialogStart,'export dialogs must be independently testable');
+const dialogCtx=vm.createContext({});
+vm.runInContext('let currentLang="en";\n'+html.slice(dialogStart,dialogEnd)+';this.lines=beatosExportDialogLines;this.offline=beatosOfflineConfirmText;this.setLang=v=>{currentLang=v;}',dialogCtx);
+const resultPaths={kit_name:'Test_Kit',targets:{mpc:{project_path:'/mnt/Projects/Test_Kit.xpj',program_path_root:'/mnt/Programs/Test_Kit.xpm'},sp404mk2:{import_folder:'/mnt/Samples/Kick.wav'}}};
+const englishDialog=dialogCtx.lines(resultPaths).join('\n');
+assert.match(englishDialog,/KIT CREATED SUCCESSFULLY/);
+assert.match(englishDialog,/Akai MPC projects/);
+assert.doesNotMatch(englishDialog,/Proyectos|Programas|guardado/);
+assert.match(englishDialog,/\/mnt\/Samples\/Kick.wav/,'sample paths must stay literal');
+assert.match(dialogCtx.offline(),/local server API/);
+assert.ok(dialogCtx.offline().includes('\n\n'), 'offline dialog should have proper paragraphs');
+assert.doesNotMatch(dialogCtx.offline(),/¿Quieres|La API del/);
+dialogCtx.setLang('es');
+const spanishDialog=dialogCtx.lines(resultPaths).join('\n');
+assert.match(spanishDialog,/KIT CREADO CON ÉXITO/);
+assert.match(spanishDialog,/Akai MPC Proyectos/);
+assert.match(dialogCtx.offline(),/¿Quieres descargar/);
+
+// Dynamic playback, processing and rack states must not mix ES text into EN.
+const dynamicStates = [
+  ['Pausado: Kick.wav','Paused: Kick.wav'],
+  ['Cargando: Kick.wav','Loading: Kick.wav'],
+  ['Grupo 7','Group 7'],
+  ['⏳ Procesando…','⏳ Processing…'],
+  ['⚡ Auto-avance de pad ACTIVADO','⚡ Auto-advance enabled'],
+  ['⏸ Auto-avance de pad DESACTIVADO','⏸ Auto-advance disabled']
+];
+for (const [es,en] of dynamicStates) {
+  assert.equal(vm.runInContext('beatosTranslateExact('+JSON.stringify(es)+')',ctx),en);
+}
+
+// Native warnings must never bypass the locale boundary.
+assert.doesNotMatch(html,/\b(?:alert|confirm)\s*\(\s*['"]/,'Native browser dialogs must use locale helpers');
 
 // Regression: visible labels in the delivered catalog need genuine EN equivalents.
 // These keys were previously omitted even though the main ES/EN switch existed.
