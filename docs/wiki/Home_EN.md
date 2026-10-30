@@ -16,17 +16,17 @@ A sample-library browser, 16-pad beatmaking rack and hardware-oriented kit expor
 
 ## Topics for music producers
 
-1. [Installation and first run](../en/MANUAL_COMPLETO.md#2-requirements-and-installation)
-2. [Library folders and MicroSD](../en/MANUAL_COMPLETO.md#3-libraries-and-files)
-3. [Sound-type taxonomy, BPM, keys and RMS labels](../en/MANUAL_COMPLETO.md#4-indexing-and-audio-classification)
-4. [Inspecting Akai MPC Drum projects and banks](../en/MANUAL_COMPLETO.md#8-akai-mpc-projects)
-5. [Browsing MPC expansions](../en/MANUAL_COMPLETO.md#9-mpc-expansions)
-6. [Sample browser and audio preview](../en/MANUAL_COMPLETO.md#5-sample-browser)
-7. [Read-only SQLite queries](../en/REFERENCIA_TECNICA.md#3-generated-library-files)
-8. [16-pad beatmaker rack and six export targets](../en/MANUAL_COMPLETO.md#10-kit-export-workflow)
-9. [PO-33 / PO-133 sample reels and backups](../en/MANUAL_COMPLETO.md#12-pocket-operator-backup-wavs)
-10. [Language selector, themes and current limits](../en/MANUAL_COMPLETO.md#16-language-themes-and-support)
-11. [Changing libraries and optional integrations](../en/MANUAL_COMPLETO.md#15-maintenance-and-integrations)
+1. [Installation and first run](en/01-Installation-and-First-Run.md)
+2. [Library folders and MicroSD](en/02-Libraries-and-MicroSD.md)
+3. [Sound-type taxonomy, BPM, keys and RMS labels](en/03-Sound-Taxonomy-and-Audio-Detection.md)
+4. [Inspecting Akai MPC Drum projects and banks](en/04-Akai-MPC-Project-Inspector.md)
+5. [Browsing MPC expansions](en/05-Akai-MPC-Expansions.md)
+6. [Sample browser and audio preview](en/06-Web-Catalog-and-Playback.md)
+7. [Read-only SQLite queries](en/07-SQLite-Queries-for-Beatmakers.md)
+8. [16-pad beatmaker rack and six export targets](en/08-16-Pad-Rack-and-Hardware-Exports.md)
+9. [PO-33 / PO-133 sample reels and backups](en/09-PO-33-PO-133-and-EP-133.md)
+10. [Language selector, themes and current limits](en/10-English-and-Spanish-Interface.md)
+11. [Changing libraries and optional integrations](en/11-Disk-Selection-and-Integrations.md)
 
 **Important:** The browser's ES/EN selector translates supported UI controls and messages, not sample file names. Some runtime texts and terminal output are still being localized. A generated WAV, XPM, XPJ or ZIP is not evidence that a specific hardware firmware accepted it.
 
