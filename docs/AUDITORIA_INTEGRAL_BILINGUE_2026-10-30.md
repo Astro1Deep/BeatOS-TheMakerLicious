@@ -87,3 +87,26 @@ El objetivo es publicar software usable por beatmakers y productores sin confund
 - **No se certifica compatibilidad física en todos los samplers/firmwares:** los tests actuales son sintéticos; cargar en MPC, Maschine, SP-404, PO y EP y verificar guardado/reapertura requiere dispositivos reales y registro de modelo/firmware.
 
 **Regla de cierre:** «CI verde» acredita que las pruebas existentes pasan; no demuestra ausencia absoluta de defectos, localización total ni seguridad de cada dispositivo. Se recomienda no etiquetar como estable una nueva versión antes de cerrar los P0 realmente observables y probar el ZIP final descargable.
+
+
+## 7. Continuación de auditoría — localización dinámica y estabilidad del pipeline (30/10/2026)
+
+Esta ampliación se realizó sobre el último estado auditado y registra los defectos encontrados con pruebas reproducibles. **Ningún resultado de CI se presupone para commits posteriores sin inspeccionar su ejecución.**
+
+| Código | Hallazgo reproducible | Reparación aplicada | Verificación |
+| --- | --- | --- | --- |
+| P0-PO-MENSAJES | Los textos dinámicos de grabación, importación, estado de copia, restauración y errores PO podían quedar en español con UI inglesa. | Se añadió traducción de estados críticos al mostrarse y tratamiento explícito de mensajes dinámicos con SHA-256, sin modificar el hash ni el WAV. | `tests/test_i18n.cjs`, pruebas de confirmación de restauración y estructura de backups. |
+| P0-PO-IDIOMA | Una advertencia PO ya visible no cambiaba automáticamente de idioma cuando se pulsaba ES/EN. | Se conserva el texto canónico del último aviso y se vuelve a renderizar en el idioma activo. | Regresión ES→EN→ES en `tests/test_i18n.cjs`. |
+| P1-EXP-TARJETAS | Las tarjetas de expansión creadas dinámicamente mantenían botones, accesibilidad y mensaje sin resultados en español. | `renderExpansionProgramsList` genera directamente textos ES/EN; conserva exactamente el nombre y ruta de cada programa. Se rerenderiza la vista si el selector cambia con el modal abierto. | Regresión de renderizado de cards y controles de expansión en `tests/test_i18n.cjs`. |
+| P1-WINDOWS-CI | La descarga de release estable consultaba la ruta antigua `Astro1Deep/mpc-sample-database` y podía agotar cuota API tras la redirección. | Se usa `Astro1Deep/BeatOS-TheMakerLicious` directamente en el workflow, conservando autorización de la API. | CI Windows `windows-release-install`, también verifica el ZIP de fuente actualizado. |
+
+**Evidencias intermedias confirmadas:** el commit `427bcff292be6d836bfb2d29be3d5bca4629f8dc` pasó los cuatro trabajos de CI después de reparar la consulta de release; el commit `2e5f7d1c895b2369054b59e990e1de9a97c445cc` pasó los cuatro trabajos después de corregir las tarjetas de expansiones. **Para aceptar los cambios posteriores de avisos PO, es necesaria una CI verde asociada al último commit.**
+
+### 7.1 Cierre técnico parcial, no certificación absoluta
+
+- **Localización:** las pantallas principales, capturas y estados PO, API JSON e indexador están cubiertos por pruebas, pero aún pueden existir excepciones de errores poco frecuentes o bibliotecas de terceros sin traducción. El diseño conserva `error_es` para inspección y muestra un mensaje genérico EN cuando no existe una equivalencia verificada.
+- **Distribución:** el paquete de **desarrollo** se genera y prueba en CI; la antigua release estable **no se ha sustituido**. Antes de anunciar una versión pública nueva hace falta publicar assets, comprobar hashes y verificar la versión descargable final.
+- **Hardware:** MPC, Maschine, SP-404MKII/A/SX, PO-33/PO-133 y EP-133 requieren validación real por modelo y firmware, guardado y reapertura; ningún test sintético demuestra compatibilidad física universal.
+- **Accesibilidad y portabilidad:** una comprobación Chrome headless no acredita por sí sola Safari, Firefox ni accesibilidad integral en macOS/Windows.
+
+**Estado global:** se han reparado defectos funcionales y de documentación, con trazabilidad de pruebas y rollback por commit. El objetivo de «cero errores» no es certificable en un sistema no trivial; corresponde exigir ausencia de defectos críticos conocidos, pruebas reproducibles y declaración honesta de los límites.
