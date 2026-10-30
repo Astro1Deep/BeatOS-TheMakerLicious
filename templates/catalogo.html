@@ -3286,6 +3286,11 @@ function setLanguage(lang) {
   const btnN = document.getElementById('btnNext');
   if (btnN) btnN.innerText = t.btnNext;
   refreshBeatOsLocale();
+  if (typeof refreshPo33BackupStatus === 'function') refreshPo33BackupStatus();
+  const expansionModal = document.getElementById('expansionBrowserModalOverlay');
+  if (expansionModal?.style.display === 'flex' && typeof filterExpansionKits === 'function') {
+    filterExpansionKits(document.getElementById('expansionSearchInput')?.value || '');
+  }
 }
 
 function toggleLanguage() {
@@ -5423,8 +5428,16 @@ function updatePo33StudioView() {
 let po33Recorder = null;
 let po33PendingArchives = 0;
 const po33UnsavedCaptures = new Set();
+function refreshPo33BackupStatus() {
+  const display = document.getElementById('po33BackupStatus');
+  if (display && typeof setPo33BackupStatus.originalText === 'string') {
+    display.textContent = localizeUiMessage(setPo33BackupStatus.originalText);
+  }
+}
 function setPo33BackupStatus(message) {
-  document.getElementById('po33BackupStatus').textContent = localizeUiMessage(message);
+  // The source is retained so safety warnings can switch languages without a reload.
+  setPo33BackupStatus.originalText = String(message == null ? '' : message);
+  refreshPo33BackupStatus();
 }
 function po33PcmWav(chunks, sampleRate) {
   const bytes = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
