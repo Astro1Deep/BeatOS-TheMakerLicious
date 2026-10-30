@@ -66,6 +66,17 @@ class ServerSecurityTests(unittest.TestCase):
                     self.assertIn(quote(name, safe=''), disposition)
                     self.assertEqual(response.read(), payload)
 
+    def test_download_io_failure_reports_http_500_instead_of_disconnect(self):
+        from unittest.mock import patch
+        with self.server() as (url, parent):
+            folder = parent / 'library' / 'Custom_Kits'
+            folder.mkdir()
+            (folder / 'locked.zip').write_bytes(b'zip bytes')
+            with patch.object(Path, 'open', side_effect=PermissionError('simulated denied access')):
+                status, body = self.request(url + '/api/download_file?path=Custom_Kits/locked.zip')
+            self.assertEqual(status, 500)
+            self.assertNotIn(b'zip bytes', body)
+
     def test_rejects_traversal_symlinks_and_absolute_downloads(self):
         with self.server() as (url, parent):
             for path in ('/%2e%2e/outside.txt', '/escape.txt',
