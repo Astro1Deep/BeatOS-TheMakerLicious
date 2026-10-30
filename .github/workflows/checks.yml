@@ -31,3 +31,31 @@ jobs:
           node tests/test_creator_identity.cjs
       - name: Build clean installer
         run: python build_release.py "${{ runner.temp }}/BeatOS.zip"
+  windows-release-install:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.11'
+      - name: Download the published installer
+        shell: pwsh
+        run: |
+          Invoke-WebRequest 'https://github.com/Astro1Deep/mpc-sample-database/releases/download/v3.7.0/BeatOS-3.7.0-layout.20261029.zip' -OutFile "$env:RUNNER_TEMP\BeatOS.zip"
+          Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, OSArchitecture
+      - name: Install, index, stream and export on native Windows
+        shell: pwsh
+        run: |
+          python -B tests/smoke_release_install.py --archive "$env:RUNNER_TEMP\BeatOS.zip" --sha256 6649afcd7293021c98d353c34866ba7b95c462b84e573d42c7f013230f245b66 --require-windows --report "$env:RUNNER_TEMP\windows-install-report.json"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-Content "$env:RUNNER_TEMP\windows-install-report.json" | Add-Content $env:GITHUB_STEP_SUMMARY
+      - name: Verify the current source installer on Windows
+        shell: pwsh
+        run: |
+          python -B build_release.py "$env:RUNNER_TEMP\BeatOS-source.zip"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $sourceDigest = (Get-FileHash "$env:RUNNER_TEMP\BeatOS-source.zip" -Algorithm SHA256).Hash.ToLowerInvariant()
+          python -B tests/smoke_release_install.py --archive "$env:RUNNER_TEMP\BeatOS-source.zip" --sha256 $sourceDigest --require-windows --report "$env:RUNNER_TEMP\windows-source-report.json"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-Content "$env:RUNNER_TEMP\windows-source-report.json" | Add-Content $env:GITHUB_STEP_SUMMARY
