@@ -22,7 +22,7 @@ let confirmation=false, stopped=0;
 let beforeUnload;
 const context=vm.createContext({Blob,ArrayBuffer,DataView,Date,URL,setTimeout,clearTimeout,clearInterval,
   document:{getElementById:el,querySelectorAll:()=>[audio],createElement:()=>({style:{},click(){}})}, window:{addEventListener:(_,callback)=>{beforeUnload=callback}},
-  confirm:()=>confirmation,stopPadVoices:()=>stopped++,getApiBaseUrl:()=> 'http://127.0.0.1:8888',
+  confirm:()=>confirmation,localizeUiMessage:message=>message,stopPadVoices:()=>stopped++,getApiBaseUrl:()=> 'http://127.0.0.1:8888',
   fetch:async()=>{throw Error('not expected');}});
 vm.runInContext(html.slice(html.indexOf('// PO-33 backup capture and archive:'),html.indexOf('// Carga de inventario de backups')) + '\nthis.makeWav=po33PcmWav;this.restore=preparePo33Restore;',context);
 (async()=>{
