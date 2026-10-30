@@ -77,19 +77,21 @@ class APILanguageTests(unittest.TestCase):
             self.assertIn("Falta parámetro", payload["error_es"])
             self.assertNotEqual(payload["error"], payload["error_es"])
 
-    def test_spanish_default_and_header_priority(self):
+    def test_english_default_and_header_priority(self):
         with self.server() as url:
             status, payload = self.request(url + "/api/load_project", data=b"{}", headers={
                 "Content-Type": "application/json",
             })
             self.assertNotEqual(status, 200)
-            self.assertIn("Falta parámetro", payload["error"])
+            self.assertIn("Missing", payload["error"])
             _, en = self.request(url + "/api/load_project", data=b"{}", headers={
                 "Cookie": "beatos_locale=es",
                 "X-BeatOS-Language": "en",
                 "Content-Type": "application/json",
             })
             self.assertIn("Missing", en["error"])
+            _, spanish = self.request(url + "/api/load_project", data=b"{}", headers={"Cookie":"beatos_locale=es", "Content-Type":"application/json"})
+            self.assertIn("Falta parámetro", spanish["error"])
 
     def test_server_console_honors_english_environment(self):
         import contextlib
@@ -115,7 +117,7 @@ class APILanguageTests(unittest.TestCase):
                 self.assertIn("Starting", payload["logs"][0])
                 self.assertIn("Iniciando", payload["logs_es"][0])
                 _, default = self.request(url + "/api/task_status")
-                self.assertIn("Iniciando", default["logs"][0])
+                self.assertIn("Starting", default["logs"][0])
             self.assertIn("Iniciando", serve_mpc.TASK_STATE["logs"][0])
         finally:
             serve_mpc.TASK_STATE["logs"] = logs_before
