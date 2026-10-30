@@ -98,7 +98,7 @@ assert.match(esDetail,/Datos del módem NO verificados/);
 
 
 // PO-33 critical recorder/restore states must be localized (not just static UI labels).
-const poStatusStart=html.indexOf('function setPo33BackupStatus(');
+const poStatusStart=html.indexOf('function refreshPo33BackupStatus(');
 const poStatusEnd=html.indexOf('function po33PcmWav(',poStatusStart);
 assert.ok(poStatusStart>0 && poStatusEnd>poStatusStart,'PO backup status function found');
 const poStatusEl={textContent:''};
