@@ -24,6 +24,30 @@ Versión **3.8.0**. [Instaladores y versiones](https://github.com/Astro1Deep/Bea
 >
 > **Estado técnico:** la interfaz funciona en ES/EN en las pruebas automatizadas, pero todavía **no se certifica una localización del 100 % de los mensajes del backend** ni compatibilidad universal con todos los firmwares.
 
+## Interface preview / Vista real de la interfaz
+
+This is the **actual BeatOS web interface** captured in headless Chrome with a synthetic demonstration library. It is not an AI concept image, and it does not contain real users' samples. / Captura **real** del catálogo HTML de BeatOS con datos de demostración, sin bibliotecas privadas ni hardware conectado.
+
+![BeatOS — The MakerLicious: real web sample-browser interface (English, synthetic demonstration samples)](docs/assets/screenshots/beatos-overview-en.png)
+
+<details>
+<summary>More screenshots / Más capturas (16-pad rack and Spanish UI)</summary>
+
+**16-pad drum rack / Rack de 16 pads (English)**
+
+![BeatOS 16-pad drum rack, rendered in actual Chrome](docs/assets/screenshots/beatos-rack-en.png)
+
+**Interfaz en español / Spanish overview**
+
+![BeatOS: explorador de samples en español, captura real con datos sintéticos](docs/assets/screenshots/beatos-overview-es.png)
+</details>
+
+**Who is it for? / ¿A quién va dirigido?** Music producers, beatmakers, DJs and sampling artists using **Akai MPC Sample / MPC workflows, NI Maschine, Roland SP-404MKII / SP-404A/SX, Teenage Engineering PO-33/PO-133 and EP-133 K.O. II**. This is a computer-based sample catalog and kit preparation tool, **not** replacement firmware or a native hardware project editor.
+
+**Searchable topics / Etiquetas:** `sample-library` · `beatmaking` · `music-production` · `akai-mpc` · `maschine` · `sp-404` · `po-33` · `ep-133` · `drum-kits` · `sampling`. GitHub uses repository **Topics** for discovery; plain hashtags are better suited to social announcements.
+
+**Website & discoverability:** [SEO / indexation checklist](docs/SEO_DISCOVERY.md) · [Pages landing (English source)](docs/index.html) · [Presentación en español (source)](docs/index-es.html). **GitHub Pages must be enabled before claiming these URLs are public.**
+
 ## Documentation / Documentación (ES · EN)
 
 | Topic / Tema | English | Español |
