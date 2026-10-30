@@ -12,6 +12,7 @@ from beatos_paths import data_dir, default_library_root
 import subprocess
 import shutil
 import time
+from contextlib import contextmanager
 
 
 # Installer prompts use the selected locale; no extra input is requested from existing users.
@@ -28,6 +29,19 @@ def get_language(argv=None, environ=None):
 
 def locale_text(message, lang=None):
     return _INSTALLER_EN.get(message, message) if (lang or get_language()) == "en" else message
+
+@contextmanager
+def language_environment(language):
+    """Pass a temporary locale to in-process server and its child indexers."""
+    previous = os.environ.get("BEATOS_LANG")
+    os.environ["BEATOS_LANG"] = language
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("BEATOS_LANG", None)
+        else:
+            os.environ["BEATOS_LANG"] = previous
 
 def open_url_or_file(target):
     if sys.platform == "darwin":
@@ -61,7 +75,7 @@ def main():
         
             
         cmd = [sys.executable, os.path.join(script_dir, "index_mpc_library.py"), "--path", path]
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True, env={**os.environ, "BEATOS_LANG": get_language()})
         
         cat_path = os.path.join(path, "catalogo_mpc_sample.html")
         cat_sub = os.path.join(path, "SQLITE_DATABASE", "catalogo_mpc_sample.html")
@@ -71,16 +85,18 @@ def main():
             ans = input(locale_text("\n¿Deseas abrir el catálogo en tu navegador ahora? (s/n): ")).strip().lower()
             if ans in ["s", "y", "si", "yes"]:
                 import serve_mpc
-                serve_mpc.run_server(os.path.abspath(path))
+                with language_environment(get_language()):
+                    serve_mpc.run_server(os.path.abspath(path))
                 
     elif choice == "2":
         path = input(locale_text("Ingresa la ruta de la tarjeta SD (Enter para carpeta de instalación): ")).strip()
         try:
             import serve_mpc
-            serve_mpc.run_server(path if path else str(default_library_root(script_dir)))
+            with language_environment(get_language()):
+                serve_mpc.run_server(path if path else str(default_library_root(script_dir)))
         except ImportError:
             # Fallback inline si serve_mpc no estuviera disponible
-            subprocess.run([sys.executable, os.path.join(script_dir, "serve_mpc.py"), path if path else ""])
+            subprocess.run([sys.executable, os.path.join(script_dir, "serve_mpc.py"), path if path else ""], env={**os.environ, "BEATOS_LANG": get_language()})
             
     elif choice == "3":
         path = input(locale_text("Ingresa la ruta a limpiar (Enter para carpeta actual): ")).strip()
