@@ -394,6 +394,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(self._api_json_dumps({"error": "Archivo no encontrado."}).encode("utf-8"))
                 return
+            headers_sent = False
             try:
                 # Stream from disk in bounded chunks: kits may contain many large samples.
                 with target_path.open("rb") as source:
@@ -411,13 +412,23 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                                      f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{quoted_name}")
                     self.send_cors_headers()
                     self.end_headers()
+                    headers_sent = True
                     shutil.copyfileobj(source, self.wfile, length=64 * 1024)
             except (BrokenPipeError, ConnectionResetError):
-                # A user canceling a download is not a server-side export failure.
+                # A cancelled browser download needs no follow-up response.
                 pass
             except Exception:
-                # Headers may already have been written; never send a second HTTP status.
-                if not self.wfile.closed:
+                if not headers_sent:
+                    # Preserve an explicit HTTP error when opening a file fails.
+                    self.send_response(500)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_cors_headers()
+                    self.end_headers()
+                    self.wfile.write(self._api_json_dumps(
+                        {"success": False, "error": "No se pudo abrir el archivo de descarga."},
+                        ensure_ascii=False).encode("utf-8"))
+                else:
+                    # A streaming error after headers cannot change the HTTP status.
                     self.close_connection = True
             return
 
