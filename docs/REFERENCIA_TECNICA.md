@@ -221,7 +221,7 @@ Las pruebas de instalación extraen el ZIP, crean una biblioteca sintética, ind
 - No hay un perfil XPJ separado por modelo MPC; el template incluido es Sample/AC50.
 - No hay proyecto nativo Maschine, SP o EP generado por BeatOS, ni decodificación de datos de backup PO. La restauración integrada prepara reproducción con confirmación, pero la recepción la realiza el aparato.
 - El rack no persiste una sesión completa en disco y sólo exporta el banco visible.
-- El deslizador de volumen y la validación del exportador tienen máximos distintos.
+- El deslizador de volumen se ha acotado a 141% para respetar la validación del exportador (ganancia 0–1). Clientes de API externos deben validar igualmente sus valores.
 - El orden de «fecha» del explorador usa IDs; algunos indicadores de duración PO son aproximados.
 - El script offline no conserva los controles web de tempo/opciones PO.
 - Algunos textos/comentarios históricos del programa exageran compatibilidad, ausencia de dependencias o verificación de respaldos. Para el alcance real consulta estas tablas y el comportamiento de las funciones, no sólo sus cabeceras.
