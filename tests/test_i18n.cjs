@@ -124,11 +124,11 @@ for (const [es,en] of missingVisibleTranslations) {
 
 // Every static Spanish title/ARIA instruction must be localizable; test the
 // markup itself so new controls cannot silently evade the fixed-key cases.
-const staticMarkup = html.replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script>/gi,'')
-  .replace(/<style\\b[^>]*>[\\s\\S]*?<\\/style>/gi,'');
-for (const match of staticMarkup.matchAll(/\\b(?:title|aria-label)="([^"]+)"/g)) {
+const staticMarkup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'')
+  .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,'');
+for (const match of staticMarkup.matchAll(/\b(?:title|aria-label)="([^"]+)"/g)) {
   const source = match[1].replaceAll('&amp;', '&').replaceAll('&quot;', '"');
-  if (!/[áéíóúñ]|\\b(?:Restablecer|Avanza|Cargar|Abrir|Modo Mover|Reproducir|Borrar|Selecciona|Haz clic|Buscar)\\b/i.test(source)) continue;
+  if (!/[áéíóúñ]|\b(?:Restablecer|Avanza|Cargar|Abrir|Modo Mover|Reproducir|Borrar|Selecciona|Haz clic|Buscar)\b/i.test(source)) continue;
   const result = vm.runInContext('beatosTranslateExact('+JSON.stringify(source)+')',ctx);
   assert.notEqual(result,source,'Missing English translation of visible title/ARIA: '+source);
 }
