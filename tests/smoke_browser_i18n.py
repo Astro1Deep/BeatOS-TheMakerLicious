@@ -37,6 +37,8 @@ window.addEventListener('load', () => {
     ['🎛️ Editar Pads en Rack','🎛️ Edit pads in rack'],
     ['⚡ Generar Kit EP-133','⚡ Generate EP-133 kit'],
     ['📁 Revelar en Finder','📁 Show in Finder'],
+    ['Haz clic en','Click'],
+    ['"Revelar en Finder"','"Show in Finder"'],
     ['Tipo y formato: estimados por nombre y carpeta de instrumento. Tonalidad: etiqueta del archivo; «nota» no confirma mayor/menor. Camelot sólo con modo declarado. Energía: nivel RMS aproximado de tres ventanas PCM (baja < −24, media hasta −12, alta ≥ −12 dBFS); no mide intensidad musical. Sin evidencia se indica sin identificar o sin medir.',
      'Type and format are estimated from filenames and instrument folders. The key label comes from the filename; a note alone does not establish major/minor mode. Camelot requires an explicit mode. Energy estimates RMS from three PCM windows (low < −24, medium to −12, high ≥ −12 dBFS); it does not measure perceived loudness. Missing evidence is shown as unidentified or unmeasured.']
   ];
