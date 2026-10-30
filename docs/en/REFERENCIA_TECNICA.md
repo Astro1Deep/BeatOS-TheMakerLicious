@@ -165,7 +165,7 @@ Review the GitHub Actions run associated with the actual source commit. CI tests
 - No native Maschine `.mxgrp`, SP project or EP project generated.
 - No PO FSK payload decoder, and no automatic proof of restored state.
 - A 16-pad rack is **not** persisted as a full project/session.
-- Web volume slider and export validation maxima are not identical.
+- Web volume controls are now capped within the exporter's gain validation; third-party API clients must still validate numeric ranges.
 - Some browser/CLI messages may remain Spanish as locale coverage is expanded.
 - BPM is parsed from filenames and estimated RMS energy comes from short WAV windows; it is not whole-file acoustic analysis.
 
