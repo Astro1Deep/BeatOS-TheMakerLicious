@@ -24,12 +24,23 @@ class IndexLocaleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="BeatOS locale ") as folder:
             root = Path(folder)
             (root / "Kick_Esperanza_90bpm.wav").write_bytes(b"not-a-real-wav")
+            (root / "Synthetic.xpj").write_bytes(b"not-a-real-project")
+            expansion = root / "Synthetic_Expansion"
+            expansion.mkdir()
+            (expansion / "Expansion.xml").write_text("<Expansion><title>Synthetic_Expansion</title></Expansion>", encoding="utf-8")
             lines = self.run_index(root, "en")
             self.assertIn("Source library:", lines)
-            self.assertIn("Starting", lines) if False else None
             self.assertIn("Indexing completed successfully", lines)
+            self.assertIn("Project:", lines)
+            self.assertIn("Key:", lines)
+            self.assertIn("Status:", lines)
+            self.assertIn("Expansion:", lines)
+            self.assertIn("Programs", lines)
             self.assertNotIn("Ruta de Origen", lines)
+            self.assertNotIn("Clave:", lines)
+            self.assertNotIn("Estado:", lines)
             self.assertTrue((root / "Kick_Esperanza_90bpm.wav").is_file())
+            self.assertEqual((root / "Synthetic.xpj").read_bytes(), b"not-a-real-project")
 
     def test_cli_defaults_to_spanish(self):
         with tempfile.TemporaryDirectory(prefix="BeatOS locale ") as folder:
