@@ -241,7 +241,7 @@ def resolve_library_path(root_dir: str, value: str) -> Path:
 
 
 class MPCAudioRequestHandler(BaseHTTPRequestHandler):
-    server_version = "MPCAudioStreamer/3.7.0-layout.20261029"
+    server_version = "MPCAudioStreamer/3.7.1"
 
     def send_cors_headers(self):
         origin = self.headers.get('Origin')
