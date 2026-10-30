@@ -238,7 +238,7 @@ Shuffle elige candidatos por categorías del catálogo completo: dos bombos, dos
 
 Por defecto bombo usa grupo 1, hi-hat grupo 2 y caja grupo 3; el resto 0. Un grupo explícito importado se mantiene, incluido 0. Repetir un mismo pad corta su voz anterior; dos grupos distintos pueden sonar a la vez.
 
-**Límite actual del volumen:** el deslizador llega a 150%, pero el exportador valida ganancia máxima 1; con la conversión visual actual, valores superiores a aproximadamente 141% pueden rechazarse al exportar. Para un recorrido reproducible usa 100% o menos, o un valor dentro del rango admitido. El manual no interpreta ese rechazo como una exportación completada.
+**Límite actual del volumen:** el deslizador se ha limitado a 141%, por debajo de la ganancia máxima 1 del exportador (141 / 141,25 ≈ 0,998). El 100% visual equivale aproximadamente a 0,707946 de ganancia, no a un medidor dBFS. La API continúa rechazando valores enviados externamente fuera del rango 0–1.
 
 Guardar en el editor actualiza el rack de la página; **no guarda un proyecto en disco**. Los ajustes no se transmiten igual a todos los destinos: consulta la tabla de parámetros de la referencia técnica.
 
