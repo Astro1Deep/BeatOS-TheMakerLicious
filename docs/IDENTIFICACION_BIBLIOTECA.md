@@ -1,5 +1,7 @@
 # Identificación de la biblioteca — BeatOS
 
+**Idioma:** Español · [English version](en/IDENTIFICACION_BIBLIOTECA.md)
+
 Véase GUIA_INSTALACION.md para las reglas, umbrales y límites. Los desconocidos se conservan explícitamente; no se asigna automáticamente percusión, mayor o energía media a un archivo sin evidencia. El contrato del catálogo mantiene sus 12 columnas para conservar la compatibilidad del rack, filtros y exportación.
 
 La conversión Camelot coincide con el cuadro oficial mayor/menor de Mixed In Key: https://mixedinkey.com/camelot-wheel/0/
