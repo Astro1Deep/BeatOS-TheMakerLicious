@@ -103,6 +103,11 @@ def preview_server():
         def do_GET(self):
             from urllib.parse import urlsplit
             endpoint=urlsplit(self.path).path
+            # The installed distribution uses BeatOS/docs/assets/ while the
+            # source checkout stores the exact same originals in docs/assets/.
+            if endpoint.startswith("/BeatOS/docs/assets/"):
+                self.path=self.path[len("/BeatOS"):]
+                return super().do_GET()
             if endpoint in ("/api/status", "/api/po33_backups"):
                 import json
                 data=({"status":"online","root_dir":"DEMO_LIBRARY (synthetic, read-only)",
