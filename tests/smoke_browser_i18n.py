@@ -49,23 +49,34 @@ window.addEventListener('load', () => {
     return null;
   };
   const localeNodes = expected.map(([es,en]) => ({es,en,node:findNode(es)}));
+  const attributeExpected = [
+    ['title','Restablecer todos los filtros y búsqueda','Reset all filters and search'],
+    ['title','Modo Mover: Haz clic en dos pads consecutivamente para intercambiarlos de sitio de forma rápida','Move mode: click two pads in succession to swap their positions quickly'],
+    ['aria-label','Reproductor y símbolos de Astro1Deep','Player and Astro1Deep symbols']
+  ];
+  const localeAttrs = attributeExpected.map(([attr,es,en]) => ({
+    attr,es,en,
+    node:[...document.querySelectorAll('['+attr+']')].find(el => el.getAttribute(attr) === es)
+  }));
   const reporter = document.createElement('output');
   reporter.id = 'i18n-browser-result';
   document.body.appendChild(reporter);
-  if (!recording || localeNodes.some(x => !x.node)) {reporter.textContent = 'FAIL:missing locale test nodes'; return;}
+  if (!recording || localeNodes.some(x => !x.node) || localeAttrs.some(x => !x.node)) {reporter.textContent = 'FAIL:missing locale test nodes'; return;}
   try {
     setLanguage('en');
     setTimeout(() => {
       const enOK = recording.textContent.trim() === '⏺ Record backup' &&
           document.documentElement.lang === 'en' &&
           document.cookie.includes('beatos_locale=en') &&
-          localeNodes.every(x => x.node.nodeValue.trim() === x.en);
+          localeNodes.every(x => x.node.nodeValue.trim() === x.en) &&
+          localeAttrs.every(x => x.node.getAttribute(x.attr) === x.en);
       setLanguage('es');
       setTimeout(() => {
         const esOK = recording.textContent.trim() === '⏺ Grabar backup' &&
             document.documentElement.lang === 'es' &&
             document.cookie.includes('beatos_locale=es') &&
-            localeNodes.every(x => x.node.nodeValue.trim() === x.es);
+            localeNodes.every(x => x.node.nodeValue.trim() === x.es) &&
+            localeAttrs.every(x => x.node.getAttribute(x.attr) === x.es);
         const fileOK = probe.textContent === 'MyCustom-Sample_90bpm.wav';
         reporter.textContent = enOK && esOK && fileOK
           ? 'BEATOS_BROWSER_ES_EN_PASS' : 'FAIL:en=' + enOK + ',es=' + esOK + ',file=' + fileOK;
