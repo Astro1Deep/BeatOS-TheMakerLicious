@@ -49,6 +49,11 @@ class HubWorkflows(unittest.TestCase):
         self.assertFalse((self.root/'BeatOS').exists())
         truncated=self.root/'truncated.wav';truncated.write_bytes(raw)
         self.assertFalse(kits.inspect_po33_backup(truncated)['wav_complete'])
+    def test_po_interrupted_marker_survives_long_recording_names_and_rescan(self):
+        name='x'*60+'_INCOMPLETO_2026-10-30.wav'
+        info=kits.import_po33_backup(self.root,name,self.audio.read_bytes())
+        self.assertTrue(info['capture_interrupted'])
+        self.assertTrue(kits.scan_po33_backups([self.root/'BeatOS/data/po33_backups'])[0]['capture_interrupted'])
     def test_po_backup_preserves_mono_but_does_not_offer_stereo_restore(self):
         path=self.root/'mono.wav'
         with wave.open(str(path),'wb') as wav:

@@ -14,7 +14,7 @@ En Linux usa `sha256sum -c` con ese mismo archivo. En PowerShell, `Get-FileHash 
 
 ## Pruebas realizadas
 
-- 57 pruebas Python y cuatro suites JavaScript; la entrega incluye las pruebas de regresión.
+- 58 pruebas Python y cuatro suites JavaScript; la entrega incluye las pruebas de regresión.
 - GitHub Actions comprueba Python 3.11 y 3.14, lógica JavaScript y generación del instalador.
 - Instalación en carpeta con espacios y biblioteca separada; indexación repetida, un catálogo único, recursos y preescucha por HTTP.
 - Inspector de proyectos, pistas/bancos, acceso a XPJ de expansiones y flujo de carga al rack; fallos que conservan la copia anterior.
