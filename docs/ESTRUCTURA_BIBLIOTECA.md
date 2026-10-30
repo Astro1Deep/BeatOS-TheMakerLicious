@@ -1,5 +1,7 @@
 # Organización de BeatOS
 
+**Idioma:** Español · [English version](en/ESTRUCTURA_BIBLIOTECA.md)
+
 ```text
 Biblioteca/
 ├── catalogo_universal.html       acceso ligero
