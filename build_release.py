@@ -18,7 +18,7 @@ FILES = ('serve_mpc.py', 'hardware_kit_builder.py', 'index_mpc_library.py', 'bea
          'templates/catalogo.html', 'docs/assets/po33-capture-worklet.js', 'templates/template_drum.xpm',
          'templates/template_project.xpj', 'tests/test_hardware_kit_builder.py',
          'tests/test_serve_mpc.py', 'tests/test_indexer.py', 'tests/test_metadata.py', 'tests/test_installer.py', 'tests/test_mute_groups.py',
-         'tests/test_pad_audio.cjs', 'tests/test_library_ui.cjs', 'tests/test_creator_identity.cjs', 'tests/test_po33_backups.cjs', 'ABRIR_BEATOS.command', 'tests/test_hub_workflows.py', 'docs/assets/hardware/sources.json')
+         'tests/test_pad_audio.cjs', 'tests/test_library_ui.cjs', 'tests/test_creator_identity.cjs', 'tests/test_po33_backups.cjs', 'tests/test_i18n.cjs', 'tests/test_installer_language.py', 'tests/test_documentation_links.py', 'tests/smoke_browser_i18n.py', 'ABRIR_BEATOS.command', 'tests/test_hub_workflows.py', 'docs/assets/hardware/sources.json')
 VERSION = '3.8.0'
 
 
