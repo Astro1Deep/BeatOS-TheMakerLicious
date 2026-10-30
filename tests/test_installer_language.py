@@ -27,6 +27,19 @@ class InstallerLanguageTests(unittest.TestCase):
             self.assertEqual(installer.get_language(),"es")
             installer.main()
             self.assertIn("Saliendo.",str(printed.call_args_list))
+    def test_indexer_inherits_english_without_changing_command_path(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as folder, patch.object(sys, "argv", ["installer.py", "--lang", "en"]), patch("builtins.input", side_effect=["1", folder]), patch("builtins.print"), patch("installer.subprocess.run") as run:
+            installer.main()
+            self.assertEqual(run.call_args.kwargs["env"]["BEATOS_LANG"], "en")
+            self.assertEqual(run.call_args.args[0][-2:], ["--path", folder])
+
+    def test_server_receives_english_and_restores_parent_environment(self):
+        with patch.object(sys, "argv", ["installer.py", "--lang", "en"]), patch.dict(os.environ, {"BEATOS_LANG": "es"}), patch("builtins.input", side_effect=["2", ""]), patch("builtins.print"), patch("serve_mpc.run_server") as start:
+            start.side_effect = lambda *_args, **_kwargs: self.assertEqual(os.environ.get("BEATOS_LANG"), "en")
+            installer.main()
+            self.assertEqual(os.environ.get("BEATOS_LANG"), "es")
+
     def test_english_from_environment(self):
         with patch.object(sys,"argv",["installer.py"]), patch.dict(os.environ,{"BEATOS_LANG":"en"}):
             self.assertEqual(installer.get_language(),"en")
