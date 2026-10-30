@@ -10,13 +10,13 @@
 
 El flujo central es **explorar tu biblioteca → montar y ajustar un kit → elegir destino → generar los archivos → cargarlos en el aparato o software correspondiente**. Puedes partir de samples sueltos sin tener una MPC. La inspección de proyectos XPJ y programas XPM es una función adicional para recuperar referencias y editar copias de kits del ecosistema Akai.
 
-Versión **3.7.1**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc-sample-database/releases) · [Guía de instalación](GUIA_INSTALACION.md) · [Identidad del creador](docs/IDENTIDAD_DEL_CREADOR.md)
+Versión **3.8.0**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc-sample-database/releases) · [Guía de instalación](GUIA_INSTALACION.md) · [Identidad del creador](docs/IDENTIDAD_DEL_CREADOR.md)
 
 ## Instalación
 
 Requiere **Python 3.11 o superior**. El catálogo y el servidor usan la biblioteca estándar. FFmpeg es opcional para convertir audio y necesario en determinados formatos, frecuencias y ajustes de afinación. El sistema se ejecuta en el ordenador; no instala firmware en el sampler.
 
-Descarga el archivo **BeatOS-3.7.1.zip** de [la versión estable](https://github.com/Astro1Deep/mpc-sample-database/releases/latest), junto a su archivo SHA-256. El ZIP adjunto a la versión es el instalador organizado; «Source code» descarga el repositorio de desarrollo, cuya estructura es distinta.
+Descarga el archivo **BeatOS-3.8.0.zip** de [la versión estable](https://github.com/Astro1Deep/mpc-sample-database/releases/latest), junto a su archivo SHA-256. El ZIP adjunto a la versión es el instalador organizado; «Source code» descarga el repositorio de desarrollo, cuya estructura es distinta.
 
 Descomprime en una carpeta nueva y abre una terminal en la carpeta que contiene `BeatOS/`:
 
@@ -92,6 +92,8 @@ Con el bundle universal, `Custom_Kits/<nombre>/` contiene `Akai_MPC/`, `NI_Masch
 FFmpeg permite convertir formatos o frecuencias distintos y procesar afinación en el reel PO. Sin él sólo se admiten las fuentes PCM compatibles con la conversión solicitada; por ejemplo, pasar de 44.1 a 48 kHz para SP-404MK2 requiere FFmpeg. Si falla una conversión, se informa del error y se retira la entrega parcial. En el bundle universal, el fallo de un destino cancela el conjunto: si sólo necesitas un aparato, selecciona ese destino.
 
 Para PO, introduce la memoria que tengas libre: BeatOS no puede consultarla. El reel puede recortar muestras con fade-out para caber en el presupuesto, y las pausas cuentan dentro de él. Consulta la [guía de PO-33/PO-133 y EP-133](docs/wiki/09-Pocket-Operator-PO-33-KO-Studio-y-FSK-Modem.md) antes de cargar audio o manejar respaldos.
+
+El Hub PO permite grabar WAV estéreo sin compresión, importar, archivar y descargar respaldos originales con SHA-256, y preparar su restauración con confirmación. El volcado del propio PO conserva sonidos y patrones; BeatOS no convierte proyectos MPC en proyectos nativos del PO ni certifica los datos del módem. Consulta el [flujo completo de backups](docs/wiki/09-Pocket-Operator-PO-33-KO-Studio-y-FSK-Modem.md).
 
 ## Seguridad y datos
 

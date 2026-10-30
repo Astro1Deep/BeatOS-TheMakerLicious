@@ -1660,20 +1660,29 @@
 /* ==================== POCKET OPERATOR PO-33 STUDIO & PAD EDITOR STYLES ==================== */
 .po33-dashboard {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
   gap: 20px;
   margin-top: 14px;
 }
 @media (max-width: 960px) {
-  .po33-dashboard { grid-template-columns: 1fr; }
+  .po33-dashboard { grid-template-columns: minmax(0, 1fr); }
 }
 .po33-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
+.po33-card > div:first-child { flex-wrap: wrap; gap: 8px; }
+.po33-card input, .po33-card select {
+  min-width: 0; max-width: 100%; padding: 8px; border-radius: 6px;
+  border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); font: inherit;
+}
+.po33-card input[type="file"] { font-size: 12px; }
+#connectionSummary { overflow-wrap: anywhere; }
 .po33-header-badge {
   display: inline-flex;
   align-items: center;
@@ -2240,7 +2249,7 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
         <select id="rackTargetSelect" class="filter-select" style="width:100%; padding:12px; font-weight:600;">
           <option value="universal">🌐 Bundle Universal (MPC + Maschine + SP-404MK2 + PO-33 + EP-133)</option>
           <option value="ep133">🥊 TE EP-133 K.O. II (EP Sample Tool: WAV + ZIP)</option>
-          <option value="po33">🕹️ TE Pocket Operator PO-33 / PO-133 (Auto-Slice Reel &amp; Backup)</option>
+          <option value="po33">🕹️ TE Pocket Operator PO-33 / PO-133 (Auto-Slice Reel)</option>
           <option value="maschine">🎹 Native Instruments Maschine (WAV + mapa JSON)</option>
           <option value="mpc">🎛️ Akai MPC Standalone (.xpm Drum Program)</option>
           <option value="sp404mk2">🎚️ Roland SP-404MK2 &amp; DOOM OS (IMPORT Folder)</option>
@@ -2348,7 +2357,7 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
           <span style="font-size:13px; color:var(--text-primary); margin-left:8px;" id="po33BudgetText">0.00s / 40.00s (0% utilizado)</span>
         </div>
         <div style="font-size:12px; color:var(--text-muted);">
-          Memoria libre del dispositivo: <strong id="po33FreeTime" style="color:var(--mpc-green);">40.00s</strong>
+          Saldo del presupuesto elegido: <strong id="po33FreeTime" style="color:var(--mpc-green);">40.00s</strong>
         </div>
       </div>
       <div class="po33-budget-bar-bg">
@@ -2373,7 +2382,7 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
           <span class="po33-header-badge drum">Pads 9 al 16 (≤ 40s)</span>
         </div>
         <p style="font-size:12px; color:var(--text-muted); line-height:1.5;">
-          Concatena los 16 pads del Beatmaker Rack en una tira de audio continua con <strong>150 ms de silencio exacto</strong> entre transitorios como ayuda al corte; revisa y ajusta los puntos TRIM en el PO-33/PO-133. Si los sonidos suman más de 40s, el motor aplica <strong>Smart Trim con fade-out suave</strong> para garantizar que nunca se desborde la memoria RAM de tu Pocket Operator.
+          Reúne hasta 16 pads ocupados en una tira de audio con pausas ajustables (150 ms por defecto). Revisa los cortes TRIM en el PO. Si hace falta, el exportador recorta con fade-out para respetar el presupuesto elegido; comprueba primero la memoria libre real del dispositivo.
         </p>
 
         <div style="margin: 16px 0; display:flex; gap:10px; flex-wrap:wrap;">
@@ -2386,14 +2395,14 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
         </div>
 
         <div class="card-actions">
-          <label>Memoria disponible para el reel (s) <input id="poBudget" type="number" min="1" max="40" step="0.1" value="40"></label>
-          <label>Pausa entre golpes (ms) <input id="poGap" type="number" min="0" max="500" step="10" value="150"></label>
+          <label>Memoria disponible para el reel (s) <input id="poBudget" type="number" min="1" max="40" step="0.1" value="40" oninput="updatePo33StudioView()"></label>
+          <label>Pausa entre golpes (ms) <input id="poGap" type="number" min="0" max="500" step="10" value="150" oninput="updatePo33StudioView()"></label>
           <p>Introduce el tiempo libre que muestra tu PO. El exportador recorta si hace falta; no borra muestras del dispositivo. Los mutes y el paneo del rack no se transfieren al PO.</p>
         </div>
         <!-- VISUALIZADOR DE REPRODUCCIÓN / CUENTA ATRÁS -->
         <div id="po33CountdownBox" style="display:none; background:rgba(0, 240, 255, 0.1); border:1px solid var(--mpc-cyan); padding:14px; border-radius:8px; text-align:center; margin-bottom:14px;">
           <div style="font-size:22px; font-weight:800; color:var(--mpc-cyan);" id="po33CountdownText">Preparando... 3</div>
-          <div style="font-size:11px; color:var(--text-primary); margin-top:4px;">En tu PO-33 mantén pulsado <strong>RECORD + SOUND + [Pad 9 al 16]</strong></div>
+          <div style="font-size:11px; color:var(--text-primary); margin-top:4px;">En tu PO-33 mantén pulsado <strong>RECORD + [slot de batería 9 al 16]</strong></div>
         </div>
 
         <div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-top:16px;">
@@ -2417,7 +2426,7 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
         </div>
 
         <div style="margin-top:14px; font-size:11px; color:var(--text-muted); line-height:1.6; background:var(--modal-box-bg, rgba(255,255,255,0.02)); border:1px solid var(--border-color); padding:10px; border-radius:6px;">
-          💡 <strong>Modo Melódico (Pads 1 al 8):</strong> Si deseas cargar un sintetizador o bajo cromático en los slots 1-8, abre el <em>Inspector de Pads (⚙️)</em> y selecciona la muestra para reproducirla a lo largo de las 16 notas de la escala.
+          💡 <strong>Modo Melódico (Pads 1 al 8):</strong> Para cargar un sonido cromático, reproduce su muestra individual mientras mantienes RECORD + el slot melódico elegido (1–8) en el PO. El reel de batería corresponde a un slot 9–16.
         </div>
       </div>
 
@@ -2427,14 +2436,25 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
           <h3 style="color:var(--text-primary); font-size:17px; display:flex; align-items:center; gap:8px;">
             📻 Módem FSK &amp; Restauración de Backups
           </h3>
-          <span class="po33-header-badge fsk">Módem FSK (1~4 min)</span>
+          <span class="po33-header-badge fsk">Sonidos + patrones</span>
         </div>
         <p style="font-size:12px; color:var(--text-muted); line-height:1.5;">
-          Los volcados FSK transmiten muestras, patrones y parámetros codificados en tonos de audio de alta frecuencia. Su duración es <strong>dinámica (típicamente entre 1 y 4 minutos)</strong> según el respaldo. BeatOS inspecciona el encabezado y los primeros cuatro segundos de amplitud; no decodifica ni certifica sus datos.
+          Un backup completo conserva los sonidos y patrones transmitidos por el PO. Un reel sólo carga muestras: no incluye secuencias. BeatOS archiva el WAV original y calcula SHA-256, pero no decodifica ni certifica el contenido del módem ni convierte proyectos MPC en proyectos nativos del PO.
         </p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
+          <label class="po33-btn-secondary">📥 Importar backup WAV<input id="po33BackupInput" type="file" accept=".wav,audio/wav" onchange="importPo33BackupFile(this)" style="display:block; max-width:100%; margin-top:6px;"></label>
+          <label>Nombre de la grabación<input id="po33RecordingName" value="PO33_Backup" maxlength="60" style="display:block; max-width:100%;"></label>
+          <label>Entrada de línea estéreo<select id="po33InputDevice" style="display:block; max-width:100%;"><option value="">Entrada predeterminada del sistema</option></select></label>
+          <button type="button" id="po33DetectInputs" class="po33-btn-secondary" onclick="detectPo33Inputs()">Detectar entradas</button>
+          <button type="button" id="po33RecordStart" class="po33-btn-action" onclick="startPo33Recording()">⏺ Grabar backup</button>
+          <button type="button" id="po33RecordStop" class="po33-btn-secondary" onclick="stopPo33Recording()" disabled>⏹ Finalizar y guardar</button>
+        </div>
+        <p id="po33BackupStatus" role="status" aria-live="polite" style="font-size:12px; margin-top:10px; overflow-wrap:anywhere;">Los WAV se guardan en BeatOS/data/po33_backups/. No se sobrescriben grabaciones anteriores.</p>
+        <div id="po33RecoveryDownloads" style="display:flex; flex-direction:column; gap:8px; overflow-wrap:anywhere;"></div>
+        <p style="font-size:12px; color:var(--text-muted);">Para grabar: PO LINE OUT → entrada de línea estéreo. Inicia la grabación, pulsa WRITE + SOUND + PLAY en el PO y espera a que termine el envío antes de finalizar. Se captura WAV PCM estéreo, sin compresión ni monitorización; se solicitan desactivados eco, reducción de ruido y ganancia automática. Máximo 10 minutos. Conserva la copia descargada.</p>
 
         <div style="margin-top:16px;">
-          <strong style="font-size:12px; color:var(--text-primary);">📁 Backups Detectados en tu Mac:</strong>
+          <strong style="font-size:12px; color:var(--text-primary);">📁 Archivo de backups:</strong>
           <div id="po33BackupsList" style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
             <!-- Tarjetas de backup renderizadas en JS -->
             <div style="padding:14px; background:var(--modal-box-bg, rgba(255,255,255,0.03)); border-radius:8px; border:1px solid var(--border-color); font-size:12px; color:var(--text-muted);">
@@ -2442,13 +2462,19 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
             </div>
           </div>
         </div>
+        <div id="po33RestoreBox" hidden style="margin-top:16px;">
+          <strong id="po33RestoreTitle" style="overflow-wrap:anywhere;"></strong>
+          <p>La recepción BORRA todos los sonidos y patrones actuales del PO. Conserva antes su backup. Conecta salida estéreo → PO LINE IN, entra con WRITE + SOUND + RECORD y después pulsa reproducir. No uses Bluetooth, efectos, ecualización ni audio espacial. Ajusta el nivel sin saturar; no hay un volumen universal.</p>
+          <audio id="po33RestoreAudio" controls preload="none" style="width:100%;" onratechange="this.playbackRate=1"></audio>
+          <p>Reproducción del WAV original a velocidad 1×. Que el archivo esté íntegro no garantiza que el PO haya aceptado el respaldo.</p>
+        </div>
 
         <div style="margin-top:20px; background:var(--modal-box-bg, rgba(0,0,0,0.25)); border:1px solid var(--border-color); padding:14px; border-radius:8px;">
           <h4 style="font-size:13px; color:var(--mpc-gold); margin-bottom:6px;">🕹️ Protocolo Físico de Botones PO-33:</h4>
           <ul style="font-size:11px; color:var(--text-muted); line-height:1.8; margin-left:16px;">
             <li><strong>Restaurar Backup Completo FSK:</strong> Conecta cable 3.5mm de Mac a LINE IN. En la PO-33 mantén <code>WRITE + SOUND + RECORD</code> y reproduce el audio del backup (duración variable). Esta restauración borra las muestras y patrones del receptor; guarda antes su respaldo.</li>
             <li><strong>Crear Nuevo Backup:</strong> Conecta cable 3.5mm de LINE OUT a la entrada de audio del Mac. Mantén <code>WRITE + SOUND</code> y presiona <code>PLAY</code>.</li>
-            <li><strong>Auto-Slice Drum Kit (≤ 40.0s):</strong> Mantén <code>RECORD + SOUND + [Pad 9 al 16]</code> y reproduce la tira Drum Reel.</li>
+            <li><strong>Auto-Slice Drum Kit (≤ 40.0s):</strong> Mantén <code>RECORD + [slot de batería 9 al 16]</code> y reproduce la tira Drum Reel. Revisa después los cortes en TRIM.</li>
           </ul>
         </div>
       </div>
@@ -3069,7 +3095,7 @@ const I18N = {
     btnShuffle: '🎲 AI Shuffle (16 Pads)',
     btnClearRack: '🗑️ Vaciar',
     po33Title: '🕹️ Pocket Operator PO-33 / PO-133 Studio & FSK Modem',
-    po33Subtitle: 'Tiras Drum Reel con silencios exactos de 150ms (≤ 40s) y inspección de audio de respaldos (sin decodificación).',
+    po33Subtitle: 'Reels con pausas ajustables (≤ 40s), captura estéreo y archivo de backups WAV (datos no decodificados).',
     btnGenDrumReel: '⚡ Sintetizar Drum Reel (150ms)',
     btnScanBackups: '🔄 Escanear Backups FSK',
     toastCopied: '✔ Ruta copiada al portapapeles'
@@ -3102,7 +3128,7 @@ const I18N = {
     btnShuffle: '🎲 AI Shuffle (16 Pads)',
     btnClearRack: '🗑️ Clear Rack',
     po33Title: '🕹️ Pocket Operator PO-33 / PO-133 Studio & FSK Modem',
-    po33Subtitle: 'Drum Reel strips with calibrated 150ms silences (≤ 40s) and backup audio inspection (payload not decoded).',
+    po33Subtitle: 'Drum reels with adjustable gaps (≤ 40s), stereo capture and WAV backup archive (payload not decoded).',
     btnGenDrumReel: '⚡ Synthesize Drum Reel (150ms)',
     btnScanBackups: '🔄 Scan FSK Backups',
     toastCopied: '✔ Path copied to clipboard'
@@ -5187,9 +5213,8 @@ function testPlayCurrentPad() {
 
 function getPadDurationSec(p) {
   if (!p) return 0;
-  if (typeof p.durationSec === 'number' && p.durationSec > 0) return p.durationSec;
-  if (typeof p.duration === 'number' && p.duration > 0) return p.duration;
-  return 0;
+  const duration = p.durationSec > 0 ? p.durationSec : p.duration > 0 ? p.duration : 0;
+  return duration / Math.pow(2, (Number(p.tune) || 0) / 12);
 }
 
 function updatePo33StudioView() {
@@ -5214,23 +5239,28 @@ function updatePo33StudioView() {
   }
 
   const activeCount = activePadsList.length;
+  const totalCap = Number(document.getElementById('poBudget').value);
+  const gapMs = Number(document.getElementById('poGap').value);
+  if (!Number.isFinite(totalCap) || totalCap < 1 || totalCap > 40 || !Number.isInteger(gapMs) || gapMs < 0 || gapMs > 500 || activeCount * gapMs / 1000 >= totalCap) {
+    budgetText.textContent = 'Revisa presupuesto (1–40 s) y pausas (0–500 ms): debe quedar tiempo para el audio.';
+    budgetBar.style.width = '0%'; freeTimeText.textContent = 'Presupuesto no válido'; tableBody.textContent = ''; return;
+  }
   if (activePadsList.some(p => !p.dur)) {
-    tableBody.innerHTML = activePadsList.map(p => `<tr><td>Pad ${p.padNum}</td><td>${escapeHtml(p.item.filename)}</td><td>${escapeHtml(p.item.soundType || 'SAMPLE')}</td><td>150 ms</td><td>Se calcula al exportar</td></tr>`).join('');
+    tableBody.innerHTML = activePadsList.map(p => `<tr><td>Pad ${p.padNum}</td><td>${escapeHtml(p.item.filename)}</td><td>${escapeHtml(p.item.soundType || 'SAMPLE')}</td><td>${gapMs} ms</td><td>Se calcula al exportar</td></tr>`).join('');
     countBadge.textContent = activeCount; budgetBar.style.width = '0%';
-    budgetText.textContent = 'Duración pendiente de decodificar; el exportador comprueba el límite de 40s.';
+    budgetText.textContent = `Duración pendiente de decodificar; presupuesto elegido ${totalCap}s y pausas ${gapMs} ms. El exportador comprueba el límite.`;
     freeTimeText.textContent = 'No consultada en el dispositivo'; return;
   }
-  const gapPerPad = 0.15;
+  const gapPerPad = gapMs / 1000;
   const totalGapSec = activeCount * gapPerPad;
   const rawTotalSec = totalRawSoundSec + totalGapSec;
-  const totalCap = 40.0;
-  const maxAvailableSoundSec = Math.max(0.5, totalCap - totalGapSec);
+  const maxAvailableSoundSec = totalCap - totalGapSec;
   const exceedsCapacity = rawTotalSec > totalCap;
 
   // Algoritmo Water-Filling idéntico a hardware_kit_builder.py
   let capSec = 999.0;
   if (exceedsCapacity && activePadsList.length > 0) {
-    let low = 0.05;
+    let low = 0;
     let high = Math.max(...activePadsList.map(x => x.dur));
     for (let it = 0; it < 35; it++) {
       let mid = (low + high) / 2.0;
@@ -5257,7 +5287,7 @@ function updatePo33StudioView() {
       '<td><strong style="color:var(--mpc-cyan);">Pad ' + obj.padNum + '</strong></td>' +
       '<td>' + escapeHtml(obj.item.filename) + '</td>' +
       '<td><span class="badge" style="font-size:10px;">' + (obj.item.soundType || 'SAMPLE') + '</span></td>' +
-      '<td>150 ms</td>' +
+      '<td>' + gapMs + ' ms</td>' +
       '<td>' + durLabel + '</td>' +
     '</tr>';
   });
@@ -5277,7 +5307,7 @@ function updatePo33StudioView() {
   if (exceedsCapacity) {
     budgetBar.style.background = 'var(--mpc-gold)';
     if (budgetText) {
-      budgetText.innerHTML = `<span style="color:var(--mpc-gold); font-weight:800;">${displayTotalSec.toFixed(2)}s / ${totalCap.toFixed(2)}s (${pct.toFixed(0)}% RAM)</span> <span style="font-size:11px; color:var(--text-muted);">[Audio original ${rawTotalSec.toFixed(2)}s ajustado con Smart Trim para caber en 40s]</span>`;
+      budgetText.innerHTML = `<span style="color:var(--mpc-gold); font-weight:800;">${displayTotalSec.toFixed(2)}s / ${totalCap.toFixed(2)}s (${pct.toFixed(0)}% del presupuesto)</span> <span style="font-size:11px; color:var(--text-muted);">[Estimación con Smart Trim; se confirma al exportar]</span>`;
     }
     if (freeTimeText) {
       freeTimeText.innerHTML = `<strong style="color:var(--mpc-gold);">${(totalCap - displayTotalSec).toFixed(2)}s libre</strong>`;
@@ -5294,27 +5324,186 @@ function updatePo33StudioView() {
   }
 }
 
+// PO-33 backup capture and archive: independent of the musical rack audio graph.
+let po33Recorder = null;
+let po33PendingArchives = 0;
+const po33UnsavedCaptures = new Set();
+function setPo33BackupStatus(message) {
+  document.getElementById('po33BackupStatus').textContent = message;
+}
+function po33PcmWav(chunks, sampleRate) {
+  const bytes = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
+  const header = new ArrayBuffer(44), view = new DataView(header);
+  const text = (offset, value) => [...value].forEach((char, i) => view.setUint8(offset + i, char.charCodeAt(0)));
+  text(0, 'RIFF'); view.setUint32(4, 36 + bytes, true); text(8, 'WAVE'); text(12, 'fmt ');
+  view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 2, true);
+  view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 4, true);
+  view.setUint16(32, 4, true); view.setUint16(34, 16, true); text(36, 'data'); view.setUint32(40, bytes, true);
+  return new Blob([header, ...chunks], {type:'audio/wav'});
+}
+async function archivePo33Backup(blob, name) {
+  po33PendingArchives++;
+  try {
+    const response = await fetch(getApiBaseUrl() + '/api/po33_backups?name=' + encodeURIComponent(name), {
+      method:'POST', headers:{'Content-Type':'audio/wav'}, body:blob
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) throw new Error(result.error || 'No se pudo archivar el WAV');
+    setPo33BackupStatus('WAV guardado sin modificar. SHA-256: ' + result.backup.sha256 + '. Datos del módem no verificados.');
+    await loadPo33BackupsList();
+    return result.backup;
+  } finally { po33PendingArchives--; }
+}
+async function importPo33BackupFile(input) {
+  const file = input.files[0];
+  if (!file || !requireConnectedView()) return;
+  input.disabled = true;
+  try {
+    if (file.size > 128 * 1024 * 1024) throw new Error('El máximo es 128 MiB');
+    setPo33BackupStatus('Importando el WAV original…');
+    await archivePo33Backup(file, file.name);
+  } catch(error) { setPo33BackupStatus('No importado: ' + error.message); }
+  finally { input.disabled = false; input.value = ''; }
+}
+async function detectPo33Inputs() {
+  if (!navigator.mediaDevices?.getUserMedia) { setPo33BackupStatus('Abre BeatOS en un navegador de escritorio mediante el servidor local para usar la entrada de audio.'); return; }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const select = document.getElementById('po33InputDevice'), selected = select.value;
+    select.replaceChildren(new Option('Entrada predeterminada del sistema', ''));
+    devices.filter(device => device.kind === 'audioinput').forEach(device => select.add(new Option(device.label || 'Entrada de audio', device.deviceId)));
+    if ([...select.options].some(option => option.value === selected)) select.value = selected;
+    setPo33BackupStatus('Selecciona la entrada de línea de tu interfaz; la detección no ha grabado ni guardado audio.');
+  } catch(error) { setPo33BackupStatus('No se pudieron detectar entradas: ' + error.message); }
+  finally { stream?.getTracks().forEach(track => track.stop()); }
+}
+function cleanupPo33Recording(recording) {
+  clearInterval(recording.timer);
+  clearTimeout(recording.stopTimer);
+  recording.stream?.getTracks().forEach(track => track.stop());
+  recording.source?.disconnect(); recording.node?.disconnect();
+  if (recording.context) recording.context.close().catch(() => {});
+  if (po33Recorder === recording) po33Recorder = null;
+  for (const id of ['po33RecordStart','po33DetectInputs','po33InputDevice']) document.getElementById(id).disabled = false;
+  document.getElementById('po33RecordStop').disabled = true;
+}
+async function finishPo33Recording(recording) {
+  if (recording.finished) return;
+  recording.finished = true;
+  cleanupPo33Recording(recording);
+  if (!recording.bytes) { setPo33BackupStatus('La grabación está vacía; no se ha guardado.'); return; }
+  const wav = po33PcmWav(recording.chunks, recording.rate);
+  document.getElementById('po33RecordStart').disabled = true;
+  const name = (document.getElementById('po33RecordingName').value.trim() || 'PO33_Backup') + (recording.interrupted ? '_INCOMPLETO_' : '_') + new Date().toISOString().replace(/[:.]/g, '-') + '.wav';
+  // Keep a local recovery copy even if the SD is unplugged before the upload.
+  const url = URL.createObjectURL(wav), link = document.createElement('a');
+  po33UnsavedCaptures.add(url);
+  link.href = url; link.download = name; link.textContent = 'Descargar grabación: ' + name; link.className = 'po33-btn-secondary';
+  document.getElementById('po33RecoveryDownloads').append(link); link.click();
+  setPo33BackupStatus('Grabación finalizada. Guardando el WAV; conserva también la descarga…');
+  try {
+    const backup = await archivePo33Backup(wav, name);
+    link.href = getApiBaseUrl() + '/api/po33_backup_audio?file=' + encodeURIComponent(backup.path);
+    po33UnsavedCaptures.delete(url); URL.revokeObjectURL(url);
+    if (recording.interrupted) setPo33BackupStatus('La captura se interrumpió. Se ha conservado el WAV parcial como INCOMPLETO; no lo uses para restaurar sin revisar y repetir la grabación.');
+  }
+  catch(error) { setPo33BackupStatus('No se archivó en BeatOS: ' + error.message + '. Usa el enlace de descarga de la grabación que permanece arriba. No cierres esta página antes de guardarla.'); }
+  finally { document.getElementById('po33RecordStart').disabled = !!po33Recorder; }
+}
+function stopPo33Recording() {
+  if (!po33Recorder?.node || po33Recorder.stopping) return;
+  po33Recorder.stopping = true;
+  document.getElementById('po33RecordStop').disabled = true;
+  po33Recorder.node.port.postMessage('stop');
+  const recording = po33Recorder;
+  recording.stopTimer = setTimeout(() => {
+    recording.interrupted = true;
+    finishPo33Recording(recording);
+  }, 5000);
+}
+async function startPo33Recording() {
+  if (!requireConnectedView() || po33Recorder) return;
+  const recording = {chunks:[], bytes:0}; po33Recorder = recording;
+  for (const id of ['po33RecordStart','po33DetectInputs','po33InputDevice']) document.getElementById(id).disabled = true;
+  try {
+    document.querySelectorAll('audio').forEach(audio => audio.pause()); stopPadVoices();
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error('El navegador no permite capturar audio aquí');
+    const device = document.getElementById('po33InputDevice').value;
+    recording.stream = await navigator.mediaDevices.getUserMedia({audio:{
+      ...(device ? {deviceId:{exact:device}} : {}), channelCount:{exact:2},
+      echoCancellation:false, noiseSuppression:false, autoGainControl:false
+    }});
+    const settings = recording.stream.getAudioTracks()[0].getSettings();
+    if (settings.channelCount !== 2 || settings.echoCancellation || settings.noiseSuppression || settings.autoGainControl) throw new Error('Se necesita una entrada estéreo con el procesamiento de voz desactivado');
+    const Context = window.AudioContext || window.webkitAudioContext;
+    recording.context = new Context({sampleRate:settings.sampleRate || 48000});
+    recording.rate = recording.context.sampleRate;
+    if (![44100,48000].includes(recording.rate)) throw new Error('Selecciona 44.1 o 48 kHz en tu interfaz');
+    await recording.context.audioWorklet.addModule(getApiBaseUrl() + '/docs/assets/po33-capture-worklet.js');
+    recording.source = recording.context.createMediaStreamSource(recording.stream);
+    recording.node = new AudioWorkletNode(recording.context, 'po33-capture', {channelCountMode:'max'});
+    recording.node.port.onmessage = ({data}) => {
+      if (data.error) { recording.interrupted = true; if (recording.bytes) finishPo33Recording(recording); else { cleanupPo33Recording(recording); setPo33BackupStatus('Grabación cancelada: ' + data.error); } return; }
+      if (data.pcm) { recording.chunks.push(data.pcm); recording.bytes += data.pcm.byteLength; }
+      if (data.stopped) { finishPo33Recording(recording); return; }
+      if (recording.bytes >= recording.rate * 4 * 600) stopPo33Recording();
+    };
+    recording.node.onprocessorerror = () => { recording.interrupted = true; finishPo33Recording(recording); };
+    recording.stream.getAudioTracks()[0].addEventListener('ended', () => {
+      if (po33Recorder === recording) { recording.interrupted = true; stopPo33Recording(); }
+    });
+    recording.source.connect(recording.node); recording.node.connect(recording.context.destination);
+    await recording.context.resume();
+    document.getElementById('po33RecordStop').disabled = false;
+    recording.timer = setInterval(() => setPo33BackupStatus('Grabando ' + (recording.bytes / recording.rate / 4).toFixed(1) + ' s · estéreo PCM · pulsa WRITE + SOUND + PLAY en el PO. Finaliza sólo cuando acabe el envío.'), 1000);
+    setPo33BackupStatus('Grabación iniciada. Envía ahora el backup desde el PO.');
+  } catch(error) { cleanupPo33Recording(recording); setPo33BackupStatus('No se inició la grabación: ' + error.message); }
+}
+function preparePo33Restore(backup) {
+  if (po33Recorder) { setPo33BackupStatus('Finaliza y guarda la grabación antes de preparar una restauración.'); return; }
+  if (!backup.audio_compatible || backup.capture_interrupted) { setPo33BackupStatus('Este WAV necesita revisión antes de reproducirlo como respaldo. El original sigue disponible para descargar.'); return; }
+  if (!confirm('Restaurar en el PO-33 BORRA todos sus sonidos y patrones actuales. ¿Has conservado su backup y quieres preparar la reproducción?')) return;
+  document.querySelectorAll('audio').forEach(audio => audio.pause());
+  stopPadVoices();
+  const audio = document.getElementById('po33RestoreAudio');
+  audio.src = getApiBaseUrl() + '/api/po33_backup_audio?file=' + encodeURIComponent(backup.path);
+  audio.playbackRate = 1; audio.loop = false;
+  document.getElementById('po33RestoreTitle').textContent = backup.filename.replace('_' + backup.sha256, '');
+  const box = document.getElementById('po33RestoreBox'); box.hidden = false; box.scrollIntoView({block:'nearest',behavior:'smooth'});
+  setPo33BackupStatus('Reproducción preparada, todavía detenida. Conecta LINE IN y activa recepción en el PO antes de pulsar reproducir.');
+}
+window.addEventListener('beforeunload', event => {
+  if (po33Recorder || po33PendingArchives || po33UnsavedCaptures.size) { event.preventDefault(); event.returnValue = ''; }
+});
+
 // Carga de inventario de backups desde la API local
+let po33BackupScan = 0;
 async function loadPo33BackupsList() {
+  const scan = ++po33BackupScan;
   const container = document.getElementById('po33BackupsList');
   container.textContent = 'Buscando archivos de respaldo…';
   try {
     const response = await fetch(getApiBaseUrl() + '/api/po33_backups');
     const data = await response.json();
+    if (scan !== po33BackupScan) return;
     if (!response.ok || !data.success) throw new Error(data.error || 'Servidor no disponible');
     po33BackupsCache = data.backups;
     container.replaceChildren();
     if (!data.backups.length) container.textContent = 'No se encontraron WAV en las carpetas de respaldos.';
     for (const backup of data.backups) {
       const card = document.createElement('div'); card.className = 'card';
-      const title = document.createElement('strong'); title.textContent = backup.filename;
+      const title = document.createElement('strong'); title.textContent = backup.filename.replace('_' + backup.sha256, '');
       const info = document.createElement('p');
-      info.textContent = `${backup.duration_sec ?? '?'} s · ${backup.channels ?? '?'} canales · ${backup.bit_depth ?? '?'} bits. ${backup.audio_compatible ? 'Formato de audio compatible' : 'Formato no compatible o archivo ilegible'}. Datos del módem NO verificados. ${backup.clipping ? 'Posible saturación.' : ''}`;
-      const link = document.createElement('a'); link.textContent = 'Descargar WAV original'; link.download = backup.filename;
+      info.textContent = `${backup.duration_sec ?? '?'} s · ${backup.channels ?? '?'} canales · ${backup.bit_depth ?? '?'} bits · ${backup.sample_rate ?? '?'} Hz. ${backup.audio_compatible ? 'WAV completo en formato de reproducción admitido' : 'Formato no admitido o archivo incompleto/ilegible'}. Datos del módem NO verificados. ${backup.clipping ? 'Posible saturación en los primeros 4 s.' : ''}`;
+      const link = document.createElement('a'); link.textContent = 'Descargar WAV original'; link.download = backup.filename; link.className = 'po33-btn-secondary';
       link.href = getApiBaseUrl() + '/api/po33_backup_audio?file=' + encodeURIComponent(backup.path);
-      card.append(title, info, link); container.append(card);
+      const hash = document.createElement('p'); hash.style.overflowWrap = 'anywhere'; hash.textContent = 'SHA-256: ' + (backup.sha256 || 'no disponible');
+      const restore = document.createElement('button'); restore.type = 'button'; restore.className = 'po33-btn-secondary'; restore.textContent = backup.capture_interrupted ? 'Captura interrumpida: repetir' : 'Preparar restauración'; restore.disabled = !backup.audio_compatible || backup.capture_interrupted; restore.onclick = () => preparePo33Restore(backup);
+      card.append(title, info, hash, link, restore); container.append(card);
     }
-  } catch (error) { container.textContent = 'No se pudo consultar: ' + error.message + '. Inicia el servidor local de BeatOS.'; }
+  } catch (error) { if (scan === po33BackupScan) container.textContent = 'No se pudo consultar: ' + error.message + '. Inicia el servidor local de BeatOS.'; }
 }
 
 let poReelBusy = false;

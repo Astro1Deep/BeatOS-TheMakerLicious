@@ -56,6 +56,8 @@ mimetypes.add_type("application/json", ".json")
 
 # Estado global de tareas en segundo plano
 TASK_LOCK = threading.Lock()
+PO_BACKUP_LOCK = threading.Lock()
+PO_BACKUP_CACHE = {}
 TASK_STATE = {
     "running": False,
     "task_name": "",
@@ -241,7 +243,7 @@ def resolve_library_path(root_dir: str, value: str) -> Path:
 
 
 class MPCAudioRequestHandler(BaseHTTPRequestHandler):
-    server_version = "MPCAudioStreamer/3.7.1"
+    server_version = "MPCAudioStreamer/3.8.0"
 
     def send_cors_headers(self):
         origin = self.headers.get('Origin')
@@ -267,7 +269,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             valid_origin = not origin or (parsed_origin.scheme == 'http' and parsed_origin.netloc == host)
         except ValueError:
             valid_host = valid_origin = False
-        if not valid_host or not valid_origin:
+        if not valid_host or not valid_origin or self.headers.get('Sec-Fetch-Site') == 'cross-site':
             self.send_error(403, 'Use la interfaz local de BeatOS')
             return False
         return True
@@ -329,7 +331,8 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             kit_mod = get_hardware_kit_builder(self.server.root_dir)
             if kit_mod and hasattr(kit_mod, "scan_po33_backups"):
                 try:
-                    backups = kit_mod.scan_po33_backups([kit_mod.DEFAULT_PO_DIR, Path(self.server.root_dir) / "PO_BACKUPS", Path.home() / "Music/Pocket_Operator_Backups"])
+                    with PO_BACKUP_LOCK:
+                        backups = kit_mod.scan_po33_backups(kit_mod.po33_backup_dirs(self.server.root_dir), cache=PO_BACKUP_CACHE)
                     self.wfile.write(json.dumps({"success": True, "backups": backups}, ensure_ascii=False).encode("utf-8"))
                 except Exception as e:
                     self.wfile.write(json.dumps({"success": False, "error": str(e), "backups": []}).encode("utf-8"))
@@ -343,7 +346,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             target_path = None
             kit_mod = get_hardware_kit_builder(self.server.root_dir)
             if file_name and kit_mod:
-                roots = [kit_mod.DEFAULT_PO_DIR.resolve(), (Path(self.server.root_dir) / "PO_BACKUPS").resolve(), (Path.home() / "Music/Pocket_Operator_Backups").resolve()]
+                roots = [p.resolve() for p in kit_mod.po33_backup_dirs(self.server.root_dir)]
                 candidate = Path(file_name)
                 candidate = (candidate if candidate.is_absolute() else roots[0] / candidate).resolve()
                 if any(candidate.is_relative_to(root) for root in roots) and candidate.suffix.lower() == '.wav':
@@ -356,15 +359,15 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": "Audio de backup no encontrado."}).encode("utf-8"))
                 return
             try:
-                data = target_path.read_bytes()
+                size = target_path.stat().st_size
                 self.send_response(200)
                 self.send_header("Content-Type", "audio/wav")
-                self.send_header("Content-Length", str(len(data)))
-                self.send_header("Accept-Ranges", "bytes")
-                self.send_header("Content-Disposition", f'inline; filename="{target_path.name}"')
+                self.send_header("Content-Length", str(size))
+                self.send_header("Content-Disposition", "inline; filename*=UTF-8''" + urllib.parse.quote(target_path.name, safe=''))
                 self.send_cors_headers()
                 self.end_headers()
-                self.wfile.write(data)
+                with target_path.open('rb') as source:
+                    shutil.copyfileobj(source, self.wfile, length=64 * 1024)
             except Exception:
                 self.send_response(500)
                 self.end_headers()
@@ -410,18 +413,41 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.allow_local_request():
             return
+        parsed = urllib.parse.urlparse(self.path)
+        clean_api = parsed.path.rstrip("/")
         try:
             length = int(self.headers.get('Content-Length', '0'))
         except ValueError:
             self.send_error(400, 'Content-Length no válido')
             return
-        if length < 0 or length > 1024 * 1024:
+        limit = 128 * 1024 * 1024 if clean_api == '/api/po33_backups' else 1024 * 1024
+        if length < 0 or length > limit:
             self.send_error(400 if length < 0 else 413, 'Tamaño de petición no permitido')
             return
-        parsed = urllib.parse.urlparse(self.path)
-        clean_api = parsed.path.rstrip("/")
+        if clean_api == '/api/po33_backups':
+            try:
+                if self.headers.get_content_type() != 'audio/wav':
+                    raise ValueError('Envía el archivo WAV original con Content-Type audio/wav')
+                filename = urllib.parse.parse_qs(parsed.query).get('name', ['PO33.wav'])[0]
+                data = self.rfile.read(length)
+                if len(data) != length:
+                    raise ValueError('Transferencia incompleta')
+                kit_mod = get_hardware_kit_builder(self.server.root_dir)
+                with PO_BACKUP_LOCK:
+                    result = kit_mod.import_po33_backup(self.server.root_dir, filename, data)
+                response, code = {'success': True, 'backup': result}, 200
+            except (ValueError, EOFError) as error:
+                response, code = {'success': False, 'error': str(error)}, 400
+            except Exception as error:
+                response, code = {'success': False, 'error': str(error)}, 500
+            self.send_response(code)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_cors_headers()
+            self.end_headers()
+            self.wfile.write(json.dumps(response, ensure_ascii=False).encode('utf-8'))
+            return
 
-        if clean_api == "/api/create_kit":
+        elif clean_api == "/api/create_kit":
             try:
                 content_length = int(self.headers.get("Content-Length", 0))
                 body = self.rfile.read(content_length).decode("utf-8")

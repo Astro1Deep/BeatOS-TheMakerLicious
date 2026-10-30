@@ -59,12 +59,38 @@ class ServerSecurityTests(unittest.TestCase):
             for headers in ({'Origin': 'https://untrusted.example'}, {'Host': 'untrusted.example'}):
                 self.assertEqual(self.request(url + '/inside.txt', headers=headers)[0], 403)
             self.assertEqual(self.request(url + '/inside.txt', headers={'Origin': url})[0], 200)
+            self.assertEqual(self.request(url + '/api/po33_backups', headers={'Sec-Fetch-Site':'cross-site'})[0],403)
 
     def test_rejects_oversized_or_negative_request_lengths(self):
         with self.server() as (url, _):
             for length in ('-1', '2097152'):
                 self.assertIn(self.request(url + '/api/create_kit', data=b'',
                                           headers={'Content-Length': length})[0], (400, 413))
+
+    def test_po_backup_import_inventory_and_download_are_byte_exact(self):
+        import io,json,struct,wave,hashlib,urllib.parse
+        buffer=io.BytesIO()
+        with wave.open(buffer,'wb') as wav:
+            wav.setparams((2,2,48000,0,'NONE',''));wav.writeframes(struct.pack('<hh',1234,-6789)*4800)
+        raw=buffer.getvalue()
+        with self.server() as (url,parent):
+            status,body=self.request(url+'/api/po33_backups?name=Mi%20PO.WAV',data=raw,headers={'Content-Type':'audio/wav','Origin':url})
+            self.assertEqual(status,200,body);info=json.loads(body)['backup']
+            self.assertEqual(info['sha256'],hashlib.sha256(raw).hexdigest());self.assertFalse(info['payload_verified'])
+            self.assertTrue(Path(info['path']).is_relative_to(parent.resolve()/'library/BeatOS/data/po33_backups'))
+            self.assertEqual(self.request(url+'/api/po33_backup_audio?file='+urllib.parse.quote(info['path'])),(200,raw))
+            inventory=json.loads(self.request(url+'/api/po33_backups')[1])
+            self.assertIn(info['path'],[b['path'] for b in inventory['backups']])
+            self.assertEqual(self.request(url+'/api/po33_backup_audio?file='+str(parent/'outside.txt'))[0],404)
+            self.assertEqual(self.request(url+'/docs/assets/po33-capture-worklet.js')[0],200)
+
+    def test_po_backup_import_rejects_bad_audio_foreign_origin_and_oversize(self):
+        with self.server() as (url,parent):
+            self.assertEqual(self.request(url+'/api/po33_backups',data=b'bad'*20,headers={'Content-Type':'audio/wav'})[0],400)
+            self.assertEqual(self.request(url+'/api/po33_backups',data=b'bad',headers={'Content-Type':'text/plain'})[0],400)
+            self.assertEqual(self.request(url+'/api/po33_backups',data=b'bad',headers={'Content-Type':'audio/wav','Origin':'https://evil.example'})[0],403)
+            self.assertEqual(self.request(url+'/api/po33_backups',data=b'',headers={'Content-Length':str(128*1024*1024+1)})[0],413)
+            self.assertFalse((parent/'library/BeatOS/data/po33_backups').exists())
 
     def test_busy_port_does_not_reuse_a_different_library(self):
         from unittest.mock import patch,MagicMock

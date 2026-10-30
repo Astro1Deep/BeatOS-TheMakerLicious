@@ -30,6 +30,7 @@ jobs:
           node tests/test_library_ui.cjs
           node tests/test_pad_audio.cjs
           node tests/test_creator_identity.cjs
+          node tests/test_po33_backups.cjs
       - name: Build clean installer
         run: python build_release.py "${{ runner.temp }}/BeatOS.zip"
   windows-release-install:

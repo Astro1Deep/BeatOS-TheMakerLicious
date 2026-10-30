@@ -6,7 +6,7 @@
 
 ## Instalación limpia
 
-Edición 3.7.1. Biblioteca de samples y rack de 16 pads para preparar kits destinados a MPC, Maschine, SP-404MK2, SP-404A/SX, PO-33/PO-133 y EP-133 K.O. II. Se ejecuta en el ordenador y no instala firmware en los aparatos. No necesitas una MPC para trabajar desde samples sueltos.
+Edición 3.8.0. Biblioteca de samples y rack de 16 pads para preparar kits destinados a MPC, Maschine, SP-404MK2, SP-404A/SX, PO-33/PO-133 y EP-133 K.O. II. Se ejecuta en el ordenador y no instala firmware en los aparatos. No necesitas una MPC para trabajar desde samples sueltos.
 
 Requiere Python 3.11 o superior. No incluye samples comerciales, proyectos personales, bases de datos de Iván, claves ni configuraciones privadas. La biblioteca inicial está vacía.
 

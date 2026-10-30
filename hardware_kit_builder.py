@@ -14,7 +14,7 @@ Soporta de forma nativa, estable y sin dependencias externas:
   4. Teenage Engineering Pocket Operator PO-33 K.O.! & PO-133:
      - Generador de 'Drum Reel' con pausas calibradas de 150ms para auto-slicing (Pads 9-16)
      - Presupuesto estricto de memoria (<= 40.0s de RAM de muestra)
-     - Verificador forense de integridad de backups por módem de audio FSK (~73.6s)
+     - Archivo de respaldos WAV originales con SHA-256; no decodifica datos del módem.
      - Escaneo, catalogación y generador de manifiesto de slices en JSON y TXT.
 """
 
@@ -22,6 +22,8 @@ from __future__ import annotations
 
 import datetime
 import gzip
+import hashlib
+import io
 import json
 import logging
 import math
@@ -31,6 +33,8 @@ import shutil
 import struct
 import subprocess
 import sys
+import tempfile
+import threading
 import time
 import wave
 import zipfile
@@ -42,6 +46,62 @@ logger = logging.getLogger(__name__)
 
 # Directorio por defecto de backups de Pocket Operator
 DEFAULT_PO_DIR = Path.home() / "Documents" / "PO- POCKET OPERATORS"
+PO_IMPORT_LOCK = threading.Lock()
+
+
+def po33_backup_dirs(root: str | Path) -> list[Path]:
+    return [Path(root) / 'BeatOS/data/po33_backups', DEFAULT_PO_DIR,
+            Path(root) / 'PO_BACKUPS', Path('/Volumes/MPCSMPL/PO_BACKUPS'),
+            Path.home() / 'Music/Pocket_Operator_Backups']
+
+
+def import_po33_backup(root: str | Path, filename: str, data: bytes) -> dict:
+    """Archive original PCM WAV bytes without replacing any existing recording."""
+    if not filename.lower().endswith('.wav') or not 44 <= len(data) <= 128 * 1024 * 1024:
+        raise ValueError('Selecciona un WAV PCM de hasta 128 MiB')
+    try:
+        with wave.open(io.BytesIO(data), 'rb') as wav:
+            if not 8000 <= wav.getframerate() <= 384000 or not 1 <= wav.getnchannels() <= 8:
+                raise ValueError('Parámetros WAV no admitidos: usa PCM entre 8 y 384 kHz y de 1 a 8 canales')
+            expected = wav.getnframes() * wav.getnchannels() * wav.getsampwidth()
+            actual = 0
+            while chunk := wav.readframes(65536):
+                actual += len(chunk)
+            if not expected or actual != expected:
+                raise ValueError('WAV vacío o truncado; conserva y revisa la grabación original')
+    except (wave.Error, EOFError) as error:
+        raise ValueError('WAV PCM ilegible: ' + str(error)) from error
+    digest = hashlib.sha256(data).hexdigest()
+    name = re.sub(r'[^a-zA-Z0-9_-]+', '_', Path(filename.replace('\\', '/')).stem)[:60].strip('_') or 'PO33'
+    if '_INCOMPLETO_' in filename.upper() and '_INCOMPLETO_' not in name.upper():
+        name += '_INCOMPLETO_'
+    library = Path(root).resolve()
+    folder = library / 'BeatOS/data/po33_backups'
+    if not folder.resolve().is_relative_to(library):
+        raise ValueError('Carpeta de respaldos fuera de la biblioteca')
+    folder.mkdir(parents=True, exist_ok=True)
+    target = folder / f'{name}_{digest}.wav'
+    with PO_IMPORT_LOCK:
+        if target.exists() or target.is_symlink():
+            if target.is_symlink():
+                raise ValueError('Existe un enlace en el destino; no se ha sustituido')
+            with target.open('rb') as existing:
+                existing_digest = hashlib.file_digest(existing, 'sha256').hexdigest()
+            if existing_digest != digest:
+                raise ValueError('Existe otro archivo en el destino; no se ha sustituido')
+        else:
+            temporary = None
+            try:
+                with tempfile.NamedTemporaryFile(dir=folder, prefix='.po33-upload-', suffix='.tmp', delete=False) as output:
+                    temporary = Path(output.name)
+                    output.write(data)
+                    output.flush()
+                    os.fsync(output.fileno())
+                os.replace(temporary, target)
+            finally:
+                if temporary is not None:
+                    temporary.unlink(missing_ok=True)
+    return inspect_po33_backup(target)
 
 # ==============================================================================
 # 1. PARSERS: LECTURA DE PROYECTOS Y PROGRAMAS EXISTENTES
@@ -1080,7 +1140,7 @@ def export_po33_drum_reel(
 ) -> tuple[str, float, list[dict]]:
     """
     Genera un archivo WAV 'Drum Reel' de hasta 16 golpes espaciados por pausas de silencio (150ms)
-    calibradas exactamente para el algoritmo de división automática (Auto-Slice) de la PO-33.
+    como ayuda al auto-slicing del PO-33; los cortes necesitan revisión en TRIM.
     Garantiza rigurosamente que la duración total nunca supere los 40.00 segundos de memoria física
     de la PO-33 aplicando recorte inteligente (Smart Trim) con fade-out a transitorios excesivos.
     Retorna (ruta_wav, duracion_segundos, lista_slices_con_timestamps).
@@ -1259,7 +1319,7 @@ def export_po33_drum_reel(
     guide_text = f"""========================================================================
 TEENAGE ENGINEERING POCKET OPERATOR PO-33 K.O.! - GUÍA DE CARGA RÁPIDA
 Kit: {kit_name} | Duración: {total_duration_sec:.2f}s / {MAX_TOTAL_SEC:.2f}s presupuestados
-Smart Trim Aplicado: {'SÍ (Ajustado a RAM 40s)' if is_trimmed else 'NO (Audio original < 40s)'}
+Smart Trim Aplicado: {'SÍ (Ajustado al presupuesto elegido)' if is_trimmed else 'NO (Dentro del presupuesto)'}
 ========================================================================
 
 1. Conecta un cable minijack 3.5mm estéreo desde la salida de tu Mac a la entrada LINE IN (izquierda) de la PO-33.
@@ -1284,20 +1344,21 @@ Para volcado de BACKUP COMPLETO (duración variable; reemplaza muestras y patron
 
 
 def verify_po33_backup_wav(wav_path: str | Path) -> dict:
-    """Verifica si un archivo WAV es un volcado de backup válido de una PO-33."""
+    """Compatibility alias: inspect audio only, never certify modem payload."""
     return inspect_po33_backup(wav_path)
 
 
 def inspect_po33_backup(wav_path: str | Path) -> dict:
     """
-    Inspección técnica forense de un archivo de audio para determinar si es un
-    volcado válido de datos por módem FSK de Teenage Engineering PO-33/PO-133.
+    Inspect WAV structure and initial levels; never certify PO-33 modem data.
     """
     p = Path(wav_path)
     if not p.exists() or not p.is_file():
         return {"valid": False, "error": f"Archivo no encontrado: {wav_path}"}
 
     try:
+        if p.stat().st_size > 128 * 1024 * 1024:
+            return {'valid': False, 'error': 'El límite de inspección es 128 MiB; el original sigue disponible para descargar'}
         with wave.open(str(p), "rb") as wf:
             n_ch = wf.getnchannels()
             sw = wf.getsampwidth()
@@ -1306,13 +1367,15 @@ def inspect_po33_backup(wav_path: str | Path) -> dict:
             duration = n_frames / fr
 
             # Leer una porción representativa para análisis de amplitud y señal
-            sample_frames_to_read = min(n_frames, fr * 4)  # primeros 4 segundos
+            sample_frames_to_read = min(n_frames, fr * 4, 48000 * 4) if n_ch == 2 and sw == 2 else 0
             raw_sample = wf.readframes(sample_frames_to_read)
-
-        # Duración de backup PO-33: Dinámica (típicamente entre 1 y 4 minutos, ~30s a 260s según samples y patrones en RAM)
-        is_duration_valid = 15.0 <= duration <= 300.0
+            complete = False
+            if n_frames:
+                wf.setpos(n_frames - 1)
+                complete = len(wf.readframes(1)) == n_ch * sw and not wf.readframes(1)
         is_stereo = n_ch == 2
         is_16bit = sw == 2
+        audio_compatible = complete and is_stereo and is_16bit and fr in (44100, 48000)
 
         # Análisis de niveles y clipping
         peak_val = 0
@@ -1335,18 +1398,23 @@ def inspect_po33_backup(wav_path: str | Path) -> dict:
         is_too_quiet = peak_dbfs < -25.0
 
         status = "AUDIO_COMPATIBLE_NOT_DECODED"
-        if not is_duration_valid or not is_stereo or not is_16bit:
-            status = "INVALID_OR_NOT_A_PO33_BACKUP"
+        if not audio_compatible:
+            status = "UNSUPPORTED_OR_INCOMPLETE_AUDIO"
         elif has_clipping:
             status = "WARNING_CLIPPING_DETECTED"
         elif is_too_quiet:
             status = "WARNING_SIGNAL_TOO_QUIET"
 
+        with p.open('rb') as source:
+            digest = hashlib.file_digest(source, 'sha256').hexdigest()
         return {
             "valid": False,
-            "audio_compatible": is_duration_valid and is_stereo and is_16bit,
+            "audio_compatible": audio_compatible,
+            "wav_complete": complete,
+            "capture_interrupted": '_INCOMPLETO_' in p.name.upper(),
+            "sha256": digest,
             "payload_verified": False,
-            "inspection_scope": "Encabezado y primeros 4s; no decodifica ni verifica datos del módem",
+            "inspection_scope": "Estructura WAV y amplitud inicial (hasta 4s y 192000 frames); no verifica datos del módem",
             "filename": p.name,
             "path": str(p),
             "size_mb": round(p.stat().st_size / (1024 * 1024), 2),
@@ -1364,33 +1432,46 @@ def inspect_po33_backup(wav_path: str | Path) -> dict:
         return {"valid": False, "error": str(e)}
 
 
-def scan_po33_backups(search_dirs: Optional[list[str | Path]] = None) -> list[dict]:
+def scan_po33_backups(search_dirs: Optional[list[str | Path]] = None, cache: Optional[dict] = None) -> list[dict]:
     """
     Escanea directorios en busca de backups PO-33 y devuelve el catálogo ordenado.
     """
     if search_dirs is None:
         search_dirs = [
             DEFAULT_PO_DIR,
-            Path("/Volumes/MPCSMPL/PO_BACKUPS"),
+            Path('/Volumes/MPCSMPL/PO_BACKUPS'),
             Path.home() / "Music" / "Pocket_Operator_Backups",
         ]
 
     results = []
     seen_paths = set()
+    cache = {} if cache is None else cache
 
     for d in search_dirs:
         p_dir = Path(d)
         if not p_dir.exists():
             continue
-        for wav in p_dir.glob("*.wav"):
-            if wav.name.startswith("._") or wav in seen_paths:
+        for wav in p_dir.rglob('*'):
+            if not wav.is_file() or wav.suffix.lower() != '.wav' or any(part.startswith('.') for part in wav.relative_to(p_dir).parts):
+                continue
+            wav = wav.resolve()
+            if not wav.is_relative_to(p_dir.resolve()) or wav in seen_paths:
                 continue
             seen_paths.add(wav)
-            info = inspect_po33_backup(wav)
+            stat = wav.stat()
+            signature = (stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+            previous = cache.get(wav)
+            if previous and previous[0] == signature:
+                info = dict(previous[1])
+            else:
+                info = inspect_po33_backup(wav)
+                cache[wav] = (signature, dict(info))
             info["filename"] = wav.name
             info["path"] = str(wav.resolve())
             results.append(info)
 
+    for stale in cache.keys() - seen_paths:
+        del cache[stale]
     return sorted(results, key=lambda x: x.get("filename", ""))
 
 

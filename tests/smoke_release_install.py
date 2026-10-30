@@ -117,6 +117,25 @@ def validate(archive, expected_sha256, require_windows=False):
                 assert pads['1']['mute_group'] == 1 and pads['2']['mute_group'] == 2
                 assert not any(p.get('missing') for p in pads.values())
                 assert loaded['project']['tempo'] == 93
+                po33_roundtrip = False
+                if (code / 'docs/assets/po33-capture-worklet.js').is_file():
+                    import io
+                    buffer = io.BytesIO()
+                    with wave.open(buffer, 'wb') as wav:
+                        wav.setparams((2, 2, 48000, 0, 'NONE', ''))
+                        wav.writeframes(struct.pack('<hh', 1234, -6789) * 4800)
+                    original = buffer.getvalue()
+                    req = urllib.request.Request(base + '/api/po33_backups?name=PO33_prueba.WAV', data=original,
+                                                 headers={'Origin': base, 'Content-Type': 'audio/wav'})
+                    with urllib.request.urlopen(req, timeout=15) as response:
+                        backup = json.load(response)['backup']
+                    assert backup['sha256'] == hashlib.sha256(original).hexdigest()
+                    assert backup['audio_compatible'] and not backup['payload_verified']
+                    _, restored = request(base, '/api/po33_backup_audio?file=' + urllib.parse.quote(backup['path']))
+                    assert restored == original
+                    _, worklet = request(base, '/docs/assets/po33-capture-worklet.js')
+                    assert b"registerProcessor('po33-capture'" in worklet
+                    po33_roundtrip = True
                 for private in ['/BeatOS/data/mpc_sample.db', '/BeatOS/config/theme_config.json']:
                     try:
                         request(base, private)
@@ -132,6 +151,7 @@ def validate(archive, expected_sha256, require_windows=False):
                 'python': platform.python_version(), 'release_sha256': digest, 'archive_name': archive.name,
                 'installer_cli': True, 'unicode_and_spaces': True, 'indexed_samples': 2,
                 'http_audio_range': True, 'mpc_export_and_reimport': True,
+                'po33_backup_roundtrip': po33_roundtrip,
                 'private_files_blocked': True, 'personal_data_used': False}
 
 
