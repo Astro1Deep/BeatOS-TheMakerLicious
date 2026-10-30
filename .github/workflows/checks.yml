@@ -2,6 +2,7 @@ name: BeatOS checks
 on:
   push:
   pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -39,15 +40,24 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.11'
-      - name: Download the published installer
+      - name: Download and identify the stable installer
         shell: pwsh
         run: |
-          Invoke-WebRequest 'https://github.com/Astro1Deep/mpc-sample-database/releases/download/v3.7.0/BeatOS-3.7.0-layout.20261029.zip' -OutFile "$env:RUNNER_TEMP\BeatOS.zip"
-          Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, OSArchitecture
+          $release = Invoke-RestMethod 'https://api.github.com/repos/Astro1Deep/mpc-sample-database/releases/latest' -Headers @{'Accept'='application/vnd.github+json'; 'User-Agent'='BeatOS-install-check'}
+          $assets = @($release.assets | Where-Object { $_.name -like 'BeatOS-*.zip' })
+          if ($assets.Count -ne 1) { throw 'Expected one stable BeatOS installer' }
+          $digest = $assets[0].digest -replace '^sha256:', ''
+          if ($digest -notmatch '^[a-f0-9]{64}$') { throw 'Missing SHA-256 digest' }
+          Invoke-WebRequest $assets[0].browser_download_url -OutFile "$env:RUNNER_TEMP\BeatOS.zip"
+          @{tag=$release.tag_name; sha256=$digest} | ConvertTo-Json | Set-Content "$env:RUNNER_TEMP\release-meta.json" -Encoding utf8
+          Write-Output "Testing stable release $($release.tag_name)"
+          $hostInfo = Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, OSArchitecture
+          Write-Output ('BEATOS_WINDOWS_HOST=' + ($hostInfo | ConvertTo-Json -Compress))
       - name: Install, index, stream and export on native Windows
         shell: pwsh
         run: |
-          python -B tests/smoke_release_install.py --archive "$env:RUNNER_TEMP\BeatOS.zip" --sha256 6649afcd7293021c98d353c34866ba7b95c462b84e573d42c7f013230f245b66 --require-windows --report "$env:RUNNER_TEMP\windows-install-report.json"
+          $releaseInfo = Get-Content "$env:RUNNER_TEMP\release-meta.json" | ConvertFrom-Json
+          python -B tests/smoke_release_install.py --archive "$env:RUNNER_TEMP\BeatOS.zip" --sha256 $releaseInfo.sha256 --require-windows --report "$env:RUNNER_TEMP\windows-install-report.json"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Get-Content "$env:RUNNER_TEMP\windows-install-report.json" | Add-Content $env:GITHUB_STEP_SUMMARY
       - name: Verify the current source installer on Windows

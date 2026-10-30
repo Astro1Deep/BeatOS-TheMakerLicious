@@ -19,7 +19,7 @@ FILES = ('serve_mpc.py', 'hardware_kit_builder.py', 'index_mpc_library.py', 'bea
          'templates/template_project.xpj', 'tests/test_hardware_kit_builder.py',
          'tests/test_serve_mpc.py', 'tests/test_indexer.py', 'tests/test_metadata.py', 'tests/test_installer.py', 'tests/test_mute_groups.py',
          'tests/test_pad_audio.cjs', 'tests/test_library_ui.cjs', 'tests/test_creator_identity.cjs', 'ABRIR_BEATOS.command', 'tests/test_hub_workflows.py', 'docs/assets/hardware/sources.json')
-VERSION = '3.7.0-layout.20261029'
+VERSION = '3.7.1'
 
 
 def blank_templates(payload):
@@ -74,7 +74,7 @@ def build_release(destination):
     source = Path(__file__).resolve().parent
     payload = {name: (source / name).read_bytes() for name in FILES}
     documentation = [p for p in (source / 'docs').rglob('*.md') if p.is_file() and not p.is_symlink()]
-    references = payload['templates/catalogo.html'].decode() + '\n' + '\n'.join(p.read_text() for p in documentation)
+    references = payload['templates/catalogo.html'].decode() + '\n' + '\n'.join(p.read_text(encoding='utf-8') for p in documentation)
     for path in (source / 'docs').rglob('*'):
         if path.is_file() and not path.name.startswith('.') and not path.is_symlink() and path.suffix.lower() in {'.md', '.svg', '.jpg', '.png', '.webp'}:
             if 'branding' in path.parts and 'creator' not in path.parts and path.stem not in references:

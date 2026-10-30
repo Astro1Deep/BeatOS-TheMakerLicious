@@ -26,7 +26,7 @@ def main():
     
     print("=" * 70)
     print("🎛️  AKAI MPC SAMPLE DATABASE & FINDER TOOLKIT - INSTALADOR UNIVERSAL")
-    print("    BeatOS 3.7.0 • Astro1Deep • Compatible con Akai MPC Standalone")
+    print("    BeatOS 3.7.1 • Astro1Deep • Compatible con Akai MPC Standalone")
     print("=" * 70)
     print("1. 🚀 Indexar tarjeta Micro SD o carpeta de samples para MPC")
     print("2. 🌐 Iniciar Servidor Web Local y Abrir Catálogo (Audio y herramientas locales)")

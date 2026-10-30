@@ -8,7 +8,7 @@
 
 Biblioteca de samples, inspector de proyectos MPC y rack de 16 pads. Creado por **Astro1Deep** para explorar bibliotecas propias, preparar kits y revisar referencias antes de llevarlos al sampler.
 
-Versión **3.7.0-layout.20261029**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc-sample-database/releases) · [Guía de instalación](GUIA_INSTALACION.md) · [Identidad del creador](docs/IDENTIDAD_DEL_CREADOR.md)
+Versión **3.7.1**. [Instaladores y versiones](https://github.com/Astro1Deep/mpc-sample-database/releases) · [Guía de instalación](GUIA_INSTALACION.md) · [Identidad del creador](docs/IDENTIDAD_DEL_CREADOR.md)
 
 ![Banner de hardware de BeatOS](docs/assets/branding/user_blueprint_sheet_dark_4k.jpg)
 
@@ -16,7 +16,7 @@ Versión **3.7.0-layout.20261029**. [Instaladores y versiones](https://github.co
 
 Requiere **Python 3.11 o superior**. El catálogo y el servidor usan la biblioteca estándar. FFmpeg es opcional para convertir audio y necesario en determinados formatos, frecuencias y ajustes de afinación. El sistema se ejecuta en el ordenador; no instala firmware en el sampler.
 
-Descarga el archivo **BeatOS-3.7.0-layout.20261029.zip** de [la versión estable](https://github.com/Astro1Deep/mpc-sample-database/releases/latest), junto a su archivo SHA-256. El ZIP adjunto a la versión es el instalador organizado; «Source code» descarga el repositorio de desarrollo, cuya estructura es distinta.
+Descarga el archivo **BeatOS-3.7.1.zip** de [la versión estable](https://github.com/Astro1Deep/mpc-sample-database/releases/latest), junto a su archivo SHA-256. El ZIP adjunto a la versión es el instalador organizado; «Source code» descarga el repositorio de desarrollo, cuya estructura es distinta.
 
 Descomprime en una carpeta nueva y abre una terminal en la carpeta que contiene `BeatOS/`:
 
@@ -90,7 +90,7 @@ node tests/test_creator_identity.cjs
 python3 build_release.py "/ruta/de/salida/BeatOS.zip"
 ```
 
-Node.js sólo es necesario para las comprobaciones JavaScript. El empaquetador usa una lista explícita de componentes, vacía los templates MPC y genera un manifiesto SHA-256. No empaqueta la biblioteca, bases SQLite, respaldos o configuraciones personales.
+El flujo de CI incluye una instalación funcional del ZIP en Windows, además de las regresiones de Linux. Los informes identifican el sistema operativo y el SHA-256 probado; no certifican hardware físico ni todos los Windows de escritorio. Node.js sólo es necesario para las comprobaciones JavaScript. El empaquetador usa una lista explícita de componentes, vacía los templates MPC y genera un manifiesto SHA-256. No empaqueta la biblioteca, bases SQLite, respaldos o configuraciones personales.
 
 ## Apoyo
 
