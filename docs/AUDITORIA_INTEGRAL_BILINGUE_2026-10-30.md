@@ -110,3 +110,19 @@ Esta ampliación se realizó sobre el último estado auditado y registra los def
 - **Accesibilidad y portabilidad:** una comprobación Chrome headless no acredita por sí sola Safari, Firefox ni accesibilidad integral en macOS/Windows.
 
 **Estado global:** se han reparado defectos funcionales y de documentación, con trazabilidad de pruebas y rollback por commit. El objetivo de «cero errores» no es certificable en un sistema no trivial; corresponde exigir ausencia de defectos críticos conocidos, pruebas reproducibles y declaración honesta de los límites.
+
+
+## 8. Auditoría adicional — filtros MPC y descargas de kits
+
+**Fuente:** rama `main`, con pruebas reproducibles sobre el servidor y bibliotecas sintéticas. Los cambios descritos aquí no garantizan ausencia de otros defectos ni validan hardware externo.
+
+| Incidencia | Reproducción | Corrección | Validación automatizada |
+| --- | --- | --- | --- |
+| EXP-NULL | Los programas XPM sin `program_type` provocaban una excepción al filtrar expansiones. | Búsqueda y filtro de tipo tolerantes a campos ausentes, sin cambiar nombres ni rutas originales. | `tests/test_i18n.cjs`: programa con metadatos incompletos y filtro de Drum. |
+| DOWNLOAD-RAM | `/api/download_file` cargaba el kit ZIP completo mediante `Path.read_bytes()`. | Se sustituyó por transferencia con `shutil.copyfileobj` en bloques de **64 KiB**, limitando el uso de RAM a un búfer de transmisión. | `tests/test_serve_mpc.py`: descarga binaria con lectura completa de `Path.read_bytes` prohibida. |
+| DOWNLOAD-UTF8 | Un nombre ZIP con tildes podía generar una cabecera HTTP inválida. | `Content-Disposition` con nombre ASCII seguro y parámetro `filename*=UTF-8''` codificado. | Descarga con `Percusión_Kit_á.zip`, contenido y cabecera comprobados. |
+| DOWNLOAD-FAIL | Si no podía abrirse un archivo, la conexión podía terminar sin estado HTTP válido. | Respuesta JSON con código HTTP 500 si todavía no se habían enviado cabeceras; para una transferencia ya iniciada, cierre sin intentar enviar una segunda respuesta HTTP. | Prueba que simula `PermissionError` al abrir el ZIP. |
+
+**Límite de estas pruebas:** se ejecutan en el servidor de pruebas de GitHub con archivos sintéticos. No equivalen a un ensayo de rendimiento con bibliotecas multimillonarias de samples ni a una descarga real en Safari/iOS. La versión ZIP estable previamente publicada sigue sin sustituirse.
+
+**Política de cierre:** solo atribuir éxito a la ejecución GitHub Actions del **commit final**; un éxito de un commit anterior no valida correcciones posteriores.
