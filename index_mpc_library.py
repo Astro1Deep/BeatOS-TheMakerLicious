@@ -288,7 +288,7 @@ def main():
     args = parser.parse_args()
 
     def emit(value):
-        emit(translate_text(str(value), args.lang))
+        print(translate_text(str(value), args.lang))
 
     root_path = os.path.abspath(args.path)
     if not Path(root_path).is_dir():
