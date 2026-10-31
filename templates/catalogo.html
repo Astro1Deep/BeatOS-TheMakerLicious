@@ -5677,7 +5677,7 @@ async function classifyLegacyPoBackup(backup) {
   if (!Object.prototype.hasOwnProperty.call(PO_BACKUP_BUTTONS, model)) return false;
   const entered = document.getElementById('po33RecordingName')?.value.trim() || '';
   const project = entered && entered !== 'PO33_Backup'
-    ? entered : backup.filename.replace('_' + (backup.sha256 || ''), '').replace(/\\.wav$/i, '');
+    ? entered : backup.filename.replace('_' + (backup.sha256 || ''), '').replace(/\.wav$/i, '');
   const question = currentLang === 'en'
     ? 'Classify this older WAV as a ' + model + ' backup based on YOUR selection? BeatOS has not identified its digital protocol. The original audio will not change.'
     : '¿Clasificar este WAV antiguo como backup de ' + model + ' según TU selección? BeatOS no ha identificado su protocolo digital. El audio original no se modificará.';
