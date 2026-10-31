@@ -47,6 +47,8 @@ Para un mismo destino distinguiremos explícitamente **(1) WAV para importar**, 
 
 Seguimiento técnico: [propuesta de compatibilidad y edición nativa](docs/HARDWARE_EXPORT_PROTOCOLS.md#8-protocolo-mínimo-de-aceptación-física). Los formatos propietarios o no documentados exigen investigación autorizada, archivos de prueba originales y verificación de ida y vuelta; nunca se deben modificar respaldos reales como experimento.
 
+**Hoja de ruta técnica:** [Fidelidad de proyectos nativos y edición avanzada por hardware — issue #11](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/issues/11).
+
 ## Formatos y límites por hardware
 
 | Sistema | Exportación de BeatOS | Limitación esencial |
