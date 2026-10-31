@@ -22,9 +22,9 @@ def get_language(argv=None, environ=None):
     environ = os.environ if environ is None else environ
     for i, arg in enumerate(argv):
         if arg == "--lang" and i + 1 < len(argv):
-            return "en" if argv[i + 1].lower() == "en" else "es"
+            return "es" if argv[i + 1].strip().lower() == "es" else "en"
         if arg.startswith("--lang="):
-            return "en" if arg.partition("=")[2].lower() == "en" else "es"
+            return "es" if arg.partition("=")[2].strip().lower() == "es" else "en"
     return "es" if environ.get("BEATOS_LANG", "").strip().lower() == "es" else "en"
 
 def locale_text(message, lang=None):
