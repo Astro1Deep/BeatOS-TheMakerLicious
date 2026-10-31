@@ -24,13 +24,30 @@ const context=vm.createContext({Blob,ArrayBuffer,DataView,Date,URL,setTimeout,cl
   document:{getElementById:el,querySelectorAll:()=>[audio],createElement:()=>({style:{},click(){}})}, window:{addEventListener:(_,callback)=>{beforeUnload=callback}},
   currentLang:'en',confirm:()=>confirmation,localizeUiMessage:message=>message,stopPadVoices:()=>stopped++,getApiBaseUrl:()=> 'http://127.0.0.1:8888',
   fetch:async()=>{throw Error('not expected');}});
-vm.runInContext(html.slice(html.indexOf('const PO_BACKUP_BUTTONS'),html.indexOf('// Carga de inventario de backups')) + '\nthis.makeWav=po33PcmWav;this.restore=preparePo33Restore;this.verificationLabel=poBackupVerificationLabel;',context);
+vm.runInContext(html.slice(html.indexOf('const PO_BACKUP_BUTTONS'),html.indexOf('// Carga de inventario de backups')) + '\nthis.makeWav=po33PcmWav;this.restore=preparePo33Restore;this.verificationLabel=poBackupVerificationLabel;this.classifyLegacy=classifyLegacyPoBackup;',context);
 (async()=>{
   assert.match(context.verificationLabel({payload_verified:false,status:'NUMPY_REQUIRED'}),/NumPy/);
   assert.match(context.verificationLabel({payload_verified:true,status:'PROTOCOL_CHECKSUM_VERIFIED'}),/NOT hardware restore/);
   context.currentLang='es';
   assert.match(context.verificationLabel({payload_verified:false,status:'NUMPY_REQUIRED'}),/Instala NumPy/);
   context.currentLang='en';
+  const sentClassifications=[];
+  el('poBackupModel').value='PO-33';
+  el('po33RecordingName').value='PO33_Backup';
+  context.fetch=async (url, options) => {
+    sentClassifications.push({url, options});
+    return {ok:true,json:async()=>({success:true,backup:{model:'PO-33',project:'Old'}})};
+  };
+  context.loadPo33BackupsList=async()=>{};
+  confirmation=true;
+  await context.classifyLegacy({path:'/old/Old.wav',sha256:'a'.repeat(64),
+                                model:'UNSPECIFIED',filename:'Old.wav',project:'Old'});
+  assert.equal(sentClassifications.length,1);
+  assert.ok(sentClassifications[0].url.endsWith('/api/po_backup_classify'));
+  assert.deepEqual(JSON.parse(sentClassifications[0].options.body),
+    {file:'/old/Old.wav',model:'PO-33',project:'Old'});
+  context.fetch=async()=>{throw Error('not expected');};
+  confirmation=false;
   const wav = context.makeWav([new Int16Array([1234,-6789]).buffer],48000);
   const bytes=Buffer.from(await wav.arrayBuffer());
   assert.equal(bytes.toString('ascii',0,4),'RIFF');assert.equal(bytes.readUInt16LE(22),2);
