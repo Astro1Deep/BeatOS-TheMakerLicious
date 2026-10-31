@@ -95,6 +95,25 @@ assert.equal(initCtx.detected,'en');
 const savedSpanishCtx=vm.createContext({localStorage:{getItem:()=> 'es'}});
 vm.runInContext(initSource+';this.detected=currentLang;',savedSpanishCtx);
 assert.equal(savedSpanishCtx.detected,'es','user Spanish preference must survive reload');
+// Sourcery PR #9 regression: cookie must preserve Spanish if localStorage is unavailable.
+const cookieFallbackCtx=vm.createContext({
+  localStorage:deniedStorage,
+  document:{cookie:'analytics=1; beatos_locale=es; session=abc'}
+});
+vm.runInContext(initSource+';this.detected=currentLang;',cookieFallbackCtx);
+assert.equal(cookieFallbackCtx.detected,'es','cookie fallback must retain explicit Spanish on reload');
+for (const cookie of ['beatos_locale=es-MX','other_beatos_locale=es','beatos_locale=invalid']) {
+  const invalidCookieCtx=vm.createContext({localStorage:deniedStorage,document:{cookie}});
+  vm.runInContext(initSource+';this.detected=currentLang;',invalidCookieCtx);
+  assert.equal(invalidCookieCtx.detected,'en','malformed cookies must not select Spanish: '+cookie);
+}
+const blankStorageCtx=vm.createContext({localStorage:{getItem:()=>null},document:{cookie:'beatos_locale=es'}});
+vm.runInContext(initSource+';this.detected=currentLang;',blankStorageCtx);
+assert.equal(blankStorageCtx.detected,'es','missing storage value must respect existing cookie');
+const storagePrecedenceCtx=vm.createContext({localStorage:{getItem:()=> 'en'},document:{cookie:'beatos_locale=es'}});
+vm.runInContext(initSource+';this.detected=currentLang;',storagePrecedenceCtx);
+assert.equal(storagePrecedenceCtx.detected,'en','explicit localStorage setting must win over stale cookie');
+
 const setterSource=html.slice(html.indexOf('const I18N ='),html.indexOf('function toggleLanguage()'));
 const fakeDoc={documentElement:{lang:'es'},getElementById(){return null;}};
 const setterCtx=vm.createContext({localStorage:deniedStorage,document:fakeDoc,refreshBeatOsLocale(){}});
