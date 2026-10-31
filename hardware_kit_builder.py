@@ -55,8 +55,12 @@ def po33_backup_dirs(root: str | Path) -> list[Path]:
             Path.home() / 'Music/Pocket_Operator_Backups']
 
 
-def import_po33_backup(root: str | Path, filename: str, data: bytes) -> dict:
+def import_po33_backup(root: str | Path, filename: str, data: bytes, *, model: str = 'PO-33', project: str | None = None) -> dict:
     """Archive original PCM WAV bytes without replacing any existing recording."""
+    from po_backup_protocols import validate_model, safe_slug, write_sidecar
+    model = validate_model(model)
+    project = project or Path(filename.replace('\\\\','/')).stem
+    safe_slug(project)
     if not filename.lower().endswith('.wav') or not 44 <= len(data) <= 128 * 1024 * 1024:
         raise ValueError('Selecciona un WAV PCM de hasta 128 MiB')
     try:
@@ -76,7 +80,7 @@ def import_po33_backup(root: str | Path, filename: str, data: bytes) -> dict:
     if '_INCOMPLETO_' in filename.upper() and '_INCOMPLETO_' not in name.upper():
         name += '_INCOMPLETO_'
     library = Path(root).resolve()
-    folder = library / 'BeatOS/data/po33_backups'
+    folder = library / 'BeatOS/data/po33_backups' / model
     if not folder.resolve().is_relative_to(library):
         raise ValueError('Carpeta de respaldos fuera de la biblioteca')
     folder.mkdir(parents=True, exist_ok=True)
@@ -101,7 +105,9 @@ def import_po33_backup(root: str | Path, filename: str, data: bytes) -> dict:
             finally:
                 if temporary is not None:
                     temporary.unlink(missing_ok=True)
-    return inspect_po33_backup(target)
+    metadata = write_sidecar(target, model, project, source=filename)
+    return {**inspect_po33_backup(target), 'model': metadata['model'], 'project': metadata['project'],
+            'device_restore_verified': False, 'payload_verified': False}
 
 # ==============================================================================
 # 1. PARSERS: LECTURA DE PROYECTOS Y PROGRAMAS EXISTENTES
@@ -1517,6 +1523,13 @@ def scan_po33_backups(search_dirs: Optional[list[str | Path]] = None, cache: Opt
             else:
                 info = inspect_po33_backup(wav)
                 cache[wav] = (signature, dict(info))
+            from po_backup_protocols import read_sidecar
+            metadata = read_sidecar(wav, info.get('sha256', ''))
+            info['model'] = metadata['model'] if metadata else 'UNSPECIFIED'
+            info['project'] = metadata['project'] if metadata else wav.stem
+            info['device_restore_verified'] = False
+            info['payload_verified'] = False
+            info['verification_status'] = metadata.get('verification_status', 'AUDIO_ARCHIVED_NOT_DECODED') if metadata else 'LEGACY_UNCLASSIFIED_AUDIO'
             info["filename"] = wav.name
             info["path"] = str(wav.resolve())
             results.append(info)
