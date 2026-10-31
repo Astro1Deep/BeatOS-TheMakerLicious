@@ -69,7 +69,17 @@ class POBackupProtocolTests(unittest.TestCase):
             first=import_po33_backup(d,'first.wav',wav_bytes(),model='PO-33',project='First')
             second=import_po33_backup(d,'other.wav',wav_bytes(),model='PO-35',project='Second')
             sidecar=Path(first['path']).with_suffix('.po.json')
-            for malformed in ('[]', '"text"', '17', '{"schema":'):
+            for malformed in ('[]', '"text"', '17', '{"schema":',
+                              json.dumps({'schema':'beatos-pocket-operator-v1',
+                                          'model':'PO-33','file':Path(first['path']).name,
+                                          'sha256':first['sha256']}),
+                              json.dumps({'schema':'beatos-pocket-operator-v1',
+                                          'model':'PO-33','file':Path(first['path']).name,
+                                          'sha256':first['sha256'],'project':[]}),
+                              json.dumps({'schema':'beatos-pocket-operator-v1',
+                                          'model':'PO-33','file':Path(first['path']).name,
+                                          'sha256':first['sha256'],'project':'B'*200}),
+                              ):
                 sidecar.write_text(malformed,encoding='utf-8')
                 self.assertIsNone(read_sidecar(first['path'],first['sha256']))
                 scanned=scan_po33_backups(po33_backup_dirs(d),cache={})
