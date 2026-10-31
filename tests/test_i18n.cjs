@@ -161,6 +161,8 @@ assert.doesNotMatch(html,/\b(?:alert|confirm)\s*\(\s*['"]/,'Native browser dialo
 // Regression: visible labels in the delivered catalog need genuine EN equivalents.
 // These keys were previously omitted even though the main ES/EN switch existed.
 const missingVisibleTranslations = [
+  ['Asignar al Pad Objetivo Activo', 'Assign to active target pad'],
+  ['Vaciar Pad 1', 'Clear pad 1'],
   ['🎛️ Expansiones Oficiales', '🎛️ Official expansions'],
   ['🎛️ Editar Pads en Rack', '🎛️ Edit pads in rack'],
   ['⚡ Generar Kit EP-133', '⚡ Generate EP-133 kit'],
@@ -187,7 +189,7 @@ const staticMarkup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'')
   .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,'');
 for (const match of staticMarkup.matchAll(/\b(?:title|aria-label)="([^"]+)"/g)) {
   const source = match[1].replaceAll('&amp;', '&').replaceAll('&quot;', '"');
-  if (!/[áéíóúñ]|\b(?:Restablecer|Avanza|Cargar|Abrir|Modo Mover|Reproducir|Borrar|Selecciona|Haz clic|Buscar)\b/i.test(source)) continue;
+  if (!/[áéíóúñ]|\b(?:Restablecer|Avanza|Cargar|Abrir|Modo Mover|Reproducir|Borrar|Selecciona|Haz clic|Buscar|Vaciar|Asignar|Elegir)\b/i.test(source)) continue;
   const result = vm.runInContext('beatosTranslateExact('+JSON.stringify(source)+')',ctx);
   assert.notEqual(result,source,'Missing English translation of visible title/ARIA: '+source);
 }
