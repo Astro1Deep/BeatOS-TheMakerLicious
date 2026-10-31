@@ -5471,6 +5471,30 @@ function updatePoBackupDeviceGuide() {
     ? model + ' · Send: ' + profile.send + ' · Receive: ' + profile.receive
     : model + ' · Enviar: ' + profile.send + ' · Recibir: ' + profile.receive;
 }
+function poBackupVerificationLabel(result) {
+  const en = currentLang === 'en';
+  if (result?.payload_verified === true) {
+    return en ? 'Packet CRC verified (NOT hardware restore)'
+              : 'CRC verificado (NO restauración física)';
+  }
+  switch (result?.status) {
+    case 'NUMPY_REQUIRED':
+      return en
+        ? 'Optional decoder unavailable. Install NumPy in the same Python used to launch BeatOS: python3 -m pip install numpy. The original WAV remains safe.'
+        : 'Instala NumPy en el mismo Python utilizado para iniciar BeatOS: python3 -m pip install numpy. El WAV original sigue intacto.';
+    case 'VERIFY_BUSY':
+      return en ? 'Another modem verification is running. Retry after it finishes.'
+                : 'Ya se está verificando otro backup. Repite al finalizar.';
+    case 'VERIFY_TIMEOUT':
+      return en ? 'Modem verification exceeded the 90-second safety limit; not verified.'
+                : 'La verificación superó el límite de seguridad de 90 segundos; no verificado.';
+    case 'DECODER_NOT_INTEGRATED':
+      return en ? 'No protocol decoder is integrated for this model; WAV is archived, not digitally verified.'
+                : 'Este modelo todavía no dispone de decodificador integrado; WAV archivado, datos no verificados.';
+    default:
+      return (en ? 'NOT digitally verified: ' : 'NO verificado digitalmente: ') + String(result?.status || 'UNKNOWN');
+  }
+}
 // PO-33 backup capture and archive: independent of the musical rack audio graph.
 let po33Recorder = null;
 let po33PendingArchives = 0;
@@ -5696,9 +5720,7 @@ async function loadPo33BackupsList() {
           if(!response.ok || !result.success) throw new Error(result.error || 'Protocol check failed');
           const verified=result.verification;
           info.textContent=beatosPoBackupInfoText({...backup,payload_verified:verified.payload_verified});
-          const label=verified.payload_verified
-            ? (currentLang==='en' ? 'Packet CRC verified (NOT hardware restore)' : 'CRC verificado (NO restauración física)')
-            : (currentLang==='en' ? 'NOT digitally verified: ' : 'NO verificado digitalmente: ')+verified.status;
+          const label=poBackupVerificationLabel(verified);
           setPo33BackupStatus(label);
           verify.textContent=label;
         } catch(error) { verify.textContent=String(error.message); }
