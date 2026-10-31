@@ -469,7 +469,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                     raise ValueError('Envía el archivo WAV original con Content-Type audio/wav')
                 params = urllib.parse.parse_qs(parsed.query)
                 filename = params.get('name', ['PO33.wav'])[0]
-                model = params.get('model', ['PO-33'])[0]
+                model = params.get('model', [None])[0]
                 project = params.get('project', [None])[0]
                 data = self.rfile.read(length)
                 if len(data) != length:
