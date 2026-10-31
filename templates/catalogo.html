@@ -5672,6 +5672,34 @@ window.addEventListener('beforeunload', event => {
   if (po33Recorder || po33PendingArchives || po33UnsavedCaptures.size) { event.preventDefault(); event.returnValue = ''; }
 });
 
+async function classifyLegacyPoBackup(backup) {
+  const model = document.getElementById('poBackupModel')?.value || 'PO-33';
+  if (!Object.prototype.hasOwnProperty.call(PO_BACKUP_BUTTONS, model)) return false;
+  const entered = document.getElementById('po33RecordingName')?.value.trim() || '';
+  const project = entered && entered !== 'PO33_Backup'
+    ? entered : backup.filename.replace('_' + (backup.sha256 || ''), '').replace(/\\.wav$/i, '');
+  const question = currentLang === 'en'
+    ? 'Classify this older WAV as a ' + model + ' backup based on YOUR selection? BeatOS has not identified its digital protocol. The original audio will not change.'
+    : '¿Clasificar este WAV antiguo como backup de ' + model + ' según TU selección? BeatOS no ha identificado su protocolo digital. El audio original no se modificará.';
+  if (!confirm(question)) return false;
+  try {
+    const response = await fetch(getApiBaseUrl() + '/api/po_backup_classify', {
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({file:backup.path,model,project})
+    });
+    const data=await response.json();
+    if (!response.ok || !data.success) throw new Error(data.error || 'Classification failed');
+    setPo33BackupStatus(currentLang === 'en'
+      ? 'Model assigned by user; modem payload and hardware restore remain unverified.'
+      : 'Modelo asignado por el usuario; datos digitales y restauración física no verificados.');
+    await loadPo33BackupsList();
+    return true;
+  } catch(error) {
+    setPo33BackupStatus((currentLang === 'en' ? 'Classification failed: ' : 'No se pudo clasificar: ') + error.message);
+    return false;
+  }
+}
+
 // Carga de inventario de backups desde la API local
 let po33BackupScan = 0;
 function beatosPoBackupInfoText(backup) {
@@ -5726,8 +5754,14 @@ async function loadPo33BackupsList() {
         } catch(error) { verify.textContent=String(error.message); }
         finally {verify.disabled=false;}
       };
-      restore.disabled = restore.disabled || !PO_BACKUP_BUTTONS[backup.model];
-      card.append(title, info, hash, link, verify, restore); container.append(card);
+      restore.disabled = restore.disabled || !Object.prototype.hasOwnProperty.call(PO_BACKUP_BUTTONS, backup.model);
+      const classify = document.createElement('button');
+      classify.type = 'button';
+      classify.className = 'po33-btn-secondary';
+      classify.textContent = currentLang === 'en' ? 'Assign model to older recording' : 'Asignar modelo a grabación antigua';
+      classify.hidden = backup.model !== 'UNSPECIFIED';
+      classify.onclick = () => classifyLegacyPoBackup(backup);
+      card.append(title, info, hash, link, classify, verify, restore); container.append(card);
     }
   } catch (error) { if (scan === po33BackupScan) container.textContent = 'No se pudo consultar: ' + error.message + '. Inicia el servidor local de BeatOS.'; }
 }
