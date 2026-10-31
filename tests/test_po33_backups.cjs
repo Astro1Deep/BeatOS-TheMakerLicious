@@ -24,19 +24,21 @@ const context=vm.createContext({Blob,ArrayBuffer,DataView,Date,URL,setTimeout,cl
   document:{getElementById:el,querySelectorAll:()=>[audio],createElement:()=>({style:{},click(){}})}, window:{addEventListener:(_,callback)=>{beforeUnload=callback}},
   confirm:()=>confirmation,localizeUiMessage:message=>message,stopPadVoices:()=>stopped++,getApiBaseUrl:()=> 'http://127.0.0.1:8888',
   fetch:async()=>{throw Error('not expected');}});
-vm.runInContext(html.slice(html.indexOf('// PO-33 backup capture and archive:'),html.indexOf('// Carga de inventario de backups')) + '\nthis.makeWav=po33PcmWav;this.restore=preparePo33Restore;',context);
+vm.runInContext(html.slice(html.indexOf('const PO_BACKUP_BUTTONS'),html.indexOf('// Carga de inventario de backups')) + '\nthis.makeWav=po33PcmWav;this.restore=preparePo33Restore;',context);
 (async()=>{
   const wav = context.makeWav([new Int16Array([1234,-6789]).buffer],48000);
   const bytes=Buffer.from(await wav.arrayBuffer());
   assert.equal(bytes.toString('ascii',0,4),'RIFF');assert.equal(bytes.readUInt16LE(22),2);
   assert.equal(bytes.readUInt32LE(24),48000);assert.equal(bytes.readUInt32LE(40),4);
   assert.equal(bytes.readInt16LE(44),1234);assert.equal(bytes.readInt16LE(46),-6789);
-  const backup={audio_compatible:true,path:'/archive/name #1.wav',filename:'name #1.wav'};
+  el('poBackupModel').value='PO-33';
+  const backup={audio_compatible:true,model:'PO-33',path:'/archive/name #1.wav',filename:'name #1.wav'};
   context.restore(backup);assert.equal(audio.src,undefined);
   confirmation=true;context.restore(backup);assert.ok(audio.src.endsWith('%2Farchive%2Fname%20%231.wav'));
   assert.equal(audio.playbackRate,1);assert.equal(audio.loop,false);assert.equal(audio.paused,true);
   assert.equal(audio.play,undefined);assert.equal(stopped,1);assert.equal(el('po33RestoreBox').hidden,false);
-  const before=audio.src;context.restore({...backup,audio_compatible:false,path:'/bad.wav'});assert.equal(audio.src,before);
+  const before=audio.src;
+  context.restore({...backup,model:'PO-35',path:'/different-model.wav'});assert.equal(audio.src,before);context.restore({...backup,audio_compatible:false,path:'/bad.wav'});assert.equal(audio.src,before);
   context.restore({...backup,capture_interrupted:true,path:'/partial.wav'});assert.equal(audio.src,before);
   let failUpload;
   context.fetch=()=>new Promise((_,reject)=>{failUpload=reject});
