@@ -173,6 +173,40 @@ class ServerSecurityTests(unittest.TestCase):
             self.assertEqual(self.request(url+'/api/po33_backups?model=PO-20&name=bad.wav',
                 data=raw,headers={'Content-Type':'audio/wav'})[0],400)
 
+    def test_legacy_backup_can_be_classified_explicitly_without_changing_audio(self):
+        import io, json, wave, struct, hashlib
+        buffer=io.BytesIO()
+        with wave.open(buffer,'wb') as audio:
+            audio.setparams((2,2,44100,0,'NONE',''))
+            audio.writeframes(struct.pack('<hh',5432,-3145)*1200)
+        original=buffer.getvalue()
+        with self.server() as (url, parent):
+            status,raw=self.request(url+'/api/po33_backups?name=Old_Beat.wav',
+                data=original,headers={'Content-Type':'audio/wav'})
+            self.assertEqual(status,200,raw)
+            first=json.loads(raw)['backup']
+            inventory=json.loads(self.request(url+'/api/po33_backups')[1])['backups']
+            self.assertEqual(inventory[0]['model'],'UNSPECIFIED')
+            oldhash=hashlib.sha256(original).hexdigest()
+            def classify(model,project,file=first['path']):
+                return self.request(url+'/api/po_backup_classify',
+                    data=json.dumps({'file':file,'model':model,'project':project}).encode(),
+                    headers={'Content-Type':'application/json'})
+            status,body=classify('PO-33','Mi beat antiguo')
+            self.assertEqual(status,200,body)
+            info=json.loads(body)['backup']
+            self.assertEqual(info['model'],'PO-33')
+            self.assertEqual(info['project'],'Mi beat antiguo')
+            self.assertEqual(Path(first['path']).read_bytes(),original)
+            self.assertEqual(hashlib.sha256(Path(first['path']).read_bytes()).hexdigest(),oldhash)
+            self.assertEqual(classify('PO-33','Mi beat antiguo')[0],200)
+            self.assertEqual(classify('PO-32','Otro beat')[0],400)
+            self.assertEqual(classify('PO-20','No data')[0],400)
+            self.assertEqual(classify('PO-33','No data',file=str(parent/'outside.txt'))[0],400)
+            refreshed=json.loads(self.request(url+'/api/po33_backups')[1])['backups']
+            self.assertEqual(refreshed[0]['model'],'PO-33')
+            self.assertEqual(refreshed[0]['project'],'Mi beat antiguo')
+
     def test_po_backup_import_rejects_bad_audio_foreign_origin_and_oversize(self):
         with self.server() as (url,parent):
             self.assertEqual(self.request(url+'/api/po33_backups',data=b'bad'*20,headers={'Content-Type':'audio/wav'})[0],400)
