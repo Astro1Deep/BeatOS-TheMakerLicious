@@ -3303,6 +3303,7 @@ function setLanguage(lang) {
   if (btnN) btnN.innerText = t.btnNext;
   refreshBeatOsLocale();
   if (typeof refreshPo33BackupStatus === 'function') refreshPo33BackupStatus();
+  if (typeof updatePoBackupDeviceGuide === 'function') updatePoBackupDeviceGuide();
   const expansionModal = document.getElementById('expansionBrowserModalOverlay');
   if (expansionModal?.style.display === 'flex' && typeof filterExpansionKits === 'function') {
     filterExpansionKits(document.getElementById('expansionSearchInput')?.value || '');
