@@ -489,6 +489,49 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(self._api_json_dumps(response, ensure_ascii=False).encode('utf-8'))
             return
 
+        elif clean_api == '/api/po_backup_classify':
+            try:
+                if self.headers.get_content_type() != 'application/json':
+                    raise ValueError('Expected JSON request')
+                data = self.rfile.read(length)
+                if len(data) != length:
+                    raise ValueError('Incomplete request')
+                payload = json.loads(data)
+                import po_backup_protocols as protocols
+                model = protocols.validate_model(payload.get('model'))
+                project = payload.get('project')
+                protocols.safe_slug(project)
+                requested = payload.get('file', '')
+                if not isinstance(requested, str) or not requested:
+                    raise ValueError('Missing backup path')
+                kit_mod = get_hardware_kit_builder(self.server.root_dir)
+                roots = [p.resolve() for p in kit_mod.po33_backup_dirs(self.server.root_dir)]
+                candidate = Path(requested)
+                if candidate.is_symlink():
+                    raise ValueError('Symlinked backups are not supported')
+                candidate = (candidate if candidate.is_absolute() else roots[0] / candidate).resolve()
+                if not (candidate.is_file() and candidate.suffix.lower() == '.wav'
+                        and any(candidate.is_relative_to(root) for root in roots)):
+                    raise ValueError('Backup outside the library')
+                with PO_BACKUP_LOCK:
+                    audio = kit_mod.inspect_po33_backup(candidate)
+                    if not audio.get('wav_complete') or not audio.get('audio_compatible'):
+                        raise ValueError('Unsupported/incomplete WAV; do not prepare restoration')
+                    metadata = protocols.write_sidecar(candidate, model, project, source=candidate.name)
+                response, code = {'success': True, 'backup': {
+                    **audio, 'model': metadata['model'], 'project': metadata['project'],
+                    'payload_verified': False, 'device_restore_verified': False}}, 200
+            except (ValueError, TypeError, json.JSONDecodeError) as error:
+                response, code = {'success': False, 'error': str(error)}, 400
+            except Exception as error:
+                response, code = {'success': False, 'error': str(error)}, 500
+            self.send_response(code)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_cors_headers()
+            self.end_headers()
+            self.wfile.write(self._api_json_dumps(response, ensure_ascii=False).encode('utf-8'))
+            return
+
         elif clean_api == '/api/po_backup_verify':
             try:
                 if self.headers.get_content_type() != 'application/json':
