@@ -24,8 +24,13 @@ const context=vm.createContext({Blob,ArrayBuffer,DataView,Date,URL,setTimeout,cl
   document:{getElementById:el,querySelectorAll:()=>[audio],createElement:()=>({style:{},click(){}})}, window:{addEventListener:(_,callback)=>{beforeUnload=callback}},
   currentLang:'en',confirm:()=>confirmation,localizeUiMessage:message=>message,stopPadVoices:()=>stopped++,getApiBaseUrl:()=> 'http://127.0.0.1:8888',
   fetch:async()=>{throw Error('not expected');}});
-vm.runInContext(html.slice(html.indexOf('const PO_BACKUP_BUTTONS'),html.indexOf('// Carga de inventario de backups')) + '\nthis.makeWav=po33PcmWav;this.restore=preparePo33Restore;',context);
+vm.runInContext(html.slice(html.indexOf('const PO_BACKUP_BUTTONS'),html.indexOf('// Carga de inventario de backups')) + '\nthis.makeWav=po33PcmWav;this.restore=preparePo33Restore;this.verificationLabel=poBackupVerificationLabel;',context);
 (async()=>{
+  assert.match(context.verificationLabel({payload_verified:false,status:'NUMPY_REQUIRED'}),/NumPy/);
+  assert.match(context.verificationLabel({payload_verified:true,status:'PROTOCOL_CHECKSUM_VERIFIED'}),/NOT hardware restore/);
+  context.currentLang='es';
+  assert.match(context.verificationLabel({payload_verified:false,status:'NUMPY_REQUIRED'}),/Instala NumPy/);
+  context.currentLang='en';
   const wav = context.makeWav([new Int16Array([1234,-6789]).buffer],48000);
   const bytes=Buffer.from(await wav.arrayBuffer());
   assert.equal(bytes.toString('ascii',0,4),'RIFF');assert.equal(bytes.readUInt16LE(22),2);
