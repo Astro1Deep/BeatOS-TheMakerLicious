@@ -11,7 +11,11 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import threading
 import tempfile
+
+# The local HTTP server is threaded. Decode at most one untrusted WAV at a time.
+_VERIFY_SLOT = threading.BoundedSemaphore(1)
 
 PROFILES = {
     'PO-32': {'name':'Tonic','send':'WRITE + SOUND','receive':'ACC + SOUND',
@@ -78,6 +82,8 @@ def read_sidecar(path, sha256):
         if meta_path.stat().st_size>32768:
             return None
         meta=json.loads(meta_path.read_text(encoding='utf-8'))
+        if not isinstance(meta,dict):
+            return None
         if (meta.get('schema')!='beatos-pocket-operator-v1'
                 or meta.get('file')!=path.name
                 or meta.get('sha256')!=sha256
@@ -102,21 +108,35 @@ def verify_modem(wav_path,model):
     decoder=Path(__file__).resolve().parent/'vendor'/'po33_verify.py'
     if not decoder.is_file():
         return {**result,'status':'DECODER_NOT_INSTALLED'}
+    if not _VERIFY_SLOT.acquire(blocking=False):
+        return {**result,'status':'VERIFY_BUSY'}
     try:
-        execution=subprocess.run([sys.executable,'-I','-B',str(decoder),str(wav)],
-                   capture_output=True,text=True,timeout=90,check=False)
-    except subprocess.TimeoutExpired:
-        return {**result,'status':'VERIFY_TIMEOUT'}
-    except OSError:
-        return {**result,'status':'DECODER_START_ERROR'}
-    try:
-        report=json.loads(execution.stdout)
-    except (json.JSONDecodeError,TypeError):
-        return {**result,'status':'DECODER_UNAVAILABLE_OR_ERROR',
-                'detail':(execution.stderr or '')[-350:]}
-    if execution.returncode!=0 or not report.get('payload_verified'):
-        return {**result,'status':report.get('status','PROTOCOL_NOT_VERIFIED'),
-                'detail':str(report.get('detail',''))[:350]}
-    return {**result,'status':'PROTOCOL_CHECKSUM_VERIFIED','payload_verified':True,
-            'packet_count':report.get('packet_count',0),'pattern_count':report.get('pattern_count',0),
-            'bpm':report.get('bpm'),'verification_scope':'PO-33 packet CRC, transfer end marker and structure only'}
+        try:
+            execution=subprocess.run([sys.executable,'-I','-B',str(decoder),str(wav)],
+                       capture_output=True,text=True,timeout=90,check=False)
+        except subprocess.TimeoutExpired:
+            return {**result,'status':'VERIFY_TIMEOUT'}
+        except OSError:
+            return {**result,'status':'DECODER_START_ERROR'}
+        try:
+            report=json.loads(execution.stdout)
+        except (json.JSONDecodeError,TypeError):
+            return {**result,'status':'DECODER_UNAVAILABLE_OR_ERROR',
+                    'detail':(execution.stderr or '')[-350:]}
+        if not isinstance(report,dict):
+            return {**result,'status':'DECODER_INVALID_RESPONSE'}
+        # A malformed/malicious decoder response must never grant verified status.
+        structurally_complete=(report.get('payload_verified') is True
+            and report.get('end_marker_valid') is True
+            and report.get('pattern_count') == 16
+            and type(report.get('packet_count')) is int
+            and report['packet_count'] > 0)
+        if execution.returncode!=0 or not structurally_complete:
+            return {**result,'status':'PROTOCOL_NOT_VERIFIED',
+                    'detail':str(report.get('detail',''))[:350]}
+        return {**result,'status':'PROTOCOL_CHECKSUM_VERIFIED','payload_verified':True,
+                'packet_count':report['packet_count'],'pattern_count':16,
+                'bpm':report.get('bpm'),
+                'verification_scope':'PO-33 packet CRC, transfer end marker and structure only'}
+    finally:
+        _VERIFY_SLOT.release()
