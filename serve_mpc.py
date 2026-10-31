@@ -188,11 +188,18 @@ def _probe_local_port(port: int, timeout: float = 0.04) -> bool:
         return False
 
 
+_DISCOVERED_LIBS_CACHE = {"timestamp": 0.0, "libs": [], "root": ""}
+
+
 def discover_mounted_audio_libraries(active_root: str = "") -> list[dict]:
     """
     Descubre dinámicamente bibliotecas SQLite de audio en volúmenes montados (/Volumes/*, /media/*, /mnt/*)
     sin depender de nombres de discos personales codificados a fuego.
     """
+    now = time.time()
+    if _DISCOVERED_LIBS_CACHE["root"] == active_root and (now - _DISCOVERED_LIBS_CACHE["timestamp"]) < 15.0:
+        return list(_DISCOVERED_LIBS_CACHE["libs"])
+
     discovered: list[dict] = []
     seen_dbs: set[str] = set()
 
@@ -267,6 +274,9 @@ def discover_mounted_audio_libraries(active_root: str = "") -> list[dict]:
                             _inspect_candidate_db(db_f, vol, is_active=is_act)
             except OSError:
                 pass
+    _DISCOVERED_LIBS_CACHE["timestamp"] = now
+    _DISCOVERED_LIBS_CACHE["root"] = active_root
+    _DISCOVERED_LIBS_CACHE["libs"] = list(discovered)
     return discovered
 
 

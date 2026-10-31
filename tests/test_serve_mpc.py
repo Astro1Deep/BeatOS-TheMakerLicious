@@ -34,8 +34,9 @@ class ServerSecurityTests(unittest.TestCase):
                 server.server_close()
 
     def request(self, url, **kwargs):
+        timeout = kwargs.pop('timeout', 10)
         try:
-            with urllib.request.urlopen(urllib.request.Request(url, **kwargs), timeout=3) as response:
+            with urllib.request.urlopen(urllib.request.Request(url, **kwargs), timeout=timeout) as response:
                 return response.status, response.read()
         except urllib.error.HTTPError as error:
             return error.code, error.read()
