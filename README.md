@@ -54,6 +54,8 @@ Priorities include **pad/bank assignments, velocity layers and zones, tuning, en
 
 Each exporter must clearly identify its verified level: **(1) import-ready WAV**, **(2) audio plus mapping guide**, **(3) device-native editable project**, or **(4) advanced native parameter editing**. Progress toward the goal is not a claim that existing WAV/JSON/ZIP output is already a native project. Native formats require device-specific research, legitimate fixtures, format validation and an actual device load → edit → save → reload round-trip. Never test by overwriting someone's only hardware backup.
 
+**Engineering roadmap:** [Native project fidelity and advanced device editing — issue #11](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/issues/11).
+
 ## Hardware/export matrix
 
 | Destination | BeatOS output | What you load | Native-equivalence limits |
