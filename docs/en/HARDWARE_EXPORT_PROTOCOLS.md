@@ -58,6 +58,22 @@ Manufacturer references: [Roland v5 import/export](https://static.roland.com/man
 
 **Workflow:** connect the computer's line output to PO input, monitor safe signal level, enter the PO's drum-recording mode, play the reel and inspect the resulting slices with TRIM. The device's actual free recording memory is not queried by BeatOS; select the budget manually. Always verify the complete recorded reel and all slices. For full backups, use the manufacturer's audio-modem send/receive workflow separately. BeatOS backup-recording utilities can preserve an original WAV and compute SHA-256, but **do not decode or certify the modem payload**.
 
+### Pocket Operator Studio — archive and protocol verification (development build)
+
+The **Pocket Operator Studio** backup tool handles **PO-32, PO-33, PO-35, PO-133 and PO-137** audio-data recordings. Select the model **before recording or importing** and give the beat/project a distinctive name. BeatOS stores the original stereo WAV under `BeatOS/data/po33_backups/<MODEL>/` and writes a `.po.json` provenance sidecar with the original filename and SHA-256. It does not destructively overwrite recorded takes. Legacy recordings without a sidecar are marked **UNSPECIFIED** until their device model is established; a random WAV must not be offered for restore as a PO-33 project.
+
+The **Verify digital transfer** action currently supports **only PO-33**: it uses a vendored MIT-licensed independent decoder, requires optional Python NumPy (`python3 -m pip install numpy`), and checks symbol recovery, preamble, full packet CRCs, payload structure and end marker **without modifying the original WAV**. The result `PROTOCOL_CHECKSUM_VERIFIED` **does not** assert editable PO-33 patterns or physical restore compatibility. `PO-133` remains separately unverified until real model-specific fixtures pass. PO-32/35/137 archive and replay are available, but the PO-32 decoder/encoder from `libpo32` has **not yet been integrated**. Do not reuse PO-33 packet rules on other models.
+
+| Device | Send the device state | Prepare data reception | Digital verification in BeatOS |
+| --- | --- | --- | --- |
+| PO-33 / PO-133 | WRITE + SOUND + PLAY | WRITE + SOUND + RECORD | PO-33 packet checks only |
+| PO-32 | WRITE + SOUND | ACC + SOUND | Not integrated |
+| PO-35 / PO-137 | WRITE + SOUND | RECORD + SOUND | Not integrated |
+
+**Safety:** restore may erase every existing sound and pattern on the receiving unit. First record and preserve a known-good backup of the receiver. Match the destination model, connect a **stereo wired** line output to LINE IN, disable EQ/spatial effects/Bluetooth and avoid clipping. Arm receive on the hardware, then manually start the paused backup-player at 1×. Browser/system audio processing and soundcard channel settings may still change the analog transmission. A successful upload or checksummed packet decoder is **not** physical proof: verify the device displays successful reception and that sounds/patterns survive a save/reload cycle. No PO-12/14/16/20/24/28/128 audio-data backup is claimed.
+
+**Third-party decoder:** `vendor/po33_decode.py`, MIT copyright Daniel Pradilla; attribution in `vendor/PO33_DECODER_LICENSE.txt`. This optional decoder is source-visible and does not transmit files to the internet. The PO-33 format and any further edit/encode features remain independent, reverse-engineered research rather than manufacturer-endorsed support.
+
 ## 7. Teenage Engineering EP-133 K.O. II — Sample Tool import
 
 **BeatOS implementation:** `Teenage_Engineering_EP133/<kit>/sounds/001_PAD01_*.wav`–`016_PAD16_*.wav` in 16-bit/44.1 kHz PCM, `meta.json` (sound, group, key, tune, pan, choke references), a readable loading guide and a transport ZIP. The manifest assigns 12 positions to group A and four to B, following BeatOS's chosen rack layout, *not* a complete native project format.
