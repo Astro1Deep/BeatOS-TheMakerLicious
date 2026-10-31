@@ -55,10 +55,11 @@ def po33_backup_dirs(root: str | Path) -> list[Path]:
             Path.home() / 'Music/Pocket_Operator_Backups']
 
 
-def import_po33_backup(root: str | Path, filename: str, data: bytes, *, model: str = 'PO-33', project: str | None = None) -> dict:
+def import_po33_backup(root: str | Path, filename: str, data: bytes, *, model: str | None = None, project: str | None = None) -> dict:
     """Archive original PCM WAV bytes without replacing any existing recording."""
     from po_backup_protocols import validate_model, safe_slug, write_sidecar
-    model = validate_model(model)
+    enhanced = model is not None or project is not None
+    model = validate_model(model or 'PO-33')
     project = project or Path(filename.replace('\\\\','/')).stem
     safe_slug(project)
     if not filename.lower().endswith('.wav') or not 44 <= len(data) <= 128 * 1024 * 1024:
@@ -80,7 +81,9 @@ def import_po33_backup(root: str | Path, filename: str, data: bytes, *, model: s
     if '_INCOMPLETO_' in filename.upper() and '_INCOMPLETO_' not in name.upper():
         name += '_INCOMPLETO_'
     library = Path(root).resolve()
-    folder = library / 'BeatOS/data/po33_backups' / model
+    folder = library / 'BeatOS/data/po33_backups'
+    if enhanced:
+        folder = folder / model
     if not folder.resolve().is_relative_to(library):
         raise ValueError('Carpeta de respaldos fuera de la biblioteca')
     folder.mkdir(parents=True, exist_ok=True)
@@ -105,7 +108,10 @@ def import_po33_backup(root: str | Path, filename: str, data: bytes, *, model: s
             finally:
                 if temporary is not None:
                     temporary.unlink(missing_ok=True)
-    metadata = write_sidecar(target, model, project, source=filename)
+    if enhanced:
+        metadata = write_sidecar(target, model, project, source=filename)
+    else:
+        metadata = {'model': model, 'project': project}
     return {**inspect_po33_backup(target), 'model': metadata['model'], 'project': metadata['project'],
             'device_restore_verified': False, 'payload_verified': False}
 
