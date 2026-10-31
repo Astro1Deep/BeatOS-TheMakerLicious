@@ -204,7 +204,7 @@ def measure_energy(path):
         return 'UNMEASURED'
 
 
-def render_catalog(template, records, metadata):
+def render_catalog(template, records, metadata, root_path=None):
     marker = re.search(r'const SAMPLES\s*=\s*', template)
     if not marker:
         raise ValueError('La plantilla no declara SAMPLES')
@@ -235,7 +235,8 @@ def render_catalog(template, records, metadata):
 
     project_cards = []
     for project in projects:
-        title = esc(project.get('name', ''))
+        raw_title = str(project.get('name', ''))
+        title = esc(raw_title)
         raw_path = project.get('rel_path') or project.get('file_path') or ''
         path = esc(raw_path)
         tempo = esc(project.get('tempo'))
@@ -245,11 +246,77 @@ def render_catalog(template, records, metadata):
         status = project.get('status', '')
         warning = bool(missing_value) or status in {'ERROR', 'ATTENTION'}
         label = 'Revisar referencias' if warning else ('Índice sin avisos' if status in {'INDEX_OK', 'HEALTHY', 'Lectura actual OK'} else 'Sin inspeccionar')
-        kind = 'sessions' if 'projects' in [p.lower() for p in Path(raw_path).parts] else 'kits'
+        full_parts = list(Path(raw_path).parts)
+        low_parts = [pt.lower() for pt in full_parts]
+        if 'expansions' in low_parts:
+            idx = low_parts.index('expansions')
+            parts = full_parts[idx:]
+        elif 'projects' in low_parts:
+            idx = low_parts.index('projects')
+            parts = full_parts[idx:]
+        elif 'custom_kits' in low_parts:
+            idx = low_parts.index('custom_kits')
+            parts = full_parts[idx:]
+        elif root_path:
+            try:
+                parts = list(Path(raw_path).relative_to(root_path).parts)
+            except (ValueError, TypeError):
+                parts = full_parts
+        else:
+            parts = full_parts
+        kind = 'sessions' if 'projects' in [p.lower() for p in parts] else 'kits'
         category = 'Sesión MPC' if kind == 'sessions' else 'Kit / otro proyecto'
-        project_cards.append(f'''<article class="card library-card" data-name="{title}" data-tempo="{tempo}" data-count="{count}" data-kind="{kind}" data-path="{path}" data-search="{title} {path}">
+        # Extraer Artista / Subcarpeta dentro de la expansión o colección
+        group_name = ''
+        artist_name = ''
+        if len(parts) >= 3 and parts[0].lower() == 'expansions':
+            exp_name = parts[1]
+            sub_parts = [pt for pt in parts[2:-1] if not pt.endswith('_[ProjectData]') and not pt.endswith('_ProjectData')]
+            if sub_parts and re.sub(r'[^a-z0-9]', '', sub_parts[-1].lower()) == re.sub(r'[^a-z0-9]', '', Path(raw_path).stem.lower()):
+                sub_parts.pop()
+            if sub_parts:
+                top_folder = sub_parts[0]
+                if top_folder == 'Artist Signature Kits':
+                    low_t = raw_title.lower()
+                    art = ""
+                    if "'s " in raw_title: art = raw_title.split("'s ")[0].strip()
+                    elif "’s " in raw_title: art = raw_title.split("’s ")[0].strip()
+                    elif " - " in raw_title: art = raw_title.split(" - ")[0].strip()
+                    elif any(k in low_t for k in ["msxii", "bodega", "deli", "subway"]): art = "MSXII Sound Design"
+                    elif "controllerise" in low_t: art = "Controllerise Lo-Fi"
+                    elif any(k in low_t for k in ["tracklib", "south bronx", "back pack", "live break", "house techno"]): art = "Tracklib"
+                    elif any(k in low_t for k in ["decap", "knocking"]): art = "DECAP"
+                    elif "just blaze" in low_t: art = "Just Blaze"
+                    elif "very sick" in low_t: art = "Very Sick Beats"
+                    elif "juls" in low_t: art = "Juls"
+                    elif any(k in low_t for k in ["bullton", "bemular", "neronga", "alien baltan"]): art = "Cookin Soul"
+                    elif any(k in low_t for k in ["honda fist", "dragon knuckle"]): art = "Martial Beats"
+                    elif any(k in low_t for k in ["90s grunge", "grunge"]): art = "90s Grunge Lab"
+                    elif any(k in low_t for k in ["beats & chill", "lofi", "faded"]): art = "Chill Lo-Fi Collective"
+                    elif any(k in low_t for k in ["uk drill", "drill"]): art = "Drill Signature"
+                    elif any(k in low_t for k in ["trap", "modern trap", "classic trap"]): art = "Trap Signature"
+                    else: art = "Signature Producer"
+                    artist_name = art
+                    group_name = f"Artist Signature Kits · {art}"
+                else:
+                    if " - " in top_folder:
+                        artist_name = top_folder.split(" - ")[0].strip()
+                    elif top_folder not in ("Core", "Instruments", "Drums", "Bonus_Loops_&_Shots"):
+                        artist_name = top_folder
+                    elif top_folder == "Core":
+                        artist_name = "Akai Core Library"
+                    group_name = ' / '.join(sub_parts)
+            else:
+                m_pref = re.match(r"^(Trap|BoomBap|DanceHall|Urban|Pop|DeepHouse|FutureHouse|EDM|Funk|Soul|RnB|R&B|LoFi|Drill|House|Inst)[-_]", raw_title, re.I)
+                group_name = f"{exp_name} · {m_pref.group(1)} Kits" if m_pref else exp_name
+        elif len(parts) >= 2:
+            group_name = parts[0]
+        group_esc = esc(group_name) if group_name else ''
+        art_esc = esc(artist_name) if artist_name else ''
+        group_html = f'<p class="library-manufacturer" translate="no">🎭 {group_esc}</p>' if group_esc else ''
+        project_cards.append(f'''<article class="card library-card" data-name="{title}" data-tempo="{tempo}" data-count="{count}" data-kind="{kind}" data-group="{group_esc}" data-artist="{art_esc}" data-path="{path}" data-search="{title} {group_esc} {art_esc} {path}">
           <div class="library-card-heading"><span class="library-kind">{category}</span><span class="library-state {'warning' if warning else ''}">{label}</span></div>
-          <h3 translate="no">{title}</h3><dl><dt>Tempo</dt><dd>{tempo} BPM</dd><dt>Muestras referenciadas</dt><dd>{count}</dd><dt>Ausentes en el índice</dt><dd>{missing}</dd></dl>
+          <h3 translate="no">{title}</h3>{group_html}<dl><dt>Tempo</dt><dd>{tempo} BPM</dd><dt>Muestras referenciadas</dt><dd>{count}</dd><dt>Ausentes en el índice</dt><dd>{missing}</dd></dl>
           <details class="library-location"><summary>Ubicación del proyecto</summary><code>{path}</code></details>
           <div class="card-actions"><button type="button" class="po33-btn-secondary library-action primary" data-project="{title}" data-path="{path}" onclick="loadProjectToRack(this.dataset.project,this.dataset.path,null,this)">🎛️ Editar copia en rack</button>
           <button type="button" class="po33-btn-secondary library-action" data-path="{path}" onclick="revealLibraryPath(this.dataset.path,this)">📁 Mostrar en Finder</button>
@@ -413,14 +480,15 @@ def main():
             s_count = 0
             sz_bytes = 0
             for er, _, efiles in os.walk(r):
+                in_proj_data = "_[ProjectData]" in er or "_ProjectData" in er
                 for ef in efiles:
                     if ef.startswith('.'): continue
                     ext = os.path.splitext(ef)[1].lower()
                     efp = os.path.join(er, ef)
                     try: sz_bytes += os.path.getsize(efp)
                     except: pass
-                    if ext in ['.xpm', '.pgm', '.akp']: p_count += 1
-                    elif ext in ['.wav', '.aif', '.mp3']: s_count += 1
+                    if ext in ['.xpm', '.pgm', '.akp'] and not in_proj_data: p_count += 1
+                    elif ext in ['.wav', '.aif', '.mp3'] and not in_proj_data: s_count += 1
             
             sz_mb = round(sz_bytes / (1024*1024), 2)
             cur.execute("""
@@ -532,7 +600,7 @@ def main():
     if os.path.exists(universal_template_path):
         with open(universal_template_path, 'r', encoding='utf-8') as f:
             html_code = f.read()
-        html_code = render_catalog(html_code, catalog_records, json_payload)
+        html_code = render_catalog(html_code, catalog_records, json_payload, root_path=root_path)
     else:
         # Fallback inline minimal catalog
         html_code = f"<html><body><h1>MPC Sample Catalog</h1><script>const SAMPLES={records_json}; const METADATA={metadata_json};</script></body></html>"

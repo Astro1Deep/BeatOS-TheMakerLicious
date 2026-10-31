@@ -22,21 +22,45 @@ let confirmation=false, stopped=0;
 let beforeUnload;
 const context=vm.createContext({Blob,ArrayBuffer,DataView,Date,URL,setTimeout,clearTimeout,clearInterval,
   document:{getElementById:el,querySelectorAll:()=>[audio],createElement:()=>({style:{},click(){}})}, window:{addEventListener:(_,callback)=>{beforeUnload=callback}},
-  confirm:()=>confirmation,localizeUiMessage:message=>message,stopPadVoices:()=>stopped++,getApiBaseUrl:()=> 'http://127.0.0.1:8888',
+  currentLang:'en',confirm:()=>confirmation,localizeUiMessage:message=>message,stopPadVoices:()=>stopped++,getApiBaseUrl:()=> 'http://127.0.0.1:8888',
   fetch:async()=>{throw Error('not expected');}});
-vm.runInContext(html.slice(html.indexOf('// PO-33 backup capture and archive:'),html.indexOf('// Carga de inventario de backups')) + '\nthis.makeWav=po33PcmWav;this.restore=preparePo33Restore;',context);
+vm.runInContext(html.slice(html.indexOf('const PO_BACKUP_BUTTONS'),html.indexOf('// Carga de inventario de backups')) + '\nthis.makeWav=po33PcmWav;this.restore=preparePo33Restore;this.verificationLabel=poBackupVerificationLabel;this.classifyLegacy=classifyLegacyPoBackup;',context);
 (async()=>{
+  assert.match(context.verificationLabel({payload_verified:false,status:'NUMPY_REQUIRED'}),/NumPy/);
+  assert.match(context.verificationLabel({payload_verified:true,status:'PROTOCOL_CHECKSUM_VERIFIED'}),/NOT hardware restore/);
+  context.currentLang='es';
+  assert.match(context.verificationLabel({payload_verified:false,status:'NUMPY_REQUIRED'}),/Instala NumPy/);
+  context.currentLang='en';
+  const sentClassifications=[];
+  el('poBackupModel').value='PO-33';
+  el('po33RecordingName').value='PO33_Backup';
+  context.fetch=async (url, options) => {
+    sentClassifications.push({url, options});
+    return {ok:true,json:async()=>({success:true,backup:{model:'PO-33',project:'Old'}})};
+  };
+  context.loadPo33BackupsList=async()=>{};
+  confirmation=true;
+  await context.classifyLegacy({path:'/old/Old.wav',sha256:'a'.repeat(64),
+                                model:'UNSPECIFIED',filename:'Old.wav',project:'Old'});
+  assert.equal(sentClassifications.length,1);
+  assert.ok(sentClassifications[0].url.endsWith('/api/po_backup_classify'));
+  assert.deepEqual(JSON.parse(sentClassifications[0].options.body),
+    {file:'/old/Old.wav',model:'PO-33',project:'Old'});
+  context.fetch=async()=>{throw Error('not expected');};
+  confirmation=false;
   const wav = context.makeWav([new Int16Array([1234,-6789]).buffer],48000);
   const bytes=Buffer.from(await wav.arrayBuffer());
   assert.equal(bytes.toString('ascii',0,4),'RIFF');assert.equal(bytes.readUInt16LE(22),2);
   assert.equal(bytes.readUInt32LE(24),48000);assert.equal(bytes.readUInt32LE(40),4);
   assert.equal(bytes.readInt16LE(44),1234);assert.equal(bytes.readInt16LE(46),-6789);
-  const backup={audio_compatible:true,path:'/archive/name #1.wav',filename:'name #1.wav'};
+  el('poBackupModel').value='PO-33';
+  const backup={audio_compatible:true,model:'PO-33',path:'/archive/name #1.wav',filename:'name #1.wav'};
   context.restore(backup);assert.equal(audio.src,undefined);
   confirmation=true;context.restore(backup);assert.ok(audio.src.endsWith('%2Farchive%2Fname%20%231.wav'));
   assert.equal(audio.playbackRate,1);assert.equal(audio.loop,false);assert.equal(audio.paused,true);
   assert.equal(audio.play,undefined);assert.equal(stopped,1);assert.equal(el('po33RestoreBox').hidden,false);
-  const before=audio.src;context.restore({...backup,audio_compatible:false,path:'/bad.wav'});assert.equal(audio.src,before);
+  const before=audio.src;
+  context.restore({...backup,model:'PO-35',path:'/different-model.wav'});assert.equal(audio.src,before);context.restore({...backup,audio_compatible:false,path:'/bad.wav'});assert.equal(audio.src,before);
   context.restore({...backup,capture_interrupted:true,path:'/partial.wav'});assert.equal(audio.src,before);
   let failUpload;
   context.fetch=()=>new Promise((_,reject)=>{failUpload=reject});
@@ -55,7 +79,7 @@ vm.runInContext(html.slice(html.indexOf('// PO-33 backup capture and archive:'),
 
   vm.runInContext('const RACK_PADS=[{filename:"kick.wav",durationSec:2,tune:12},{filename:"hat.wav",durationSec:2,tune:0}];',context);
   context.escapeHtml=value=>value;
-  vm.runInContext(html.slice(html.indexOf('function getPadDurationSec('),html.indexOf('// PO-33 backup capture and archive:')),context);
+  vm.runInContext(html.slice(html.indexOf('function getPadDurationSec('),html.indexOf('const PO_BACKUP_BUTTONS')),context);
   el('poBudget').value='1';el('poGap').value='200';vm.runInContext('updatePo33StudioView()',context);
   assert.match(el('po33SlicesTableBody').innerHTML,/200 ms/);assert.match(el('po33BudgetText').innerHTML,/1\.00s \/ 1\.00s/);
   el('poBudget').value='3';el('poGap').value='0';vm.runInContext('updatePo33StudioView()',context);

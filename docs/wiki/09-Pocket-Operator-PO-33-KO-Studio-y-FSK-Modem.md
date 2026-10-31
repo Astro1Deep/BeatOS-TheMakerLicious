@@ -1,28 +1,37 @@
-# PO-33, PO-133 y EP-133: alcance real de BeatOS
+# Pocket Operator Studio (PO-32, PO-33, PO-35, PO-133, PO-137) y EP-133: alcance real de BeatOS
 
 [Manual completo: Hub PO y respaldos](../MANUAL_COMPLETO.md#11-hub-po-33-y-po-133) · [Carga por modelo](../COMPATIBILIDAD_HARDWARE.md)
 
-## PO-33 / PO-133
+## PO-33 / PO-133: Reels de muestras (≤ 40 s)
 
 El reel reúne los pads ocupados del rack en audio mono PCM 16-bit/44.1 kHz. Ese es el formato del archivo de intercambio, no una afirmación sobre la electrónica interna. Volumen y afinación se procesan en el audio y luego se normaliza el conjunto; panorama y mutes no se transfieren al PO.
 
 El Hub permite fijar presupuesto de 1–40 s y pausas de 0–500 ms. Introduce la memoria libre que muestra el dispositivo: BeatOS no la consulta. Si hace falta, el exportador recorta con fade-out y guarda un manifiesto con segundos, frames, número de corte y pad de origen. Los 150 ms predeterminados ayudan a separar golpes, pero no garantizan cortes perfectos: revisa TRIM.
 
-Conecta la salida de audio a LINE IN y graba manteniendo RECORD y el slot de batería elegido (9–16). Ajusta nivel sin saturación. No hay un porcentaje universal de volumen válido para todas las interfaces. El PO-20 no admite esta carga de samples.
+Conecta la salida de audio a LINE IN y graba manteniendo RECORD y el slot de batería elegido (9–16). Ajusta nivel sin saturación. No hay un porcentaje universal de volumen válido para todas las interfaces. Los modelos sin muestreo de usuario como el PO-20 Arcade no admiten esta carga de samples.
 
-### Respaldar, archivar y restaurar proyectos del PO
+### Respaldar, archivar y restaurar proyectos por audio-datos (5 modelos)
 
-En el PO, el intercambio completo de sonidos y patrones se realiza mediante un volcado de datos en audio. El reel del rack sólo prepara muestras para grabarlas; no contiene patrones, automatizaciones ni un proyecto nativo del PO. BeatOS no decodifica ni convierte ese volcado a XPJ, MIDI o pads editables.
+En la familia Pocket Operator, la transferencia completa de proyectos y sonidos por línea estéreo sólo está documentada oficialmente en **cinco modelos**:
 
-1. Conecta PO LINE OUT a una **entrada de línea estéreo** de tu interfaz. En el Hub pulsa «Detectar entradas», selecciona la interfaz y pulsa «Grabar backup». Se pide permiso al navegador únicamente al detectar o grabar; no se inicia una grabación al abrir el menú.
+| Modelo | Contenido del respaldo | Comando Enviar (Exportar del PO) | Comando Recibir (Restaurar al PO) | Verificación de paquetes en BeatOS |
+| :--- | :--- | :--- | :--- | :--- |
+| **PO-32 Tonic** | Parches de batería + patrones | `WRITE` + `SOUND` (o `BPM`) | `RECORD` + `SOUND` (o `BPM`) | Cabecera WAV + SHA-256 (protocolo propietario no decodificado) |
+| **PO-33 K.O.!** | 16 slots de muestras + 16 patrones | `WRITE` + `SOUND` + `PLAY` | `WRITE` + `SOUND` + `RECORD` | **Verificador experimental CRC de paquetes (`vendor/po33_verify.py`)** + SHA-256 |
+| **PO-35 Speak** | Voces sintetizadas + kit + patrones | `WRITE` + `SOUND` + `PLAY` | `WRITE` + `SOUND` + `RECORD` | Cabecera WAV + SHA-256 |
+| **PO-133 Street Fighter** | 16 slots de muestras + 16 patrones | `WRITE` + `SOUND` + `PLAY` | `WRITE` + `SOUND` + `RECORD` | Cabecera WAV + SHA-256 (misma arquitectura que PO-33) |
+| **PO-137 Rick & Morty** | Voces sintetizadas + kit + patrones | `WRITE` + `SOUND` + `PLAY` | `WRITE` + `SOUND` + `RECORD` | Cabecera WAV + SHA-256 (misma arquitectura que PO-35) |
+
+> **Nota importante sobre modelos sin backup:** Los modelos **PO-12 Rhythm, PO-14 Sub, PO-16 Factory, PO-20 Arcade, PO-24 Office, PO-28 Robot y PO-128 Mega Man** carecen de transferencia de proyectos por audio-datos documentada por Teenage Engineering; BeatOS rechaza explícitamente etiquetar grabaciones como backups restaurables de esos modelos.
+
+1. Conecta PO LINE OUT a una **entrada de línea estéreo** de tu interfaz. En el Hub selecciona el **modelo de Pocket Operator** (`PO-32`, `PO-33`, `PO-35`, `PO-133` o `PO-137`), escribe el **nombre del beat/proyecto**, pulsa «Detectar entradas», selecciona la interfaz y pulsa «Grabar backup». Se pide permiso al navegador únicamente al detectar o grabar; no se inicia una grabación al abrir el menú.
 2. BeatOS solicita dos canales, sin eco, reducción de ruido ni ganancia automática. Rechaza una entrada mono o procesamiento de voz anunciado como activo. Captura PCM 16-bit a 44.1/48 kHz con AudioWorklet, sin monitorización de retorno, mezcla de canales, efectos ni compresión. Comprueba también los ajustes físicos y del sistema operativo. Si el navegador o interfaz no admiten esta captura, usa un grabador externo en WAV PCM estéreo e importa el archivo.
-3. Con la grabación ya iniciada, pulsa WRITE + SOUND + PLAY en el PO. Espera a que termine todo el envío y pulsa «Finalizar y guardar». No apliques normalización, fades, recortes, MP3, limpieza de ruido ni conversión a mono a un backup. La captura se limita a diez minutos y ofrece un enlace visible para descargarla antes de intentar archivarla en la biblioteca. Si el navegador bloquea la descarga automática o falla el archivado, pulsa ese enlace y guarda el WAV antes de cerrar la página. Se avisa al salir mientras hay una captura o archivado pendiente o una grabación sin archivar.
-4. «Importar backup WAV» conserva **los bytes originales** y verifica que el PCM declarado está completo. Archiva en `BeatOS/data/po33_backups/`, con nombre y SHA-256; no sobrescribe archivos anteriores. El límite de importación e inspección es 128 MiB; el lector admite WAV PCM entre 8 y 384 kHz, de 1 a 8 canales. La reproducción integrada de respaldos admite estéreo de 16 bits a 44.1/48 kHz. Cada WAV puede representar un estado/proyecto distinto del PO: dale un nombre descriptivo y conserva copias fuera de la tarjeta. La huella detecta cambios de archivo, no errores ya presentes en la grabación.
-5. «Preparar restauración» pide confirmar el reemplazo y carga el WAV original en un reproductor separado, detenido, a velocidad 1×. Conecta salida estéreo → PO LINE IN; entra en recepción con WRITE + SOUND + RECORD y después reproduce. **El PO borra todos los sonidos y patrones actuales al empezar a recibir**. No hay restauración por slot ni fusión de proyectos en este flujo. El navegador no puede confirmar que el PO haya recibido correctamente el envío.
+3. Con la grabación ya iniciada, ejecuta el comando **Enviar** correspondiente a tu modelo (`WRITE + SOUND + PLAY` en PO-33/35/133/137; `WRITE + SOUND` en PO-32). Espera a que termine todo el envío y pulsa «Finalizar y guardar». No apliques normalización, fades, recortes, MP3, limpieza de ruido ni conversión a mono a un backup. La captura se limita a diez minutos y ofrece un enlace visible para descargarla antes de intentar archivarla en la biblioteca.
+4. «Importar backup WAV» conserva **los bytes originales**, verifica que el PCM declarado está completo y archiva en `BeatOS/data/po33_backups/<MODELO>/`, junto con un manifiesto lateral `.po.json` no destructivo que registra el modelo, nombre del beat y SHA-256 sin alterar jamás el WAV original. Los archivos heredados sin modelo declarado aparecen como `UNSPECIFIED` y pueden clasificarse desde la interfaz sin tocar el audio.
+5. Para grabaciones etiquetadas como **`PO-33`**, el botón **«Verificar paquetes PO-33»** ejecuta el decodificador experimental [`vendor/po33_verify.py`](../../vendor/po33_verify.py) (derivado bajo licencia MIT de `p0k3t0/po-33-exploration`), comprobando la integridad CRC de los paquetes modulados a 44.1 kHz estéreo.
+6. «Preparar restauración» pide confirmar el reemplazo y carga el WAV original en un reproductor separado, detenido, a velocidad 1×. Conecta salida estéreo → PO LINE IN; entra en recepción con el comando de tu modelo y después reproduce. **El PO borra todos los sonidos y patrones actuales al empezar a recibir**. No hay restauración por slot ni fusión de proyectos en este flujo.
 
-El inventario incluye WAV y WAV en mayúsculas dentro de las subcarpetas admitidas y mantiene lectura de las ubicaciones históricas. Descargar devuelve el original sin convertirlo. La inspección comprueba estructura WAV completa, SHA-256 y amplitud inicial (hasta cuatro segundos, limitada a 192000 frames); **no decodifica ni verifica los datos del módem**. El inventario reutiliza la inspección mientras tamaño y fechas de modificación/cambio no varían, sin crear una base auxiliar; la primera lectura calcula la huella completa. Un WAV estéreo completo puede contener audio musical o un volcado corrupto. Un WAV mono se conserva, pero no se habilita su restauración integrada. Las grabaciones interrumpidas se descargan/archivan como INCOMPLETO cuando hay audio recuperable; deben repetirse antes de confiar en ellas.
-
-Para certificar un respaldo hace falta restaurarlo y comprobar sonidos y patrones en el PO. El fabricante recomienda un segundo PO para evitar sobrescribir el original durante esa verificación. Con un solo PO no hay prueba de restauración sin sustituir su estado actual. Las pruebas automáticas de BeatOS usan audio sintético, no un volcado real del equipo. Fuentes: [PO-33, sección 8](https://teenage.engineering/guides/po-33/en) y [PO-133](https://teenage.engineering/guides/po-133/en).
+Para certificar un respaldo hace falta restaurarlo y comprobar sonidos y patrones en el PO. Fuentes: [PO-32](https://teenage.engineering/guides/po-32/en), [PO-33, sección 8](https://teenage.engineering/guides/po-33/en), [PO-35](https://teenage.engineering/guides/po-35/en), [PO-133](https://teenage.engineering/guides/po-133/en) y [PO-137](https://teenage.engineering/guides/po-137/en).
 
 ## EP-133 K.O. II
 
