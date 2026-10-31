@@ -54,7 +54,7 @@ class POBackupProtocolTests(unittest.TestCase):
                 self.assertFalse(result['device_restore_verified'])
             with patch('po_backup_protocols.subprocess.run') as run:
                 run.return_value.returncode=0
-                run.return_value.stdout=json.dumps({'payload_verified':True,'packets':18,'patterns':16,'bpm':120})
+                run.return_value.stdout=json.dumps({'payload_verified':True,'packet_count':18,'pattern_count':16,'end_marker_valid':True,'bpm':120})
                 run.return_value.stderr=''
                 good=verify_modem(p,'PO-33')
                 self.assertTrue(good['payload_verified'])
@@ -63,6 +63,45 @@ class POBackupProtocolTests(unittest.TestCase):
                 bad=verify_modem(p,'PO-33')
                 self.assertFalse(bad['payload_verified'])
                 self.assertIn('TIMEOUT',bad['status'])
+    def test_corrupted_project_metadata_never_breaks_complete_inventory(self):
+        from hardware_kit_builder import import_po33_backup, scan_po33_backups, po33_backup_dirs
+        with tempfile.TemporaryDirectory() as d:
+            first=import_po33_backup(d,'first.wav',wav_bytes(),model='PO-33',project='First')
+            second=import_po33_backup(d,'other.wav',wav_bytes(),model='PO-35',project='Second')
+            sidecar=Path(first['path']).with_suffix('.po.json')
+            for malformed in ('[]', '"text"', '17', '{"schema":'):
+                sidecar.write_text(malformed,encoding='utf-8')
+                self.assertIsNone(read_sidecar(first['path'],first['sha256']))
+                scanned=scan_po33_backups(po33_backup_dirs(d),cache={})
+                self.assertEqual(len(scanned),2)
+                self.assertEqual(next(x for x in scanned if x['path']==first['path'])['model'],'UNSPECIFIED')
+                self.assertEqual(next(x for x in scanned if x['path']==second['path'])['project'],'Second')
+    def test_verifier_refuses_missing_crc_evidence_even_when_subprocess_claims_success(self):
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/'data.wav';p.write_bytes(wav_bytes())
+            with patch('po_backup_protocols.subprocess.run') as run:
+                run.return_value.returncode=0
+                run.return_value.stderr=''
+                for report in ('[]','true',
+                               json.dumps({'payload_verified':True,'packet_count':2,'pattern_count':16,
+                                           'end_marker_valid':False})):
+                    run.return_value.stdout=report
+                    self.assertFalse(verify_modem(p,'PO-33')['payload_verified'])
+    def test_simultaneous_verification_is_rejected_without_starting_another_decoder(self):
+        import po_backup_protocols
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/'data.wav';p.write_bytes(wav_bytes())
+            semaphore=po_backup_protocols._VERIFY_SLOT
+            self.assertTrue(semaphore.acquire(blocking=False))
+            try:
+                with patch('po_backup_protocols.subprocess.run') as run:
+                    result=verify_modem(p,'PO-33')
+                    self.assertEqual(result['status'],'VERIFY_BUSY')
+                    self.assertFalse(result['payload_verified'])
+                    run.assert_not_called()
+            finally:
+                semaphore.release()
+
     def test_legacy_import_and_model_aware_scan(self):
         from hardware_kit_builder import import_po33_backup,scan_po33_backups,po33_backup_dirs
         with tempfile.TemporaryDirectory() as d:
