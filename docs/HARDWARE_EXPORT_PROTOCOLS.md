@@ -1,6 +1,6 @@
 # BeatOS — Protocolos avanzados de exportación y validación en hardware
 
-**Referencia técnica para productores e ingenieros de sonido** · [English](en/HARDWARE_EXPORT_PROTOCOLS.md) · [Manual completo](MANUAL_COMPLETO.md) · [Compatibilidad](COMPATIBILIDAD_HARDWARE.md) · [Referencia de API](REFERENCIA_TECNICA.md)
+**Referencia técnica para músicos, beatmakers y productores de música basada en samples** · [English](en/HARDWARE_EXPORT_PROTOCOLS.md) · [Manual completo](MANUAL_COMPLETO.md) · [Compatibilidad](COMPATIBILIDAD_HARDWARE.md) · [Referencia de API](REFERENCIA_TECNICA.md)
 
 **Alcance:** exportadores implementados en BeatOS 3.8.0, examinados el 30 de octubre de 2026. Se distingue entre **estructura del archivo exportado**, **procedimiento admitido por el fabricante** y **prueba física de funcionamiento**. Ni una extensión, ni un manifiesto JSON, ni la correcta ejecución del software garantizan compatibilidad nativa con todos los firmwares.
 
