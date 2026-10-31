@@ -933,12 +933,12 @@ def existing_library_root(port):
 
 def run_server(custom_path: str | None = None, port: int | None = None, auto_open: bool = True):
     def emit(message):
-        print(translate_text(str(message), os.environ.get("BEATOS_LANG", "en")))
+        print(translate_text(str(message), (os.environ.get("BEATOS_LANG") or "en")))
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     target_root = str(Path(custom_path).expanduser().resolve()) if custom_path else find_card_root(script_dir)
     if not Path(target_root).is_dir():
-        raise ValueError(translate_text(f"La biblioteca no existe: {target_root}", os.environ.get("BEATOS_LANG", "en")))
+        raise ValueError(translate_text(f"La biblioteca no existe: {target_root}", (os.environ.get("BEATOS_LANG") or "en")))
 
     desired_port = port or 8888
     port = find_available_port(desired_port)
