@@ -28,9 +28,11 @@ window.addEventListener('load', () => {
   const controls = [...document.querySelectorAll('button')];
   const recording = controls.find(b => b.textContent.trim() === '⏺ Record backup');
   const deviceGuide=document.getElementById('poBackupDeviceGuide');
-  const legacyCards = [...document.querySelectorAll('#po33BackupsList .card')];
-  const backupCard=legacyCards.find(el => el.textContent.includes('Synthetic Browser Test'));
-  const backupInfo=backupCard?.querySelector('p');
+  const backupInfoText=() => {
+    const card=[...document.querySelectorAll('#po33BackupsList .card')]
+      .find(el=>el.textContent.includes('Synthetic Browser Test'));
+    return card?.querySelector('p')?.textContent || '';
+  };
   const expected = [
     ['📻 Backups por audio-datos y restauración','📻 Audio-data backups and restore'],
     ['🎹 Mapeo Físico de Teclas EP-133 (12 Teclas por Grupo):','🎹 EP-133 physical key map (12 keys per group):'],
@@ -69,20 +71,20 @@ window.addEventListener('load', () => {
   const reporter = document.createElement('output');
   reporter.id = 'i18n-browser-result';
   document.body.appendChild(reporter);
-  if (!recording || !deviceGuide || !backupInfo || localeNodes.some(x => !x.node) || localeAttrs.some(x => !x.node)) {reporter.textContent = 'FAIL:missing locale test nodes'; return;}
+  if (!recording || !deviceGuide || !backupInfoText() || localeNodes.some(x => !x.node) || localeAttrs.some(x => !x.node)) {reporter.textContent = 'FAIL:missing locale test nodes'; return;}
   try {
     const initialEnglish = document.documentElement.lang === 'en' &&
       document.cookie.includes('beatos_locale=en') &&
       recording.textContent.trim() === '⏺ Record backup' &&
       deviceGuide.textContent.includes('Send: WRITE + SOUND + PLAY') &&
-      backupInfo.textContent.includes('Modem payload NOT verified.') &&
+      backupInfoText().includes('Modem payload NOT verified.') &&
       localeNodes.every(x => x.node.nodeValue.trim() === x.en) &&
       localeAttrs.every(x => x.node.getAttribute(x.attr) === x.en);
     setLanguage('es');
     setTimeout(() => {
       const spanishOK = recording.textContent.trim() === '⏺ Grabar backup' &&
         deviceGuide.textContent.includes('Enviar: WRITE + SOUND + PLAY') &&
-        backupInfo.textContent.includes('Datos del módem NO verificados.') &&
+        backupInfoText().includes('Datos del módem NO verificados.') &&
         document.documentElement.lang === 'es' &&
         document.cookie.includes('beatos_locale=es') &&
         localeNodes.every(x => x.node.nodeValue.trim() === x.es) &&
@@ -91,7 +93,7 @@ window.addEventListener('load', () => {
       setTimeout(() => {
         const englishOK = recording.textContent.trim() === '⏺ Record backup' &&
           deviceGuide.textContent.includes('Send: WRITE + SOUND + PLAY') &&
-          backupInfo.textContent.includes('Modem payload NOT verified.') &&
+          backupInfoText().includes('Modem payload NOT verified.') &&
           document.documentElement.lang === 'en' &&
           document.cookie.includes('beatos_locale=en') &&
           localStorage.getItem('mpc_lang') === 'en' &&
@@ -101,8 +103,8 @@ window.addEventListener('load', () => {
         reporter.textContent = initialEnglish && spanishOK && englishOK && filenameOK
           ? 'BEATOS_BROWSER_ES_EN_PASS'
           : 'FAIL:initial=' + initialEnglish + ',es=' + spanishOK + ',en=' + englishOK + ',filename=' + filenameOK;
-      }, 100);
-    }, 100);
+      }, 250);
+    }, 250);
   } catch (error) {reporter.textContent = 'FAIL:' + error.message;}
   }, 500);
 });
