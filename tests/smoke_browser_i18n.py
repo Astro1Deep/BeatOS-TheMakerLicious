@@ -2,6 +2,7 @@
 
 Only reads a synthetic empty catalog. Does not touch real sample libraries or hardware.
 """
+from html.parser import HTMLParser
 from pathlib import Path
 from threading import Thread
 from contextlib import contextmanager
@@ -9,6 +10,33 @@ from tempfile import TemporaryDirectory
 import shutil
 import subprocess
 import sys
+
+class _ProbeOutputParser(HTMLParser):
+    """Inspect rendered DOM elements, never matching literal JS source strings."""
+    def __init__(self):
+        super().__init__()
+        self.results = []
+        self.in_result = False
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "output" and dict(attrs).get("id") == "i18n-browser-result":
+            self.results.append("")
+            self.in_result = True
+
+    def handle_data(self, data):
+        if self.in_result:
+            self.results[-1] += data
+
+    def handle_endtag(self, tag):
+        if tag == "output":
+            self.in_result = False
+
+
+def browser_probe_result(html):
+    parser = _ProbeOutputParser()
+    parser.feed(html)
+    return parser.results[0].strip() if len(parser.results) == 1 else None
+
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -23,6 +51,12 @@ window.addEventListener('load', () => {
   document.body.appendChild(probe);
   const controls = [...document.querySelectorAll('button')];
   const recording = controls.find(b => b.textContent.trim() === '⏺ Record backup');
+  // Exact cookie value: en-US/es-MX are not accepted by the API's language parser.
+  const localeCookie = () => {
+    const cookie = document.cookie.split(';').map(value => value.trim())
+      .find(value => value.startsWith('beatos_locale='));
+    return cookie ? cookie.slice('beatos_locale='.length) : null;
+  };
   const expected = [
     ['📻 Módem FSK & Restauración de Backups','📻 FSK modem & backup restore'],
     ['🎹 Mapeo Físico de Teclas EP-133 (12 Teclas por Grupo):','🎹 EP-133 physical key map (12 keys per group):'],
@@ -64,7 +98,7 @@ window.addEventListener('load', () => {
   if (!recording || localeNodes.some(x => !x.node) || localeAttrs.some(x => !x.node)) {reporter.textContent = 'FAIL:missing locale test nodes'; return;}
   try {
     const initialEnglish = document.documentElement.lang === 'en' &&
-      document.cookie.includes('beatos_locale=en') &&
+      localeCookie() === 'en' &&
       recording.textContent.trim() === '⏺ Record backup' &&
       localeNodes.every(x => x.node.nodeValue.trim() === x.en) &&
       localeAttrs.every(x => x.node.getAttribute(x.attr) === x.en);
@@ -72,14 +106,14 @@ window.addEventListener('load', () => {
     setTimeout(() => {
       const spanishOK = recording.textContent.trim() === '⏺ Grabar backup' &&
         document.documentElement.lang === 'es' &&
-        document.cookie.includes('beatos_locale=es') &&
+        localeCookie() === 'es' &&
         localeNodes.every(x => x.node.nodeValue.trim() === x.es) &&
         localeAttrs.every(x => x.node.getAttribute(x.attr) === x.es);
       setLanguage('en');
       setTimeout(() => {
         const englishOK = recording.textContent.trim() === '⏺ Record backup' &&
           document.documentElement.lang === 'en' &&
-          document.cookie.includes('beatos_locale=en') &&
+          localeCookie() === 'en' &&
           localStorage.getItem('mpc_lang') === 'en' &&
           localeNodes.every(x => x.node.nodeValue.trim() === x.en) &&
           localeAttrs.every(x => x.node.getAttribute(x.attr) === x.en);
@@ -137,7 +171,7 @@ def main():
                 "--dump-dom", base + endpoint
             ]
             result = subprocess.run(command, capture_output=True, text=True, timeout=50)
-            if result.returncode or "BEATOS_BROWSER_ES_EN_PASS" not in result.stdout:
+            if result.returncode or browser_probe_result(result.stdout) != "BEATOS_BROWSER_ES_EN_PASS":
                 detail = result.stdout[-1500:] + "\n" + result.stderr[-900:]
                 raise SystemExit("Browser UI locale smoke FAILED (" + label + "): " + detail)
     print("PASS: actual BeatOS HTTP routes (generated and checked-in) switched default EN→ES→EN without touching sample filenames")

@@ -29,6 +29,15 @@ class InstallerLanguageTests(unittest.TestCase):
             self.assertIn("Exiting.",str(printed.call_args_list))
         with patch.object(sys,"argv",["installer.py","--lang","es"]), patch.dict(os.environ,{"BEATOS_LANG":""}):
             self.assertEqual(installer.get_language(),"es")
+    def test_empty_or_unknown_cli_language_does_not_accidentally_select_spanish(self):
+        # Only explicit 'es' selects Spanish; empty or unsupported values use EN.
+        with patch.object(sys,'argv',['installer.py','--lang','']), patch.dict(os.environ,{'BEATOS_LANG':'es'}):
+            self.assertEqual(installer.get_language(),'en')
+        with patch.object(sys,'argv',['installer.py','--lang=']), patch.dict(os.environ,{'BEATOS_LANG':'es'}):
+            self.assertEqual(installer.get_language(),'en')
+        with patch.object(sys,'argv',['installer.py','--lang=fr']), patch.dict(os.environ,{'BEATOS_LANG':''}):
+            self.assertEqual(installer.get_language(),'en')
+
     def test_indexer_inherits_english_without_changing_command_path(self):
         import tempfile
         with tempfile.TemporaryDirectory() as folder, patch.object(sys, "argv", ["installer.py", "--lang", "en"]), patch("builtins.input", side_effect=["1", folder]), patch("builtins.print"), patch("installer.subprocess.run") as run:

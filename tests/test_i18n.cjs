@@ -95,6 +95,25 @@ assert.equal(initCtx.detected,'en');
 const savedSpanishCtx=vm.createContext({localStorage:{getItem:()=> 'es'}});
 vm.runInContext(initSource+';this.detected=currentLang;',savedSpanishCtx);
 assert.equal(savedSpanishCtx.detected,'es','user Spanish preference must survive reload');
+// Sourcery PR #9 regression: cookie must preserve Spanish if localStorage is unavailable.
+const cookieFallbackCtx=vm.createContext({
+  localStorage:deniedStorage,
+  document:{cookie:'analytics=1; beatos_locale=es; session=abc'}
+});
+vm.runInContext(initSource+';this.detected=currentLang;',cookieFallbackCtx);
+assert.equal(cookieFallbackCtx.detected,'es','cookie fallback must retain explicit Spanish on reload');
+for (const cookie of ['beatos_locale=es-MX','other_beatos_locale=es','beatos_locale=invalid']) {
+  const invalidCookieCtx=vm.createContext({localStorage:deniedStorage,document:{cookie}});
+  vm.runInContext(initSource+';this.detected=currentLang;',invalidCookieCtx);
+  assert.equal(invalidCookieCtx.detected,'en','malformed cookies must not select Spanish: '+cookie);
+}
+const blankStorageCtx=vm.createContext({localStorage:{getItem:()=>null},document:{cookie:'beatos_locale=es'}});
+vm.runInContext(initSource+';this.detected=currentLang;',blankStorageCtx);
+assert.equal(blankStorageCtx.detected,'es','missing storage value must respect existing cookie');
+const storagePrecedenceCtx=vm.createContext({localStorage:{getItem:()=> 'en'},document:{cookie:'beatos_locale=es'}});
+vm.runInContext(initSource+';this.detected=currentLang;',storagePrecedenceCtx);
+assert.equal(storagePrecedenceCtx.detected,'en','explicit localStorage setting must win over stale cookie');
+
 const setterSource=html.slice(html.indexOf('const I18N ='),html.indexOf('function toggleLanguage()'));
 const fakeDoc={documentElement:{lang:'es'},getElementById(){return null;}};
 const setterCtx=vm.createContext({localStorage:deniedStorage,document:fakeDoc,refreshBeatOsLocale(){}});
@@ -142,6 +161,8 @@ assert.doesNotMatch(html,/\b(?:alert|confirm)\s*\(\s*['"]/,'Native browser dialo
 // Regression: visible labels in the delivered catalog need genuine EN equivalents.
 // These keys were previously omitted even though the main ES/EN switch existed.
 const missingVisibleTranslations = [
+  ['Asignar al Pad Objetivo Activo', 'Assign to active target pad'],
+  ['Vaciar Pad 1', 'Clear pad 1'],
   ['🎛️ Expansiones Oficiales', '🎛️ Official expansions'],
   ['🎛️ Editar Pads en Rack', '🎛️ Edit pads in rack'],
   ['⚡ Generar Kit EP-133', '⚡ Generate EP-133 kit'],
@@ -168,9 +189,32 @@ const staticMarkup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'')
   .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,'');
 for (const match of staticMarkup.matchAll(/\b(?:title|aria-label)="([^"]+)"/g)) {
   const source = match[1].replaceAll('&amp;', '&').replaceAll('&quot;', '"');
-  if (!/[áéíóúñ]|\b(?:Restablecer|Avanza|Cargar|Abrir|Modo Mover|Reproducir|Borrar|Selecciona|Haz clic|Buscar)\b/i.test(source)) continue;
+  if (!/[áéíóúñ]|\b(?:Restablecer|Avanza|Cargar|Abrir|Modo Mover|Reproducir|Borrar|Selecciona|Haz clic|Buscar|Vaciar|Asignar|Elegir|Cambiar|Cerrar)\b/i.test(source)) continue;
   const result = vm.runInContext('beatosTranslateExact('+JSON.stringify(source)+')',ctx);
   assert.notEqual(result,source,'Missing English translation of visible title/ARIA: '+source);
+}
+
+// Sourcery PR #8: verify actual English meaning, not merely that it changed.
+const expectedAttrEnglish = {
+  'Banner central BeatOS':'BeatOS main banner',
+  'Cambiar Tema Visual (Teenage Engineering / Cerebro OS / MPC / SP-404 / Maschine)':'Change visual theme (Teenage Engineering / Cerebro OS / MPC / SP-404 / Maschine)',
+  'Cambiar Idioma / Switch Language':'Change language',
+  'Reproducir muestra del pad activo':'Play active pad sample',
+  'Vaciar pad activo':'Clear active pad',
+  'Avanza automáticamente al siguiente pad tras asignar una muestra para armar tu kit con rapidez':'Automatically advance to the next pad after assigning a sample to build your kit faster',
+  'Restablecer todos los filtros y búsqueda':'Reset all filters and search',
+  'Cargar programa anterior de esta expansión':'Load the previous program from this expansion',
+  'Cargar siguiente programa de esta expansión':'Load the next program from this expansion',
+  'Abrir catálogo visual con los programas de esta expansión':'Open the visual catalog of programs in this expansion',
+  'Modo Mover: Haz clic en dos pads consecutivamente para intercambiarlos de sitio de forma rápida':'Move mode: click two pads in succession to swap their positions quickly',
+  'Reproductor y símbolos de Astro1Deep':'Player and Astro1Deep symbols',
+  'Cerrar programas de expansión':'Close expansion programs'
+};
+for (const [spanish,english] of Object.entries(expectedAttrEnglish)) {
+  assert.ok(staticMarkup.includes(spanish.replaceAll('&','&amp;')) || staticMarkup.includes(spanish),
+    'Missing regression attribute on static UI: '+spanish);
+  assert.equal(vm.runInContext('beatosTranslateExact('+JSON.stringify(spanish)+')',ctx),english,
+    'Incorrect English tooltip / ARIA label: '+spanish);
 }
 
 // Regression: the visible gain slider must never produce an export-invalid gain.
