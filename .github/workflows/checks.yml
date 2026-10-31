@@ -28,6 +28,11 @@ jobs:
           sudo apt-get install -y --no-install-recommends ffmpeg
       - name: Python regression tests
         run: python -B -m unittest discover -s tests -v
+      - name: PO-33 independent modem decoder self-check (optional NumPy)
+        if: matrix.python == '3.11'
+        run: |
+          python -m pip install --disable-pip-version-check numpy
+          python -B vendor/po33_verify.py --self-check
       - name: Browser logic regression tests
         run: |
           node tests/test_library_ui.cjs
