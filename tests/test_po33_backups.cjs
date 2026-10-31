@@ -57,7 +57,7 @@ vm.runInContext(html.slice(html.indexOf('const PO_BACKUP_BUTTONS'),html.indexOf(
 
   vm.runInContext('const RACK_PADS=[{filename:"kick.wav",durationSec:2,tune:12},{filename:"hat.wav",durationSec:2,tune:0}];',context);
   context.escapeHtml=value=>value;
-  vm.runInContext(html.slice(html.indexOf('function getPadDurationSec('),html.indexOf('// PO-33 backup capture and archive:')),context);
+  vm.runInContext(html.slice(html.indexOf('function getPadDurationSec('),html.indexOf('const PO_BACKUP_BUTTONS')),context);
   el('poBudget').value='1';el('poGap').value='200';vm.runInContext('updatePo33StudioView()',context);
   assert.match(el('po33SlicesTableBody').innerHTML,/200 ms/);assert.match(el('po33BudgetText').innerHTML,/1\.00s \/ 1\.00s/);
   el('poBudget').value='3';el('poGap').value='0';vm.runInContext('updatePo33StudioView()',context);
