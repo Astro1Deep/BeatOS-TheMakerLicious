@@ -5,7 +5,7 @@
 
 **Language: English (default) · [Español / Spanish README](README_ES.md)**
 
-BeatOS is a local, open-source sample-library browser and kit-preparation workstation for producers, beatmakers and audio engineers. It helps you audition and classify audio, assemble a 16-pad rack, inspect supported Akai MPC projects and prepare sampler-specific deliveries. It does **not** replace hardware firmware, turn every sampler into a fully native project editor, or guarantee playback on every hardware/firmware combination.
+BeatOS is a sample-based music creation and kit-preparation workstation for **musicians, beatmakers and music producers**. Browse and audition sound libraries, organize samples, build and edit 16-pad kits, inspect supported MPC projects and prepare exports for different hardware samplers. **Our development goal is native-level project fidelity:** generate kits and projects that each supported device can load and edit as naturally as possible, preserve device-specific settings, and—where the format allows—offer deeper parameter editing than standard import workflows. Native-format support must be implemented and verified for each device and firmware; today, some targets still receive WAVs and mapping guides rather than native project files.
 
 ![Real BeatOS browser interface in English, with synthetic demonstration samples](docs/assets/screenshots/beatos-overview-en.png)
 
@@ -45,6 +45,14 @@ python3 BeatOS/serve_mpc.py "/path/to/Your Samples" --port 8888
 **Localization:** English is the first-run default for the UI, installer, indexer and local API; switch to **ES** in the web header or use `--lang es` / `BEATOS_LANG=es` for command-line tools. The browser remembers your explicit selection. The locale changes UI text and diagnostic messages, **never** your sample filenames, project titles, paths or audio payloads.
 
 > **Release notice:** the latest stable release asset may predate changes on `main`. A passing CI build is not a published stable installer. Current source fixes require a new release, and existing installed libraries must be reindexed after upgrading the application. [Review the current QA status](docs/AUDITORIA_INTEGRAL_BILINGUE_2026-10-30.md).
+
+## Product vision: device-native kits and deeper editing
+
+BeatOS should evolve beyond exporting labelled WAVs. The target is a **hardware-aware kit/project editor**: prepare a kit on the computer, edit parameters actually supported by the selected sampler, load it on the device, continue editing there, save it, and reopen it without losing mappings.
+
+Priorities include **pad/bank assignments, velocity layers and zones, tuning, envelopes, sample start/end and looping, levels and panning, choke/mute groups, trigger modes, tempo and sample references**. Device-specific effects, patterns and additional controls can be added where a verified format supports them—even where normal import utilities do not expose those settings.
+
+Each exporter must clearly identify its verified level: **(1) import-ready WAV**, **(2) audio plus mapping guide**, **(3) device-native editable project**, or **(4) advanced native parameter editing**. Progress toward the goal is not a claim that existing WAV/JSON/ZIP output is already a native project. Native formats require device-specific research, legitimate fixtures, format validation and an actual device load → edit → save → reload round-trip. Never test by overwriting someone's only hardware backup.
 
 ## Hardware/export matrix
 
