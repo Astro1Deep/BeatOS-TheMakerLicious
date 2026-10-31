@@ -78,6 +78,8 @@ def import_po33_backup(root: str | Path, filename: str, data: bytes, *, model: s
         raise ValueError('WAV PCM ilegible: ' + str(error)) from error
     digest = hashlib.sha256(data).hexdigest()
     name = re.sub(r'[^a-zA-Z0-9_-]+', '_', Path(filename.replace('\\', '/')).stem)[:60].strip('_') or 'PO33'
+    if enhanced:
+        name = safe_slug(project)
     if '_INCOMPLETO_' in filename.upper() and '_INCOMPLETO_' not in name.upper():
         name += '_INCOMPLETO_'
     library = Path(root).resolve()
