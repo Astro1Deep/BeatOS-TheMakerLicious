@@ -78,6 +78,15 @@ for (const [spanish,english] of phrases) {
   assert.equal(actual,english,'Missing EN translation for: '+spanish);
 }
 
+// The Pocket Operator panel must label phase-modulated audio-data honestly,
+// rather than promising FSK or limiting the tool to PO-33/133.
+assert.match(html,/po33Title:\s*'🕹️ Pocket Operator Studio · Audio-data backups'/);
+assert.match(html,/btnScanBackups:\s*'🔄 Refresh backup library'/);
+assert.equal(vm.runInContext('beatosTranslateExact("Crear Nuevo Backup:")',ctx),'Create new backup:');
+assert.equal(vm.runInContext('beatosTranslateExact("Restaurar backup completo (audio-datos):")',ctx),'Restore complete audio-data backup:');
+assert.equal(vm.runInContext('beatosTranslateExact("(Los backups PO-33 usan audio-datos modulados por fase; duración variable).")',ctx),
+             '(PO-33 backups use phase-modulated audio data; duration varies).');
+
 const wrappedEpHelp = String.fromCharCode(10) + '  Exporta los 16 pads activos de tu Beatmaker Rack directamente formateados para el EP-133 K.O. II:' + String.fromCharCode(10) + '  muestras individuales convertidas en  ';
 assert.match(vm.runInContext('beatosTranslateExact('+JSON.stringify(wrappedEpHelp)+')',ctx),/Export all 16 active pads/);
 assert.equal(ctx.locale.message('Restaurar en el PO-33 BORRA todos sus sonidos y patrones actuales. ¿Has conservado su backup y quieres preparar la reproducción?'), 'Restoring on the PO-33 ERASES all its current sounds and patterns. Have you backed up the device and do you want to prepare playback?');
