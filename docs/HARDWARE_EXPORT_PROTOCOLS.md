@@ -48,6 +48,22 @@ Referencias: [Roland — importar/exportar](https://static.roland.com/manuals/sp
 
 **Procedimiento:** conecta la salida de línea del ordenador a la entrada de la PO, ajusta nivel sin saturar, inicia la grabación en pads de batería, reproduce el reel y revisa los cortes en TRIM. BeatOS **no consulta la memoria real disponible** en la PO. El respaldo completo por audio módem es otro procedimiento: un WAV íntegro con hash SHA-256 no demuestra que sus datos internos hayan sido decodificados ni restaurados correctamente.
 
+### Pocket Operator Studio — biblioteca de backups y verificación del protocolo (versión de desarrollo)
+
+**Pocket Operator Studio** permite guardar grabaciones de datos de **PO-32, PO-33, PO-35, PO-133 y PO-137**. Selecciona el modelo **antes de importar o grabar** y da al beat/proyecto un nombre inequívoco. BeatOS conserva el WAV estéreo original en `BeatOS/data/po33_backups/<MODELO>/` y genera un archivo `.po.json` con nombre original y SHA-256. No sobrescribe tomas anteriores. Los WAV históricos sin metadatos se identifican como **UNSPECIFIED**: nunca deben ofrecerse como backups de PO-33 sin confirmar primero el modelo.
+
+La acción **Verificar transferencia digital** actualmente verifica **solo PO-33**, utilizando un decodificador independiente de licencia MIT. Requiere la dependencia opcional NumPy (`python3 -m pip install numpy`) y comprueba sincronización, preámbulo, CRC de todos los paquetes, estructura y marcador final **sin alterar el WAV original**. El estado `PROTOCOL_CHECKSUM_VERIFIED` **no certifica** la interpretación de patrones ni que la restauración haya funcionado en una máquina. PO-133 sigue pendiente de comprobarse con capturas reales específicas. Los PO-32/35/137 pueden archivarse y reproducirse, pero el códec/decodificador de `libpo32` **todavía no está integrado**. No utilices reglas PO-33 para otros modelos.
+
+| Equipo | Enviar backup | Preparar recepción | Verificación digital en BeatOS |
+| --- | --- | --- | --- |
+| PO-33 / PO-133 | WRITE + SOUND + PLAY | WRITE + SOUND + RECORD | CRC de paquetes solo PO-33 |
+| PO-32 | WRITE + SOUND | ACC + SOUND | No integrada |
+| PO-35 / PO-137 | WRITE + SOUND | RECORD + SOUND | No integrada |
+
+**Advertencia:** la restauración puede borrar todos los sonidos y patrones del receptor. Primero registra y conserva una copia de seguridad válida de su estado. Confirma el modelo, utiliza conexión **estéreo por cable** a LINE IN y desactiva ecualización, audio espacial, Bluetooth y efectos. Evita la saturación. Activa la recepción en la máquina y pulsa manualmente Play en el reproductor inicialmente detenido, a velocidad 1×. El navegador, el sistema operativo o la interfaz de audio podrían modificar la señal reproducida. Un SHA-256 o CRC correcto **no demuestra una restauración real**: comprueba que la máquina ha recibido los datos y conserva sus sonidos y patrones tras guardar y volver a abrir. No se anuncia compatibilidad de backup de datos con PO-12/14/16/20/24/28/128.
+
+**Licencia del decodificador:** `vendor/po33_decode.py`, MIT de Daniel Pradilla, aviso conservado en `vendor/PO33_DECODER_LICENSE.txt`. El decodificador opcional trabaja en local y su investigación de formato no es una certificación del fabricante.
+
 ## 7. EP-133 K.O. II — herramientas de transferencia de muestras
 
 **Entrega:** hasta 16 WAV PCM **16-bit/44.1 kHz** en `sounds/`, `meta.json` con referencias de grupos/teclas y ZIP de transporte. Los doce primeros pads se asocian al grupo A en el mapa elegido por BeatOS y cuatro al B. **El ZIP no es backup nativo ni aplica automáticamente todos los parámetros.**

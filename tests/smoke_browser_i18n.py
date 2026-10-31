@@ -7,24 +7,34 @@ from threading import Thread
 from contextlib import contextmanager
 from tempfile import TemporaryDirectory
 import shutil
+import struct
+import wave
 import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from index_mpc_library import render_catalog
+from po_backup_protocols import write_sidecar
 import serve_mpc
 
 PROBE = r"""
 <script>
 window.addEventListener('load', () => {
+  setTimeout(() => {
   const probe = document.createElement('span');
   probe.textContent = 'MyCustom-Sample_90bpm.wav';
   document.body.appendChild(probe);
   const controls = [...document.querySelectorAll('button')];
   const recording = controls.find(b => b.textContent.trim() === '⏺ Record backup');
+  const deviceGuide=document.getElementById('poBackupDeviceGuide');
+  const backupInfoText=() => {
+    const card=[...document.querySelectorAll('#po33BackupsList .card')]
+      .find(el=>el.textContent.includes('Synthetic Browser Test'));
+    return card?.querySelector('p')?.textContent || '';
+  };
   const expected = [
-    ['📻 Módem FSK & Restauración de Backups','📻 FSK modem & backup restore'],
+    ['📻 Backups por audio-datos y restauración','📻 Audio-data backups and restore'],
     ['🎹 Mapeo Físico de Teclas EP-133 (12 Teclas por Grupo):','🎹 EP-133 physical key map (12 keys per group):'],
     ['🔄 Ejecutar Reindexación Completa','🔄 Reindex entire library'],
     ['🧹 Optimización para Hardware MPC & SP-404','🧹 MPC & SP-404 maintenance'],
@@ -61,16 +71,20 @@ window.addEventListener('load', () => {
   const reporter = document.createElement('output');
   reporter.id = 'i18n-browser-result';
   document.body.appendChild(reporter);
-  if (!recording || localeNodes.some(x => !x.node) || localeAttrs.some(x => !x.node)) {reporter.textContent = 'FAIL:missing locale test nodes'; return;}
+  if (!recording || !deviceGuide || !backupInfoText() || localeNodes.some(x => !x.node) || localeAttrs.some(x => !x.node)) {reporter.textContent = 'FAIL:missing locale test nodes'; return;}
   try {
     const initialEnglish = document.documentElement.lang === 'en' &&
       document.cookie.includes('beatos_locale=en') &&
       recording.textContent.trim() === '⏺ Record backup' &&
+      deviceGuide.textContent.includes('Send: WRITE + SOUND + PLAY') &&
+      backupInfoText().includes('Modem payload NOT verified.') &&
       localeNodes.every(x => x.node.nodeValue.trim() === x.en) &&
       localeAttrs.every(x => x.node.getAttribute(x.attr) === x.en);
     setLanguage('es');
     setTimeout(() => {
       const spanishOK = recording.textContent.trim() === '⏺ Grabar backup' &&
+        deviceGuide.textContent.includes('Enviar: WRITE + SOUND + PLAY') &&
+        backupInfoText().includes('Datos del módem NO verificados.') &&
         document.documentElement.lang === 'es' &&
         document.cookie.includes('beatos_locale=es') &&
         localeNodes.every(x => x.node.nodeValue.trim() === x.es) &&
@@ -78,6 +92,8 @@ window.addEventListener('load', () => {
       setLanguage('en');
       setTimeout(() => {
         const englishOK = recording.textContent.trim() === '⏺ Record backup' &&
+          deviceGuide.textContent.includes('Send: WRITE + SOUND + PLAY') &&
+          backupInfoText().includes('Modem payload NOT verified.') &&
           document.documentElement.lang === 'en' &&
           document.cookie.includes('beatos_locale=en') &&
           localStorage.getItem('mpc_lang') === 'en' &&
@@ -87,10 +103,10 @@ window.addEventListener('load', () => {
         reporter.textContent = initialEnglish && spanishOK && englishOK && filenameOK
           ? 'BEATOS_BROWSER_ES_EN_PASS'
           : 'FAIL:initial=' + initialEnglish + ',es=' + spanishOK + ',en=' + englishOK + ',filename=' + filenameOK;
-      }, 100);
-    }, 100);
+      }, 250);
+    }, 250);
   } catch (error) {reporter.textContent = 'FAIL:' + error.message;}
-
+  }, 500);
 });
 </script>
 """
@@ -103,6 +119,15 @@ def local_site(html):
         root = Path(folder)
         catalog = root / "BeatOS" / "data" / "catalogo.html"
         catalog.parent.mkdir(parents=True)
+        # Synthetic local PO-33 fixture: tests the *actual* server inventory and
+        # reversible translation of dynamic project cards, not just static HTML.
+        archive = root / "BeatOS" / "data" / "po33_backups" / "PO-33"
+        archive.mkdir(parents=True)
+        sound = archive / "synthetic-browser.wav"
+        with wave.open(str(sound), "wb") as recording:
+            recording.setparams((2, 2, 48000, 0, "NONE", ""))
+            recording.writeframes(struct.pack("<hh", 1400, -1400) * 48000)
+        write_sidecar(sound, "PO-33", "Synthetic Browser Test", source=sound.name)
         if "</body>" not in html:
             raise RuntimeError("Catalog missing body")
         catalog.write_text(html.replace("</body>", PROBE + "\n</body>", 1), encoding="utf-8")

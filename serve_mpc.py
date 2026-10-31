@@ -346,6 +346,16 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(self._api_json_dumps({"success": False, "error": "Módulo hardware_kit_builder no disponible.", "backups": []}).encode("utf-8"))
             return
 
+        elif clean_path == "/api/po_backup_profiles":
+            from po_backup_protocols import PROFILES, AUDIO_ONLY
+            payload = {'success': True, 'backup_models': PROFILES, 'audio_only_models': AUDIO_ONLY}
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_cors_headers()
+            self.end_headers()
+            self.wfile.write(self._api_json_dumps(payload, ensure_ascii=False).encode("utf-8"))
+            return
+
         elif clean_path == "/api/po33_backup_audio":
             query = urllib.parse.parse_qs(parsed.query)
             file_name = query.get("file", [""])[0] or query.get("path", [""])[0]
@@ -457,15 +467,101 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             try:
                 if self.headers.get_content_type() != 'audio/wav':
                     raise ValueError('Envía el archivo WAV original con Content-Type audio/wav')
-                filename = urllib.parse.parse_qs(parsed.query).get('name', ['PO33.wav'])[0]
+                params = urllib.parse.parse_qs(parsed.query)
+                filename = params.get('name', ['PO33.wav'])[0]
+                model = params.get('model', [None])[0]
+                project = params.get('project', [None])[0]
                 data = self.rfile.read(length)
                 if len(data) != length:
                     raise ValueError('Transferencia incompleta')
                 kit_mod = get_hardware_kit_builder(self.server.root_dir)
                 with PO_BACKUP_LOCK:
-                    result = kit_mod.import_po33_backup(self.server.root_dir, filename, data)
+                    result = kit_mod.import_po33_backup(self.server.root_dir, filename, data, model=model, project=project)
                 response, code = {'success': True, 'backup': result}, 200
             except (ValueError, EOFError) as error:
+                response, code = {'success': False, 'error': str(error)}, 400
+            except Exception as error:
+                response, code = {'success': False, 'error': str(error)}, 500
+            self.send_response(code)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_cors_headers()
+            self.end_headers()
+            self.wfile.write(self._api_json_dumps(response, ensure_ascii=False).encode('utf-8'))
+            return
+
+        elif clean_api == '/api/po_backup_classify':
+            try:
+                if self.headers.get_content_type() != 'application/json':
+                    raise ValueError('Expected JSON request')
+                data = self.rfile.read(length)
+                if len(data) != length:
+                    raise ValueError('Incomplete request')
+                payload = json.loads(data)
+                import po_backup_protocols as protocols
+                model = protocols.validate_model(payload.get('model'))
+                project = payload.get('project')
+                protocols.safe_slug(project)
+                requested = payload.get('file', '')
+                if not isinstance(requested, str) or not requested:
+                    raise ValueError('Missing backup path')
+                kit_mod = get_hardware_kit_builder(self.server.root_dir)
+                roots = [p.resolve() for p in kit_mod.po33_backup_dirs(self.server.root_dir)]
+                candidate = Path(requested)
+                if candidate.is_symlink():
+                    raise ValueError('Symlinked backups are not supported')
+                candidate = (candidate if candidate.is_absolute() else roots[0] / candidate).resolve()
+                if not (candidate.is_file() and candidate.suffix.lower() == '.wav'
+                        and any(candidate.is_relative_to(root) for root in roots)):
+                    raise ValueError('Backup outside the library')
+                with PO_BACKUP_LOCK:
+                    audio = kit_mod.inspect_po33_backup(candidate)
+                    if not audio.get('wav_complete') or not audio.get('audio_compatible'):
+                        raise ValueError('Unsupported/incomplete WAV; do not prepare restoration')
+                    metadata = protocols.write_sidecar(candidate, model, project, source=candidate.name)
+                response, code = {'success': True, 'backup': {
+                    **audio, 'model': metadata['model'], 'project': metadata['project'],
+                    'payload_verified': False, 'device_restore_verified': False}}, 200
+            except (ValueError, TypeError, json.JSONDecodeError) as error:
+                response, code = {'success': False, 'error': str(error)}, 400
+            except Exception as error:
+                response, code = {'success': False, 'error': str(error)}, 500
+            self.send_response(code)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_cors_headers()
+            self.end_headers()
+            self.wfile.write(self._api_json_dumps(response, ensure_ascii=False).encode('utf-8'))
+            return
+
+        elif clean_api == '/api/po_backup_verify':
+            try:
+                if self.headers.get_content_type() != 'application/json':
+                    raise ValueError('Expected JSON request')
+                data = self.rfile.read(length)
+                if len(data) != length:
+                    raise ValueError('Incomplete request')
+                payload = json.loads(data)
+                candidate_text = payload.get('file', '')
+                if not isinstance(candidate_text, str) or not candidate_text:
+                    raise ValueError('Missing backup file')
+                import po_backup_protocols as protocols
+                kit_mod = get_hardware_kit_builder(self.server.root_dir)
+                roots = [p.resolve() for p in kit_mod.po33_backup_dirs(self.server.root_dir)]
+                requested = Path(candidate_text)
+                if requested.is_symlink():
+                    raise ValueError('Symlinked backups are not supported')
+                candidate = (requested if requested.is_absolute() else roots[0] / requested).resolve()
+                if not (candidate.is_file() and candidate.suffix.lower() == '.wav'
+                        and any(candidate.is_relative_to(root) for root in roots)):
+                    raise ValueError('Backup outside the library')
+                info = kit_mod.inspect_po33_backup(candidate)
+                metadata = protocols.read_sidecar(candidate, info.get('sha256', ''))
+                if not metadata:
+                    raise ValueError('Classify this legacy recording with its device model before protocol verification')
+                if not info.get('audio_compatible') or info.get('capture_interrupted'):
+                    raise ValueError('Incomplete or unsupported WAV recording')
+                verified = protocols.verify_modem(candidate, metadata['model'])
+                response, code = {'success': True, 'verification': verified}, 200
+            except (ValueError, json.JSONDecodeError, TypeError) as error:
                 response, code = {'success': False, 'error': str(error)}, 400
             except Exception as error:
                 response, code = {'success': False, 'error': str(error)}, 500
