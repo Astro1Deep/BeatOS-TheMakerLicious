@@ -5,7 +5,7 @@
 
 **Idioma: Español · [English / presentación principal](README.md)**
 
-BeatOS es una estación de creación musical basada en samples y preparación de kits para **músicos, beatmakers y productores musicales**. Permite explorar y preescuchar bibliotecas, organizar sonidos, montar y editar kits en un rack de 16 pads, inspeccionar proyectos MPC compatibles y preparar exportaciones para distintos samplers. **Nuestro objetivo es alcanzar la máxima fidelidad a los proyectos nativos de cada hardware:** generar kits y proyectos que sus máquinas puedan cargar y editar de forma natural, conservar ajustes específicos y, cuando el formato lo permita, ofrecer una edición de parámetros más profunda que los métodos habituales de importación. La compatibilidad nativa se desarrollará y validará por modelo y firmware; actualmente, algunos destinos reciben WAV y mapas de asignación en lugar de proyectos nativos.
+BeatOS es una estación de preparación de kits para músicos, beatmakers y productores musicales. Permite explorar y preescuchar bibliotecas, organizar samples, editar un rack de 16 pads, inspeccionar ciertos proyectos MPC y generar entregas adaptadas a distintos samplers. **No sustituye el firmware** ni convierte automáticamente todos los kits en proyectos nativos de cada máquina.
 
 ![Interfaz real de BeatOS en español, con datos sintéticos](docs/assets/screenshots/beatos-overview-es.png)
 
@@ -36,18 +36,6 @@ Utiliza la opción **1** para indexar y **2** para abrir el servidor local. En u
 **Idiomas:** por defecto, el primer inicio se muestra en inglés. Puedes seleccionar **ES** desde el encabezado web. La preferencia se conserva en el navegador; para terminal, utiliza `--lang es` o `BEATOS_LANG=es`. Ni los nombres de archivos, ni las rutas, ni los nombres de proyectos privados se traducen.
 
 > **Importante:** el código de `main` puede ser más reciente que el instalador estable 3.8.0. Para actualizar una instalación, instala una distribución nueva y regenera el catálogo de tu biblioteca tras conservar tus copias. [Estado de la auditoría](docs/AUDITORIA_INTEGRAL_BILINGUE_2026-10-30.md).
-
-## Objetivo: edición y exportación con fidelidad nativa
-
-La meta no es limitarse a recopilar WAV: **BeatOS debe evolucionar hacia un editor avanzado de kits y proyectos específico para cada sampler**. Queremos que el usuario prepare un kit en el ordenador, edite los parámetros que su máquina realmente admite y pueda cargarlo, seguir trabajándolo y volver a guardarlo en el hardware sin perder asignaciones.
-
-El desarrollo prioriza **bancos y pads, capas/zonas de velocidad, afinación, envolventes, inicio/fin y loop, volumen, panorama, grupos choke/mute, modo de disparo, BPM y referencias de muestras**, cuando estén disponibles en cada dispositivo. Cuando se investiguen formatos de proyecto compatibles, también podrá estudiarse la edición de efectos, patrones y otros parámetros soportados.
-
-Para un mismo destino distinguiremos explícitamente **(1) WAV para importar**, **(2) kit con mapeo asistido**, **(3) proyecto nativo editable verificado** y **(4) exportación avanzada de parámetros**, sin dar por completado ningún nivel hasta superar las pruebas de carga, modificación y relectura en el equipo y firmware correspondientes. Ni un ZIP renombrado ni un manifiesto JSON convierten un paquete en un backup nativo.
-
-Seguimiento técnico: [propuesta de compatibilidad y edición nativa](docs/HARDWARE_EXPORT_PROTOCOLS.md#8-protocolo-mínimo-de-aceptación-física). Los formatos propietarios o no documentados exigen investigación autorizada, archivos de prueba originales y verificación de ida y vuelta; nunca se deben modificar respaldos reales como experimento.
-
-**Hoja de ruta técnica:** [Fidelidad de proyectos nativos y edición avanzada por hardware — issue #11](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/issues/11).
 
 ## Formatos y límites por hardware
 
