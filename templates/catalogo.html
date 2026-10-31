@@ -3240,6 +3240,7 @@ function refreshBeatOsLocale() {
 }
 
 function setLanguage(lang) {
+  const previousLang = currentLang;
   currentLang = (lang === 'en') ? 'en' : 'es';
   try { localStorage.setItem('mpc_lang', currentLang); } catch (error) { /* Incognito or restricted storage: current session still works. */ }
   // Only a non-sensitive ES/EN preference; keeps local API diagnostics in sync.
@@ -3304,6 +3305,7 @@ function setLanguage(lang) {
   refreshBeatOsLocale();
   if (typeof refreshPo33BackupStatus === 'function') refreshPo33BackupStatus();
   if (typeof updatePoBackupDeviceGuide === 'function') updatePoBackupDeviceGuide();
+  if (previousLang !== currentLang && typeof window !== 'undefined' && window.beatosPoBackupLibraryReady) loadPo33BackupsList();
   const expansionModal = document.getElementById('expansionBrowserModalOverlay');
   if (expansionModal?.style.display === 'flex' && typeof filterExpansionKits === 'function') {
     filterExpansionKits(document.getElementById('expansionSearchInput')?.value || '');
@@ -6050,6 +6052,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initBackdropPreference();
   updatePo33StudioView();
   loadPo33BackupsList();
+  window.beatosPoBackupLibraryReady = true;
 });
 
 </script>
