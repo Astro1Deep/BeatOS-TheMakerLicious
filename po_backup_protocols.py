@@ -87,7 +87,11 @@ def read_sidecar(path, sha256):
         if (meta.get('schema')!='beatos-pocket-operator-v1'
                 or meta.get('file')!=path.name
                 or meta.get('sha256')!=sha256
-                or meta.get('model') not in PROFILES):
+                or meta.get('model') not in PROFILES
+                or not isinstance(meta.get('project'), str)
+                or not 1 <= len(meta['project'].strip()) <= 160
+                or type(meta.get('size_bytes')) is not int
+                or meta['size_bytes'] != path.stat().st_size):
             return None
         # A sidecar may not assert physical verification merely because it was edited.
         meta['device_restore_verified']=False
