@@ -23,8 +23,9 @@ window.addEventListener('load', () => {
   document.body.appendChild(probe);
   const controls = [...document.querySelectorAll('button')];
   const recording = controls.find(b => b.textContent.trim() === '⏺ Record backup');
+  const deviceGuide=document.getElementById('poBackupDeviceGuide');
   const expected = [
-    ['📻 Módem FSK & Restauración de Backups','📻 FSK modem & backup restore'],
+    ['📻 Backups por audio-datos y restauración','📻 Audio-data backups and restore'],
     ['🎹 Mapeo Físico de Teclas EP-133 (12 Teclas por Grupo):','🎹 EP-133 physical key map (12 keys per group):'],
     ['🔄 Ejecutar Reindexación Completa','🔄 Reindex entire library'],
     ['🧹 Optimización para Hardware MPC & SP-404','🧹 MPC & SP-404 maintenance'],
@@ -61,16 +62,18 @@ window.addEventListener('load', () => {
   const reporter = document.createElement('output');
   reporter.id = 'i18n-browser-result';
   document.body.appendChild(reporter);
-  if (!recording || localeNodes.some(x => !x.node) || localeAttrs.some(x => !x.node)) {reporter.textContent = 'FAIL:missing locale test nodes'; return;}
+  if (!recording || !deviceGuide || localeNodes.some(x => !x.node) || localeAttrs.some(x => !x.node)) {reporter.textContent = 'FAIL:missing locale test nodes'; return;}
   try {
     const initialEnglish = document.documentElement.lang === 'en' &&
       document.cookie.includes('beatos_locale=en') &&
       recording.textContent.trim() === '⏺ Record backup' &&
+      deviceGuide.textContent.includes('Send: WRITE + SOUND + PLAY') &&
       localeNodes.every(x => x.node.nodeValue.trim() === x.en) &&
       localeAttrs.every(x => x.node.getAttribute(x.attr) === x.en);
     setLanguage('es');
     setTimeout(() => {
       const spanishOK = recording.textContent.trim() === '⏺ Grabar backup' &&
+        deviceGuide.textContent.includes('Enviar: WRITE + SOUND + PLAY') &&
         document.documentElement.lang === 'es' &&
         document.cookie.includes('beatos_locale=es') &&
         localeNodes.every(x => x.node.nodeValue.trim() === x.es) &&
@@ -78,6 +81,7 @@ window.addEventListener('load', () => {
       setLanguage('en');
       setTimeout(() => {
         const englishOK = recording.textContent.trim() === '⏺ Record backup' &&
+          deviceGuide.textContent.includes('Send: WRITE + SOUND + PLAY') &&
           document.documentElement.lang === 'en' &&
           document.cookie.includes('beatos_locale=en') &&
           localStorage.getItem('mpc_lang') === 'en' &&
