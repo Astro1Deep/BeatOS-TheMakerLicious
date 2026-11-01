@@ -1252,15 +1252,15 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             return
         if clean_api == '/api/po33_backups':
             try:
+                data = self.rfile.read(length)
+                if len(data) != length:
+                    raise ValueError('Transferencia incompleta')
                 if self.headers.get_content_type() != 'audio/wav':
                     raise ValueError('Envía el archivo WAV original con Content-Type audio/wav')
                 params = urllib.parse.parse_qs(parsed.query)
                 filename = params.get('name', ['PO33.wav'])[0]
                 model = params.get('model', [None])[0]
                 project = params.get('project', [None])[0]
-                data = self.rfile.read(length)
-                if len(data) != length:
-                    raise ValueError('Transferencia incompleta')
                 kit_mod = get_hardware_kit_builder(self.server.root_dir)
                 with PO_BACKUP_LOCK:
                     result = kit_mod.import_po33_backup(self.server.root_dir, filename, data, model=model, project=project)
