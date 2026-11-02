@@ -713,8 +713,8 @@
     background: #1a1e2b;
     border: 1.5px solid #333c56;
     color: #ffffff;
-    padding: 10px 10px;
-    font-size: 13.5px;
+    padding: 11px 12px;
+    font-size: 14.5px;
     font-weight: 700;
     cursor: pointer;
     border-radius: 8px;
@@ -745,9 +745,10 @@
   .tab-badge {
     background: var(--mpc-red);
     color: #fff;
-    padding: 1px 6px;
+    padding: 2px 7px;
     border-radius: 10px;
-    font-size: 11px;
+    font-size: 12px;
+    font-weight: 800;
     font-weight: 800;
     margin-left: 2px;
     box-shadow: 0 0 8px rgba(255, 51, 68, 0.5);
@@ -897,8 +898,8 @@
   }
 
   .table-box { overflow-x: auto; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { background: var(--bg-header); padding: 12px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { background: var(--bg-header); padding: 12px 14px; text-align: left; font-size: 12.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; }
   th.th-sortable {
     cursor: pointer;
     user-select: none;
@@ -913,31 +914,31 @@
     border-bottom: 2px solid var(--mpc-cyan);
   }
   .sort-arrow {
-    font-size: 10px;
+    font-size: 11.5px;
     margin-left: 4px;
   }
   td { padding: 10px 14px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
   tr:hover { background: rgba(255, 51, 68, 0.04); }
 
-  .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+  .badge { display: inline-block; padding: 4px 9px; border-radius: 4px; font-size: 12px; font-weight: 700; }
   .badge-healthy { background: rgba(46, 204, 113, 0.15); color: var(--mpc-green); border: 1px solid var(--mpc-green); }
   .badge-chill { background: rgba(0, 210, 211, 0.15); color: var(--mpc-cyan); }
   .badge-groove { background: rgba(245, 166, 35, 0.15); color: var(--mpc-gold); }
   .badge-banger { background: rgba(255, 51, 68, 0.15); color: var(--mpc-red); }
 
-  .badge-format { font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.5px; display: inline-block; }
+  .badge-format { font-weight: 700; font-size: 12px; padding: 4px 9px; border-radius: 4px; letter-spacing: 0.5px; display: inline-block; }
   .badge-oneshot { background: rgba(0, 210, 211, 0.15); color: #00d2d3; border: 1px solid rgba(0, 210, 211, 0.4); }
   .badge-loop { background: rgba(245, 166, 35, 0.15); color: #f5a623; border: 1px solid rgba(245, 166, 35, 0.4); }
   .badge-stem { background: rgba(162, 155, 254, 0.15); color: #a29bfe; border: 1px solid rgba(162, 155, 254, 0.4); }
   .badge-roll { background: rgba(255, 107, 129, 0.15); color: #ff6b81; border: 1px solid rgba(255, 107, 129, 0.4); }
 
-  .btn-play { padding: 6px 12px; border-radius: 6px; border: none; font-size: 11px; font-weight: 700; cursor: pointer; background: var(--mpc-red); color: #fff; transition: 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-play { padding: 7px 14px; border-radius: 6px; border: none; font-size: 12.5px; font-weight: 700; cursor: pointer; background: var(--mpc-red); color: #fff; transition: 0.15s; display: inline-flex; align-items: center; gap: 6px; }
   .btn-play:hover { opacity: 0.9; transform: scale(1.02); }
-  .btn-copy { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 11px; font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.05); color: var(--text-muted); transition: 0.15s; margin-left: 6px; }
+  .btn-copy { padding: 7px 11px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 12px; font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.05); color: var(--text-muted); transition: 0.15s; margin-left: 6px; }
   .btn-copy:hover { color: #fff; border-color: var(--mpc-cyan); }
 
-  .pagination { display: flex; justify-content: space-between; align-items: center; padding: 16px 4px; font-size: 13px; color: var(--text-muted); }
-  .btn-page { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); font-size: 12px; font-weight: 600; cursor: pointer; }
+  .pagination { display: flex; justify-content: space-between; align-items: center; padding: 16px 4px; font-size: 13.5px; color: var(--text-muted); }
+  .btn-page { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-weight: 600; cursor: pointer; }
   .btn-page:disabled { opacity: 0.4; cursor: not-allowed; }
 
   .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
@@ -964,21 +965,22 @@
     box-shadow: 0 12px 36px rgba(0,0,0,0.75), 0 0 24px rgba(255,102,0,0.20);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    gap: 15px;
+    gap: 18px;
     box-sizing: border-box;
     overflow: hidden;
+    min-height: 140px;
   }
-  .player-track-info { display: flex; flex-direction: column; min-width: 240px; }
-  .player-track-title { font-size: 15.5px; color: #ffffff; font-weight: 800; letter-spacing: 0.02em; display: flex; align-items: center; gap: 8px; }
-  .player-track-path { font-size: 12px; color: #a0a8c2; font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 520px; margin-top: 2px; }
+  .player-track-info { display: flex; flex-direction: column; min-width: 280px; flex: 0 1 380px; }
+  .player-track-title { font-size: 20px; color: #ffffff; font-weight: 800; letter-spacing: 0.02em; display: flex; align-items: center; gap: 8px; line-height: 1.3; }
+  .player-track-path { font-size: 14.5px; color: #a4adc7; font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 500px; margin-top: 4px; line-height: 1.35; }
   .player-controls { display: flex; align-items: center; gap: 15px; }
-  audio { height: 42px; outline: none; }
+  audio { height: 46px; outline: none; }
 
   .btn-add-pad {
-    padding: 6px 11px;
+    padding: 7px 12px;
     border-radius: 6px;
     border: 1px solid rgba(0, 240, 255, 0.3);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     cursor: pointer;
     background: rgba(0, 240, 255, 0.1);
@@ -1186,29 +1188,29 @@
   }
   .pad-num-badge {
     background: rgba(255,255,255,0.08);
-    padding: 2px 5px;
+    padding: 3px 6px;
     border-radius: 4px;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 800;
     letter-spacing: 0.5px;
     color: var(--text-muted);
   }
   .pad-key-shortcut {
-    font-size: 10px;
+    font-size: 11.5px;
     color: var(--mpc-gold);
     background: rgba(255, 170, 0, 0.12);
     border: 1px solid rgba(255, 170, 0, 0.3);
-    padding: 1px 4px;
+    padding: 2px 5px;
     border-radius: 3px;
     font-weight: 800;
     line-height: 1;
   }
   .pad-sample-name {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--text-primary);
     margin: 4px 0;
-    line-height: 1.25;
+    line-height: 1.35;
     text-align: center;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1223,7 +1225,7 @@
   }
   .pad-cell.empty .pad-sample-name {
     color: #555e70;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     font-style: normal;
   }
@@ -1236,16 +1238,16 @@
     margin-top: 2px;
   }
   .pad-type-tag {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
-    padding: 2px 5px;
+    padding: 2px 6px;
     border-radius: 3px;
     letter-spacing: 0.5px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 62px;
+    max-width: 72px;
   }
   .pad-btn-group {
     display: flex;
@@ -1253,10 +1255,10 @@
     align-items: center;
   }
   .btn-pad-action {
-    padding: 3px 5px;
+    padding: 4px 6px;
     border-radius: 4px;
     border: none;
-    font-size: 10px;
+    font-size: 11.5px;
     font-weight: 700;
     cursor: pointer;
     line-height: 1;
@@ -1266,8 +1268,8 @@
     background: rgba(255,255,255,0.08);
     border: 1px solid rgba(255,255,255,0.15);
     color: var(--text-muted);
-    font-size: 9px;
-    padding: 1px 4px;
+    font-size: 11px;
+    padding: 2px 5px;
     border-radius: 3px;
     cursor: pointer;
     line-height: 1;
@@ -1516,7 +1518,7 @@
     align-items: center;
   }
   .dock-pad-num {
-    font-size: 11px;
+    font-size: 12.5px;
     font-weight: 800;
     color: var(--text-primary);
   }
@@ -1524,12 +1526,12 @@
     color: var(--mpc-red);
   }
   .dock-pad-tag {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-muted);
   }
   .dock-pad-stype {
-    font-size: 8px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--mpc-gold);
     max-width: 90%;
@@ -1551,9 +1553,9 @@
     color: #000;
     border: none;
     border-radius: 4px;
-    width: 24px;
-    height: 20px;
-    font-size: 9px;
+    width: 26px;
+    height: 22px;
+    font-size: 11px;
     font-weight: 900;
     cursor: pointer;
     display: inline-flex;
@@ -1571,9 +1573,9 @@
     color: var(--text-muted);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 4px;
-    width: 20px;
-    height: 20px;
-    font-size: 9px;
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
     font-weight: 700;
     cursor: pointer;
     display: inline-flex;
@@ -1587,8 +1589,8 @@
     border-color: #e74c3c;
   }
   .dock-pad-empty-lbl {
-    font-size: 8px;
-    color: rgba(255, 255, 255, 0.25);
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.3);
     text-transform: uppercase;
     font-weight: 600;
   }
@@ -2098,7 +2100,7 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
 @media (max-width: 600px) {
   .rack-grid-4x4 { gap: 6px; padding: 8px; min-height: 480px; }
   .pad-cell .pad-actions { flex-direction: column; align-items: stretch; }
-  .pad-cell .pad-type-tag { width: 100%; max-width: 100%; box-sizing: border-box; font-size: 8px; }
+  .pad-cell .pad-type-tag { width: 100%; max-width: 100%; box-sizing: border-box; font-size: 11px; }
   .pad-cell .pad-btn-group { margin: 0; justify-content: space-between; }
   .pad-cell .pad-drag-grip, .pad-cell .pad-key-shortcut { display: none; }
   .rack-header-bar select { max-width: 100% !important; }
@@ -2115,27 +2117,27 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
 .beatos-brand p { margin: 8px 0 0; }
 .beatos-brand .brand-edition { font-size: clamp(20px, 3vw, 30px); font-weight: 700; }
 .beatos-brand .brand-description { font-family: 'SF Mono', Monaco, monospace; font-size: clamp(12px, 1.7vw, 17px); color: var(--theme-accent, #ff6600); letter-spacing: .04em; }
-.creator-mark { display:block; width:158px; height:130px; overflow:hidden; opacity:.95; mix-blend-mode:screen; pointer-events:none; border-radius:8px; }
+.creator-mark { display:block; width:245px; height:185px; overflow:hidden; opacity:.95; mix-blend-mode:screen; pointer-events:none; border-radius:8px; }
 .creator-mark img { display:block; width:100%; height:100%; object-fit:cover; }
-.creator-mark[data-art="eye-mirror-compact"] img { transform:scale(1.68); object-position:50% 51%; }
-.creator-mark[data-art="eye-mirror-portrait"] img { transform:scale(1.15); object-position:50% 28%; }
-.creator-mark[data-art="eye-mirror-wide"] img { transform:scale(1.10); object-position:50% 50%; }
-.creator-mark[data-art="eye-minimal-wide"] img { transform:scale(1.26); object-position:50% 50%; }
-.creator-mark[data-art="eye-black-relief"] img { transform:scale(1.10); object-position:50% 50%; }
-.creator-mark--label { grid-column:1; grid-row:1; width:375px; height:148px; justify-self:start; align-self:center; border-radius:10px; z-index:1; pointer-events:none; opacity:.95; overflow:visible; margin-left:-50px; }
-.creator-mark--label img { transform:scale(2.28) translateX(-16px) translateY(25px); object-position:50% 50%; }
+.creator-mark[data-art="eye-mirror-compact"] img { transform:scale(2.20); object-position:50% 53%; }
+.creator-mark[data-art="eye-mirror-portrait"] img { transform:scale(1.45); object-position:50% 30%; }
+.creator-mark[data-art="eye-mirror-wide"] img { transform:scale(1.35); object-position:50% 50%; }
+.creator-mark[data-art="eye-minimal-wide"] img { transform:scale(1.55); object-position:50% 50%; }
+.creator-mark[data-art="eye-black-relief"] img { transform:scale(1.35); object-position:50% 50%; }
+.creator-mark--label { grid-column:1; grid-row:1; width:480px; height:175px; justify-self:start; align-self:center; border-radius:10px; z-index:1; pointer-events:none; opacity:.95; overflow:visible; margin-left:-35px; }
+.creator-mark--label img { transform:scale(2.45) translateX(-8px) translateY(26px); object-position:50% 50%; }
 :root[data-theme="makerlicious-bone"] .creator-mark,
 :root[data-theme="mpc-vintage"] .creator-mark { filter:invert(1); mix-blend-mode:multiply; opacity:.78; }
-.player-track-info { flex:1 1 240px; min-width:200px; position:relative; z-index:4; }
-.audio-player-bar { padding: 10px 24px; min-height: 124px; box-sizing: border-box; overflow:hidden; }
-.audio-player-bar .player-controls { position:relative; display:grid; grid-template-columns:minmax(280px,400px) 155px; grid-template-rows:1fr; align-items:center; gap:6px; min-width:0; }
+.player-track-info { flex:0 1 380px; min-width:280px; position:relative; z-index:4; }
+.audio-player-bar { padding: 12px 28px; min-height: 145px; box-sizing: border-box; overflow:hidden; }
+.audio-player-bar .player-controls { position:relative; display:grid; grid-template-columns:minmax(460px,860px) 245px; grid-template-rows:1fr; align-items:center; gap:8px; min-width:0; }
 .audio-player-bar .player-controls::before {
   content:'';
   grid-column:1;
   grid-row:1;
   width:100%;
-  height:42px;
-  border-radius:21px;
+  height:46px;
+  border-radius:23px;
   pointer-events:none;
   z-index:2;
   background:linear-gradient(90deg, 
@@ -2152,7 +2154,7 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
              -12px 0 22px rgba(255, 102, 0, 0.28),
              12px 0 22px rgba(0, 240, 255, 0.28);
 }
-.audio-player-bar audio { grid-column:1; grid-row:1; width:100%; min-width:0; height:42px; position:relative; z-index:3; border-radius:21px; color-scheme:dark; }
+.audio-player-bar audio { grid-column:1; grid-row:1; width:100%; min-width:0; height:46px; position:relative; z-index:3; border-radius:23px; color-scheme:dark; }
 audio::-webkit-media-controls-panel { background-color:rgba(10,12,18,0.12); }
 :root[data-theme="makerlicious-bone"] .audio-player-bar audio,
 :root[data-theme="mpc-vintage"] .audio-player-bar audio { color-scheme:light; }
@@ -2171,34 +2173,34 @@ audio::-webkit-media-controls-panel { background-color:rgba(10,12,18,0.12); }
   border-color:rgba(0, 0, 0, 0.14);
   box-shadow:0 4px 16px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.7);
 }
-.creator-mark:not(.creator-mark--label) { grid-column:2; grid-row:1; align-self:center; justify-self:start; margin-left:-56px; z-index:1; }
+.creator-mark:not(.creator-mark--label) { grid-column:2; grid-row:1; align-self:center; justify-self:start; margin-left:-95px; z-index:1; }
 .audio-player-bar #btnCopyPlayer { grid-column:1; grid-row:1; justify-self:center; align-self:end; margin-bottom:-26px; z-index:4; }
 @media(max-width:1080px) {
- .audio-player-bar .player-controls { grid-template-columns:minmax(220px,320px) 136px; gap:6px; }
- .creator-mark { width:136px; height:114px; }
- .creator-mark:not(.creator-mark--label) { margin-left:-44px; z-index:1; }
- .creator-mark--label { width:290px; height:130px; margin-left:-38px; }
- .creator-mark--label img { transform:scale(2.28) translateX(-14px) translateY(20px); }
+ .audio-player-bar .player-controls { grid-template-columns:minmax(320px,540px) 195px; gap:6px; }
+ .creator-mark { width:195px; height:155px; }
+ .creator-mark:not(.creator-mark--label) { margin-left:-70px; z-index:1; }
+ .creator-mark--label { width:380px; height:155px; margin-left:-30px; }
+ .creator-mark--label img { transform:scale(2.35) translateX(-8px) translateY(22px); }
 }
 @media(max-width:760px) {
  .audio-player-bar { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; padding:10px 14px; min-height:auto; bottom:8px; left:10px; right:10px; border-radius:10px; }
  .audio-player-bar .player-track-info { min-width:0; }
- .audio-player-bar .player-controls { grid-template-columns:minmax(0,1fr) 98px; gap:6px; }
- .creator-mark { width:98px; height:88px; }
- .creator-mark:not(.creator-mark--label) { margin-left:-24px; z-index:1; }
- .creator-mark--label { width:230px; height:105px; margin-left:-25px; }
- .creator-mark--label img { transform:scale(2.28) translateX(-10px) translateY(14px); }
+ .audio-player-bar .player-controls { grid-template-columns:minmax(0,1fr) 130px; gap:6px; }
+ .creator-mark { width:130px; height:105px; }
+ .creator-mark:not(.creator-mark--label) { margin-left:-40px; z-index:1; }
+ .creator-mark--label { width:260px; height:115px; margin-left:-25px; }
+ .creator-mark--label img { transform:scale(2.28) translateX(-8px) translateY(16px); }
  .tabs { padding:8px 10px; gap:5px; }
  .tab-btn { font-size:13px; padding:7px 11px; }
 }
 .rack-bank-tabs-bar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; padding:8px 12px; margin-bottom:12px; }
 .rack-bank-btn-group { display:flex; align-items:center; flex-wrap:wrap; gap:5px; }
-.rack-bank-btn { background:rgba(255,255,255,0.04); color:var(--text-primary); border:1px solid var(--border-color); border-radius:6px; padding:5px 10px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all .15s ease; }
+.rack-bank-btn { background:rgba(255,255,255,0.04); color:var(--text-primary); border:1px solid var(--border-color); border-radius:6px; padding:6px 12px; font-size:12.5px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all .15s ease; }
 .rack-bank-btn:hover:not(:disabled) { border-color:var(--mpc-cyan); color:var(--mpc-cyan); }
 .rack-bank-btn.active { background:var(--theme-accent, #ff6600); color:#000; border-color:var(--theme-accent, #ff6600); box-shadow:0 0 12px rgba(255,102,0,0.35); }
 .rack-bank-btn.has-pads:not(.active) { border-color:rgba(0,240,255,0.45); background:rgba(0,240,255,0.08); }
 .rack-bank-btn:disabled { opacity:0.32; cursor:not-allowed; }
-.rack-bank-count { font-size:9px; padding:1px 5px; border-radius:8px; background:rgba(0,0,0,0.28); font-weight:800; }
+.rack-bank-count { font-size:11px; padding:2px 6px; border-radius:8px; background:rgba(0,0,0,0.28); font-weight:800; }
 .rack-workbench-row { display:grid; grid-template-columns:minmax(0, 580px) minmax(265px, 1fr); gap:16px; align-items:start; }
 @media(max-width:1180px) { .rack-workbench-row { grid-template-columns:minmax(0, 1fr); } }
 .rack-bank-manager-cell { background:var(--bg-card); border:2px solid var(--border-color); border-radius:14px; padding:14px 16px; box-shadow:inset 0 2px 10px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.35); display:flex; flex-direction:column; gap:12px; }
@@ -2498,29 +2500,29 @@ audio::-webkit-media-controls-panel { background-color:rgba(10,12,18,0.12); }
       <div class="rack-header-bar" style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; padding:10px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; box-shadow:0 4px 16px rgba(0,0,0,0.15);">
         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
           <div>
-            <span style="font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); font-weight:700; display:block;">PROGRAMA / KIT ACTIVO:</span>
+            <span style="font-size:12px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); font-weight:700; display:block;">PROGRAMA / KIT ACTIVO:</span>
             <strong id="rackCurrentKitTitle" style="font-size:15px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
               <span id="rackKitActiveIcon">🎛️</span> <span id="rackKitActiveName">Kit Predeterminado (Vacío)</span>
             </strong>
           </div>
-          <span id="rackKitExpBadge" style="font-size:10px; font-weight:700; padding:2px 8px; border-radius:4px; background:rgba(0,240,255,0.1); border:1px solid rgba(0,240,255,0.3); color:var(--mpc-cyan); display:none;"></span>
+          <span id="rackKitExpBadge" style="font-size:12px; font-weight:700; padding:3px 9px; border-radius:4px; background:rgba(0,240,255,0.1); border:1px solid rgba(0,240,255,0.3); color:var(--mpc-cyan); display:none;"></span>
         </div>
 
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
           <div style="display:flex; align-items:center; gap:4px;">
-            <button class="rack-btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="prevExpansionProgram()" title="Cargar programa anterior de esta expansión">◀ Anterior</button>
-            <select id="rackQuickKitSelector" class="filter-select" style="max-width:240px; padding:6px 10px; font-size:12px; font-weight:600;" onchange="onRackKitSelectChange(this.value)">
+            <button class="rack-btn-secondary" style="padding:7px 11px; font-size:12px;" onclick="prevExpansionProgram()" title="Cargar programa anterior de esta expansión">◀ Anterior</button>
+            <select id="rackQuickKitSelector" class="filter-select" style="max-width:240px; padding:7px 10px; font-size:13px; font-weight:600;" onchange="onRackKitSelectChange(this.value)">
               <option value="">-- Cambiar Kit (.xpm) --</option>
             </select>
-            <button class="rack-btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="nextExpansionProgram()" title="Cargar siguiente programa de esta expansión">Siguiente ▶</button>
+            <button class="rack-btn-secondary" style="padding:7px 11px; font-size:12px;" onclick="nextExpansionProgram()" title="Cargar siguiente programa de esta expansión">Siguiente ▶</button>
           </div>
-          <button class="po33-btn-action" style="padding:6px 12px; font-size:11px; display:flex; align-items:center; gap:5px;" onclick="openCurrentExpansionModal()" title="Abrir catálogo visual con los programas de esta expansión">
+          <button class="po33-btn-action" style="padding:7px 13px; font-size:12px; display:flex; align-items:center; gap:5px;" onclick="openCurrentExpansionModal()" title="Abrir catálogo visual con los programas de esta expansión">
             📂 Explorar Kits
           </button>
-          <button id="btnQuickSwapMode" class="rack-btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="togglePadSwapMode()" title="Modo Mover: Haz clic en dos pads consecutivamente para intercambiarlos de sitio de forma rápida">🔀 Modo Mover</button>
-          <button class="rack-btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="autoFillRandomRack()">🎲 Shuffle</button>
-          <button class="rack-btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="stopPadVoices()">⏹ Detener pads</button>
-          <button class="rack-btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="clearRack()">🗑️ Vaciar</button>
+          <button id="btnQuickSwapMode" class="rack-btn-secondary" style="padding:7px 11px; font-size:12px;" onclick="togglePadSwapMode()" title="Modo Mover: Haz clic en dos pads consecutivamente para intercambiarlos de sitio de forma rápida">🔀 Modo Mover</button>
+          <button class="rack-btn-secondary" style="padding:7px 11px; font-size:12px;" onclick="autoFillRandomRack()">🎲 Shuffle</button>
+          <button class="rack-btn-secondary" style="padding:7px 11px; font-size:12px;" onclick="stopPadVoices()">⏹ Detener pads</button>
+          <button class="rack-btn-secondary" style="padding:7px 11px; font-size:12px;" onclick="clearRack()">🗑️ Vaciar</button>
         </div>
       </div>
 
@@ -2548,14 +2550,14 @@ audio::-webkit-media-controls-panel { background-color:rgba(10,12,18,0.12); }
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
             <div>
               <strong style="font-size:13px; color:var(--text-primary); display:block;">🎛️ Gestión de Bancos &amp; Pads</strong>
-              <span id="rackSideHardwareCapText" style="font-size:10px; color:var(--mpc-cyan); font-weight:700;">8 Bancos (A–H · 128 Pads)</span>
+              <span id="rackSideHardwareCapText" style="font-size:12px; color:var(--mpc-cyan); font-weight:700;">8 Bancos (A–H · 128 Pads)</span>
             </div>
             <span id="rackSideActiveBankBadge" style="font-size:11px; font-weight:800; padding:3px 8px; border-radius:6px; background:rgba(255,102,0,0.18); border:1px solid var(--theme-accent, #ff6600); color:var(--text-primary);">BANCO A</span>
           </div>
 
           <div>
-            <label style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:4px;">Capacidad según Hardware:</label>
-            <select id="rackSideTargetSelect" class="filter-select" style="width:100%; padding:6px 8px; font-size:11px; font-weight:600;" onchange="syncSideTargetHardware(this.value)">
+            <label style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-bottom:5px;">Capacidad según Hardware:</label>
+            <select id="rackSideTargetSelect" class="filter-select" style="width:100%; padding:7px 9px; font-size:12.5px; font-weight:600;" onchange="syncSideTargetHardware(this.value)">
               <option value="universal">🌐 Bundle Universal (8 Bancos A–H · 128 Pads)</option>
               <option value="mpc">🎛️ Akai MPC Standalone (8 Bancos A–H · 128 Pads)</option>
               <option value="mpc1000">🎛️ Akai MPC 1000 / 2500 / JJOS (4 Bancos A–D · 64 Pads)</option>
@@ -2570,40 +2572,40 @@ audio::-webkit-media-controls-panel { background-color:rgba(10,12,18,0.12); }
 
           <div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <span style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Seleccionar Banco a Programar:</span>
-              <span id="rackSideTotalPadsCount" style="font-size:10px; font-weight:800; color:var(--mpc-gold);">0/128 pads</span>
+              <span style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted);">Seleccionar Banco a Programar:</span>
+              <span id="rackSideTotalPadsCount" style="font-size:12px; font-weight:800; color:var(--mpc-gold);">0/128 pads</span>
             </div>
             <div class="rack-side-bank-grid" id="rackSideBankGrid">
-              <button type="button" class="rack-side-bank-card active" onclick="switchRackBank(0)"><div><strong style="font-size:11px;">Banco A</strong><div style="font-size:9px; color:var(--text-muted);">Pads 1–16</div></div><span class="rack-bank-count">0/16</span></button>
-              <button type="button" class="rack-side-bank-card" onclick="switchRackBank(1)"><div><strong style="font-size:11px;">Banco B</strong><div style="font-size:9px; color:var(--text-muted);">Pads 17–32</div></div><span class="rack-bank-count">0/16</span></button>
-              <button type="button" class="rack-side-bank-card" onclick="switchRackBank(2)"><div><strong style="font-size:11px;">Banco C</strong><div style="font-size:9px; color:var(--text-muted);">Pads 33–48</div></div><span class="rack-bank-count">0/16</span></button>
-              <button type="button" class="rack-side-bank-card" onclick="switchRackBank(3)"><div><strong style="font-size:11px;">Banco D</strong><div style="font-size:9px; color:var(--text-muted);">Pads 49–64</div></div><span class="rack-bank-count">0/16</span></button>
-              <button type="button" class="rack-side-bank-card" onclick="switchRackBank(4)"><div><strong style="font-size:11px;">Banco E</strong><div style="font-size:9px; color:var(--text-muted);">Pads 65–80</div></div><span class="rack-bank-count">0/16</span></button>
-              <button type="button" class="rack-side-bank-card" onclick="switchRackBank(5)"><div><strong style="font-size:11px;">Banco F</strong><div style="font-size:9px; color:var(--text-muted);">Pads 81–96</div></div><span class="rack-bank-count">0/16</span></button>
-              <button type="button" class="rack-side-bank-card" onclick="switchRackBank(6)"><div><strong style="font-size:11px;">Banco G</strong><div style="font-size:9px; color:var(--text-muted);">Pads 97–112</div></div><span class="rack-bank-count">0/16</span></button>
-              <button type="button" class="rack-side-bank-card" onclick="switchRackBank(7)"><div><strong style="font-size:11px;">Banco H</strong><div style="font-size:9px; color:var(--text-muted);">Pads 113–128</div></div><span class="rack-bank-count">0/16</span></button>
+              <button type="button" class="rack-side-bank-card active" onclick="switchRackBank(0)"><div><strong style="font-size:12.5px;">Banco A</strong><div style="font-size:11px; color:var(--text-muted);">Pads 1–16</div></div><span class="rack-bank-count">0/16</span></button>
+              <button type="button" class="rack-side-bank-card" onclick="switchRackBank(1)"><div><strong style="font-size:12.5px;">Banco B</strong><div style="font-size:11px; color:var(--text-muted);">Pads 17–32</div></div><span class="rack-bank-count">0/16</span></button>
+              <button type="button" class="rack-side-bank-card" onclick="switchRackBank(2)"><div><strong style="font-size:12.5px;">Banco C</strong><div style="font-size:11px; color:var(--text-muted);">Pads 33–48</div></div><span class="rack-bank-count">0/16</span></button>
+              <button type="button" class="rack-side-bank-card" onclick="switchRackBank(3)"><div><strong style="font-size:12.5px;">Banco D</strong><div style="font-size:11px; color:var(--text-muted);">Pads 49–64</div></div><span class="rack-bank-count">0/16</span></button>
+              <button type="button" class="rack-side-bank-card" onclick="switchRackBank(4)"><div><strong style="font-size:12.5px;">Banco E</strong><div style="font-size:11px; color:var(--text-muted);">Pads 65–80</div></div><span class="rack-bank-count">0/16</span></button>
+              <button type="button" class="rack-side-bank-card" onclick="switchRackBank(5)"><div><strong style="font-size:12.5px;">Banco F</strong><div style="font-size:11px; color:var(--text-muted);">Pads 81–96</div></div><span class="rack-bank-count">0/16</span></button>
+              <button type="button" class="rack-side-bank-card" onclick="switchRackBank(6)"><div><strong style="font-size:12.5px;">Banco G</strong><div style="font-size:11px; color:var(--text-muted);">Pads 97–112</div></div><span class="rack-bank-count">0/16</span></button>
+              <button type="button" class="rack-side-bank-card" onclick="switchRackBank(7)"><div><strong style="font-size:12.5px;">Banco H</strong><div style="font-size:11px; color:var(--text-muted);">Pads 113–128</div></div><span class="rack-bank-count">0/16</span></button>
             </div>
           </div>
 
           <div style="border-top:1px solid var(--border-color); padding-top:10px; display:flex; flex-direction:column; gap:6px;">
-            <span style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Programación Rápida de Kits y Bancos:</span>
-            <button type="button" class="po33-btn-action" style="width:100%; justify-content:center; padding:8px 10px; font-size:11px;" onclick="autoFillRandomRack()">
+            <span style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted);">Programación Rápida de Kits y Bancos:</span>
+            <button type="button" class="po33-btn-action" style="width:100%; justify-content:center; padding:8px 10px; font-size:12px;" onclick="autoFillRandomRack()">
               🎲 Programar Banco Activo (16 Pads)
             </button>
-            <button type="button" class="po33-btn-secondary" style="width:100%; justify-content:center; padding:7px 10px; font-size:11px;" onclick="autoFillMultiBankKit()">
+            <button type="button" class="po33-btn-secondary" style="width:100%; justify-content:center; padding:8px 10px; font-size:12px;" onclick="autoFillMultiBankKit()">
               ⚡ Auto-Programar Multi-Banco (A–D / A–H)
             </button>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-              <button type="button" class="po33-btn-secondary" style="justify-content:center; padding:6px 8px; font-size:10px;" onclick="cloneActiveBankToNext()" title="Copiar los 16 pads de este banco al siguiente banco libre">
+              <button type="button" class="po33-btn-secondary" style="justify-content:center; padding:7px 8px; font-size:11.5px;" onclick="cloneActiveBankToNext()" title="Copiar los 16 pads de este banco al siguiente banco libre">
                 📋 Clonar a Sig. Banco
               </button>
-              <button type="button" class="po33-btn-secondary" style="justify-content:center; padding:6px 8px; font-size:10px;" onclick="clearCurrentRackBank()" title="Vaciar únicamente los 16 pads del banco actual">
+              <button type="button" class="po33-btn-secondary" style="justify-content:center; padding:7px 8px; font-size:11.5px;" onclick="clearCurrentRackBank()" title="Vaciar únicamente los 16 pads del banco actual">
                 🧹 Vaciar Este Banco
               </button>
             </div>
           </div>
 
-          <div id="rackMultiBankExportSummary" style="background:rgba(0,0,0,0.28); border:1px solid rgba(255,255,255,0.07); border-radius:8px; padding:8px 10px; font-size:10.5px; line-height:1.45; color:var(--text-muted);">
+          <div id="rackMultiBankExportSummary" style="background:rgba(0,0,0,0.28); border:1px solid rgba(255,255,255,0.07); border-radius:8px; padding:10px 12px; font-size:12px; line-height:1.55; color:var(--text-muted);">
             📦 <strong>Almacenamiento Multi-Banco:</strong> Los bancos con muestras se exportan juntos en un único programa/proyecto según la capacidad del hardware elegido.
           </div>
         </aside>
@@ -2621,54 +2623,54 @@ audio::-webkit-media-controls-panel { background-color:rgba(10,12,18,0.12); }
       <div class="rack-form-group" style="width:100%; box-sizing:border-box;">
         <label class="rack-label" for="rackMuteProfileSelect" style="display:flex; justify-content:space-between; align-items:center;">
           <span>✂️ Perfil de Chokes / Mute Groups:</span>
-          <span style="font-size:10px; color:var(--mpc-gold); font-weight:600;">Cortes coherentes</span>
+          <span style="font-size:12px; color:var(--mpc-gold); font-weight:600;">Cortes coherentes</span>
         </label>
         
         <!-- Botón primario por defecto que los aplica a todos los bancos -->
-        <button type="button" class="po33-btn-action" style="width:100%; padding:9px 12px; font-size:11px; margin-bottom:8px; justify-content:center; box-sizing:border-box;" onclick="applyMuteProfileToRack(document.getElementById('rackMuteProfileSelect').value || 'real_drums', true)" title="Aplicar perfil de cortes coherentes a todos los pads con muestra en todos los bancos">
+        <button type="button" class="po33-btn-action" style="width:100%; padding:10px 14px; font-size:12.5px; margin-bottom:8px; justify-content:center; box-sizing:border-box;" onclick="applyMuteProfileToRack(document.getElementById('rackMuteProfileSelect').value || 'real_drums', true)" title="Aplicar perfil de cortes coherentes a todos los pads con muestra en todos los bancos">
           ⚡ Aplicar Chokes a Todos los Bancos
         </button>
 
         <div style="display:flex; gap:6px; align-items:center; width:100%; box-sizing:border-box;">
-          <select id="rackMuteProfileSelect" class="filter-select" style="flex:1; min-width:0; width:100%; padding:8px; font-size:11px; font-weight:600; text-overflow:ellipsis; overflow:hidden;" onchange="applyMuteProfileToRack(this.value, false)">
+          <select id="rackMuteProfileSelect" class="filter-select" style="flex:1; min-width:0; width:100%; padding:9px 10px; font-size:12.5px; font-weight:600; text-overflow:ellipsis; overflow:hidden;" onchange="applyMuteProfileToRack(this.value, false)">
             <option value="real_drums">🥁 Batería Real (Kick/Tom=1 · Hat=2 · Snare=3 · Clap=Libre)</option>
             <option value="club_clean">🔊 Club / Sub 808 (+ 808/Sub=4 · Toms=5)</option>
             <option value="jazz_funk">🎷 Jazz / Funk Acústico (Solo Hi-Hats Open/Closed=2)</option>
             <option value="free_poly">🔓 Libre / Polifónico (Sin silenciado mutuo)</option>
           </select>
-          <button type="button" class="po33-btn-secondary" style="padding:8px 10px; font-size:11px; white-space:nowrap; flex-shrink:0;" onclick="applyMuteProfileToRack(document.getElementById('rackMuteProfileSelect').value, false)" title="Aplicar perfil de cortes únicamente al banco activo">Banco Activo</button>
+          <button type="button" class="po33-btn-secondary" style="padding:9px 12px; font-size:12px; white-space:nowrap; flex-shrink:0;" onclick="applyMuteProfileToRack(document.getElementById('rackMuteProfileSelect').value, false)" title="Aplicar perfil de cortes únicamente al banco activo">Banco Activo</button>
         </div>
       </div>
 
       <div id="cerebroOsSmartPanel" hidden style="margin-bottom:14px; padding:12px; border-radius:10px; background:linear-gradient(135deg, rgba(0,240,255,0.08) 0%, rgba(168,85,247,0.10) 100%); border:1px solid rgba(0,240,255,0.35);">
         <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:6px;">
-          <strong style="font-size:12px; color:var(--mpc-cyan);">🧠 Cerebro OS · Motor Acústico Activo</strong>
-          <span id="cerebroOsStatusBadge" style="font-size:9px; font-weight:800; padding:2px 6px; border-radius:8px; background:rgba(46,204,113,0.18); color:var(--mpc-green);">MLX DSP</span>
+          <strong style="font-size:13.5px; color:var(--mpc-cyan);">🧠 Cerebro OS · Motor Acústico Activo</strong>
+          <span id="cerebroOsStatusBadge" style="font-size:11px; font-weight:800; padding:3px 8px; border-radius:8px; background:rgba(46,204,113,0.18); color:var(--mpc-green);">MLX DSP</span>
         </div>
-        <p style="font-size:11px; color:var(--text-muted); line-height:1.45; margin-bottom:8px;">Analiza el espectro PCM de tus muestras (subgraves, brillo de hi-hats, transientes) y detecta estilos underground (Baile Funk, Drill, Grime, UK Garage, 2-Step, Dubstep).</p>
+        <p style="font-size:12.5px; color:var(--text-muted); line-height:1.55; margin-bottom:8px;">Analiza el espectro PCM de tus muestras (subgraves, brillo de hi-hats, transientes) y detecta estilos underground (Baile Funk, Drill, Grime, UK Garage, 2-Step, Dubstep).</p>
         <div style="display:flex; gap:6px; margin-bottom:8px;">
-          <input type="text" id="cerebroPromptInput" class="rack-input" style="flex:1; padding:6px 8px; font-size:11px;" placeholder="Ej: Baile Funk 130, UK Garage 132, Drill 142...">
-          <button type="button" class="po33-btn-action" style="padding:6px 10px; font-size:11px; white-space:nowrap;" onclick="runCerebroSmartKit(this)" title="Armar kit inteligente de 16 pads según estilo o descripción">✨ Armar Kit</button>
+          <input type="text" id="cerebroPromptInput" class="rack-input" style="flex:1; padding:7px 9px; font-size:12px;" placeholder="Ej: Baile Funk 130, UK Garage 132, Drill 142...">
+          <button type="button" class="po33-btn-action" style="padding:7px 12px; font-size:12px; white-space:nowrap;" onclick="runCerebroSmartKit(this)" title="Armar kit inteligente de 16 pads según estilo o descripción">✨ Armar Kit</button>
         </div>
         <div style="display:grid; grid-template-columns:1fr; gap:6px;">
-          <button type="button" class="po33-btn-action" style="width:100%; font-size:11px; padding:7px 10px;" onclick="runCerebroRackAnalysis(this)">🧠 Analizar Acústica, Estilo &amp; Chokes</button>
+          <button type="button" class="po33-btn-action" style="width:100%; font-size:12.5px; padding:8px 12px;" onclick="runCerebroRackAnalysis(this)">🧠 Analizar Acústica, Estilo &amp; Chokes</button>
           <div style="display:flex; gap:6px;">
-            <button type="button" class="po33-btn-secondary" style="flex:1; font-size:10px; padding:6px 8px;" onclick="runCerebroAutoChop(this)" title="Cortar la muestra del pad activo en 16 slices ajustados a cruces por cero">🔪 Auto-Chop (16 Pads)</button>
-            <button type="button" class="po33-btn-secondary" style="flex:1; font-size:10px; padding:6px 8px;" onclick="runCerebroSimilarSamples(this)" title="Buscar muestras con timbre y envolvente similares al pad activo">🧬 Similares del Pad</button>
+            <button type="button" class="po33-btn-secondary" style="flex:1; font-size:11.5px; padding:7px 9px;" onclick="runCerebroAutoChop(this)" title="Cortar la muestra del pad activo en 16 slices ajustados a cruces por cero">🔪 Auto-Chop (16 Pads)</button>
+            <button type="button" class="po33-btn-secondary" style="flex:1; font-size:11.5px; padding:7px 9px;" onclick="runCerebroSimilarSamples(this)" title="Buscar muestras con timbre y envolvente similares al pad activo">🧬 Similares del Pad</button>
           </div>
         </div>
         <div id="cerebroFederatedBox" hidden style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.08);">
           <div style="display:flex; gap:6px;">
-            <input type="text" id="cerebroFedQuery" class="rack-input" style="flex:1; padding:5px 8px; font-size:10px;" placeholder="Buscar en bibliotecas conectadas...">
-            <button type="button" class="po33-btn-secondary" style="font-size:10px; padding:5px 8px;" onclick="runCerebroFederatedSearch(this)">🌐 Buscar</button>
+            <input type="text" id="cerebroFedQuery" class="rack-input" style="flex:1; padding:6px 9px; font-size:11.5px;" placeholder="Buscar en bibliotecas conectadas...">
+            <button type="button" class="po33-btn-secondary" style="font-size:11.5px; padding:6px 10px;" onclick="runCerebroFederatedSearch(this)">🌐 Buscar</button>
           </div>
         </div>
-        <div id="cerebroAnalysisResultBox" hidden style="margin-top:8px; padding:8px 10px; border-radius:6px; background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); font-size:11px; line-height:1.5; color:var(--text-primary); max-height:210px; overflow-y:auto;"></div>
+        <div id="cerebroAnalysisResultBox" hidden style="margin-top:8px; padding:8px 10px; border-radius:6px; background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); font-size:12px; line-height:1.5; color:var(--text-primary); max-height:210px; overflow-y:auto;"></div>
       </div>
 
       <div class="rack-form-group">
         <label class="rack-label">Destino de Hardware:</label>
-        <select id="rackTargetSelect" class="filter-select" style="width:100%; padding:12px; font-weight:600;" onchange="onRackTargetHardwareChange(this.value)">
+        <select id="rackTargetSelect" class="filter-select" style="width:100%; padding:12px; font-weight:600; font-size:13.5px;" onchange="onRackTargetHardwareChange(this.value)">
           <option value="universal">🌐 Bundle Universal (MPC + Legacy + Maschine + SP-404 + PO-33 + EP-133)</option>
           <option value="mpc">🎛️ Akai MPC Standalone (.xpm Drum Program)</option>
           <option value="mpc1000">🎛️ Akai MPC 1000 / 2500 / 500 / JJOS (.PGM + WAV 16/44.1)</option>
@@ -2681,19 +2683,19 @@ audio::-webkit-media-controls-panel { background-color:rgba(10,12,18,0.12); }
         </select>
       </div>
 
-      <button class="rack-btn-primary" onclick="exportKitToHardware()">
+      <button class="rack-btn-primary" style="font-size:13.5px;" onclick="exportKitToHardware()">
         ⚡ Generar Kit en Tarjeta MicroSD
       </button>
 
-      <button class="rack-btn-secondary" onclick="exportOfflineCommandScript()">
+      <button class="rack-btn-secondary" style="font-size:13px;" onclick="exportOfflineCommandScript()">
         📥 Descargar Script Offline (.command)
       </button>
 
-      <button class="rack-btn-secondary" onclick="openCreateExpansionModal()">
+      <button class="rack-btn-secondary" style="font-size:13px;" onclick="openCreateExpansionModal()">
         📦 Crear Expansión Oficial MPC
       </button>
 
-      <div style="font-size:11px; line-height:1.6; color:var(--text-muted); background:rgba(0,0,0,0.25); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+      <div style="font-size:12px; line-height:1.65; color:var(--text-muted); background:rgba(0,0,0,0.25); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
         <strong style="color:var(--mpc-gold);">💡 Guía de Carga en Hardware:</strong>
         <br>• <strong>Akai MPC</strong>: Ve a <em>Browser &gt; Programs</em> y pulsa <em>Load</em> en tu kit.
         <br>• <strong>MPC 1000 / 2500 / JJOS</strong>: Pulsa <em>MODE + PAD 2 (LOAD)</em> y carga el archivo <code>.PGM</code>.
@@ -2711,7 +2713,7 @@ audio::-webkit-media-controls-panel { background-color:rgba(10,12,18,0.12); }
  <div id="projectArtistPillsContainer" style="display:none; margin:8px 0 12px; flex-shrink:0;">
    <div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
      <span>📁 Packs y Artistas en estos proyectos:</span>
-     <span id="projectActiveArtistBadge" style="font-size:10.5px; color:var(--mpc-gold); font-weight:700;">Todas las carpetas</span>
+     <span id="projectActiveArtistBadge" style="font-size:12.5px; color:var(--mpc-gold); font-weight:700;">Todas las carpetas</span>
    </div>
    <div id="projectArtistPillsBar" style="display:flex; flex-wrap:wrap; gap:6px; max-height:85px; overflow-y:auto; padding:2px 0;"></div>
  </div>
@@ -3084,105 +3086,105 @@ audio::-webkit-media-controls-panel { background-color:rgba(10,12,18,0.12); }
           <!-- 1. Teenage Engineering PO-20 Arcade -->
           <div class="theme-card-option" id="themeCard_te-arcade" onclick="setEcosystemTheme('te-arcade')" style="background:#08090e; border:2px solid #8b5cf6; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:#f8fafc; font-size:12px;">🕹️ TE PO-20 Arcade</strong>
+              <strong style="color:#f8fafc; font-size:13.5px;">🕹️ TE PO-20 Arcade</strong>
               <div style="display:flex; gap:3px;">
                 <span style="width:10px; height:10px; border-radius:50%; background:#8b5cf6;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#facc15;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#06b6d4;"></span>
               </div>
             </div>
-            <p style="font-size:10px; color:#94a3b8; line-height:1.4;">Chiptune 8-bit arcade: Chasis gris marengo, serigrafía en blanco tiza, sprites violeta arcade y acento amarillo moneda.</p>
+            <p style="font-size:12px; color:#94a3b8; line-height:1.5;">Chiptune 8-bit arcade: Chasis gris marengo, serigrafía en blanco tiza, sprites violeta arcade y acento amarillo moneda.</p>
           </div>
 
           <!-- 2. Teenage Engineering PO-33 K.O.! -->
           <div class="theme-card-option" id="themeCard_te-ko" onclick="setEcosystemTheme('te-ko')" style="background:#08090e; border:1px solid #2b3242; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:#f5f5f7; font-size:12px;">🥊 TE PO-33 K.O.!</strong>
+              <strong style="color:#f5f5f7; font-size:13.5px;">🥊 TE PO-33 K.O.!</strong>
               <div style="display:flex; gap:3px;">
                 <span style="width:10px; height:10px; border-radius:50%; background:#ff6600;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#ffd000;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#2fe070;"></span>
               </div>
             </div>
-            <p style="font-size:10px; color:#8c93a3; line-height:1.4;">Micro-muestreo nórdico: PCB negro grafito mate, serigrafía técnica y el emblemático naranja de seguridad (#ff6600).</p>
+            <p style="font-size:12px; color:#8c93a3; line-height:1.5;">Micro-muestreo nórdico: PCB negro grafito mate, serigrafía técnica y el emblemático naranja de seguridad (#ff6600).</p>
           </div>
 
           <!-- 3. Akai MPC Vintage Classic -->
           <div class="theme-card-option" id="themeCard_mpc-vintage" onclick="setEcosystemTheme('mpc-vintage')" style="background:#ded9ce; border:1px solid #bebcb4; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:#1a1a1a; font-size:12px;">🎛️ Akai MPC 60 / 2000XL</strong>
+              <strong style="color:#1a1a1a; font-size:13.5px;">🎛️ Akai MPC 60 / 2000XL</strong>
               <div style="display:flex; gap:3px;">
                 <span style="width:10px; height:10px; border-radius:50%; background:#c8102e;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#22c55e;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#6b7280;"></span>
               </div>
             </div>
-            <p style="font-size:10px; color:#525866; line-height:1.4;">Roger Linn 1988: Chasis blanco hueso / beige marfil industrial Roger Linn, pads de caucho gris y botón rojo Carmesí.</p>
+            <p style="font-size:12px; color:#525866; line-height:1.5;">Roger Linn 1988: Chasis blanco hueso / beige marfil industrial Roger Linn, pads de caucho gris y botón rojo Carmesí.</p>
           </div>
 
           <!-- 4. Akai MPC 2000XL Blue LE -->
           <div class="theme-card-option" id="themeCard_mpc-blue-le" onclick="setEcosystemTheme('mpc-blue-le')" style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:#f8fafc; font-size:12px;">🔷 Akai MPC 2000XL Blue LE</strong>
+              <strong style="color:#f8fafc; font-size:13.5px;">🔷 Akai MPC 2000XL Blue LE</strong>
               <div style="display:flex; gap:3px;">
                 <span style="width:10px; height:10px; border-radius:50%; background:#1e3a5f;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#dc2626;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#cbd5e1;"></span>
               </div>
             </div>
-            <p style="font-size:10px; color:#94a3b8; line-height:1.4;">Special Edition 1999: Chasis azul cobalto profundo metálico sobre noche, detalles en plata serigráfica y botón rojo Akai.</p>
+            <p style="font-size:12px; color:#94a3b8; line-height:1.5;">Special Edition 1999: Chasis azul cobalto profundo metálico sobre noche, detalles en plata serigráfica y botón rojo Akai.</p>
           </div>
 
           <!-- 5. Roland SP-404MK2 Studio -->
           <div class="theme-card-option" id="themeCard_sp404-studio" onclick="setEcosystemTheme('sp404-studio')" style="background:#0a0a0d; border:1px solid #262733; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:#edf2f4; font-size:12px;">🎚️ Roland SP-404MK2</strong>
+              <strong style="color:#edf2f4; font-size:13.5px;">🎚️ Roland SP-404MK2</strong>
               <div style="display:flex; gap:3px;">
                 <span style="width:10px; height:10px; border-radius:50%; background:#f59e0b;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#10b981;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#ef4444;"></span>
               </div>
             </div>
-            <p style="font-size:10px; color:#7d8290; line-height:1.4;">Vinyl Studio: Chasis negro grafito, anillo OLED porthole en ámbar cálido (#f59e0b) y acentos verdes de DJFX Looper.</p>
+            <p style="font-size:12px; color:#7d8290; line-height:1.5;">Vinyl Studio: Chasis negro grafito, anillo OLED porthole en ámbar cálido (#f59e0b) y acentos verdes de DJFX Looper.</p>
           </div>
 
           <!-- 6. NI Maschine Studio -->
           <div class="theme-card-option" id="themeCard_maschine-studio" onclick="setEcosystemTheme('maschine-studio')" style="background:#111215; border:1px solid #2d313d; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:#ffffff; font-size:12px;">🎹 NI Maschine Studio</strong>
+              <strong style="color:#ffffff; font-size:13.5px;">🎹 NI Maschine Studio</strong>
               <div style="display:flex; gap:3px;">
                 <span style="width:10px; height:10px; border-radius:50%; background:#3b82f6;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#ec4899;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#14b8a6;"></span>
               </div>
             </div>
-            <p style="font-size:10px; color:#8b8f9c; line-height:1.4;">Precisión alemana: Chasis carbón anodizado mate (#111215), Smart Strip azul, blanco puro y matriz de pads RGB.</p>
+            <p style="font-size:12px; color:#8b8f9c; line-height:1.5;">Precisión alemana: Chasis carbón anodizado mate (#111215), Smart Strip azul, blanco puro y matriz de pads RGB.</p>
           </div>
 
           <!-- 7. The MakerLicious Bone -->
           <div class="theme-card-option" id="themeCard_makerlicious-bone" onclick="setEcosystemTheme('makerlicious-bone')" style="background:#f4f4f6; border:1px solid #c8c8cf; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:#111111; font-size:12px;">🦴 The MakerLicious Bone</strong>
+              <strong style="color:#111111; font-size:13.5px;">🦴 The MakerLicious Bone</strong>
               <div style="display:flex; gap:3px;">
                 <span style="width:10px; height:10px; border-radius:50%; background:#ff6600;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#111111;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#d1d1d6;"></span>
               </div>
             </div>
-            <p style="font-size:10px; color:#55555e; line-height:1.4;">Dieter Rams & Braun: Papel de dibujo técnico milimetrado claro (#ebebed), tinta negra pura y señalética funcional naranja.</p>
+            <p style="font-size:12px; color:#55555e; line-height:1.5;">Dieter Rams & Braun: Papel de dibujo técnico milimetrado claro (#ebebed), tinta negra pura y señalética funcional naranja.</p>
           </div>
 
           <!-- 8. Cerebro OS Neon -->
           <div class="theme-card-option" id="themeCard_cerebro-neon" onclick="setEcosystemTheme('cerebro-neon')" style="background:#090c12; border:1px solid #242c3d; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:#ffffff; font-size:12px;">⚡ Cerebro OS Neon</strong>
+              <strong style="color:#ffffff; font-size:13.5px;">⚡ Cerebro OS Neon</strong>
               <div style="display:flex; gap:3px;">
                 <span style="width:10px; height:10px; border-radius:50%; background:#00f0ff;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#ff0055;"></span>
                 <span style="width:10px; height:10px; border-radius:50%; background:#00ff88;"></span>
               </div>
             </div>
-            <p style="font-size:10px; color:#7e8b9b; line-height:1.4;">Astro1Deep Host: Cian eléctrico (#00f0ff) y magenta neón (#ff0055) de alta energía sobre fondo medianoche.</p>
+            <p style="font-size:12px; color:#7e8b9b; line-height:1.5;">Astro1Deep Host: Cian eléctrico (#00f0ff) y magenta neón (#ff0055) de alta energía sobre fondo medianoche.</p>
           </div>
         </div>
       </div>
@@ -3245,9 +3247,9 @@ audio::-webkit-media-controls-panel { background-color:rgba(10,12,18,0.12); }
   </div>
   <div id="padPopoverSampleLabel" translate="no" style="font-size:11px; color:var(--mpc-gold); font-weight:700; margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
   <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:8px;">
-    <button type="button" class="po33-btn-secondary" style="font-size:10px; padding:3px 8px;" onclick="previewPopoverSample()">▶ Escuchar</button>
-    <button type="button" class="po33-btn-secondary" style="font-size:10px; padding:3px 8px;" onclick="copyPopoverSamplePath()">📋 Copiar ruta</button>
-    <label style="font-size:10px; color:var(--text-muted); display:flex; align-items:center; gap:4px; cursor:pointer;">
+    <button type="button" class="po33-btn-secondary" style="font-size:12px; padding:5px 10px;" onclick="previewPopoverSample()">▶ Escuchar</button>
+    <button type="button" class="po33-btn-secondary" style="font-size:12px; padding:5px 10px;" onclick="copyPopoverSamplePath()">📋 Copiar ruta</button>
+    <label style="font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:5px; cursor:pointer;">
       <input type="checkbox" id="chkPopoverOpenInspector">
       <span>⚙️ Ajustes al asignar</span>
     </label>
@@ -3580,7 +3582,7 @@ function renderPopoverGrid() {
       const bLet = getActiveBankLetter(b);
       const disabled = b >= prof.maxBanks;
       const isAct = b === currentRackBank;
-      bHtml += '<button type="button" class="rack-bank-btn' + (isAct ? ' active' : '') + '" style="padding:2px 6px; font-size:9px;" ' + (disabled ? 'disabled ' : '') + 'onclick="event.stopPropagation(); switchRackBank(' + b + ');">' + bLet + '</button>';
+      bHtml += '<button type="button" class="rack-bank-btn' + (isAct ? ' active' : '') + '" style="padding:4px 8px; font-size:11.5px; font-weight:700;" ' + (disabled ? 'disabled ' : '') + 'onclick="event.stopPropagation(); switchRackBank(' + b + ');">' + bLet + '</button>';
     }
     popBankBar.innerHTML = bHtml;
   }
@@ -3594,7 +3596,7 @@ function renderPopoverGrid() {
 
     html += '<button type="button" class="pad-popover-btn' + (isFilled ? ' is-filled' : '') + '" onclick="selectPadFromPopover(' + i + ')" title="' + (pItem ? escapeHtml(pItem.filename) : 'Pad Vacío') + '">' +
       '<div>PAD ' + i + '</div>' +
-      '<div style="font-size:8px; opacity:0.85;">' + padTag + ' · ' + stTag + '</div>' +
+      '<div style="font-size:11px; opacity:0.85;">' + padTag + ' · ' + stTag + '</div>' +
     '</button>';
   }
   grid.innerHTML = html;
@@ -4436,13 +4438,13 @@ function renderRackBankTabs() {
       `<span class="rack-bank-count">${cnt}/16</span>` +
     `</button>`;
 
-    dockBtnsHtml += `<button type="button" class="${cls}" style="padding:3px 8px; font-size:10px;" ${isDis ? 'disabled' : ''} onclick="switchRackBank(${b})" title="${escapeHtml(tip)}">` +
+    dockBtnsHtml += `<button type="button" class="${cls}" style="padding:5px 10px; font-size:12px; font-weight:700;" ${isDis ? 'disabled' : ''} onclick="switchRackBank(${b})" title="${escapeHtml(tip)}">` +
       `<span>${bLet}</span>` +
       `<span class="rack-bank-count">${cnt}</span>` +
     `</button>`;
 
     sideCardsHtml += `<button type="button" class="${sideCls}" ${isDis ? 'disabled' : ''} onclick="switchRackBank(${b})" title="${escapeHtml(tip)}">` +
-      `<div><strong style="font-size:11px;">${en ? 'Bank' : 'Banco'} ${bLet}</strong><div style="font-size:9px; color:var(--text-muted);">Pads ${startPad}–${endPad}</div></div>` +
+      `<div><strong style="font-size:12.5px;">${en ? 'Bank' : 'Banco'} ${bLet}</strong><div style="font-size:11px; color:var(--text-muted);">Pads ${startPad}–${endPad}</div></div>` +
       `<span class="rack-bank-count">${cnt}/16</span>` +
     `</button>`;
   }
@@ -4457,7 +4459,7 @@ function renderRackBankTabs() {
 
   const dockBar = document.getElementById('dockBankTabsBar');
   if (dockBar) {
-    dockBar.innerHTML = `<div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;"><span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">${en ? 'Active Bank:' : 'Banco Activo:'}</span>${dockBtnsHtml}</div><div>${capBadge}</div>`;
+    dockBar.innerHTML = `<div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;"><span style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">${en ? 'Active Bank:' : 'Banco Activo:'}</span>${dockBtnsHtml}</div><div>${capBadge}</div>`;
   }
 
   const sideGrid = document.getElementById('rackSideBankGrid');
@@ -4664,7 +4666,7 @@ function renderRackGrid() {
           '</div>' +
           '<div class="pad-btn-group">' +
             '<button draggable="false" class="btn-pad-action btn-pad-play" onclick="triggerPadAudio(' + pNum + ');" title="Reproducir">▶</button>' +
-            '<button draggable="false" class="btn-pad-action" style="font-size:10px; padding:3px 5px; background:rgba(255,255,255,0.08); color:#ccc;" onclick="event.stopPropagation(); openPadEditor(' + pNum + ');" title="Editar parámetros del pad">⚙️</button>' +
+            '<button draggable="false" class="btn-pad-action" style="font-size:11.5px; padding:4px 6px; background:rgba(255,255,255,0.08); color:#ccc;" onclick="event.stopPropagation(); openPadEditor(' + pNum + ');" title="Editar parámetros del pad">⚙️</button>' +
             '<button draggable="false" class="btn-pad-action btn-pad-remove" onclick="removePad(' + pNum + ');" title="Vaciar pad">✕</button>' +
           '</div>' +
         '</div>' +
@@ -4687,9 +4689,9 @@ function renderRackGrid() {
             '<span class="pad-key-shortcut">' + key + '</span>' +
           '</div>' +
         '</div>' +
-        '<div class="pad-sample-name" style="color:#555e70; flex-direction:column; gap:2px;"><span style="font-size:18px; opacity:0.35;">➕</span><span style="font-size:10px; font-weight:600;">[Vacío]</span></div>' +
+        '<div class="pad-sample-name" style="color:#555e70; flex-direction:column; gap:2px;"><span style="font-size:18px; opacity:0.35;">➕</span><span style="font-size:12px; font-weight:600;">[Vacío]</span></div>' +
         '<div class="pad-actions" onclick="event.stopPropagation();">' +
-          '<span style="font-size:9px; color:var(--text-muted); opacity:0.6;">Arrastra muestra aquí</span>' +
+          '<span style="font-size:11.5px; color:var(--text-muted); opacity:0.65;">Arrastra muestra aquí</span>' +
         '</div>' +
       '</div>';
     }
@@ -5247,11 +5249,11 @@ function runCerebroRackAnalysis(btn) {
     const warnings = Array.isArray(data.phase_warnings) ? data.phase_warnings : [];
     let warnHtml = '';
     if (warnings.length > 0) {
-      warnHtml = '<div style="margin-top:4px; color:var(--mpc-gold); font-size:10px;">⚠️ ' + warnings.map(escapeHtml).join('<br>⚠️ ') + '</div>';
+      warnHtml = '<div style="margin-top:4px; color:var(--mpc-gold); font-size:12px;">⚠️ ' + warnings.map(escapeHtml).join('<br>⚠️ ') + '</div>';
     }
     let tuneHtml = '';
     if (lastCerebroTuningAdjustments.length > 0) {
-      tuneHtml = '<div style="margin-top:4px; color:var(--mpc-green); font-size:10px;">🎵 808 Pitch: ' +
+      tuneHtml = '<div style="margin-top:4px; color:var(--mpc-green); font-size:12px;">🎵 808 Pitch: ' +
         lastCerebroTuningAdjustments.map(t => 'PAD ' + t.pad + ' (' + escapeHtml(t.detected_note) + ' → ' + (t.recommended_tune >= 0 ? '+' : '') + t.recommended_tune + ' st)').join(', ') +
         '</div>';
     }
@@ -5259,11 +5261,11 @@ function runCerebroRackAnalysis(btn) {
       box.innerHTML =
         '<div><strong>🎵 Estilo detectado:</strong> <span style="color:var(--mpc-cyan);">' + escapeHtml(st.label || 'Electronic / Beats') + '</span> (' + escapeHtml(String(Math.round((st.confidence || 0.6) * 100))) + '%)</div>' +
         '<div><strong>⏱️ Tempo óptimo:</strong> ' + escapeHtml(String(recBpm)) + ' BPM · <strong>✂️ Perfil Choke:</strong> <code>' + escapeHtml(recProfile) + '</code></div>' +
-        '<div style="margin-top:4px; color:var(--text-muted); font-size:10px;">' + escapeHtml(st.notes || '') + '</div>' +
+        '<div style="margin-top:4px; color:var(--text-muted); font-size:12px;">' + escapeHtml(st.notes || '') + '</div>' +
         tuneHtml +
         warnHtml +
         '<div style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;">' +
-          '<button type="button" class="po33-btn-secondary" style="font-size:10px; padding:4px 8px;" onclick="applyCerebroRecommendations(' + recBpm + ', \'' + escapeHtml(recProfile) + '\')">⚡ Aplicar BPM (' + recBpm + ') + Chokes' + (lastCerebroTuningAdjustments.length ? ' + Afinar 808' : '') + '</button>' +
+          '<button type="button" class="po33-btn-secondary" style="font-size:12px; padding:6px 12px;" onclick="applyCerebroRecommendations(' + recBpm + ', \'' + escapeHtml(recProfile) + '\')">⚡ Aplicar BPM (' + recBpm + ') + Chokes' + (lastCerebroTuningAdjustments.length ? ' + Afinar 808' : '') + '</button>' +
         '</div>';
     }
     showToast('🧠 Análisis de Cerebro OS completado: ' + (st.label || 'Listo'));
@@ -5433,8 +5435,8 @@ function runCerebroSimilarSamples(btn) {
         html += '<div style="display:flex; justify-content:space-between; align-items:center; gap:4px; padding:3px 0; border-bottom:1px solid rgba(255,255,255,0.06);">' +
           '<span translate="no" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:140px;" title="' + escapeHtml(item.filename) + '">' + escapeHtml(item.filename) + '</span>' +
           '<div style="display:flex; gap:4px;">' +
-            '<button type="button" class="po33-btn-secondary" style="font-size:9px; padding:2px 6px;" onclick="playAudioQuick(\'' + safeRel + '\', \'' + safeName + '\')">▶</button>' +
-            '<button type="button" class="po33-btn-action" style="font-size:9px; padding:2px 6px;" onclick="addSampleToRack(\'' + safeRel + '\', \'' + safeName + '\', \'' + safeType + '\', currentTargetPad)">📥 PAD ' + currentTargetPad + '</button>' +
+            '<button type="button" class="po33-btn-secondary" style="font-size:11.5px; padding:4px 8px;" onclick="playAudioQuick(\'' + safeRel + '\', \'' + safeName + '\')">▶</button>' +
+            '<button type="button" class="po33-btn-action" style="font-size:11.5px; padding:4px 8px;" onclick="addSampleToRack(\'' + safeRel + '\', \'' + safeName + '\', \'' + safeType + '\', currentTargetPad)">📥 PAD ' + currentTargetPad + '</button>' +
           '</div>' +
         '</div>';
       }
@@ -5481,13 +5483,13 @@ function runCerebroFederatedSearch(btn) {
           const safeRel = escapeHtml(item.rel_path).replace(/'/g, "\\'");
           html += '<div style="display:flex; justify-content:space-between; align-items:center; gap:4px; padding:3px 0; border-bottom:1px solid rgba(255,255,255,0.06);">' +
             '<span translate="no" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:145px;">[' + libTag + '] ' + escapeHtml(item.filename) + '</span>' +
-            '<button type="button" class="po33-btn-action" style="font-size:9px; padding:2px 6px;" onclick="addSampleToRack(\'' + safeRel + '\', \'' + safeName + '\', \'' + safeType + '\', currentTargetPad)">📥 PAD ' + currentTargetPad + '</button>' +
+            '<button type="button" class="po33-btn-action" style="font-size:11.5px; padding:4px 8px;" onclick="addSampleToRack(\'' + safeRel + '\', \'' + safeName + '\', \'' + safeType + '\', currentTargetPad)">📥 PAD ' + currentTargetPad + '</button>' +
           '</div>';
         } else if (item.external_full_path) {
           const safeExt = escapeHtml(item.external_full_path).replace(/'/g, "\\'");
           html += '<div style="display:flex; justify-content:space-between; align-items:center; gap:4px; padding:3px 0; border-bottom:1px solid rgba(255,255,255,0.06);">' +
             '<span translate="no" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:145px;">[' + libTag + '] ' + escapeHtml(item.filename) + '</span>' +
-            '<button type="button" class="po33-btn-action" style="font-size:9px; padding:2px 6px;" onclick="importExternalSampleToPad(\'' + safeExt + '\', currentTargetPad)">📥 Importar</button>' +
+            '<button type="button" class="po33-btn-action" style="font-size:11.5px; padding:4px 8px;" onclick="importExternalSampleToPad(\'' + safeExt + '\', currentTargetPad)">📥 Importar</button>' +
           '</div>';
         }
       }
@@ -6451,9 +6453,9 @@ function renderExpansionProgramsList(programs) {
       <h4 style="margin:0;font-size:16px" translate="no">${escapeHtml(kit.name)}</h4>
       <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:4px 0 6px;">
         <span style="font-size:11px; font-weight:700; color:var(--mpc-gold); background:rgba(241,196,15,0.12); padding:2px 7px; border-radius:10px; border:1px solid rgba(241,196,15,0.25);" translate="no">🎭 ${escapeHtml(artistDisplay)}</span>
-        <span style="font-size:10px; color:var(--text-muted); background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:8px;" translate="no">📁 ${escapeHtml(groupLabel)}</span>
-        ${kit.tempo ? `<span style="font-size:10.5px; font-weight:700; color:var(--mpc-cyan); background:rgba(0,188,212,0.1); padding:2px 6px; border-radius:8px;">⚡ ${kit.tempo} BPM</span>` : ''}
-        <span style="font-size:10px; color:var(--text-muted);">🎛️ ${kit.pad_count ?? 0} pads</span>
+        <span style="font-size:12px; color:var(--text-muted); background:rgba(255,255,255,0.06); padding:3px 7px; border-radius:8px;" translate="no">📁 ${escapeHtml(groupLabel)}</span>
+        ${kit.tempo ? `<span style="font-size:12.5px; font-weight:700; color:var(--mpc-cyan); background:rgba(0,188,212,0.1); padding:3px 7px; border-radius:8px;">⚡ ${kit.tempo} BPM</span>` : ''}
+        <span style="font-size:12px; color:var(--text-muted);">🎛️ ${kit.pad_count ?? 0} pads</span>
       </div>
       ${!drum ? '<p class="library-manufacturer">' + t('Motor Keygroup: abre el archivo en MPC para conservar su comportamiento.','Keygroup engine: open this file in MPC to preserve its behavior.') + '</p>' : ''}
       <div class="card-actions">
@@ -6493,7 +6495,7 @@ function renderExpansionProgramsList(programs) {
           <strong style="color:var(--text-primary); font-size:13.5px;" translate="no">${escapeHtml(gLabel)}</strong>
           <span style="font-size:11px; color:var(--text-muted);">(${gKits.length} kits)</span>
         </div>
-        <button type="button" class="po33-btn-secondary" style="font-size:10.5px; padding:3px 10px; border-radius:12px;" onclick="selectExpansionArtistPill('${escapeHtml(gKey)}')">${t('Filtrar este pack','Filter this pack')}</button>
+        <button type="button" class="po33-btn-secondary" style="font-size:12px; padding:4px 11px; border-radius:12px;" onclick="selectExpansionArtistPill('${escapeHtml(gKey)}')">${t('Filtrar este pack','Filter this pack')}</button>
       </div>`;
       html += gKits.map(renderCard).join('');
     });
@@ -6876,13 +6878,13 @@ function updatePo33StudioView() {
     finalReelSec += effDur + gapPerPad;
 
     const durLabel = isTrimmed
-      ? `<span style="color:var(--mpc-gold); font-weight:700;">${effDur.toFixed(2)}s</span> <span style="font-size:9.5px; color:var(--text-muted);">(recorte de ${obj.dur.toFixed(2)}s)</span>`
+      ? `<span style="color:var(--mpc-gold); font-weight:700;">${effDur.toFixed(2)}s</span> <span style="font-size:11.5px; color:var(--text-muted);">(recorte de ${obj.dur.toFixed(2)}s)</span>`
       : `<span style="color:var(--text-primary);">${effDur.toFixed(2)}s</span>`;
 
     html += '<tr>' +
       '<td><strong style="color:var(--mpc-cyan);">Pad ' + obj.padNum + '</strong></td>' +
       '<td>' + escapeHtml(obj.item.filename) + '</td>' +
-      '<td><span class="badge" style="font-size:10px;">' + (obj.item.soundType || 'SAMPLE') + '</span></td>' +
+      '<td><span class="badge" style="font-size:12px;">' + (obj.item.soundType || 'SAMPLE') + '</span></td>' +
       '<td>' + gapMs + ' ms</td>' +
       '<td>' + durLabel + '</td>' +
     '</tr>';
@@ -7814,7 +7816,7 @@ window.addEventListener('DOMContentLoaded', () => {
     <div id="expansionArtistPillsContainer" style="margin: 0 0 10px; flex-shrink:0;">
       <div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
         <span>📁 Packs y Artistas de esta Expansión:</span>
-        <span id="expansionActiveArtistBadge" style="font-size:10.5px; color:var(--mpc-gold); font-weight:700;">Todos los kits</span>
+        <span id="expansionActiveArtistBadge" style="font-size:12.5px; color:var(--mpc-gold); font-weight:700;">Todos los kits</span>
       </div>
       <div id="expansionArtistPillsBar" style="display:flex; flex-wrap:wrap; gap:6px; max-height:85px; overflow-y:auto; padding:2px 0;">
         <!-- Inyectado dinámicamente -->

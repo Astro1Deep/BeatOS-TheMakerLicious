@@ -57,3 +57,23 @@ El rack general usa los valores PO predeterminados de 40 s y 150 ms entre golpes
 - **Fallo del bundle universal:** cualquiera de sus exportadores puede cancelar la operación y retirar la salida parcial. Si sólo necesitas un aparato, selecciona su destino y resuelve el error indicado.
 
 Antes de cerrar, exporta el rack y comprueba que los archivos existen. La confirmación del servidor verifica la generación en disco; la comprobación final de carga, escucha y parámetros se realiza en el aparato o software de destino.
+
+## Blueprints Técnicos y Diagramas de Hardware
+
+Ilustraciones técnicas cenitales en dibujo de ingeniería (estilo manual Teenage Engineering / Dieter Rams) con las dimensiones y controles exactos de cada máquina del ecosistema BeatOS:
+
+| Estación | Hardware Soportado | Blueprint Técnico (Vista Superior) | Overlays Transparentes (PNG 32-bit) |
+| :---: | :--- | :---: | :---: |
+| **01** | **Teenage Engineering PO-33 K.O.!** | [![PO-33 Blueprint](../assets/branding/blueprint_te_01_po33.jpg)](../assets/branding/blueprint_te_01_po33.jpg) | [Tinta Negra](../assets/branding/blueprint_transparent_ink_po33.png) · [Tiza Blanca](../assets/branding/blueprint_transparent_chalk_po33.png) |
+| **02A** | **Akai MPC Sample (AC50)** | [![MPC Sample Blueprint](../assets/branding/blueprint_te_02_mpc_sample.jpg)](../assets/branding/blueprint_te_02_mpc_sample.jpg) | [Tinta Negra](../assets/branding/blueprint_transparent_ink_mpc_sample.png) · [Tiza Blanca](../assets/branding/blueprint_transparent_chalk_mpc_sample.png) |
+| **02B** | **Akai MPC One (G2 Cobalt)** | [![MPC One Blueprint](../assets/branding/blueprint_te_02_mpc_one.jpg)](../assets/branding/blueprint_te_02_mpc_one.jpg) | [Tinta Negra](../assets/branding/blueprint_transparent_ink_mpc_one.png) · [Tiza Blanca](../assets/branding/blueprint_transparent_chalk_mpc_one.png) |
+| **02C** | **Akai MPC Live Retro** | [![MPC Live Retro Blueprint](../assets/branding/blueprint_te_02_mpc_live_retro.jpg)](../assets/branding/blueprint_te_02_mpc_live_retro.jpg) | [Tinta Negra](../assets/branding/blueprint_transparent_ink_mpc_live_retro.png) · [Tiza Blanca](../assets/branding/blueprint_transparent_chalk_mpc_live_retro.png) |
+| **03** | **Roland SP-404MKII** | [![SP-404MKII Blueprint](../assets/branding/blueprint_te_03_sp404mk2.jpg)](../assets/branding/blueprint_te_03_sp404mk2.jpg) | [Tinta Negra](../assets/branding/blueprint_transparent_ink_sp404mk2.png) · [Tiza Blanca](../assets/branding/blueprint_transparent_chalk_sp404mk2.png) |
+| **04** | **NI Maschine MK3** | [![Maschine MK3 Blueprint](../assets/branding/blueprint_te_04_maschine.jpg)](../assets/branding/blueprint_te_04_maschine.jpg) | [Tinta Negra](../assets/branding/blueprint_transparent_ink_maschine.png) · [Tiza Blanca](../assets/branding/blueprint_transparent_chalk_maschine.png) |
+| **05** | **Teenage Engineering EP-133 K.O. II** | [![EP-133 K.O. II Blueprint](../assets/branding/blueprint_te_05_ep133.jpg)](../assets/branding/blueprint_te_05_ep133.jpg) | [Tinta Negra](../assets/branding/blueprint_transparent_ink_ep133.png) · [Tiza Blanca](../assets/branding/blueprint_transparent_chalk_ep133.png) |
+
+### Banners Maestros del Ecosistema (Dark PCB & Bone White)
+- **Banner Panorámico Widescreen Dark (4128 × 1024)**: [![Master Banner Dark](../assets/branding/user_gemini_master_banner_dark.jpg)](../assets/branding/user_gemini_master_banner_dark.jpg)
+- **Banner Panorámico 16:9 Drafting Bone White**: [![Master Banner 16:9](../assets/branding/beatos_makerlicious_blueprint_banner_16x9.jpg)](../assets/branding/beatos_makerlicious_blueprint_banner_16x9.jpg)
+- **Overlays Panorámicos Transparentes**: [Tinta Negra](../assets/branding/blueprint_transparent_ink_master_banner.png) · [Tiza Blanca](../assets/branding/blueprint_transparent_chalk_master_banner.png)
+
