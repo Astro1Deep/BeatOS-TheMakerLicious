@@ -2197,11 +2197,161 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
   .grid-cards { grid-template-columns: minmax(0, 1fr); }
   .pad-cell { padding: 4px; border-width: 1px; }
 }
-.beatos-brand { text-align: center; padding: 28px 16px 24px; background: var(--bg-dark); color: var(--text-primary); }
-.beatos-brand h1 { margin: 0; font-size: clamp(40px, 6vw, 68px); line-height: 1.08; font-weight: 900; letter-spacing: .04em; }
-.beatos-brand p { margin: 8px 0 0; }
-.beatos-brand .brand-edition { font-size: clamp(20px, 3vw, 30px); font-weight: 700; }
-.beatos-brand .brand-description { font-family: 'SF Mono', Monaco, monospace; font-size: clamp(12px, 1.7vw, 17px); color: var(--theme-accent, #ff6600); letter-spacing: .04em; }
+.beatos-brand {
+  position: relative;
+  text-align: center;
+  padding: 34px 20px 26px;
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: background-color .25s ease, border-color .25s ease;
+}
+.beatos-brand::before {
+  content: '';
+  position: absolute;
+  top: -45%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 720px;
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--theme-accent, #ff6600) 0%, transparent 70%);
+  opacity: 0.14;
+  filter: blur(44px);
+  pointer-events: none;
+  z-index: 0;
+  transition: all .35s ease;
+}
+.beatos-brand::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: center top;
+  pointer-events: none;
+  opacity: 0.45;
+  z-index: 0;
+}
+.beatos-brand h1 {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: clamp(46px, 6vw, 76px);
+  line-height: 1.05;
+  font-weight: 950;
+  letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #ffffff 30%, rgba(255, 255, 255, 0.78) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.85));
+  transition: all .3s ease;
+}
+.beatos-brand p {
+  position: relative;
+  z-index: 1;
+  margin: 9px 0 0;
+}
+.beatos-brand .brand-edition {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(14px, 1.8vw, 19px);
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #f1f5f9;
+  padding: 5px 22px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all .3s ease;
+}
+.beatos-brand .brand-description {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font-family: 'SF Mono', 'JetBrains Mono', Menlo, Monaco, monospace;
+  font-size: clamp(11px, 1.25vw, 13.5px);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--theme-accent, #ff6600);
+  margin-top: 10px;
+  text-shadow: 0 0 16px var(--theme-accent, rgba(255, 102, 0, 0.5));
+  transition: all .3s ease;
+}
+.beatos-brand .brand-description::before,
+.beatos-brand .brand-description::after {
+  content: '';
+  display: inline-block;
+  width: 32px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--theme-accent, #ff6600));
+  opacity: 0.7;
+}
+.beatos-brand .brand-description::after {
+  background: linear-gradient(90deg, var(--theme-accent, #ff6600), transparent);
+}
+
+/* Específicos por Tema / Theme Identity */
+:root[data-theme="te-arcade"] .beatos-brand::before { background: radial-gradient(circle, #8b5cf6 0%, transparent 70%); opacity: .20; }
+:root[data-theme="te-arcade"] .beatos-brand h1 { background: linear-gradient(180deg, #ffffff 25%, #c4b5fd 80%, #8b5cf6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 22px rgba(139, 92, 246, 0.5)) drop-shadow(0 2px 8px rgba(0,0,0,0.9)); }
+:root[data-theme="te-arcade"] .beatos-brand .brand-edition { border-color: rgba(139, 92, 246, 0.38); background: rgba(139, 92, 246, 0.08); box-shadow: 0 0 16px rgba(139, 92, 246, 0.25), inset 0 1px 0 rgba(196, 181, 253, 0.3); }
+:root[data-theme="te-arcade"] .beatos-brand .brand-description { color: #a78bfa; text-shadow: 0 0 14px rgba(167, 139, 250, 0.65); }
+
+:root[data-theme="te-ko"] .beatos-brand::before { background: radial-gradient(circle, #ff6600 0%, transparent 70%); opacity: .18; }
+:root[data-theme="te-ko"] .beatos-brand h1 { background: linear-gradient(180deg, #ffffff 35%, #ffd0a0 85%, #ff6600 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 24px rgba(255, 102, 0, 0.45)) drop-shadow(0 2px 8px rgba(0,0,0,0.9)); }
+:root[data-theme="te-ko"] .beatos-brand .brand-edition { border-color: rgba(255, 102, 0, 0.42); background: rgba(255, 102, 0, 0.08); box-shadow: 0 0 16px rgba(255, 102, 0, 0.25), inset 0 1px 0 rgba(255, 200, 150, 0.3); }
+:root[data-theme="te-ko"] .beatos-brand .brand-description { color: #ff7711; text-shadow: 0 0 14px rgba(255, 119, 17, 0.7); }
+
+:root[data-theme="cerebro-neon"] .beatos-brand::before { background: radial-gradient(circle, #00f0ff 0%, #ff0055 50%, transparent 75%); opacity: .24; }
+:root[data-theme="cerebro-neon"] .beatos-brand h1 { background: linear-gradient(135deg, #ffffff 10%, #00f0ff 45%, #ff0055 90%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 28px rgba(0, 240, 255, 0.6)) drop-shadow(0 0 10px rgba(255, 0, 85, 0.45)); }
+:root[data-theme="cerebro-neon"] .beatos-brand .brand-edition { border-color: rgba(0, 240, 255, 0.5); background: linear-gradient(90deg, rgba(0, 240, 255, 0.14), rgba(255, 0, 85, 0.14)); box-shadow: 0 0 22px rgba(0, 240, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45); }
+:root[data-theme="cerebro-neon"] .beatos-brand .brand-description { color: #00f0ff; text-shadow: 0 0 16px #00f0ff, 0 0 32px rgba(0, 240, 255, 0.45); }
+
+:root[data-theme="mpc-vintage"] .beatos-brand { background: #ddd9ce; border-bottom-color: #bebcb4; }
+:root[data-theme="mpc-vintage"] .beatos-brand::before { background: radial-gradient(circle, #c8102e 0%, transparent 70%); opacity: .12; }
+:root[data-theme="mpc-vintage"] .beatos-brand::after { background-image: linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px); opacity: .35; }
+:root[data-theme="mpc-vintage"] .beatos-brand h1 { background: linear-gradient(180deg, #1c1d22 20%, #32353e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.85)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.22)); }
+:root[data-theme="mpc-vintage"] .beatos-brand .brand-edition { color: #1a1a1a; border-color: rgba(200, 16, 46, 0.35); background: rgba(255, 255, 255, 0.65); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff; }
+:root[data-theme="mpc-vintage"] .beatos-brand .brand-description { color: #c8102e; text-shadow: none; font-weight: 800; }
+:root[data-theme="mpc-vintage"] .beatos-brand .brand-description::before,
+:root[data-theme="mpc-vintage"] .beatos-brand .brand-description::after { background: linear-gradient(90deg, transparent, #c8102e); opacity: .8; }
+:root[data-theme="mpc-vintage"] .beatos-brand .brand-description::after { background: linear-gradient(90deg, #c8102e, transparent); }
+
+:root[data-theme="mpc-blue-le"] .beatos-brand::before { background: radial-gradient(circle, #38bdf8 0%, transparent 70%); opacity: .20; }
+:root[data-theme="mpc-blue-le"] .beatos-brand h1 { background: linear-gradient(180deg, #ffffff 25%, #bae6fd 75%, #38bdf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 24px rgba(56, 189, 248, 0.45)) drop-shadow(0 2px 8px rgba(0,0,0,0.9)); }
+:root[data-theme="mpc-blue-le"] .beatos-brand .brand-edition { border-color: rgba(56, 189, 248, 0.38); background: rgba(56, 189, 248, 0.08); box-shadow: 0 0 16px rgba(56, 189, 248, 0.25), inset 0 1px 0 rgba(186, 230, 253, 0.3); }
+:root[data-theme="mpc-blue-le"] .beatos-brand .brand-description { color: #38bdf8; text-shadow: 0 0 14px rgba(56, 189, 248, 0.65); }
+
+:root[data-theme="sp404-studio"] .beatos-brand::before { background: radial-gradient(circle, #f59e0b 0%, transparent 70%); opacity: .20; }
+:root[data-theme="sp404-studio"] .beatos-brand h1 { background: linear-gradient(180deg, #ffffff 30%, #fef3c7 70%, #f59e0b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 24px rgba(245, 158, 11, 0.5)) drop-shadow(0 2px 8px rgba(0,0,0,0.9)); }
+:root[data-theme="sp404-studio"] .beatos-brand .brand-edition { border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.08); box-shadow: 0 0 16px rgba(245, 158, 11, 0.25), inset 0 1px 0 rgba(254, 243, 199, 0.3); }
+:root[data-theme="sp404-studio"] .beatos-brand .brand-description { color: #fbbf24; text-shadow: 0 0 14px rgba(251, 191, 36, 0.7); }
+
+:root[data-theme="maschine-studio"] .beatos-brand::before { background: radial-gradient(circle, #3b82f6 0%, transparent 70%); opacity: .18; }
+:root[data-theme="maschine-studio"] .beatos-brand h1 { background: linear-gradient(180deg, #ffffff 30%, #dbeafe 75%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 22px rgba(59, 130, 246, 0.45)) drop-shadow(0 2px 8px rgba(0,0,0,0.9)); }
+:root[data-theme="maschine-studio"] .beatos-brand .brand-edition { border-color: rgba(59, 130, 246, 0.38); background: rgba(59, 130, 246, 0.08); box-shadow: 0 0 16px rgba(59, 130, 246, 0.25), inset 0 1px 0 rgba(219, 234, 254, 0.3); }
+:root[data-theme="maschine-studio"] .beatos-brand .brand-description { color: #60a5fa; text-shadow: 0 0 14px rgba(96, 165, 250, 0.65); }
+
+:root[data-theme="makerlicious-bone"] .beatos-brand { background: #dddddf; border-bottom-color: #bbbbbf; }
+:root[data-theme="makerlicious-bone"] .beatos-brand::before { background: radial-gradient(circle, #ff6600 0%, transparent 70%); opacity: .12; }
+:root[data-theme="makerlicious-bone"] .beatos-brand::after { background-image: linear-gradient(rgba(0, 0, 0, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.035) 1px, transparent 1px); opacity: .4; }
+:root[data-theme="makerlicious-bone"] .beatos-brand h1 { background: linear-gradient(180deg, #111114 20%, #2a2a30 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.9)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)); }
+:root[data-theme="makerlicious-bone"] .beatos-brand .brand-edition { color: #111114; border-color: rgba(255, 102, 0, 0.42); background: rgba(255, 255, 255, 0.7); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), inset 0 1px 0 #ffffff; }
+:root[data-theme="makerlicious-bone"] .beatos-brand .brand-description { color: #ff6600; text-shadow: none; font-weight: 800; }
+:root[data-theme="makerlicious-bone"] .beatos-brand .brand-description::before,
+:root[data-theme="makerlicious-bone"] .beatos-brand .brand-description::after { background: linear-gradient(90deg, transparent, #ff6600); opacity: .8; }
+:root[data-theme="makerlicious-bone"] .beatos-brand .brand-description::after { background: linear-gradient(90deg, #ff6600, transparent); }
 .creator-mark { display:block; width:245px; height:195px; overflow:hidden; opacity:.95; mix-blend-mode:screen; pointer-events:none; border-radius:8px; }
 .creator-mark img { display:block; width:100%; height:100%; object-fit:cover; }
 .creator-mark[data-art="eye-mirror-compact"] img { transform:scale(1.96); object-position:50% 51%; }
