@@ -701,11 +701,20 @@
     letter-spacing: .04em;
   }
   .tabs-buttons-row {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
     width: 100%;
+  }
+  @media (max-width: 960px) {
+    .tabs-buttons-row {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  @media (max-width: 580px) {
+    .tabs-buttons-row {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
   .tab-btn {
     flex: 1 1 0;
@@ -727,6 +736,82 @@
     user-select: none;
     white-space: nowrap;
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  }
+  .tabs-buttons-row .tab-btn {
+    flex: unset;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 10px 6px;
+    min-height: 68px;
+    border-radius: 9px;
+    white-space: normal;
+    overflow: hidden;
+    gap: 0;
+    box-sizing: border-box;
+  }
+  .tabs-buttons-row .tab-btn .tab-icon {
+    font-size: 22px;
+    line-height: 1;
+    margin-bottom: 5px;
+    display: inline-block;
+    transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .tabs-buttons-row .tab-btn:hover .tab-icon {
+    transform: scale(1.15);
+  }
+  .tabs-buttons-row .tab-btn.active .tab-icon {
+    transform: scale(1.08);
+  }
+  .tabs-buttons-row .tab-btn .tab-label {
+    font-size: 12.5px;
+    font-weight: 750;
+    line-height: 1.25;
+    display: block;
+    white-space: normal;
+    text-align: center;
+    word-break: normal;
+  }
+  .tabs-buttons-row .tab-btn .tab-sub {
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0.8;
+    margin-left: 2px;
+    display: inline-block;
+  }
+  .tabs-buttons-row .tab-btn.active .tab-sub {
+    color: rgba(0, 0, 0, 0.8);
+    opacity: 1;
+  }
+  .tabs-buttons-row .tab-btn .tab-badge {
+    display: inline-block;
+    margin-left: 3px;
+    padding: 1px 6px;
+    border-radius: 9px;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.2;
+    vertical-align: middle;
+  }
+  :root[data-theme="makerlicious-bone"] .tabs-buttons-row .tab-btn.active .tab-sub,
+  :root[data-theme="mpc-vintage"] .tabs-buttons-row .tab-btn.active .tab-sub {
+    color: rgba(255, 255, 255, 0.9);
+  }
+  @media (max-width: 580px) {
+    .tabs-buttons-row .tab-btn {
+      padding: 8px 4px;
+      min-height: 60px;
+    }
+    .tabs-buttons-row .tab-btn .tab-icon {
+      font-size: 19px;
+      margin-bottom: 3px;
+    }
+    .tabs-buttons-row .tab-btn .tab-label {
+      font-size: 11.5px;
+    }
   }
   .tab-btn:hover {
     color: #fff;
@@ -970,9 +1055,9 @@
     overflow: hidden;
     min-height: 140px;
   }
-  .player-track-info { display: flex; flex-direction: column; min-width: 240px; flex: 1 1 auto; max-width: 600px; }
-  .player-track-title { font-size: 20px; color: #ffffff; font-weight: 800; letter-spacing: 0.02em; display: flex; align-items: center; gap: 8px; line-height: 1.3; }
-  .player-track-path { font-size: 14px; color: #a4adc7; font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; margin-top: 4px; line-height: 1.35; }
+  .player-track-info { display: flex; flex-direction: column; justify-content: center; min-width: 200px; flex: 0 1 auto; max-width: 500px; }
+  .player-track-title { font-size: 26px; color: #ffffff; font-weight: 900; letter-spacing: 0.015em; display: flex; align-items: center; gap: 10px; line-height: 1.2; text-shadow: 0 2px 10px rgba(0,0,0,0.7); }
+  .player-track-path { font-size: 16.5px; color: #dce6ff; font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; margin-top: 6px; line-height: 1.35; letter-spacing: 0.01em; text-shadow: 0 1px 6px rgba(0,0,0,0.6); }
   .player-controls { display: flex; align-items: center; gap: 15px; }
   audio { height: 46px; outline: none; }
 
@@ -2124,13 +2209,13 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
 .creator-mark[data-art="eye-mirror-wide"] img { transform:scale(1.35); object-position:50% 50%; }
 .creator-mark[data-art="eye-minimal-wide"] img { transform:scale(1.55); object-position:50% 50%; }
 .creator-mark[data-art="eye-black-relief"] img { transform:scale(1.35); object-position:50% 50%; }
-.creator-mark--label { grid-column:1; grid-row:1; width:480px; height:175px; justify-self:start; align-self:center; border-radius:10px; z-index:1; pointer-events:none; opacity:.95; overflow:visible; margin-left:-35px; }
+.creator-mark--label { grid-column:1; grid-row:1; width:500px; height:180px; justify-self:start; align-self:center; border-radius:10px; z-index:1; pointer-events:none; opacity:.95; overflow:visible; margin-left:-10px; }
 .creator-mark--label img { transform:scale(2.45) translateX(-18px) translateY(16px); object-position:50% 50%; }
 :root[data-theme="makerlicious-bone"] .creator-mark,
 :root[data-theme="mpc-vintage"] .creator-mark { filter:invert(1); mix-blend-mode:multiply; opacity:.78; }
-.player-track-info { flex:1 1 auto; min-width:240px; max-width:600px; position:relative; z-index:4; }
-.audio-player-bar { padding: 14px 32px; min-height: 155px; box-sizing: border-box; overflow:hidden; }
-.audio-player-bar .player-controls { position:relative; display:grid; grid-template-columns:minmax(340px,580px) 150px; grid-template-rows:1fr; align-items:center; gap:0; min-width:0; flex-shrink:0; margin-left:auto; }
+.player-track-info { flex:0 1 auto; min-width:200px; max-width:500px; position:relative; z-index:4; }
+.audio-player-bar { padding: 12px 10px 12px 28px; min-height: 155px; box-sizing: border-box; overflow:hidden; }
+.audio-player-bar .player-controls { position:relative; display:grid; grid-template-columns:minmax(460px,1fr) 140px; grid-template-rows:1fr; align-items:center; gap:0; min-width:0; flex:1 1 auto; max-width:1040px; margin-left:auto; }
 .audio-player-bar .player-controls::before {
   content:'';
   grid-column:1;
@@ -2173,16 +2258,16 @@ audio::-webkit-media-controls-panel { background-color:rgba(10,12,18,0.12); }
   border-color:rgba(0, 0, 0, 0.14);
   box-shadow:0 4px 16px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.7);
 }
-.creator-mark:not(.creator-mark--label) { grid-column:2; grid-row:1; align-self:center; justify-self:start; margin-left:-95px; z-index:1; }
+.creator-mark:not(.creator-mark--label) { grid-column:2; grid-row:1; align-self:center; justify-self:end; margin-left:-50px; z-index:1; }
 .audio-player-bar #btnCopyPlayer { grid-column:1; grid-row:1; justify-self:center; align-self:end; margin-bottom:-26px; z-index:4; }
 @media(max-width:1080px) {
- .audio-player-bar { padding: 12px 20px; gap: 14px; }
- .audio-player-bar .player-controls { grid-template-columns:minmax(240px,360px) 130px; gap:0; }
+ .audio-player-bar { padding: 12px 10px 12px 18px; gap: 12px; }
+ .audio-player-bar .player-controls { grid-template-columns:minmax(320px,1fr) 120px; gap:0; }
  .creator-mark { width:195px; height:160px; }
- .creator-mark:not(.creator-mark--label) { margin-left:-65px; z-index:1; }
+ .creator-mark:not(.creator-mark--label) { margin-left:-45px; z-index:1; }
  .creator-mark { width:195px; height:155px; }
- .creator-mark:not(.creator-mark--label) { margin-left:-70px; z-index:1; }
- .creator-mark--label { width:380px; height:155px; margin-left:-30px; }
+ .creator-mark:not(.creator-mark--label) { margin-left:-45px; z-index:1; }
+ .creator-mark--label { width:400px; height:160px; margin-left:-10px; }
  .creator-mark--label img { transform:scale(2.35) translateX(-8px) translateY(22px); }
 }
 @media(max-width:760px) {
@@ -2348,12 +2433,30 @@ audio::-webkit-media-controls-panel { background-color:rgba(10,12,18,0.12); }
     </div>
   </div>
   <div class="tabs-buttons-row">
-    <button class="tab-btn active" id="tabBtnSamples" onclick="switchTab('tab-samples', this)">🔊 Explorador de Samples (0)</button>
-    <button class="tab-btn" id="tabBtnRack" onclick="switchTab('tab-rack', this)">🎛️ Beatmaker Kit Rack <span id="tabRackBadge" class="tab-badge">0/16</span></button>
-    <button class="tab-btn" id="tabBtnPO" onclick="switchTab('tab-po33', this)">🕹️ Pocket Operator (PO-33)</button>
-    <button class="tab-btn" id="tabBtnProjects" onclick="switchTab('tab-projects', this)">📁 Proyectos MPC (.xpj)</button>
-    <button class="tab-btn" id="tabBtnExpansions" onclick="switchTab('tab-expansions', this)">🎛️ Expansiones Oficiales</button>
-    <button class="tab-btn" id="tabBtnStats" onclick="switchTab('tab-stats', this)">📊 Distribución Sonora</button>
+    <button class="tab-btn active" id="tabBtnSamples" onclick="switchTab('tab-samples', this)">
+      <span class="tab-icon">🔊</span>
+      <span class="tab-label">Explorador de Samples <span id="tabSamplesBadge" class="tab-badge">0</span></span>
+    </button>
+    <button class="tab-btn" id="tabBtnRack" onclick="switchTab('tab-rack', this)">
+      <span class="tab-icon">🎛️</span>
+      <span class="tab-label">Beatmaker Kit Rack <span id="tabRackBadge" class="tab-badge">0/16</span></span>
+    </button>
+    <button class="tab-btn" id="tabBtnPO" onclick="switchTab('tab-po33', this)">
+      <span class="tab-icon">🕹️</span>
+      <span class="tab-label">Pocket Operator <span class="tab-sub">(PO-33)</span></span>
+    </button>
+    <button class="tab-btn" id="tabBtnProjects" onclick="switchTab('tab-projects', this)">
+      <span class="tab-icon">📁</span>
+      <span class="tab-label">Proyectos MPC <span class="tab-sub">(.xpj)</span></span>
+    </button>
+    <button class="tab-btn" id="tabBtnExpansions" onclick="switchTab('tab-expansions', this)">
+      <span class="tab-icon">🎛️</span>
+      <span class="tab-label">Expansiones Oficiales</span>
+    </button>
+    <button class="tab-btn" id="tabBtnStats" onclick="switchTab('tab-stats', this)">
+      <span class="tab-icon">📊</span>
+      <span class="tab-label">Distribución Sonora</span>
+    </button>
   </div>
 </div>
 
@@ -3847,21 +3950,66 @@ function setLanguage(lang) {
   if (dMeta && t.deckMeta) dMeta.innerText = t.deckMeta;
 
   const tS = document.getElementById('tabBtnSamples');
-  if (tS) tS.innerText = t.tabSamples;
+  if (tS) {
+    const lbl = tS.querySelector('.tab-label');
+    if (lbl) {
+      const sBadge = document.getElementById('tabSamplesBadge');
+      const badgeText = sBadge ? sBadge.innerText : '';
+      const badgeHtml = badgeText ? `<span id="tabSamplesBadge" class="tab-badge">${badgeText}</span>` : '';
+      lbl.innerHTML = (currentLang === 'en' ? 'Sample Explorer' : 'Explorador de Samples') + (badgeHtml ? ' ' + badgeHtml : '');
+    } else {
+      tS.innerText = t.tabSamples;
+    }
+  }
   const tR = document.getElementById('tabBtnRack');
   if (tR) {
+    const lbl = tR.querySelector('.tab-label');
     const badge = document.getElementById('tabRackBadge');
-    tR.innerHTML = t.tabRack + ' ';
-    if (badge) tR.appendChild(badge);
+    const badgeText = badge ? badge.innerText : '0/16';
+    const badgeHtml = `<span id="tabRackBadge" class="tab-badge">${badgeText}</span>`;
+    if (lbl) {
+      lbl.innerHTML = 'Beatmaker Kit Rack ' + badgeHtml;
+    } else {
+      tR.innerHTML = t.tabRack + ' ';
+      if (badge) tR.appendChild(badge);
+    }
   }
   const tPO = document.getElementById('tabBtnPO');
-  if (tPO) tPO.innerText = t.tabPO;
+  if (tPO) {
+    const lbl = tPO.querySelector('.tab-label');
+    if (lbl) {
+      lbl.innerHTML = 'Pocket Operator <span class="tab-sub">(PO-33)</span>';
+    } else {
+      tPO.innerText = t.tabPO;
+    }
+  }
   const tPr = document.getElementById('tabBtnProjects');
-  if (tPr) tPr.innerText = t.tabProjects;
+  if (tPr) {
+    const lbl = tPr.querySelector('.tab-label');
+    if (lbl) {
+      lbl.innerHTML = (currentLang === 'en' ? 'MPC Projects' : 'Proyectos MPC') + ' <span class="tab-sub">(.xpj)</span>';
+    } else {
+      tPr.innerText = t.tabProjects;
+    }
+  }
   const tEx = document.getElementById('tabBtnExpansions');
-  if (tEx) tEx.innerText = t.tabExpansions;
+  if (tEx) {
+    const lbl = tEx.querySelector('.tab-label');
+    if (lbl) {
+      lbl.innerText = currentLang === 'en' ? 'MPC Expansions' : 'Expansiones Oficiales';
+    } else {
+      tEx.innerText = t.tabExpansions;
+    }
+  }
   const tSt = document.getElementById('tabBtnStats');
-  if (tSt) tSt.innerText = t.tabStats;
+  if (tSt) {
+    const lbl = tSt.querySelector('.tab-label');
+    if (lbl) {
+      lbl.innerText = currentLang === 'en' ? 'Audio Distribution' : 'Distribución Sonora';
+    } else {
+      tSt.innerText = t.tabStats;
+    }
+  }
   const tMn = document.getElementById('tabBtnMaintenance');
   if (tMn) tMn.innerText = t.tabMaintenance;
 
