@@ -2357,13 +2357,13 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
 :root[data-theme="makerlicious-bone"] .beatos-brand .brand-description::before,
 :root[data-theme="makerlicious-bone"] .beatos-brand .brand-description::after { background: linear-gradient(90deg, transparent, #ff6600); opacity: .8; }
 :root[data-theme="makerlicious-bone"] .beatos-brand .brand-description::after { background: linear-gradient(90deg, #ff6600, transparent); }
-.creator-mark { display:flex; align-items:center; justify-content:center; width:220px; height:165px; overflow:visible; mix-blend-mode:screen; pointer-events:none; }
-.creator-mark img { display:block; height:145px; width:auto; max-width:none; object-fit:contain; }
-.creator-mark[data-art="eye-mirror-compact"] img { transform:scale(2.05) translateY(-2px); object-position:50% 50%; }
+ .creator-mark { display:flex; align-items:center; justify-content:center; width:265px; height:165px; overflow:visible; mix-blend-mode:screen; pointer-events:none; }
+.creator-mark img { display:block; height:160px; width:auto; max-width:none; object-fit:contain; }
+.creator-mark[data-art="eye-mirror-compact"] img { transform:scale(2.65) translateY(-8px); object-position:50% 50%; }
 .creator-mark[data-art="eye-mirror-portrait"] img { transform:scale(1.45) translateY(-4px); object-position:50% 50%; }
-.creator-mark[data-art="eye-mirror-wide"] img { transform:scale(1.04); object-position:50% 50%; }
-.creator-mark[data-art="eye-minimal-wide"] img { transform:scale(1.50) translateY(-2px); object-position:50% 50%; }
-.creator-mark[data-art="eye-black-relief"] img { transform:scale(1.04); object-position:50% 50%; filter:brightness(3.6) contrast(2.2); }
+.creator-mark[data-art="eye-mirror-wide"] img { transform:scale(1.15); object-position:50% 50%; }
+.creator-mark[data-art="eye-minimal-wide"] img { transform:scale(1.95) translateY(-4px); object-position:50% 50%; }
+.creator-mark[data-art="eye-black-relief"] img { transform:scale(1.15); object-position:50% 50%; filter:brightness(3.6) contrast(2.2); }
 .creator-mark--label { grid-column:1; grid-row:1; width:440px; height:180px; justify-self:start; align-self:center; z-index:1; pointer-events:none; overflow:visible; margin-left:-110px; mix-blend-mode:screen; -webkit-mask-image:radial-gradient(ellipse 75% 75% at 50% 50%, #000000 55%, transparent 95%); mask-image:radial-gradient(ellipse 75% 75% at 50% 50%, #000000 55%, transparent 95%); }
 .creator-mark--label img { width:100%; height:100%; transform:scale(2.28) translateX(-4px) translateY(12px); object-position:50% 50%; object-fit:cover; }
 :root[data-theme="makerlicious-bone"] .creator-mark,
@@ -2372,18 +2372,18 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
 .creator-mark--multiply-fallback { mix-blend-mode:multiply; }
 .player-track-info { flex:0 0 320px; min-width:240px; max-width:380px; position:relative; z-index:4; }
 .audio-player-bar { padding: 12px 18px 12px 28px; min-height: 155px; box-sizing: border-box; overflow:hidden; gap:16px; }
-.audio-player-bar .player-controls { position:relative; display:grid; grid-template-columns:1fr; grid-template-rows:1fr; align-items:center; gap:0; min-width:0; flex:1 1 auto; max-width:860px; margin-left:auto; }
+.audio-player-bar .player-controls { position:relative; display:grid; grid-template-columns:1fr; grid-template-rows:1fr; align-items:center; gap:0; min-width:0; flex:1 1 auto; max-width:960px; margin-left:auto; }
 .audio-player-bar .player-controls::before {
   content:'';
   grid-column:1;
   grid-row:1;
-  width:440px;
+  width:400px;
   height:46px;
   border-radius:23px;
   pointer-events:none;
   z-index:2;
   justify-self:end;
-  margin-right:220px;
+  margin-right:265px;
   background:linear-gradient(90deg, 
     rgba(255, 90, 0, 0.48) 0%, 
     rgba(255, 150, 0, 0.18) 22%, 
@@ -2398,7 +2398,7 @@ body:has(#tab-rack.active) .rack-floating-badge { display: none; }
              -12px 0 22px rgba(255, 102, 0, 0.25),
              12px 0 22px rgba(0, 240, 255, 0.25);
 }
-.audio-player-bar audio { grid-column:1; grid-row:1; width:440px; min-width:0; height:46px; position:relative; z-index:3; border-radius:23px; justify-self:end; margin-right:220px; color-scheme:dark; }
+.audio-player-bar audio { grid-column:1; grid-row:1; width:400px; min-width:0; height:46px; position:relative; z-index:3; border-radius:23px; justify-self:end; margin-right:265px; color-scheme:dark; }
 audio::-webkit-media-controls-panel { background-color:rgba(10,12,18,0.12); }
 :root[data-theme="makerlicious-bone"] .audio-player-bar .player-controls::before {
   background:linear-gradient(90deg, 
@@ -2422,18 +2422,18 @@ audio::-webkit-media-controls-panel { background-color:rgba(10,12,18,0.12); }
   border-color:rgba(255, 255, 255, 0.24);
   box-shadow:0 6px 24px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.38), -12px 0 22px rgba(200, 16, 46, 0.28), 12px 0 22px rgba(0, 240, 255, 0.28);
 }
-.creator-mark:not(.creator-mark--label) { grid-column:1; grid-row:1; width:215px; height:165px; align-self:center; justify-self:end; margin-right:-4px; z-index:1; -webkit-mask-image:radial-gradient(circle at center, #000000 50%, transparent 88%); mask-image:radial-gradient(circle at center, #000000 50%, transparent 88%); }
+.creator-mark:not(.creator-mark--label) { grid-column:1; grid-row:1; width:265px; height:165px; align-self:center; justify-self:end; margin-right:-8px; z-index:1; -webkit-mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, #000000 65%, transparent 96%); mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, #000000 65%, transparent 96%); }
 .audio-player-bar #btnCopyPlayer { grid-column:1; grid-row:1; justify-self:center; align-self:end; margin-bottom:-26px; z-index:4; }
 @media(max-width:1080px) {
  .audio-player-bar { padding: 12px 14px 12px 18px; gap: 12px; }
- .audio-player-bar .player-controls { max-width: 620px; }
+ .audio-player-bar .player-controls { max-width: 720px; }
  .audio-player-bar .player-controls::before,
- .audio-player-bar audio { width: 340px; margin-right: 170px; }
- .creator-mark { width:165px; height:140px; }
- .creator-mark:not(.creator-mark--label) { width: 165px; height: 135px; margin-right:-6px; z-index:1; }
- .creator-mark:not(.creator-mark--label) img { height: 120px; }
- .creator-mark--label { width:320px; height:150px; margin-left:-60px; }
- .creator-mark--label img { transform:scale(2.25) translateX(-4px) translateY(14px); }
+ .audio-player-bar audio { width: 330px; margin-right: 245px; }
+ .creator-mark { width:245px; height:160px; }
+ .creator-mark:not(.creator-mark--label) { width: 245px; height: 160px; margin-right:-6px; z-index:1; -webkit-mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, #000000 65%, transparent 96%); mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, #000000 65%, transparent 96%); }
+ .creator-mark:not(.creator-mark--label) img { height: 155px; }
+ .creator-mark--label { width:340px; height:160px; margin-left:-70px; }
+ .creator-mark--label img { transform:scale(2.0) translateX(-4px) translateY(12px); }
 }
 @media(max-width:760px) {
  .audio-player-bar { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; padding:10px 14px; min-height:auto; bottom:8px; left:10px; right:10px; border-radius:10px; }
@@ -2441,11 +2441,11 @@ audio::-webkit-media-controls-panel { background-color:rgba(10,12,18,0.12); }
  .audio-player-bar .player-controls { grid-template-columns:1fr; max-width:100%; margin-left:0; gap:0; }
  .audio-player-bar .player-controls::before,
  .audio-player-bar audio { width: 100%; margin-right: 0; }
- .creator-mark { width:130px; height:105px; }
- .creator-mark:not(.creator-mark--label) { width: 120px; height: 105px; margin-right:-6px; z-index:1; }
- .creator-mark:not(.creator-mark--label) img { height: 95px; }
+ .creator-mark { width:150px; height:120px; }
+ .creator-mark:not(.creator-mark--label) { width: 150px; height: 120px; margin-right:-6px; z-index:1; }
+ .creator-mark:not(.creator-mark--label) img { height: 110px; }
  .creator-mark--label { width:280px; height:120px; margin-left:-80px; }
- .creator-mark--label img { transform:scale(2.28) translateX(-8px) translateY(16px); }
+ .creator-mark--label img { transform:scale(2.0) translateX(-8px) translateY(16px); }
  .tabs { padding:8px 10px; gap:5px; }
  .tab-btn { font-size:13px; padding:7px 11px; }
 }
