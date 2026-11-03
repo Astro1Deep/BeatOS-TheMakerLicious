@@ -3636,6 +3636,7 @@ function toggleBannerExpand() {
 
 
 const SAMPLES = [];
+try { window.SAMPLES = SAMPLES; } catch (_) {}
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -5112,7 +5113,7 @@ function clearRack() {
   showToast('🗑️ Rack de 16 pads vaciado');
 }
 
-function autoFillRandomRack() {
+function autoFillRandomRack(silent = false) {
   const plan = [
     ['KICK', 1], ['KICK', 2],
     ['SNARE', 3], ['SNARE', 4],
@@ -5123,16 +5124,24 @@ function autoFillRandomRack() {
     ['KEYS_SYNTH', 15], ['MELODIC_LOOP', 16]
   ];
 
+  if (typeof SAMPLES === "undefined" || !Array.isArray(SAMPLES) || SAMPLES.length === 0) {
+    if (!silent) showToast('⚠️ La biblioteca de muestras no está cargada aún.');
+    return;
+  }
+
   plan.forEach(([stype, padNum]) => {
-    const candidates = SAMPLES.filter(s => s[1] === stype);
+    let candidates = SAMPLES.filter(s => s[1] === stype);
+    if (!candidates.length) {
+      candidates = SAMPLES;
+    }
     if (candidates.length > 0) {
       const rand = candidates[Math.floor(Math.random() * candidates.length)];
       RACK_PADS[padNum - 1] = {
         relPath: rand[10],
         filename: rand[0],
-        soundType: rand[1],
+        soundType: rand[1] || detectSoundTypeFromFilename(rand[0]),
         durationSec: rand[9] || 0.8,
-        muteGroup: defaultMuteGroup(detectSoundTypeFromFilename(rand[0])),
+        muteGroup: defaultMuteGroup(rand[1] || detectSoundTypeFromFilename(rand[0]), rand[0]),
         volume: 0.707946, pan: 0.5, tune: 0
       };
     }
@@ -5142,8 +5151,8 @@ function autoFillRandomRack() {
   renderRackGrid();
   renderDockMatrix();
   updateRackCounts();
-  updatePo33StudioView();
-  showToast('🎲 ¡16 Pads configurados automáticamente!');
+  if (typeof updatePo33StudioView === 'function') updatePo33StudioView();
+  if (!silent) showToast('🎲 ¡16 Pads configurados automáticamente!');
 }
 
 function autoFillMultiBankKit() {
@@ -5842,7 +5851,10 @@ const padVoices = new Map();
 let padAudioContext = null;
 
 function stopPadVoices() {
-  for (const voice of [...padVoices.values()]) { voice.audio.pause(); voice.release(); }
+  for (const voice of [...padVoices.values()]) {
+    try { voice.audio.pause(); } catch (_) {}
+    try { voice.release(); } catch (_) {}
+  }
   padVoices.clear();
 }
 
@@ -5850,37 +5862,69 @@ function playPadVoice(pNum, item) {
   const group = item.muteGroup ?? defaultMuteGroup(item.soundType);
   for (const [pad, voice] of padVoices) {
     if (pad === pNum || (group > 0 && voice.group === group)) {
-      voice.audio.pause();
-      voice.release();
+      try { voice.audio.pause(); } catch (_) {}
+      try { voice.release(); } catch (_) {}
     }
   }
   const encoded = item.relPath.split('/').map(encodeURIComponent).join('/');
   const src = new URL(encoded, document.baseURI).href;
+  const altHttpUrl = (typeof location !== 'undefined' && location.protocol === 'file:') ? ('http://127.0.0.1:8888/' + encoded) : '';
   const audio = new Audio(src);
+  if (typeof location !== 'undefined' && location.protocol && location.protocol.startsWith('http')) {
+    audio.crossOrigin = 'anonymous';
+  }
   audio.volume = Math.max(0, Math.min(1, item.volume ?? 0.707946));
   audio.preservesPitch = false;
   audio.playbackRate = Math.pow(2, (item.tune ?? 0) / 12);
   let source = null, panner = null;
   if (typeof AudioContext !== 'undefined') {
-    padAudioContext ||= new AudioContext();
-    source = padAudioContext.createMediaElementSource(audio);
-    panner = padAudioContext.createStereoPanner(); panner.pan.value = (item.pan ?? 0.5) * 2 - 1;
-    source.connect(panner); panner.connect(padAudioContext.destination);
-    padAudioContext.resume().catch(() => showToast('Activa el audio pulsando un pad.'));
+    try {
+      padAudioContext ||= new AudioContext();
+      if (padAudioContext.state === 'suspended' && typeof padAudioContext.resume === 'function') {
+        padAudioContext.resume().catch(() => {});
+      }
+      source = padAudioContext.createMediaElementSource(audio);
+      panner = padAudioContext.createStereoPanner();
+      panner.pan.value = (item.pan ?? 0.5) * 2 - 1;
+      source.connect(panner);
+      panner.connect(padAudioContext.destination);
+    } catch (webaudioErr) {
+      if (source) { try { source.disconnect(); } catch (_) {} source = null; }
+      if (panner) { try { panner.disconnect(); } catch (_) {} panner = null; }
+    }
   }
   const release = () => {
     if (padVoices.get(pNum) === voice) padVoices.delete(pNum);
-    if (source) { source.disconnect(); source = null; }
-    if (panner) { panner.disconnect(); panner = null; }
+    if (source) { try { source.disconnect(); } catch (_) {} source = null; }
+    if (panner) { try { panner.disconnect(); } catch (_) {} panner = null; }
   };
   const voice = {audio, group, release};
   padVoices.set(pNum, voice);
   audio.onended = release;
-  audio.onerror = () => { release(); showToast('No se pudo reproducir: ' + item.filename); };
-  audio.play().catch(error => {
+
+  let fallbackAttempted = false;
+  const tryFallbackOrError = (error) => {
+    if (altHttpUrl && !fallbackAttempted) {
+      fallbackAttempted = true;
+      audio.src = altHttpUrl;
+      const secondTry = audio.play();
+      if (secondTry && typeof secondTry.catch === 'function') {
+        secondTry.catch(e => {
+          release();
+          if (!e || e.name !== 'AbortError') showToast('No se pudo reproducir: ' + item.filename);
+        });
+      }
+      return;
+    }
     release();
-    if (error.name !== 'AbortError') showToast('No se pudo reproducir: ' + item.filename);
-  });
+    if (!error || error.name !== 'AbortError') showToast('No se pudo reproducir: ' + item.filename);
+  };
+
+  audio.onerror = () => tryFallbackOrError();
+  const playPromise = audio.play();
+  if (playPromise && typeof playPromise.catch === 'function') {
+    playPromise.catch(tryFallbackOrError);
+  }
 }
 
 function triggerPadAudio(pNum) {
@@ -5904,8 +5948,10 @@ function triggerPadAudio(pNum) {
 
   const item = RACK_PADS[pNum - 1];
   if (item && item.relPath) {
-    const padTag = 'A' + (pNum < 10 ? '0' : '') + pNum;
     playPadVoice(pNum, item);
+  } else {
+    const padTag = typeof formatPadTag === 'function' ? formatPadTag(pNum) : ('A' + (pNum < 10 ? '0' : '') + pNum);
+    showToast('⚠️ Pad ' + padTag + ' [Vacío]: arrastra una muestra desde la tabla o pulsa 🎲 Shuffle');
   }
 }
 
@@ -6936,7 +6982,7 @@ function quickLoadExpansionFirstKit(expansionName) {
 }
 
 function loadExpansionToRack(expTitle) {
-  if (!window.SAMPLES || !SAMPLES.length) {
+  if ((typeof SAMPLES === "undefined" || !SAMPLES.length) && (!window.SAMPLES || !window.SAMPLES.length)) {
     showToast('⚠️ Catálogo de muestras cargando...');
     return;
   }
@@ -7959,6 +8005,9 @@ window.addEventListener('DOMContentLoaded', () => {
   setLanguage(currentLang);
   initEcosystemTheme();
   initBackdropPreference();
+  if (RACK_PADS.every(p => p === null) && typeof SAMPLES !== "undefined" && Array.isArray(SAMPLES) && SAMPLES.length > 0) {
+    autoFillRandomRack(true);
+  }
   updatePo33StudioView();
   loadPo33BackupsList();
   window.beatosPoBackupLibraryReady = true;
