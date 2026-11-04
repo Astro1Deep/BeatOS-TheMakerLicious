@@ -5228,7 +5228,7 @@ function playAudioQuick(relPath, filename = '', padLabel = '') {
 
 // ==================== DRAG AND DROP REORDERING PARA FINGERDRUMMING ====================
 let draggedPadNum = null;
-let lastPadDragTimestamp = 0;
+let lastPadDropTimestamp = 0;
 
 function handleSampleRowDragStart(e, relPath, filename, soundType) {
   if (e.dataTransfer) {
@@ -5252,7 +5252,6 @@ function handleSampleRowDragStartSafe(e, rowEl) {
 
 function handlePadDragStart(e, pNum) {
   draggedPadNum = pNum;
-  lastPadDragTimestamp = Date.now();
 
   if (e.dataTransfer) {
     e.dataTransfer.effectAllowed = 'move';
@@ -5308,7 +5307,7 @@ function handlePadDragLeave(e, pNum) {
 
 function handlePadDrop(e, pNum) {
   e.preventDefault();
-  lastPadDragTimestamp = Date.now();
+  lastPadDropTimestamp = Date.now();
 
   document.body.classList.remove('is-pad-dragging');
   document.querySelectorAll('.is-dragging, .drag-target-over').forEach(el => {
@@ -5379,7 +5378,6 @@ function handlePadDrop(e, pNum) {
 }
 
 function handlePadDragEnd(e) {
-  lastPadDragTimestamp = Date.now();
   draggedPadNum = null;
   document.body.classList.remove('is-pad-dragging');
   document.querySelectorAll('.is-dragging, .drag-target-over').forEach(el => {
@@ -5877,7 +5875,9 @@ function playPadVoice(pNum, item) {
   audio.preservesPitch = false;
   audio.playbackRate = Math.pow(2, (item.tune ?? 0) / 12);
   let source = null, panner = null;
-  if (typeof AudioContext !== 'undefined') {
+  const pan = item.pan ?? 0.5;
+  const isFileProto = (typeof location !== 'undefined' && location.protocol === 'file:');
+  if (typeof AudioContext !== 'undefined' && pan !== 0.5 && !isFileProto) {
     try {
       padAudioContext ||= new AudioContext();
       if (padAudioContext.state === 'suspended' && typeof padAudioContext.resume === 'function') {
@@ -5885,7 +5885,7 @@ function playPadVoice(pNum, item) {
       }
       source = padAudioContext.createMediaElementSource(audio);
       panner = padAudioContext.createStereoPanner();
-      panner.pan.value = (item.pan ?? 0.5) * 2 - 1;
+      panner.pan.value = pan * 2 - 1;
       source.connect(panner);
       panner.connect(padAudioContext.destination);
     } catch (webaudioErr) {
@@ -5932,8 +5932,16 @@ function triggerPadAudio(pNum) {
     handlePadSwapClick(pNum);
     return;
   }
-  if (Date.now() - lastPadDragTimestamp < 180) {
+  if (Date.now() - lastPadDropTimestamp < 200) {
     return;
+  }
+  if (typeof AudioContext !== 'undefined') {
+    try {
+      padAudioContext ||= new AudioContext();
+      if (padAudioContext.state === 'suspended' && typeof padAudioContext.resume === 'function') {
+        padAudioContext.resume().catch(() => {});
+      }
+    } catch (_) {}
   }
   const dockEl = document.getElementById('dock-pad-' + pNum);
   if (dockEl) {
@@ -6350,6 +6358,9 @@ function copyTerminalCmd() {
 updateSortUI();
 sortFilteredSamples();
 renderTable();
+if (RACK_PADS.every(p => p === null) && typeof SAMPLES !== "undefined" && Array.isArray(SAMPLES) && SAMPLES.length > 0) {
+  autoFillRandomRack(true);
+}
 renderRackGrid();
 initTargetPadDock();
 checkServerHealth(false);
