@@ -1339,6 +1339,27 @@ def export_sp404mk2_kit(
     with open(kit_dir / "sp404mk2_manifest.json", "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
 
+    # Exportar mapa CSV compatible con Roland SP-404MKII App
+    csv_lines = ["Bank,Pad,BankPad,Filename,OriginalSample"]
+    for p in manifest["pads"]:
+        csv_lines.append(f"{p['bank']},{p['pad']},{p['bank_pad']},{p['file']},{p['original']}")
+    with open(kit_dir / "SP404MK2_BANK_MAP.csv", "w", encoding="utf-8") as f_csv:
+        f_csv.write("\n".join(csv_lines) + "\n")
+
+    readme_txt = f"""=== ROLAND SP-404MK2 & DOOM OS KIT: {kit_name} ===
+Generado por BeatOS (The MakerLicious) · Frecuencia Nativa 48.000 Hz Stereo PCM
+
+INSTRUCCIONES DE IMPORTACIÓN:
+1. Con Tarjeta SD en Roland SP-404MK2:
+   - Copia los archivos .wav de esta carpeta dentro de 'ROLAND/SP-404MKII/SMPL/' en tu tarjeta SD.
+   - En tu SP-404MK2, pulsa SHIFT + PAD 14 (IMPORT) y selecciona los archivos correspondientes a cada Banco (A a J).
+2. Con Roland SP-404MKII App (Mac/PC):
+   - Abre la app oficial con tu SP-404MK2 conectada por USB-C.
+   - Arrastra directamente los archivos .wav a los 16 pads del banco deseado consultando 'SP404MK2_BANK_MAP.csv'.
+"""
+    with open(kit_dir / "README_SP404MK2.txt", "w", encoding="utf-8") as f_readme:
+        f_readme.write(readme_txt)
+
     return str(kit_dir)
 
 

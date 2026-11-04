@@ -54,3 +54,7 @@ backups_seguridad/
 /BeatOS/config/
 /BeatOS/data/*
 !/BeatOS/data/catalogo.html
+
+# Teamwork and agent scratch directories
+.agents/
+docs/assets/branding/creator/_original_raw/
