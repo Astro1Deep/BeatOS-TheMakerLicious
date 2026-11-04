@@ -120,12 +120,16 @@ def run_reindex_thread(root_dir: str):
         return
 
     try:
+        reindex_env = os.environ.copy()
+        reindex_env["PYTHONIOENCODING"] = "utf-8"
         proc = subprocess.Popen(
             [sys.executable, "-B", script_path, "--path", root_dir],
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
             cwd=root_dir,
+            env=reindex_env,
         )
         if proc.stdout:
             for line in proc.stdout:
@@ -174,7 +178,7 @@ def run_sync_dashboard():
     dashboard_script = os.path.expanduser("~/.gemini/antigravity/scratch/sync_master_dashboard.py")
     if os.path.isfile(dashboard_script):
         try:
-            res = subprocess.run([sys.executable, dashboard_script], capture_output=True, text=True, check=True)
+            res = subprocess.run([sys.executable, dashboard_script], stdin=subprocess.DEVNULL, capture_output=True, text=True, check=True)
             return {"success": True, "output": res.stdout}
         except subprocess.CalledProcessError as e:
             return {"success": False, "error": e.stderr}

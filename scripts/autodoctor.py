@@ -148,6 +148,7 @@ def start_service_in_background(cmd, name):
         log_event(f"  {CYAN}⚡ AutoDoctor levantando servicio: {BOLD}{name}{RESET}...")
         subprocess.Popen(
             cmd,
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             preexec_fn=os.setpgrp
