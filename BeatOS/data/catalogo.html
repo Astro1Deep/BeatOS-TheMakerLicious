@@ -6157,10 +6157,10 @@ function exportOfflineCommandScript() {
 
 // ==================== CENTRO DE OPERACIONES Y MANTENIMIENTO API ====================
 function requireConnectedView() {
-  if (typeof location !== 'undefined' && location.protocol === 'file:' && !isConnectedToApi) {
+  if (typeof location !== 'undefined' && location.protocol === 'file:') {
     showToast(typeof currentLang !== 'undefined' && currentLang === 'en'
-      ? 'Awaiting local BeatOS server connection… Start BeatOS/ABRIR_BEATOS.command.'
-      : 'Esperando conexión con el servidor BeatOS local… Inicia BeatOS/ABRIR_BEATOS.command.');
+      ? 'Open BeatOS connected at http://127.0.0.1:8888/ to use local actions.'
+      : 'Abre BeatOS conectado en http://127.0.0.1:8888/ para usar las acciones locales.');
     const notice = document.getElementById('connectionNotice');
     if (notice && typeof notice.scrollIntoView === 'function') notice.scrollIntoView({block:'center'});
     if (typeof checkServerHealth === 'function') checkServerHealth(true);
@@ -6206,6 +6206,13 @@ function checkServerHealth(manual = false) {
   const openBtn = document.getElementById('openConnectedBeatOS');
   if (openBtn && typeof location !== 'undefined' && location.protocol) {
     openBtn.href = location.protocol.startsWith('http') ? (location.origin + '/') : 'http://127.0.0.1:8888/';
+  }
+  if (typeof location !== 'undefined' && location.protocol === 'file:') {
+    isConnectedToApi = false;
+    if (summary) summary.textContent = currentLang === 'en'
+      ? 'Offline catalog · Open BeatOS connected to use local actions.'
+      : 'Catálogo sin conexión · Abre BeatOS conectado para usar las acciones locales.';
+    return;
   }
   const base = getApiBaseUrl();
   const descEl = document.getElementById('serverStatusDesc');
@@ -6271,6 +6278,7 @@ function checkServerHealth(manual = false) {
 }
 
 function executeLibraryAction(actionType) {
+  if (!requireConnectedView()) return;
   if (!requireConnectedView()) return;
   openTerminalModal(actionType);
 
@@ -7504,6 +7512,10 @@ function setPo33BackupStatus(message) {
   setPo33BackupStatus.originalText = String(message == null ? '' : message);
   refreshPo33BackupStatus();
 }
+function poBackupAudioUrl(backup) {
+  return getApiBaseUrl() + '/api/po33_backup_audio?file=' + encodeURIComponent(backup.path)
+    + (backup.sha256 ? '&sha256=' + encodeURIComponent(backup.sha256) : '');
+}
 function po33PcmWav(chunks, sampleRate) {
   const bytes = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
   const header = new ArrayBuffer(44), view = new DataView(header);
@@ -7581,7 +7593,7 @@ async function finishPo33Recording(recording) {
   setPo33BackupStatus('Grabación finalizada. Guardando el WAV; conserva también la descarga…');
   try {
     const backup = await archivePo33Backup(wav, name, recording.model, recording.project);
-    link.href = getApiBaseUrl() + '/api/po33_backup_audio?file=' + encodeURIComponent(backup.path);
+    link.href = poBackupAudioUrl(backup);
     po33UnsavedCaptures.delete(url); URL.revokeObjectURL(url);
     if (recording.interrupted) setPo33BackupStatus('La captura se interrumpió. Se ha conservado el WAV parcial como INCOMPLETO; no lo uses para restaurar sin revisar y repetir la grabación.');
   }
@@ -7654,7 +7666,7 @@ function preparePo33Restore(backup) {
   document.querySelectorAll('audio').forEach(audio => audio.pause());
   stopPadVoices();
   const audio = document.getElementById('po33RestoreAudio');
-  audio.src = getApiBaseUrl() + '/api/po33_backup_audio?file=' + encodeURIComponent(backup.path);
+  audio.src = poBackupAudioUrl(backup);
   audio.playbackRate = 1; audio.loop = false;
   document.getElementById('po33RestoreTitle').textContent = backup.filename.replace('_' + backup.sha256, '');
   const box = document.getElementById('po33RestoreBox'); box.hidden = false; box.scrollIntoView({block:'nearest',behavior:'smooth'});
@@ -7725,7 +7737,7 @@ async function loadPo33BackupsList() {
       const info = document.createElement('p');
       info.textContent = beatosPoBackupInfoText(backup);
       const link = document.createElement('a'); link.textContent = 'Descargar WAV original'; link.download = backup.filename; link.className = 'po33-btn-secondary';
-      link.href = getApiBaseUrl() + '/api/po33_backup_audio?file=' + encodeURIComponent(backup.path);
+      link.href = poBackupAudioUrl(backup);
       const hash = document.createElement('p'); hash.style.overflowWrap = 'anywhere'; hash.textContent = 'SHA-256: ' + (backup.sha256 || 'no disponible');
       const restore = document.createElement('button'); restore.type = 'button'; restore.className = 'po33-btn-secondary'; restore.textContent = backup.capture_interrupted ? 'Captura interrumpida: repetir' : 'Preparar restauración'; restore.disabled = !backup.audio_compatible || backup.capture_interrupted; restore.onclick = () => preparePo33Restore(backup);
       const verify = document.createElement('button'); verify.type='button';

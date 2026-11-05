@@ -81,3 +81,15 @@ vm.runInContext(html.slice(html.indexOf('async function loadProjectToRack('),htm
  assert.equal(ctx.RACK_PADS.filter(Boolean).length,2);assert.equal(button.disabled,false);assert.match(notices.pop(),/Missing project/);
  console.log('Project button: API response mounts pads, activates and reveals rack, focuses source, reports success and preserves the rack on failure OK');
 })().catch(error=>{console.error(error);process.exitCode=1;});
+
+// Opaque file origins remain offline even if a stale connection flag was set.
+const offlineNodes=new Map();
+const offlineNode=id=>{if(!offlineNodes.has(id))offlineNodes.set(id,{textContent:'',href:'',scrollIntoView(){}});return offlineNodes.get(id)};
+const offline=vm.createContext({location:{protocol:'file:'},currentLang:'es',isConnectedToApi:true,
+ document:{getElementById:offlineNode},showToast(){},fetch(){throw Error('Offline mode must not call the API')}});
+vm.runInContext(html.slice(html.indexOf('function checkServerHealth('),html.indexOf('function executeLibraryAction(')),offline);
+vm.runInContext(html.slice(html.indexOf('function requireConnectedView('),html.indexOf('async function refreshLibraryMenu(')),offline);
+assert.equal(vm.runInContext('requireConnectedView()',offline),false);
+assert.equal(vm.runInContext('isConnectedToApi',offline),false);
+assert.match(offlineNode('connectionSummary').textContent,/sin conexión/);
+console.log('Offline catalog: no API calls or stale native-action access OK');

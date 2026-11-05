@@ -12,6 +12,34 @@ from index_mpc_library import render_catalog
 
 
 class IndexerTests(unittest.TestCase):
+    def test_empty_installed_catalog_recovers_existing_index_without_modifying_it(self):
+        import hashlib
+        from index_mpc_library import restore_empty_catalog, CATALOG_QUERY
+        from beatos_paths import CATALOG_REL
+        source=Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);data=root/'BeatOS/data';data.mkdir(parents=True)
+            database=data/'mpc_sample.db'
+            with sqlite3.connect(database) as connection:
+                connection.executescript((source/'schema.sql').read_text())
+                connection.execute("INSERT INTO samples(filename,sound_type,rel_path) VALUES ('Kick.wav','KICK','Samples/Kick.wav')")
+                connection.commit()
+            metadata={'total_samples':1,'projects':[],'expansions':[]}
+            (data/'mpc_sample.json').write_text(json.dumps(metadata))
+            template=(source/'templates/catalogo.html').read_text()
+            catalog=root/CATALOG_REL;catalog.write_text(render_catalog(template,[],{}))
+            before=hashlib.sha256(database.read_bytes()).hexdigest()
+            self.assertTrue(restore_empty_catalog(root))
+            text=catalog.read_text();marker=re.search(r'const SAMPLES\s*=\s*',text)
+            records=json.JSONDecoder().raw_decode(text[marker.end():])[0]
+            self.assertEqual(records[0][0],'Kick.wav');self.assertEqual(len(records),1)
+            self.assertEqual(hashlib.sha256(database.read_bytes()).hexdigest(),before)
+            self.assertFalse(restore_empty_catalog(root))
+            catalog.write_text(render_catalog(template,[],{}));metadata['total_samples']=2
+            (data/'mpc_sample.json').write_text(json.dumps(metadata))
+            with self.assertRaises(ValueError):restore_empty_catalog(root)
+            self.assertEqual(catalog.read_text(),render_catalog(template,[],{}))
+
     def test_checked_in_blank_catalog_uses_latest_bilingual_template(self):
         root = Path(__file__).resolve().parents[1]
         template = (root / 'templates/catalogo.html').read_text(encoding='utf-8')

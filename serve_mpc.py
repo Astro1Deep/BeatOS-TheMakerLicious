@@ -23,6 +23,8 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import contextlib
+import hashlib
 import json
 import mimetypes
 import os
@@ -912,10 +914,8 @@ def import_external_sample_to_library(root_dir: str, payload: dict) -> dict:
 
 
 def get_system_status(root_dir: str):
-    root_resolved = str(Path(root_dir).resolve()) if os.path.exists(root_dir) else ""
-    card_mounted = os.path.isdir("/Volumes/MPCSMPL") or (
-        bool(root_resolved) and root_resolved.startswith(("/Volumes/", "/media/", "/mnt/"))
-    )
+    library_available = os.path.isdir(root_dir)
+    card_mounted = library_available and os.path.ismount(root_dir)
     disk_stat = shutil.disk_usage(root_dir) if os.path.exists(root_dir) else None
 
     db_candidates = [database_path(root_dir)]
@@ -935,7 +935,8 @@ def get_system_status(root_dir: str):
                 pass
 
     return {
-        "status": "online",
+        "status": "online" if library_available else "library_unavailable",
+        "library_available": library_available,
         "card_mounted": card_mounted,
         "root_dir": root_dir,
         "sample_count": sample_count,
@@ -1008,7 +1009,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                     and parsed_origin.hostname in {'127.0.0.1', 'localhost', '::1'}
                     and parsed_origin.port == server_port
                 )
-                if is_local or origin == 'null' or parsed_origin.netloc == host:
+                if is_local:
                     self.send_header('Access-Control-Allow-Origin', origin)
                     self.send_header('Vary', 'Origin')
                     self.send_header('Access-Control-Allow-Private-Network', 'true')
@@ -1037,11 +1038,11 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 and parsed_origin.hostname in {'127.0.0.1', 'localhost', '::1'}
                 and parsed_origin.port == server_port
             )
-            valid_origin = not origin or is_local_origin or (parsed_origin and parsed_origin.netloc == host) or origin == 'null'
+            valid_origin = not origin or is_local_origin
         except ValueError:
             valid_host = valid_origin = False
         is_cross_site = self.headers.get('Sec-Fetch-Site') == 'cross-site'
-        if not valid_host or not valid_origin or (is_cross_site and origin != 'null'):
+        if not valid_host or not valid_origin or is_cross_site:
             self.send_error(403, 'Use la interfaz local de BeatOS')
             return False
         return True
@@ -1166,15 +1167,25 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(self._api_json_dumps({"error": "Audio de backup no encontrado."}).encode("utf-8"))
                 return
             try:
-                size = target_path.stat().st_size
-                self.send_response(200)
-                self.send_header("Content-Type", "audio/wav")
-                self.send_header("Content-Length", str(size))
-                self.send_header("Content-Disposition", "inline; filename*=UTF-8''" + urllib.parse.quote(target_path.name, safe=''))
-                self.send_cors_headers()
-                self.end_headers()
-                with target_path.open('rb') as source:
-                    shutil.copyfileobj(source, self.wfile, length=64 * 1024)
+                expected = query.get('sha256', [''])[0]
+                if expected and not re.fullmatch('[a-fA-F0-9]{64}', expected):
+                    self.send_error(400, 'Invalid SHA-256')
+                    return
+                with target_path.open('rb') as source, (tempfile.TemporaryFile() if expected else contextlib.nullcontext(source)) as transfer:
+                    if expected:
+                        shutil.copyfileobj(source, transfer, length=64 * 1024)
+                        transfer.seek(0)
+                        if hashlib.file_digest(transfer, 'sha256').hexdigest() != expected.lower():
+                            self.send_error(409, 'Backup changed since inspection; refresh the library before restoring')
+                            return
+                        transfer.seek(0)
+                    self.send_response(200)
+                    self.send_header("Content-Type", "audio/wav")
+                    self.send_header("Content-Length", str(os.fstat(transfer.fileno()).st_size))
+                    self.send_header("Content-Disposition", "inline; filename*=UTF-8''" + urllib.parse.quote(target_path.name, safe=''))
+                    self.send_cors_headers()
+                    self.end_headers()
+                    shutil.copyfileobj(transfer, self.wfile, length=64 * 1024)
             except Exception:
                 self.send_response(500)
                 self.end_headers()
@@ -2005,6 +2016,9 @@ def run_server(custom_path: str | None = None, port: int | None = None, auto_ope
     target_root = str(Path(custom_path).expanduser().resolve()) if custom_path else find_card_root(script_dir)
     if not Path(target_root).is_dir():
         raise ValueError(translate_text(f"La biblioteca no existe: {target_root}", (os.environ.get("BEATOS_LANG") or "en")))
+    from index_mpc_library import restore_empty_catalog
+    if restore_empty_catalog(target_root, Path(script_dir) / 'templates/catalogo.html'):
+        emit('Recovered the empty catalog from the existing index; audio and database were preserved.')
 
     desired_port = port or 8888
     port = find_available_port(desired_port)

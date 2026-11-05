@@ -77,7 +77,6 @@ window.addEventListener('load', () => {
     ['🔊 808s & Sub Bajos','🔊 808s & sub bass'],
     ['📂 Explorar Kits','📂 Browse kits'],
     ['🔀 Modo Mover','🔀 Move mode'],
-    ['(Banco A: Pads 1 al 16)','(Bank A: pads 1–16)'],
     ['🎛️ Editar Pads en Rack','🎛️ Edit pads in rack'],
     ['⚡ Generar Kit EP-133','⚡ Generate EP-133 kit'],
     ['📁 Revelar en Finder','📁 Show in Finder'],
@@ -92,6 +91,7 @@ window.addEventListener('load', () => {
     while ((node=walker.nextNode())) if (node.nodeValue.trim() === phrase) return node;
     return null;
   };
+  const bankSubtitle = document.getElementById('rackActiveBankSubtitle');
   const localeNodes = expected.map(([es,en]) => ({es,en,node:findNode(en)}));
   const attributeExpected = [
     ['title','Restablecer todos los filtros y búsqueda','Reset all filters and search'],
@@ -105,9 +105,9 @@ window.addEventListener('load', () => {
   const reporter = document.createElement('output');
   reporter.id = 'i18n-browser-result';
   document.body.appendChild(reporter);
-  if (!recording || !deviceGuide || !backupInfoText() || localeNodes.some(x => !x.node) || localeAttrs.some(x => !x.node)) {reporter.textContent = 'FAIL:missing locale test nodes'; return;}
+  if (!recording || !deviceGuide || !bankSubtitle || !backupInfoText() || localeNodes.some(x => !x.node) || localeAttrs.some(x => !x.node)) {reporter.textContent = 'FAIL:missing locale test nodes'; return;}
   try {
-    const initialEnglish = document.documentElement.lang === 'en' &&
+    const initialEnglish = bankSubtitle.textContent.trim() === '(Bank A: pads 1–16)' && document.documentElement.lang === 'en' &&
       localeCookie() === 'en' &&
       recording.textContent.trim() === '⏺ Record backup' &&
       deviceGuide.textContent.includes('Send: WRITE + SOUND + PLAY') &&
@@ -116,16 +116,17 @@ window.addEventListener('load', () => {
       localeAttrs.every(x => x.node.getAttribute(x.attr) === x.en);
     setLanguage('es');
     setTimeout(() => {
-      const spanishOK = recording.textContent.trim() === '⏺ Grabar backup' &&
+      const spanishOK = bankSubtitle.textContent.trim() === '(Banco A: Pads 1 al 16)' && recording.textContent.trim() === '⏺ Grabar backup' &&
         deviceGuide.textContent.includes('Enviar: WRITE + SOUND + PLAY') &&
         backupInfoText().includes('Datos del módem NO verificados.') &&
         document.documentElement.lang === 'es' &&
         localeCookie() === 'es' &&
         localeNodes.every(x => x.node.nodeValue.trim() === x.es) &&
         localeAttrs.every(x => x.node.getAttribute(x.attr) === x.es);
+      const spanishDetails = {bank:document.getElementById('rackActiveBankSubtitle').textContent,cookie:localeCookie(), html:document.documentElement.lang, record:recording.textContent.trim(),guide:deviceGuide.textContent,info:backupInfoText(),nodes:localeNodes.filter(x=>x.node.nodeValue.trim()!==x.es).map(x=>({expected:x.es,actual:x.node.nodeValue.trim()})),attrs:localeAttrs.filter(x=>x.node.getAttribute(x.attr)!==x.es).map(x=>({expected:x.es,actual:x.node.getAttribute(x.attr)}))};
       setLanguage('en');
       setTimeout(() => {
-        const englishOK = recording.textContent.trim() === '⏺ Record backup' &&
+        const englishOK = bankSubtitle.textContent.trim() === '(Bank A: pads 1–16)' && recording.textContent.trim() === '⏺ Record backup' &&
           deviceGuide.textContent.includes('Send: WRITE + SOUND + PLAY') &&
           backupInfoText().includes('Modem payload NOT verified.') &&
           document.documentElement.lang === 'en' &&
@@ -136,7 +137,7 @@ window.addEventListener('load', () => {
         const filenameOK = probe.textContent === 'MyCustom-Sample_90bpm.wav';
         reporter.textContent = initialEnglish && spanishOK && englishOK && filenameOK
           ? 'BEATOS_BROWSER_ES_EN_PASS'
-          : 'FAIL:initial=' + initialEnglish + ',es=' + spanishOK + ',en=' + englishOK + ',filename=' + filenameOK;
+          : 'FAIL:initial=' + initialEnglish + ',es=' + spanishOK + ',en=' + englishOK + ',filename=' + filenameOK + ',details=' + JSON.stringify(spanishDetails);
       }, 250);
     }, 250);
   } catch (error) {reporter.textContent = 'FAIL:' + error.message;}
@@ -178,6 +179,9 @@ def local_site(html):
 
 def main():
     browser = next((shutil.which(x) for x in ("google-chrome", "chromium", "chromium-browser") if shutil.which(x)), None)
+    if not browser and sys.platform == 'darwin':
+        native_chrome = Path('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')
+        browser = str(native_chrome) if native_chrome.is_file() else None
     if not browser:
         raise SystemExit("Chrome/Chromium missing: real-browser verification cannot be marked passed")
     template = (ROOT / "templates" / "catalogo.html").read_text(encoding="utf-8")

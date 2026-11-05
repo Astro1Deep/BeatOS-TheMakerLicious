@@ -54,9 +54,9 @@ vm.runInContext(html.slice(html.indexOf('const PO_BACKUP_BUTTONS'),html.indexOf(
   assert.equal(bytes.readUInt32LE(24),48000);assert.equal(bytes.readUInt32LE(40),4);
   assert.equal(bytes.readInt16LE(44),1234);assert.equal(bytes.readInt16LE(46),-6789);
   el('poBackupModel').value='PO-33';
-  const backup={audio_compatible:true,model:'PO-33',path:'/archive/name #1.wav',filename:'name #1.wav'};
+  const backup={audio_compatible:true,model:'PO-33',path:'/archive/name #1.wav',filename:'name #1.wav',sha256:'a'.repeat(64)};
   context.restore(backup);assert.equal(audio.src,undefined);
-  confirmation=true;context.restore(backup);assert.ok(audio.src.endsWith('%2Farchive%2Fname%20%231.wav'));
+  confirmation=true;context.restore(backup);assert.equal(new URL(audio.src).searchParams.get('file'),backup.path);assert.equal(new URL(audio.src).searchParams.get('sha256'),backup.sha256);
   assert.equal(audio.playbackRate,1);assert.equal(audio.loop,false);assert.equal(audio.paused,true);
   assert.equal(audio.play,undefined);assert.equal(stopped,1);assert.equal(el('po33RestoreBox').hidden,false);
   const before=audio.src;

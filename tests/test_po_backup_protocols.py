@@ -21,6 +21,35 @@ def wav_bytes():
     return b.getvalue()
 
 class POBackupProtocolTests(unittest.TestCase):
+    def test_metadata_publication_failure_is_atomic_and_retryable(self):
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/'backup.wav';p.write_bytes(wav_bytes())
+            with patch('po_backup_protocols.os.replace',side_effect=OSError('disk full')):
+                with self.assertRaises(OSError):write_sidecar(p,'PO-33','Beat')
+            self.assertEqual(list(Path(d).iterdir()),[p])
+            metadata=write_sidecar(p,'PO-33','Beat')
+            self.assertEqual(read_sidecar(p,metadata['sha256'])['project'],'Beat')
+
+    def test_editable_metadata_cannot_claim_digital_or_physical_verification(self):
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/'backup.wav';p.write_bytes(wav_bytes());m=write_sidecar(p,'PO-33','Beat')
+            m.update(payload_verified=True,device_restore_verified=True,verification_status='PROTOCOL_CHECKSUM_VERIFIED')
+            p.with_suffix('.po.json').write_text(json.dumps(m))
+            loaded=read_sidecar(p,m['sha256'])
+            self.assertFalse(loaded['payload_verified']);self.assertFalse(loaded['device_restore_verified'])
+            self.assertEqual(loaded['verification_status'],'AUDIO_ARCHIVED_NOT_DECODED')
+
+    def test_decoder_cannot_verify_a_file_changed_during_its_run(self):
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/'backup.wav';p.write_bytes(wav_bytes())
+            def mutate(*args,**kwargs):
+                from subprocess import CompletedProcess
+                p.write_bytes(wav_bytes()+b'changed')
+                return CompletedProcess(args,0,json.dumps({'payload_verified':True,'packet_count':18,'pattern_count':16,'end_marker_valid':True}),'')
+            with patch('po_backup_protocols.subprocess.run',side_effect=mutate):
+                result=verify_modem(p,'PO-33')
+            self.assertFalse(result['payload_verified']);self.assertEqual(result['status'],'SOURCE_CHANGED_DURING_VERIFICATION')
+
     def test_explicit_device_profiles_and_backup_only_models(self):
         self.assertEqual(set(PROFILES),{'PO-32','PO-33','PO-35','PO-133','PO-137'})
         for model in PROFILES:

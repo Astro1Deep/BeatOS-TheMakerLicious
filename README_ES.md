@@ -17,6 +17,9 @@ BeatOS es una estación de preparación de kits para músicos, beatmakers y prod
 
 </details>
 
+
+**Alcance de la descarga:** el ZIP publicado `v3.8.0` corresponde al 30 de octubre de 2026. La rama `main` contiene trabajo posterior de Pocket Operator y hardware que no se incorpora automáticamente a ese ZIP. Los paquetes de fuentes de Actions son versiones de desarrollo; comprueba los resultados del commit correspondiente.
+
 ## Instalación
 
 Necesitas Python 3.11 o posterior, un navegador de escritorio y una carpeta de samples propia. FFmpeg es recomendable y obligatorio para determinadas conversiones de audio y frecuencia.

@@ -16,6 +16,7 @@ import tempfile
 
 # The local HTTP server is threaded. Decode at most one untrusted WAV at a time.
 _VERIFY_SLOT = threading.BoundedSemaphore(1)
+_SIDECAR_LOCK = threading.Lock()
 
 PROFILES = {
     'PO-32': {'name':'Tonic','send':'WRITE + SOUND','receive':'ACC + SOUND',
@@ -62,15 +63,22 @@ def write_sidecar(path, model, project, *, source=''):
     }
     destination=_sidecar(path)
     encoded=(json.dumps(meta,ensure_ascii=False,indent=2)+'\n').encode('utf-8')
-    try:
-        with destination.open('xb') as output:
-            output.write(encoded)
-            output.flush();os.fsync(output.fileno())
-    except FileExistsError:
-        existing=read_sidecar(path,sha256)
-        if not existing or existing.get('model')!=model or existing.get('project')!=project.strip():
-            raise ValueError('Conflicting project metadata; prior entry not replaced')
-        return existing
+    with _SIDECAR_LOCK:
+        if destination.exists() or destination.is_symlink():
+            existing=read_sidecar(path,sha256)
+            if not existing or existing.get('model')!=model or existing.get('project')!=project.strip():
+                raise ValueError('Conflicting project metadata; prior entry not replaced')
+            return existing
+        temporary=None
+        try:
+            with tempfile.NamedTemporaryFile(dir=destination.parent, prefix='.po-metadata-', delete=False) as output:
+                temporary=Path(output.name)
+                output.write(encoded)
+                output.flush();os.fsync(output.fileno())
+            os.replace(temporary,destination)
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
     return meta
 
 def read_sidecar(path, sha256):
@@ -93,8 +101,10 @@ def read_sidecar(path, sha256):
                 or type(meta.get('size_bytes')) is not int
                 or meta['size_bytes'] != path.stat().st_size):
             return None
-        # A sidecar may not assert physical verification merely because it was edited.
+        # Proof comes from a fresh decoder result, never from editable project metadata.
         meta['device_restore_verified']=False
+        meta['payload_verified']=False
+        meta['verification_status']='AUDIO_ARCHIVED_NOT_DECODED'
         return meta
     except (OSError,ValueError,TypeError):
         return None
@@ -128,8 +138,10 @@ def verify_modem(wav_path,model):
     try:
         py_bin = _resolve_decoder_python()
         try:
+            with wav.open('rb') as source:
+                source_hash=hashlib.file_digest(source,'sha256').hexdigest()
             execution=subprocess.run([py_bin,'-I','-B',str(decoder),str(wav)],
-                       capture_output=True,text=True,timeout=90,check=False)
+                       stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=90,check=False)
         except subprocess.TimeoutExpired:
             return {**result,'status':'VERIFY_TIMEOUT'}
         except OSError:
@@ -150,7 +162,15 @@ def verify_modem(wav_path,model):
         if execution.returncode!=0 or not structurally_complete:
             return {**result,'status':'PROTOCOL_NOT_VERIFIED',
                     'detail':str(report.get('detail',''))[:350]}
+        try:
+            with wav.open('rb') as source:
+                after_hash=hashlib.file_digest(source,'sha256').hexdigest()
+        except OSError:
+            return {**result,'status':'SOURCE_CHANGED_DURING_VERIFICATION'}
+        if after_hash!=source_hash or wav.is_symlink():
+            return {**result,'status':'SOURCE_CHANGED_DURING_VERIFICATION'}
         return {**result,'status':'PROTOCOL_CHECKSUM_VERIFIED','payload_verified':True,
+                'sha256':source_hash,
                 'packet_count':report['packet_count'],'pattern_count':16,
                 'bpm':report.get('bpm'),
                 'verification_scope':'PO-33 packet CRC, transfer end marker and structure only'}
