@@ -1458,7 +1458,7 @@ def export_ep133_ko2_kit(
 ) -> tuple[str, str]:
     """
     Genera un paquete de Drum Kit estructurado para Teenage Engineering EP-133 K.O. II.
-    Mapea hasta 16 pads con slots de sonido (001 a 016), grupos A y B, y genera:
+    Mapea hasta 48 sonidos sobre las 12 teclas de los grupos A–D y genera:
     1. Carpeta con samples .wav listos para arrastrar al EP Sample Tool (teenage.engineering/apps/ep-sample-tool)
     2. Archivo meta.json con asignaciones de grupo, tecla, volumen, afinación y paneo.
     3. Archivo ZIP de transporte de muestras y mapa; no es un backup nativo del EP-133.
@@ -1469,7 +1469,6 @@ def export_ep133_ko2_kit(
     clean_kit_name = re.sub(r"[^a-zA-Z0-9_\-]", "_", kit_name.strip()) or "EP133_Kit"
     kit_dir = Path(output_dir) / clean_kit_name
     sounds_dir = kit_dir / "sounds"
-    sounds_dir.mkdir(parents=True, exist_ok=True)
 
     # Mapeo de teclas de hardware EP-133 (12 teclas por grupo: 1-9, ., 0, ENTER en Grupos A, B, C, D)
     base_group_keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "ENTER"]
@@ -1478,6 +1477,9 @@ def export_ep133_ko2_kit(
         for grp in ("A", "B", "C", "D")
         for k in base_group_keys
     ]
+    if any(not 1 <= int(number) <= len(ep_keys) for number in pads_data):
+        raise ValueError('EP-133: el mapa de un kit admite 4 grupos de 12 sonidos (48 en total)')
+    sounds_dir.mkdir(parents=True, exist_ok=True)
 
     manifest = {
         "version": 1,
@@ -1492,8 +1494,6 @@ def export_ep133_ko2_kit(
     copied_count = 0
     for raw_key in sorted(pads_data, key=lambda k: int(k)):
         pad_num = int(raw_key)
-        if not 1 <= pad_num <= 64:
-            continue
         p_info = pads_data[raw_key]
         src_path = p_info.get("source_path", "")
         s_name = p_info.get("sample_name", f"Sound_{pad_num:02d}")
@@ -1501,7 +1501,7 @@ def export_ep133_ko2_kit(
         slot_filename = f"{pad_num:03d}_PAD{pad_num:02d}_{clean_name}.wav"
         dest_file = sounds_dir / slot_filename
 
-        grp, key = ep_keys[pad_num - 1] if pad_num - 1 < len(ep_keys) else ("D", str(pad_num))
+        grp, key = ep_keys[pad_num - 1]
 
         if not src_path or not Path(src_path).is_file():
             raise ValueError(f"Muestra ausente en pad {pad_num}")
@@ -1532,7 +1532,7 @@ def export_ep133_ko2_kit(
 TEENAGE ENGINEERING EP-133 K.O. II — KIT DE SAMPLES (BeatOS The MakerLicious)
 ================================================================================
 Kit: {clean_kit_name}
-Total de Muestras: {copied_count} / 16
+Total de Muestras: {copied_count} / 48
 
 INSTRUCCIONES DE IMPORTACIÓN:
 1. Conecta tu EP-133 K.O. II por USB-C a tu ordenador y enciéndelo.
@@ -1540,7 +1540,7 @@ INSTRUCCIONES DE IMPORTACIÓN:
    https://teenage.engineering/apps/ep-sample-tool
 3. Método A (Arrastrar y Soltar):
    - Abre la carpeta 'sounds/' y arrastra los archivos .wav directamente a los
-     slots de sonido deseados (001 - 016).
+     slots de sonido deseados.
 4. El ZIP es un contenedor de transporte de BeatOS. Extráelo y carga los WAV.
    No lo restaures como backup nativo. Los grupos de choke del mapa son una
    referencia: configura las asignaciones en el hardware.
@@ -1562,13 +1562,14 @@ MAPEO DE PADS A TECLAS EP-133:
 - Pad 14 -> Grupo B, Tecla 2
 - Pad 15 -> Grupo B, Tecla 3
 - Pad 16 -> Grupo B, Tecla 4
+- Pads 17–24: Grupo B, teclas 5–ENTER; 25–36: Grupo C; 37–48: Grupo D.
 ================================================================================
 """
     readme_en_content = f"""================================================================================
 TEENAGE ENGINEERING EP-133 K.O. II — BEATOS SAMPLE KIT
 ================================================================================
 Kit: {clean_kit_name}
-Samples: {copied_count} / 16
+Samples: {copied_count} / 48
 
 IMPORT INSTRUCTIONS:
 1. Connect EP-133 K.O. II to the computer with a USB-C data cable.
@@ -1587,6 +1588,7 @@ BEATOS PAD → EP-133 GROUP / KEY:
   05=A/5   06=A/6   07=A/7   08=A/8
   09=A/9   10=A/.   11=A/0   12=A/ENTER
   13=B/1   14=B/2   15=B/3   16=B/4
+  17–24=B/5–ENTER   25–36=Group C   37–48=Group D
 ================================================================================
 """
     with open(kit_dir / "README_EP133_KO_II.txt", "w", encoding="utf-8") as f:
@@ -2351,7 +2353,7 @@ def create_kit(
     if target_lower not in valid_targets:
         raise ValueError("Destino de exportación no reconocido")
     target_max_pads = {
-        'universal': 160,
+        'universal': 128,
         'mpc': 128,
         'mpc1000': 64,
         'mpc2500': 64,
@@ -2361,17 +2363,20 @@ def create_kit(
         'maschine': 128,
         'sp404mk2': 160,
         'sp404a': 160,
-        'ep133': 64,
-        'ep-133': 64,
-        'ko2': 64,
-        'ko-ii': 64,
-        'ko_ii': 64,
+        'ep133': 48,
+        'ep-133': 48,
+        'ko2': 48,
+        'ko-ii': 48,
+        'ko_ii': 48,
         'po33': 16,
         'po-33': 16,
         'pocket_operator': 16,
     }.get(target_lower, 128)
     if not pads_dict or any(not 1 <= n <= target_max_pads for n in pads_dict):
-        raise ValueError("El rack admite pads 1 a 16 y necesita al menos una muestra")
+        raise ValueError(f"El destino '{target}' admite pads 1 a {target_max_pads}; selecciona un destino específico para más bancos")
+    sp404a_omitted = [number for number in sorted(pads_dict) if (number - 1) % 16 >= 12]
+    if target_lower == 'sp404a' and sp404a_omitted:
+        raise ValueError('SP-404A/SX: cada banco tiene 12 pads; mueve los sonidos de las posiciones 13–16 antes de exportar')
     for number, pad in pads_dict.items():
         source = Path(pad.get('source_path', '')).resolve()
         if not source.is_relative_to(source_root.resolve()) or not source.is_file():
@@ -2386,6 +2391,14 @@ def create_kit(
         raise FileExistsError("Ya existe un kit con ese nombre. Elige otro para conservar el original.")
     output_base_dir.mkdir(parents=True, exist_ok=False)
     targets_result = {}
+    warnings = []
+
+    def supported_pads(destination, allowed):
+        selected = {number: pad for number, pad in pads_dict.items() if number in allowed}
+        omitted = sorted(pads_dict.keys() - selected.keys())
+        if omitted:
+            warnings.append({'target': destination, 'omitted_pads': omitted})
+        return selected
 
     try:
         # 1. Akai MPC (Modern Standalone: Live / One / X / Key / Beats)
@@ -2400,18 +2413,18 @@ def create_kit(
             }
 
         # 1b. Akai MPC 1000 / 2500 / 500 / JJOS (.PGM 10,756 bytes + WAV 16/44.1)
-        if target_lower in ("universal", "mpc1000", "mpc2500", "mpc_legacy"):
+        if target_lower in ("universal", "mpc1000", "mpc2500", "mpc_legacy") and (mpc1k_pads := supported_pads('mpc1000', range(1, 65))):
             mpc1k_dir = output_base_dir / "Akai_MPC1000_2500"
-            pgm1k_path = export_mpc1000_pgm_kit(clean_kit_name, pads_dict, mpc1k_dir)
+            pgm1k_path = export_mpc1000_pgm_kit(clean_kit_name, mpc1k_pads, mpc1k_dir)
             targets_result["mpc1000"] = {
                 "pgm_path": str(pgm1k_path),
                 "folder": str(mpc1k_dir),
             }
 
         # 1c. Akai MPC 2000 / 2000XL (.PGM 2,308 bytes + WAV DOS 8.3 16/44.1)
-        if target_lower in ("universal", "mpc2000xl", "mpc2000", "mpc_legacy"):
+        if target_lower in ("universal", "mpc2000xl", "mpc2000", "mpc_legacy") and (mpc2k_pads := supported_pads('mpc2000xl', range(1, 65))):
             mpc2k_dir = output_base_dir / "Akai_MPC2000XL"
-            pgm2k_path = export_mpc2000xl_pgm_kit(clean_kit_name, pads_dict, mpc2k_dir)
+            pgm2k_path = export_mpc2000xl_pgm_kit(clean_kit_name, mpc2k_pads, mpc2k_dir)
             targets_result["mpc2000xl"] = {
                 "pgm_path": str(pgm2k_path),
                 "folder": str(mpc2k_dir),
@@ -2430,16 +2443,16 @@ def create_kit(
             targets_result["sp404mk2"] = {"import_folder": mk2_path}
 
         # 4. Roland SP-404A / SX
-        if target_lower in ("universal", "sp404a"):
+        if target_lower in ("universal", "sp404a") and (sp_a_pads := supported_pads('sp404a', {n for n in pads_dict if (n-1) % 16 < 12})):
             sp_a_dir = output_base_dir / "Roland_SP404A"
-            a_path = export_sp404a_kit(clean_kit_name, pads_dict, sp_a_dir)
+            a_path = export_sp404a_kit(clean_kit_name, sp_a_pads, sp_a_dir)
             targets_result["sp404a"] = {"folder": a_path}
 
         # 5. Teenage Engineering Pocket Operator PO-33 / PO-133
-        if target_lower in ("universal", "po33", "po-33", "pocket_operator"):
+        if target_lower in ("universal", "po33", "po-33", "pocket_operator") and (po_pads := supported_pads('po33', sorted(pads_dict)[:16])):
             po_dir = output_base_dir / "Pocket_Operator_PO33"
             reel_wav, duration, slices = export_po33_drum_reel(
-                clean_kit_name, pads_dict, po_dir, **(po_options or {})
+                clean_kit_name, po_pads, po_dir, **(po_options or {})
             )
             targets_result["po33"] = {
                 "reel_wav": reel_wav,
@@ -2449,14 +2462,14 @@ def create_kit(
             }
 
         # 6. Teenage Engineering EP-133 K.O. II
-        if target_lower in ("universal", "ep133", "ep-133", "ko2", "ko-ii", "ko_ii"):
+        if target_lower in ("universal", "ep133", "ep-133", "ko2", "ko-ii", "ko_ii") and (ep_pads := supported_pads('ep133', range(1, 49))):
             ep_dir = output_base_dir / "Teenage_Engineering_EP133"
             ep_dir.mkdir(parents=True, exist_ok=True)
-            ep_folder, ep_pak = export_ep133_ko2_kit(clean_kit_name, pads_dict, ep_dir)
+            ep_folder, ep_pak = export_ep133_ko2_kit(clean_kit_name, ep_pads, ep_dir)
             targets_result["ep133"] = {
                 "folder": ep_folder,
                 "pak_package": ep_pak,
-                "slots_count": len(pads_dict),
+                "slots_count": len(ep_pads),
             }
 
         return {
@@ -2466,6 +2479,7 @@ def create_kit(
             "kit_path": str(output_base_dir),
             "samples_count": len(pads_dict),
             "targets": targets_result,
+            "warnings": warnings,
             "message": f"Kit '{clean_kit_name}' generado exitosamente para destino '{target}'.",
         }
     except Exception:

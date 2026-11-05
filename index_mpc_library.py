@@ -13,7 +13,7 @@ from pathlib import Path
 import os
 import sys
 sys.dont_write_bytecode = True
-from beatos_paths import data_dir as library_data_dir, write_catalog
+from beatos_paths import CATALOG_REL, database_path, data_dir as library_data_dir, write_catalog
 from beatos_i18n import translate_text
 import sqlite3
 import json
@@ -347,6 +347,42 @@ def render_catalog(template, records, metadata, root_path=None):
     return rendered.replace('<!--PROJECT_CARDS-->', ''.join(project_cards)).replace(
         '<!--EXPANSION_CARDS-->', ''.join(expansion_cards))
 
+CATALOG_QUERY = """SELECT filename, sound_type, sample_format, macro_category,
+    sub_pack, COALESCE(bpm, 0), COALESCE(musical_key, '-'), COALESCE(camelot, '-'),
+    energy_level, size_mb, rel_path, id FROM samples ORDER BY id"""
+
+
+def restore_empty_catalog(root, template_path=None):
+    """Recover an installed blank preview from its existing index, without reindexing."""
+    root = Path(root).resolve()
+    catalog = root / CATALOG_REL
+    if catalog.is_file():
+        text = catalog.read_text(encoding='utf-8')
+        marker = re.search(r'const SAMPLES\s*=\s*', text)
+        if not marker or json.JSONDecoder().raw_decode(text[marker.end():])[0] != []:
+            return False
+    database = database_path(root)
+    metadata_file = database.parent / 'mpc_sample.json'
+    if not database.is_file() or not metadata_file.is_file():
+        return False
+    with sqlite3.connect(database.as_uri() + '?mode=ro', uri=True) as connection:
+        records = connection.execute(CATALOG_QUERY).fetchall()
+        if not records:
+            return False
+        metadata = json.loads(metadata_file.read_text(encoding='utf-8'))
+        if (not isinstance(metadata, dict)
+                or not isinstance(metadata.get('projects'), list)
+                or not isinstance(metadata.get('expansions'), list)
+                or metadata.get('total_samples') != len(records)
+                or len(metadata.get('projects', [])) != connection.execute('SELECT COUNT(*) FROM projects').fetchone()[0]
+                or len(metadata.get('expansions', [])) != connection.execute('SELECT COUNT(*) FROM expansions').fetchone()[0]):
+            raise ValueError('Catalog recovery requires matching database and metadata; existing files were preserved')
+    template = Path(template_path) if template_path else Path(__file__).parent / 'templates/catalogo.html'
+    html = render_catalog(template.read_text(encoding='utf-8'), records, metadata, root_path=str(root))
+    write_catalog(root, html)
+    return True
+
+
 def main():
     parser = argparse.ArgumentParser(description="Indexador Universal de Samples y Proyectos para Akai MPC")
     parser.add_argument("--path", "-p", default=".", help="Ruta de la tarjeta SD, USB o carpeta de samples (por defecto: directorio actual)")
@@ -586,11 +622,7 @@ def main():
 
     # 5. Generar Catálogo HTML5
     emit("\n🌐 5. Generando Catálogo Web HTML5 interactivo...")
-    cur.execute("""
-    SELECT filename, sound_type, sample_format, macro_category, sub_pack, COALESCE(bpm, 0), COALESCE(musical_key, '-'), COALESCE(camelot, '-'), energy_level, size_mb, rel_path, id
-    FROM samples
-    ORDER BY id
-    """)
+    cur.execute(CATALOG_QUERY)
     catalog_records = cur.fetchall()
     records_json = json.dumps(catalog_records, ensure_ascii=False)
     metadata_json = json.dumps(json_payload, ensure_ascii=False)

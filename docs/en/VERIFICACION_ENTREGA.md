@@ -21,3 +21,6 @@ The runtime tests use synthetic audio, not a physically connected MPC, Maschine,
 Install in a fresh folder; preserve your musical library, projects and backed-up PO WAVs independently. Reindex against the intended library path; then **reload the entire browser page** after updating application code, which discards any in-memory unexported rack edits. An in-page “Reload projects” operation does not update old JavaScript.
 
 The Windows CI installer test covers archive extraction, paths with spaces/accents, synthetic media indexing, local HTTP preview and sample-kit export/reimport; it is **not** a native graphical UI certification or a Windows ARM/hardware test.
+## November 2026 source audit
+
+Post-release fixes recover an empty catalog from its existing index, reject opaque/cross-site browser origins and verify a WAV checksum before transmitting the snapshot tied to it. Editable project metadata cannot assert digital or physical verification. Bundle output reports destination omissions and does not generate empty deliveries. Software tests do not certify physical restores or legacy binary programs on all hardware/firmware combinations.

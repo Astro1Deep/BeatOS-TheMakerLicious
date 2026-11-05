@@ -113,24 +113,21 @@ class ServerSecurityTests(unittest.TestCase):
             self.assertEqual(self.request(url + '/inside.txt', headers={'Origin': url})[0], 200)
             self.assertEqual(self.request(url + '/api/po33_backups', headers={'Sec-Fetch-Site':'cross-site'})[0],403)
 
-    def test_supports_null_origin_for_local_file_catalog(self):
-        import urllib.request, json
+    def test_opaque_web_origins_cannot_read_or_preflight_local_api(self):
         with self.server() as (url, _):
-            status, body = self.request(url + '/api/status', headers={'Origin': 'null'})
-            self.assertEqual(status, 200)
-            data = json.loads(body.decode('utf-8'))
-            self.assertEqual(data.get('status'), 'online')
+            for site in ('cross-site', 'none'):
+                headers={'Origin':'null','Sec-Fetch-Site':site}
+                self.assertEqual(self.request(url+'/api/status',headers=headers)[0],403)
+                self.assertEqual(self.request(url+'/api/theme',method='OPTIONS',headers={**headers,'Access-Control-Request-Method':'POST'})[0],403)
 
-            req = urllib.request.Request(url + '/api/theme', headers={
-                'Origin': 'null',
-                'Access-Control-Request-Method': 'POST',
-                'Access-Control-Request-Headers': 'content-type',
-            })
-            req.get_method = lambda: 'OPTIONS'
-            with urllib.request.urlopen(req) as resp:
-                self.assertEqual(resp.status, 204)
-                self.assertEqual(resp.headers.get('Access-Control-Allow-Origin'), 'null')
-                self.assertEqual(resp.headers.get('Access-Control-Allow-Private-Network'), 'true')
+    def test_disconnected_library_cannot_report_another_card_as_online(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as tmp,patch.object(serve_mpc,'detect_cerebro_os',return_value={}):
+            missing=str(Path(tmp)/'gone')
+            status=serve_mpc.get_system_status(missing)
+            self.assertEqual(status['status'],'library_unavailable')
+            self.assertFalse(status['card_mounted']);self.assertFalse(status['library_available'])
+            self.assertEqual(serve_mpc.get_system_status(tmp)['status'],'online')
 
     def test_rejects_oversized_or_negative_request_lengths(self):
         with self.server() as (url, _):
@@ -150,6 +147,11 @@ class ServerSecurityTests(unittest.TestCase):
             self.assertEqual(info['sha256'],hashlib.sha256(raw).hexdigest());self.assertFalse(info['payload_verified'])
             self.assertTrue(Path(info['path']).is_relative_to(parent.resolve()/'library/BeatOS/data/po33_backups'))
             self.assertEqual(self.request(url+'/api/po33_backup_audio?file='+urllib.parse.quote(info['path'])),(200,raw))
+            protected_url=url+'/api/po33_backup_audio?file='+urllib.parse.quote(info['path'])+'&sha256='+info['sha256']
+            self.assertEqual(self.request(protected_url),(200,raw))
+            Path(info['path']).write_bytes(raw+b'changed')
+            self.assertEqual(self.request(protected_url)[0],409)
+            Path(info['path']).write_bytes(raw)
             inventory=json.loads(self.request(url+'/api/po33_backups')[1])
             self.assertIn(info['path'],[b['path'] for b in inventory['backups']])
             self.assertEqual(self.request(url+'/api/po33_backup_audio?file='+str(parent/'outside.txt'))[0],404)

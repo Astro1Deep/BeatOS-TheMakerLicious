@@ -19,6 +19,10 @@ BeatOS is a local, open-source sample-library browser and kit-preparation workst
 
 </details>
 
+**Release boundary:** the published `v3.8.0` ZIP is the 30 October 2026 snapshot. The `main` branch contains later Pocket Operator and hardware work; these additions are not automatically included in that ZIP. Treat Actions source builds as development builds and consult the checks for their exact commit.
+
+**Export limits:** the universal bundle supports source pad IDs 1–128. Each delivery reports omitted pads when a destination has fewer slots, and empty destination programs are not generated. EP-133 maps four groups of twelve keys; SP-404A/SX uses twelve positions per bank. Move unsupported cells or choose another destination before individual export.
+
 ## Quick start
 
 **Requirements:** Python 3.11+, a local sample-library folder, a desktop browser. FFmpeg is recommended and required for format conversion, resampling and some pitch operations. No commercial samples or private libraries are included.
