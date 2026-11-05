@@ -32,3 +32,7 @@ Sigue la [guía](../GUIA_INSTALACION.md) en una carpeta nueva. Conserva tu bibli
 Abre el servidor sobre la biblioteca que acabas de indexar. Después de actualizar código, recarga la página completa: el botón «Recargar proyectos» sólo sustituye las tarjetas, no el JavaScript ya abierto. Cambiar de origen o cerrar la página descarta los ajustes del rack que no se hayan exportado.
 
 El trabajo windows-release-install ejecuta el instalador real del ZIP estable y del ZIP construido desde las fuentes actuales en un ejecutor Windows. Comprueba rutas con espacios y acentos, índice SQLite, preescucha HTTP y exportación/reimportación MPC con WAV sintéticos. El resumen de cada ejecución identifica Windows, arquitectura, Python y SHA-256. Esto no certifica interacción gráfica, Windows ARM ni carga en un sampler físico.
+
+## Auditoría de fuentes de noviembre de 2026
+
+Las correcciones posteriores a la publicación estable recuperan un catálogo vacío desde su índice existente, rechazan orígenes web opacos/cross-site y comprueban la huella de los WAV antes de transmitir la copia correspondiente a esa huella. Los metadatos de proyectos no pueden atribuirse una verificación digital o física por edición de JSON. El bundle informa de omisiones por hardware y no genera entregas vacías. Las pruebas de software no certifican restauraciones físicas ni programas binarios heredados en todos los modelos y versiones de firmware.

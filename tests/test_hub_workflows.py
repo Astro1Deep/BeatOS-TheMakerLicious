@@ -4,6 +4,23 @@ from unittest.mock import patch
 import hardware_kit_builder as kits
 
 class HubWorkflows(unittest.TestCase):
+    def test_destination_limits_never_publish_empty_or_impossible_deliveries(self):
+        for target,number in [('universal',129),('sp404a',13),('ep133',49)]:
+            with self.subTest(target=target),self.assertRaises(ValueError):
+                kits.create_kit('Invalid_'+target,[{'pad':number,'rel_path':'stereo.wav'}],target,source_root=self.root)
+            self.assertFalse((self.root/'Custom_Kits'/('Invalid_'+target)).exists())
+        result=kits.create_kit('EP48',[{'pad':48,'rel_path':'stereo.wav'}],'ep133',source_root=self.root)
+        metadata=json.loads((Path(result['targets']['ep133']['folder'])/'meta.json').read_text())
+        self.assertEqual((metadata['sounds'][0]['group'],metadata['sounds'][0]['key']),('D','ENTER'))
+
+    @unittest.skipUnless(shutil.which('ffmpeg'),'FFmpeg required for the universal bundle')
+    def test_multibank_bundle_preserves_modern_pads_and_reports_limited_destinations(self):
+        result=kits.create_kit('HighBank',[{'pad':100,'rel_path':'stereo.wav'}],'universal',source_root=self.root)
+        self.assertIn(100,kits.parse_xpj_project(result['targets']['mpc']['project_path'],self.root)['pads'])
+        self.assertNotIn('mpc1000',result['targets']);self.assertNotIn('mpc2000xl',result['targets']);self.assertNotIn('ep133',result['targets'])
+        self.assertEqual({w['target'] for w in result['warnings']},{'mpc1000','mpc2000xl','ep133'})
+        self.assertTrue(all(w['omitted_pads']==[100] for w in result['warnings']))
+
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name)
         self.audio=self.root/'stereo.wav'

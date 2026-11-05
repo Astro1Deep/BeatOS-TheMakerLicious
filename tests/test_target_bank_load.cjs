@@ -105,3 +105,15 @@ assert.equal(bankAItems[0].rel_path, 'Kicks/Kick_A.wav');
 assert.equal(bankBItems[0].rel_path, 'Perc/Conga_B.wav');
 
 console.log('Multi-bank assignment: target bank loading, independent bank preservation and multi-bank export payload OK');
+
+// EP-133 stores 12 physical keys per group in a 16-cell editor bank.
+nodes.rackTargetSelect.value = 'ep133';
+ctx.currentLang='en';ctx.showToast=()=>{};
+ctx.getTargetHardwareProfile=()=>({maxBanks:4,padsPerBank:12,maxPads:48});
+vm.runInContext("for(let i=0;i<RACK_BANKS.length;i++)RACK_BANKS[i]=Array(16).fill(null);currentRackBank=3;RACK_PADS=Array(16).fill(null);RACK_PADS[0]={filename:'D1.wav',relPath:'D1.wav',muteGroup:0};RACK_PADS[11]={filename:'D12.wav',relPath:'D12.wav',muteGroup:0};",ctx);
+assert.deepEqual(Array.from(ctx.getActivePadsPayload(),p=>p.pad),[37,48]);
+vm.runInContext("RACK_PADS[12]={filename:'invalid.wav',relPath:'invalid.wav',muteGroup:0};",ctx);
+assert.equal(ctx.getActivePadsPayload(),null,'Reserved cells cannot be dropped or assigned nonexistent EP keys');
+vm.runInContext("RACK_PADS[12]=null;RACK_BANKS[4]=Array(16).fill(null);RACK_BANKS[4][0]={filename:'hidden.wav',relPath:'hidden.wav',muteGroup:0};",ctx);
+assert.equal(ctx.getActivePadsPayload(),null,'Banks outside target capacity cannot disappear from an export');
+console.log('EP groups: dense 12-key addressing, reserved cells and hidden banks guarded OK');
