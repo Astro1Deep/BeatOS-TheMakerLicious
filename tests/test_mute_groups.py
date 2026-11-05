@@ -185,7 +185,7 @@ class MuteGroups(unittest.TestCase):
             self.assertTrue((maschine_dir / 'Samples' / 'Group_B').is_dir())
             self.assertTrue((maschine_dir / 'Samples' / 'Group_D').is_dir())
             # EP-133 has 48 destinations; report unsupported universal source IDs.
-            ep_sounds = Path(res['targets']['ep133']['folder']) / 'Sounds'
+            ep_sounds = Path(res['targets']['ep133']['folder']) / 'sounds'
             self.assertTrue(any(f.name.startswith('017_PAD17_') for f in ep_sounds.glob('*.wav')))
             self.assertFalse(any(f.name.startswith('050_PAD50_') for f in ep_sounds.glob('*.wav')))
             self.assertIn({'target': 'ep133', 'omitted_pads': [50]}, res['warnings'])

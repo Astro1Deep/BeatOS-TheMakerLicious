@@ -1532,7 +1532,7 @@ def export_ep133_ko2_kit(
 TEENAGE ENGINEERING EP-133 K.O. II — KIT DE SAMPLES (BeatOS The MakerLicious)
 ================================================================================
 Kit: {clean_kit_name}
-Total de Muestras: {copied_count} / 16
+Total de Muestras: {copied_count} / 48
 
 INSTRUCCIONES DE IMPORTACIÓN:
 1. Conecta tu EP-133 K.O. II por USB-C a tu ordenador y enciéndelo.
@@ -1540,7 +1540,7 @@ INSTRUCCIONES DE IMPORTACIÓN:
    https://teenage.engineering/apps/ep-sample-tool
 3. Método A (Arrastrar y Soltar):
    - Abre la carpeta 'sounds/' y arrastra los archivos .wav directamente a los
-     slots de sonido deseados (001 - 016).
+     slots de sonido deseados.
 4. El ZIP es un contenedor de transporte de BeatOS. Extráelo y carga los WAV.
    No lo restaures como backup nativo. Los grupos de choke del mapa son una
    referencia: configura las asignaciones en el hardware.
@@ -1562,13 +1562,14 @@ MAPEO DE PADS A TECLAS EP-133:
 - Pad 14 -> Grupo B, Tecla 2
 - Pad 15 -> Grupo B, Tecla 3
 - Pad 16 -> Grupo B, Tecla 4
+- Pads 17–24: Grupo B, teclas 5–ENTER; 25–36: Grupo C; 37–48: Grupo D.
 ================================================================================
 """
     readme_en_content = f"""================================================================================
 TEENAGE ENGINEERING EP-133 K.O. II — BEATOS SAMPLE KIT
 ================================================================================
 Kit: {clean_kit_name}
-Samples: {copied_count} / 16
+Samples: {copied_count} / 48
 
 IMPORT INSTRUCTIONS:
 1. Connect EP-133 K.O. II to the computer with a USB-C data cable.
@@ -1587,6 +1588,7 @@ BEATOS PAD → EP-133 GROUP / KEY:
   05=A/5   06=A/6   07=A/7   08=A/8
   09=A/9   10=A/.   11=A/0   12=A/ENTER
   13=B/1   14=B/2   15=B/3   16=B/4
+  17–24=B/5–ENTER   25–36=Group C   37–48=Group D
 ================================================================================
 """
     with open(kit_dir / "README_EP133_KO_II.txt", "w", encoding="utf-8") as f:
