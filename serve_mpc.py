@@ -391,11 +391,13 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
         low_ratio = 0.0
         crest_db = 0.0
         acoustic_role = stype
+        resolved_wav: Optional[Path] = None
 
         if rel_path:
             try:
                 wav_path = resolve_library_path(root_dir, rel_path)
                 if wav_path.is_file() and wav_path.suffix.lower() == ".wav":
+                    resolved_wav = wav_path
                     with wave.open(str(wav_path), "rb") as wf:
                         n_ch = wf.getnchannels()
                         sw = wf.getsampwidth()
@@ -444,6 +446,12 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
         elif is_tom:
             acoustic_role = "TOM"
 
+        smart_vol = (
+            kit_mod.compute_smart_pad_volume(stype, resolved_wav)
+            if kit_mod and hasattr(kit_mod, "compute_smart_pad_volume")
+            else {"volume": 0.501187, "gain_db": -6.0, "peak_dbfs": 0.0, "rms_dbfs": -12.0}
+        )
+
         pad_reports.append({
             "pad": p_num,
             "sample_name": sname,
@@ -459,6 +467,10 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
             "pitch_class": None,
             "cents_offset": 0,
             "recommended_tune": int(item.get("tune") or 0),
+            "recommended_volume": smart_vol["volume"],
+            "recommended_gain_db": smart_vol["gain_db"],
+            "peak_dbfs": smart_vol["peak_dbfs"],
+            "rms_dbfs": smart_vol["rms_dbfs"],
         })
 
     # Detección de tono fundamental (CQT/YIN Autocorrelación) y bloqueo armónico de 808s
@@ -538,12 +550,12 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
     style_info = (
         kit_mod.detect_musical_style(combined_text, bpm=current_tempo if current_tempo != 120.0 else None)
         if kit_mod and hasattr(kit_mod, "detect_musical_style")
-        else {"id": "standard", "style": "Hip-Hop / Electrónica", "bpm": current_tempo, "mute_profile": "real_drums"}
+        else {"id": "standard", "style": "Hip-Hop / Electrónica", "bpm": current_tempo, "mute_profile": "punch_clean"}
     )
 
     # Si el análisis acústico detecta colas subgraves/808 densas, priorizar perfil club_clean
-    recommended_profile = style_info.get("mute_profile", "real_drums")
-    if sub_heavy_count >= 2 and recommended_profile == "real_drums":
+    recommended_profile = style_info.get("mute_profile", "punch_clean")
+    if sub_heavy_count >= 2 and recommended_profile in ("real_drums", "punch_clean"):
         recommended_profile = "club_clean"
 
     inferred_bpm = kit_mod.infer_kit_bpm(combined_text, fallback=style_info.get("bpm", current_tempo)) if kit_mod else current_tempo
@@ -615,10 +627,10 @@ def build_cerebro_smart_kit(root_dir: str, payload: dict) -> dict:
     style_info = (
         kit_mod.detect_musical_style(prompt)
         if kit_mod and hasattr(kit_mod, "detect_musical_style")
-        else {"id": "standard", "style": "Hip-Hop / Electrónica", "bpm": 120.0, "mute_profile": "real_drums"}
+        else {"id": "standard", "style": "Hip-Hop / Electrónica", "bpm": 120.0, "mute_profile": "punch_clean"}
     )
     target_bpm = float(payload.get("bpm") or (kit_mod.infer_kit_bpm(prompt, fallback=style_info["bpm"]) if kit_mod else style_info["bpm"]))
-    mute_profile = str(payload.get("mute_profile") or style_info.get("mute_profile") or "real_drums")
+    mute_profile = str(payload.get("mute_profile") or style_info.get("mute_profile") or "punch_clean")
 
     db_file = database_path(root_dir)
     if not os.path.isfile(db_file):
@@ -709,7 +721,7 @@ def build_cerebro_smart_kit(root_dir: str, payload: dict) -> dict:
             "sound_type": stype,
             "duration_sec": 0.6,
             "mute_group": mg,
-            "volume": 0.78,
+            "volume": kit_mod.default_pad_volume(stype) if kit_mod and hasattr(kit_mod, "default_pad_volume") else 0.501187,
             "pan": 0.5,
             "tune": 0,
         })

@@ -246,5 +246,107 @@ class MuteGroups(unittest.TestCase):
             self.assertGreater(mod_xpj, 0)
             self.assertTrue(Path(proj_path).with_suffix(".xpj.bak-calib").exists())
 
+    def test_smart_acoustic_gain_staging_and_pad_routing(self):
+        import math
+        import struct
+        import wave
+        from hardware_kit_builder import (
+            analyze_sample_acoustics,
+            compute_smart_pad_volume,
+            default_pad_volume,
+            calibrate_xpj,
+            export_mpc_project,
+        )
+
+        def write_wav(path: Path, samples_mono):
+            with wave.open(str(path), "wb") as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)
+                wf.setframerate(44100)
+                packed = struct.pack(f"<{len(samples_mono)}h", *(max(-32767, min(32767, int(x))) for x in samples_mono))
+                wf.writeframes(packed)
+
+        with tempfile.TemporaryDirectory() as d:
+            tmp = Path(d)
+            sr = 44100
+            # 1. Quiet transient kick (~ -10 dBFS peak, high crest factor >= 8 dB) -> boost compensation (> default -5 dB)
+            quiet_kick = [int(10000 * math.exp(-t / 900.0) * math.sin(2 * math.pi * 60.0 * t / sr)) for t in range(int(sr * 0.25))]
+            quiet_wav = tmp / "Kick_Quiet.wav"
+            write_wav(quiet_wav, quiet_kick)
+
+            # 2. Brickwalled hot square snare (0 dBFS, crest ~ 0 dB) -> crest penalty (below default -5 dB)
+            square_snare = [32767 if (t // 40) % 2 == 0 else -32767 for t in range(int(sr * 0.15))]
+            square_wav = tmp / "Snare_Square.wav"
+            write_wav(square_wav, square_snare)
+
+            # 3. Long hot 808 sub bass (> 0.35s, < 180Hz) -> sub penalty
+            sub_808 = [int(32000 * math.sin(2 * math.pi * 55.0 * t / sr)) for t in range(int(sr * 0.6))]
+            sub_wav = tmp / "808_LongSub.wav"
+            write_wav(sub_wav, sub_808)
+
+            # 4. Silent wav -> Option A fallback
+            silent_wav = tmp / "Hat_Silent.wav"
+            write_wav(silent_wav, [0] * 4410)
+
+            res_q = compute_smart_pad_volume("KICK", quiet_wav)
+            self.assertTrue(res_q["smart_applied"])
+            self.assertGreater(res_q["volume"], default_pad_volume("KICK"))
+
+            res_sq = compute_smart_pad_volume("SNARE", square_wav)
+            self.assertTrue(res_sq["smart_applied"])
+            self.assertLess(res_sq["crest_factor_db"], 1.5)
+            self.assertLess(res_sq["volume"], default_pad_volume("SNARE"))
+
+            res_sub = compute_smart_pad_volume("BASS_808", sub_wav)
+            self.assertTrue(res_sub["smart_applied"])
+            self.assertGreater(res_sub["low_energy_ratio"], 0.70)
+            self.assertLess(res_sub["volume"], default_pad_volume("BASS_808"))
+
+            res_sil = compute_smart_pad_volume("HIHAT", silent_wav)
+            self.assertFalse(res_sil["smart_applied"])
+            self.assertEqual(res_sil["volume"], default_pad_volume("HIHAT"))
+
+            ac = analyze_sample_acoustics(sub_wav)
+            self.assertTrue(ac["valid"])
+            self.assertGreater(ac["duration_sec"], 0.55)
+
+            # Verify export_mpc_project normalizes audioRoute -> destination=0 and 4-stage gain staging
+            proj_dir = tmp / "proj"
+            proj_path = Path(export_mpc_project("SmartRoute", {
+                1: {"sample_name": "Kick_Quiet.wav", "sample_file": "Kick_Quiet.wav", "volume": res_q["volume"]},
+                2: {"sample_name": "Snare_Square.wav", "sample_file": "Snare_Square.wav"},
+            }, proj_dir))
+            raw = gzip.decompress(proj_path.read_bytes())
+            obj = json.loads(raw.split(b"\n", 5)[5].decode("utf-8"))
+            self.assertLessEqual(obj["data"]["mixer"]["volume"], 0.707946)
+            t0 = obj["data"]["tracks"][0]
+            self.assertAlmostEqual(t0["volume"], 0.7079457640647888, places=5)
+            insts = t0["program"]["drum"]["instruments"]
+            self.assertEqual(insts[0]["mixable"]["audioRoute"]["destination"], 0)
+            self.assertEqual(insts[0]["mixable"]["audioRoute"]["audioRouteSubIndex"], 0)
+            self.assertAlmostEqual(insts[1]["mixable"]["volume"], default_pad_volume("SNARE"), places=5)
+
+            # Corrupt audioRoutes (Stock Knob FX Submix-1, Out 1/2, and intentional Submix-2 w/ active insert)
+            insts[0]["mixable"]["audioRoute"] = {"destination": 1, "audioRouteSubIndex": 0}
+            insts[1]["mixable"]["audioRoute"] = {"destination": 2, "audioRouteSubIndex": 0}
+            insts[2]["mixable"]["audioRoute"] = {"destination": 1, "audioRouteSubIndex": 1}
+            insts[2]["layersv"] = [{"active": True, "sampleName": "Hat_Open", "sampleFile": "Hat_Open.wav"}]
+            # Add active insert on submix[1]
+            submixes = obj["data"]["mixer"].setdefault("submixes", [])
+            while len(submixes) < 2:
+                submixes.append({"mixable": {"inserts": {"insertsEnabled": True, "effects": []}}})
+            submixes[1]["mixable"] = {"inserts": {"insertsEnabled": True, "effects": [{"enable": True, "plugin": {"description": {"name": "AIR Delay"}}}]}}
+            header = b"\n".join(raw.split(b"\n", 5)[:5]) + b"\n"
+            proj_path.write_bytes(gzip.compress(header + json.dumps(obj).encode("utf-8")))
+
+            calibrate_xpj(proj_path, backup=False, smart_acoustics=False)
+            obj2 = json.loads(gzip.decompress(proj_path.read_bytes()).split(b"\n", 5)[5].decode("utf-8"))
+            insts2 = obj2["data"]["tracks"][0]["program"]["drum"]["instruments"]
+            self.assertEqual(insts2[0]["mixable"]["audioRoute"]["destination"], 0)
+            self.assertEqual(insts2[1]["mixable"]["audioRoute"]["destination"], 0)
+            self.assertEqual(insts2[2]["mixable"]["audioRoute"]["destination"], 1)
+            self.assertEqual(insts2[2]["mixable"]["audioRoute"]["audioRouteSubIndex"], 1)
+
+
 
 

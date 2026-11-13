@@ -39,7 +39,7 @@ import time
 import wave
 import zipfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 from xml.etree import ElementTree as ET
 
 logger = logging.getLogger(__name__)
@@ -271,6 +271,231 @@ def default_pad_volume(sound_type: str) -> float:
         "FX": 0.398107,
     }
     return levels.get(sound_type, 0.501187)
+
+
+def _sniff_wav_header(wav_path: Path) -> Tuple[int, int]:
+    """Lee (channels, sample_rate) desde la cabecera RIFF fmt aunque no sea PCM 16-bit."""
+    try:
+        with open(wav_path, "rb") as f:
+            head = f.read(64)
+        idx = head.find(b"fmt ")
+        if idx != -1 and idx + 16 <= len(head):
+            n_ch, sr = struct.unpack_from("<HI", head, idx + 10)
+            return max(1, int(n_ch)), max(8000, int(sr))
+    except Exception:
+        pass
+    return 1, 44100
+
+
+def analyze_sample_acoustics(wav_path: str | Path) -> Dict[str, Any]:
+    """Analiza propiedades físico-acústicas reales de una muestra WAV (Pico, RMS activo, Factor de Cresta, DC offset, subgraves y correlación estéreo)."""
+    p = Path(wav_path)
+    empty = {
+        "valid": False,
+        "peak_dbfs": -120.0,
+        "rms_active_dbfs": -120.0,
+        "crest_factor_db": 0.0,
+        "dc_offset": 0.0,
+        "low_energy_ratio": 0.0,
+        "stereo_correlation": 1.0,
+        "duration_sec": 0.0,
+        "channels": 1,
+        "sample_rate": 44100,
+    }
+    if not p.is_file():
+        return empty
+
+    samples: list[int] | tuple[int, ...] = []
+    n_ch = 1
+    fr = 44100
+    duration_sec = 0.0
+    used_wave = False
+
+    try:
+        with wave.open(str(p), "rb") as wf:
+            n_ch = max(1, wf.getnchannels())
+            sw = wf.getsampwidth()
+            fr = wf.getframerate() or 44100
+            n_frames = wf.getnframes()
+            duration_sec = round(n_frames / float(fr), 3) if fr else 0.0
+            if sw == 2 and n_frames > 0:
+                read_n = min(n_frames, int(fr * 2.5), 110250)
+                raw = wf.readframes(read_n)
+                total_short = len(raw) // 2
+                if total_short > 0:
+                    samples = struct.unpack(f"<{total_short}h", raw[: total_short * 2])
+                    used_wave = True
+    except (wave.Error, EOFError):
+        pass
+    except Exception:
+        return empty
+
+    if not used_wave:
+        try:
+            sniff_ch, _ = _sniff_wav_header(p)
+            conv = _convert_audio(p, mono=False, sample_rate=44100)
+            if conv:
+                n_ch = sniff_ch if (len(conv) % sniff_ch == 0) else 1
+                fr = 44100
+                max_elems = 110250 * n_ch
+                samples = conv[:max_elems]
+                if duration_sec == 0.0:
+                    duration_sec = round((len(conv) / float(n_ch)) / 44100.0, 3)
+        except Exception:
+            return empty
+
+    if not samples or len(samples) < max(1, n_ch):
+        return empty
+
+    if n_ch >= 2:
+        left = [float(x) for x in samples[0::n_ch]]
+        right = [float(x) for x in samples[1::n_ch]]
+        n_mono = min(len(left), len(right))
+        left = left[:n_mono]
+        right = right[:n_mono]
+    else:
+        left = [float(x) for x in samples]
+        right = []
+        n_mono = len(left)
+
+    if n_mono == 0:
+        return empty
+
+    peak_abs = max(abs(x) for x in samples)
+    if peak_abs <= 0:
+        res = dict(empty)
+        res.update({"valid": True, "duration_sec": duration_sec, "channels": n_ch, "sample_rate": fr})
+        return res
+
+    peak_dbfs = round(20.0 * math.log10(peak_abs / 32767.0), 2)
+    dc_offset = round((sum(samples) / len(samples)) / 32767.0, 5)
+
+    # RMS activo en bloques de 10 ms (~441 muestras) para ignorar colas de silencio en one-shots
+    block_size = max(16, int(round(fr * 0.01)))
+    active_thresh = max(32.0, float(peak_abs) * 0.01)
+    active_sq_sum = 0.0
+    active_frames = 0
+    total_sq_sum = 0.0
+
+    for start in range(0, n_mono, block_size):
+        end = min(n_mono, start + block_size)
+        blk_len = end - start
+        if right:
+            blk_sq = 0.5 * (
+                sum(left[k] * left[k] for k in range(start, end))
+                + sum(right[k] * right[k] for k in range(start, end))
+            )
+        else:
+            blk_sq = sum(left[k] * left[k] for k in range(start, end))
+        total_sq_sum += blk_sq
+        blk_rms = math.sqrt(blk_sq / blk_len)
+        if blk_rms > active_thresh:
+            active_sq_sum += blk_sq
+            active_frames += blk_len
+
+    if active_frames == 0:
+        rms_active = math.sqrt(total_sq_sum / n_mono)
+    else:
+        rms_active = math.sqrt(active_sq_sum / active_frames)
+
+    rms_active_dbfs = round(20.0 * math.log10(max(1e-9, rms_active) / 32767.0), 2)
+    crest_factor_db = round(max(0.0, peak_dbfs - rms_active_dbfs), 2)
+
+    # Filtro paso bajo IIR de 1er orden (~180 Hz) sin DC para medir energía subgrave
+    mean_l = sum(left) / n_mono
+    alpha = min(0.95, (2.0 * math.pi * 180.0) / (float(fr) + 2.0 * math.pi * 180.0))
+    lp = 0.0
+    lp_sq = 0.0
+    ac_sq = 0.0
+    for x in left:
+        xc = x - mean_l
+        ac_sq += xc * xc
+        lp = lp + alpha * (xc - lp)
+        lp_sq += lp * lp
+    low_energy_ratio = round(lp_sq / ac_sq, 3) if ac_sq > 1e-6 else 0.0
+
+    stereo_correlation = 1.0
+    if right:
+        mean_r = sum(right) / n_mono
+        num = 0.0
+        den_l = 0.0
+        den_r = 0.0
+        for i in range(n_mono):
+            dl = left[i] - mean_l
+            dr = right[i] - mean_r
+            num += dl * dr
+            den_l += dl * dl
+            den_r += dr * dr
+        denom = math.sqrt(den_l * den_r)
+        if denom > 1e-6:
+            stereo_correlation = round(max(-1.0, min(1.0, num / denom)), 3)
+
+    return {
+        "valid": True,
+        "peak_dbfs": peak_dbfs,
+        "rms_active_dbfs": rms_active_dbfs,
+        "crest_factor_db": crest_factor_db,
+        "dc_offset": dc_offset,
+        "low_energy_ratio": low_energy_ratio,
+        "stereo_correlation": stereo_correlation,
+        "duration_sec": duration_sec,
+        "channels": n_ch,
+        "sample_rate": fr,
+    }
+
+
+def compute_smart_pad_volume(sound_type: str, wav_path: Optional[str | Path] = None) -> Dict[str, Any]:
+    """Calcula la ganancia inteligente BeatOS v4.0 combinando Jerarquía Opción A + compensación de pico y densidad RMS."""
+    stype = (sound_type or "PERCUSSION").strip().upper()
+    target_map = {
+        "KICK": -5.0,
+        "SNARE": -5.0,
+        "HIHAT": -7.5,
+        "FX": -8.0,
+    }
+    target_db = target_map.get(stype, -6.0)
+    fallback_vol = default_pad_volume(stype)
+
+    ac: Dict[str, Any] = {}
+    if wav_path:
+        ac = analyze_sample_acoustics(wav_path)
+
+    if not ac.get("valid") or ac.get("peak_dbfs", -120.0) <= -60.0:
+        return {
+            "volume": fallback_vol,
+            "gain_db": target_db,
+            "target_db": target_db,
+            "peak_dbfs": ac.get("peak_dbfs", -120.0),
+            "rms_dbfs": ac.get("rms_active_dbfs", -120.0),
+            "crest_factor_db": ac.get("crest_factor_db", 0.0),
+            "low_energy_ratio": ac.get("low_energy_ratio", 0.0),
+            "stereo_correlation": ac.get("stereo_correlation", 1.0),
+            "smart_applied": False,
+        }
+
+    peak_dbfs = float(ac["peak_dbfs"])
+    crest_db = float(ac["crest_factor_db"])
+    low_ratio = float(ac["low_energy_ratio"])
+    duration_sec = float(ac["duration_sec"])
+
+    effective_peak = max(-4.5, min(0.0, peak_dbfs))
+    cf_penalty = min(2.0, (7.5 - crest_db) * 0.35) if crest_db < 7.5 else 0.0
+    sub_penalty = 0.5 if (stype not in ("KICK",) and low_ratio > 0.70 and duration_sec > 0.35) else 0.0
+
+    gain_db = round(max(-12.0, min(-1.0, target_db - effective_peak - cf_penalty - sub_penalty)), 3)
+    linear_vol = round(10.0 ** (gain_db / 20.0), 6)
+
+    return {
+        "volume": linear_vol,
+        "gain_db": gain_db,
+        "target_db": target_db,
+        "peak_dbfs": peak_dbfs,
+        "rms_dbfs": float(ac["rms_active_dbfs"]),
+        "crest_factor_db": crest_db,
+        "low_energy_ratio": low_ratio,
+        "stereo_correlation": float(ac["stereo_correlation"]),
+        "smart_applied": True,
+    }
 
 
 MUTE_PROFILES: Dict[str, Dict[str, Any]] = {
@@ -1356,6 +1581,17 @@ def export_mpc_project(
             for s_stem, s_file, _ in linked_samples
         ]
 
+        mixer_obj = data.get("mixer")
+        if isinstance(mixer_obj, dict):
+            cur_mvol = mixer_obj.get("volume")
+            if cur_mvol is None or cur_mvol > 0.707946:
+                mixer_obj["volume"] = 0.7079457640647888
+            outs = mixer_obj.get("outputs")
+            if isinstance(outs, list) and outs and isinstance(outs[0], dict):
+                out_mix = outs[0].get("mixable")
+                if isinstance(out_mix, dict) and (out_mix.get("volume") is None or out_mix.get("volume") > 0.794328):
+                    out_mix["volume"] = 0.7079457640647888
+
         tracks = data.get("tracks", [])[:1]
         data["tracks"] = tracks
         if tracks:
@@ -1363,9 +1599,12 @@ def export_mpc_project(
                 if isinstance(t, dict) and "samples" in t:
                     t["samples"] = []
             tracks[0]["name"] = kit_name
+            tracks[0]["volume"] = 0.7079457640647888
             tracks[0]["samples"] = copy.deepcopy(data["samples"]) if "copy" in globals() else list(data["samples"])
             prog = tracks[0].get("program", {})
             prog["name"] = kit_name
+            if isinstance(prog.get("mixable"), dict):
+                prog["mixable"]["volume"] = 0.7079457640647888
             drum = prog.get("drum", {})
             insts = drum.get("instruments", [])
             for idx, inst in enumerate(insts):
@@ -1374,7 +1613,11 @@ def export_mpc_project(
                 s_file = p_info.get("sample_file", "")
                 s_stem = p_info.get("sample_name", "")
                 n_frames = int(p_info.get("n_frames", 0))
-                vol = float(p_info.get("volume", 0.707946))
+                if "volume" in p_info and p_info["volume"] is not None:
+                    vol = float(p_info["volume"])
+                else:
+                    inferred_type = p_info.get("sound_type") or detect_sound_type(s_stem or s_file)
+                    vol = default_pad_volume(inferred_type)
                 pan = float(p_info.get("pan", 0.500000))
                 tune = int(p_info.get("tune", 0))
                 mute = pad_mute_group(p_info)
@@ -1389,6 +1632,10 @@ def export_mpc_project(
                 if isinstance(inst.get("mixable"), dict):
                     inst["mixable"]["volume"] = vol
                     inst["mixable"]["pan"] = pan
+                    inst["mixable"]["muteGroup"] = mute
+                    if isinstance(inst["mixable"].get("audioRoute"), dict):
+                        inst["mixable"]["audioRoute"]["destination"] = 0
+                        inst["mixable"]["audioRoute"]["audioRouteSubIndex"] = 0
 
                 layersv = inst.get("layersv", [])
                 for lay in layersv:
@@ -3216,8 +3463,12 @@ def autochop_sample_to_16_pads(
     }
 
 
-def calibrate_xpm(xpm_path: Union[str, Path], backup: bool = True) -> int:
-    """Calibra un archivo .xpm según la jerarquía Opción A y punch_clean choke."""
+def calibrate_xpm(
+    xpm_path: Union[str, Path],
+    backup: bool = True,
+    smart_acoustics: bool = True,
+) -> int:
+    """Calibra un archivo .xpm según la jerarquía Opción A + análisis acústico PCM y punch_clean choke."""
     xpm_path = Path(xpm_path)
     try:
         tree = ET.parse(xpm_path)
@@ -3244,7 +3495,21 @@ def calibrate_xpm(xpm_path: Union[str, Path], backup: bool = True) -> int:
         name_for_detect = sname or sfile
         if name_for_detect:
             kind = detect_sound_type(name_for_detect)
-            target_vol = default_pad_volume(kind)
+            wav_cand: Optional[Path] = None
+            if smart_acoustics:
+                cand_names = [sfile]
+                if sname:
+                    cand_names.append(sname if sname.lower().endswith(".wav") else f"{sname}.wav")
+                for cname in cand_names:
+                    if cname:
+                        p_cand = xpm_path.parent / Path(cname).name
+                        if p_cand.is_file():
+                            wav_cand = p_cand
+                            break
+            if smart_acoustics and wav_cand is not None:
+                target_vol = compute_smart_pad_volume(kind, wav_cand)["volume"]
+            else:
+                target_vol = default_pad_volume(kind)
             current_mute = int(inst.findtext("MuteGroup", "0"))
             # Preserve user custom chop mute groups (> 3)
             target_mute = current_mute if current_mute > 3 else default_mute_group(kind)
@@ -3257,8 +3522,12 @@ def calibrate_xpm(xpm_path: Union[str, Path], backup: bool = True) -> int:
     return modified
 
 
-def calibrate_xpj(xpj_path: Union[str, Path], backup: bool = True) -> int:
-    """Calibra un archivo .xpj (GZIP JSON) ajustando volúmenes de mixer, tracks y drum pads."""
+def calibrate_xpj(
+    xpj_path: Union[str, Path],
+    backup: bool = True,
+    smart_acoustics: bool = True,
+) -> int:
+    """Calibra un archivo .xpj (GZIP JSON): Gain Staging en 4 etapas, análisis acústico PCM y AudioRoute SampQOL."""
     xpj_path = Path(xpj_path)
     try:
         raw = xpj_path.read_bytes()
@@ -3281,30 +3550,98 @@ def calibrate_xpj(xpj_path: Union[str, Path], backup: bool = True) -> int:
 
     modified = 0
     data_dict = obj.get("data", {})
-    # Calibrate master mixer volume to -3 dB (0.707946) to guarantee absolute ceiling
-    if "mixer" in data_dict and isinstance(data_dict["mixer"], dict):
-        cur_mix_vol = data_dict["mixer"].get("volume", 1.0)
-        if cur_mix_vol is not None and cur_mix_vol > 0.707946:
-            data_dict["mixer"]["volume"] = 0.7079457640647888
+    pdata_dir = _resolve_project_data_dir(xpj_path) if smart_acoustics else None
+
+    # Etapa 4 y análisis de Submixes personalizados
+    custom_submix_indices: set[int] = set()
+    mixer_dict = data_dict.get("mixer")
+    if isinstance(mixer_dict, dict):
+        cur_mix_vol = mixer_dict.get("volume", 1.0)
+        if cur_mix_vol is None or cur_mix_vol > 0.707946:
+            mixer_dict["volume"] = 0.7079457640647888
+        outputs = mixer_dict.get("outputs")
+        if isinstance(outputs, list) and outputs and isinstance(outputs[0], dict):
+            out_mix = outputs[0].get("mixable")
+            if isinstance(out_mix, dict):
+                cur_out_vol = out_mix.get("volume")
+                if cur_out_vol is None or cur_out_vol > 0.794328:
+                    out_mix["volume"] = 0.7079457640647888
+        submixes = mixer_dict.get("submixes")
+        if isinstance(submixes, list):
+            for s_idx, sm in enumerate(submixes):
+                if not isinstance(sm, dict):
+                    continue
+                sm_mix = sm.get("mixable", {})
+                sm_ins = sm_mix.get("inserts", {})
+                fx_list = sm_ins.get("effects", []) if sm_ins.get("insertsEnabled", True) else []
+                active_fx = [e for e in fx_list if isinstance(e, dict) and e.get("enable", True)]
+                # Preservar submix solo si tiene >1 inserto en Submix 1 o algún inserto activo en Submix 2..8
+                if (s_idx == 0 and len(active_fx) > 1) or (s_idx > 0 and len(active_fx) > 0):
+                    custom_submix_indices.add(s_idx)
 
     tracks = data_dict.get("tracks", [])
     for track in tracks:
-        drum = track.get("program", {}).get("drum")
+        if not isinstance(track, dict):
+            continue
+        cur_tvol = track.get("volume")
+        if cur_tvol is None or cur_tvol < 0.50 or cur_tvol > 0.80:
+            track["volume"] = 0.7079457640647888
+        prog_obj = track.get("program")
+        if isinstance(prog_obj, dict) and isinstance(prog_obj.get("mixable"), dict):
+            cur_pvol = prog_obj["mixable"].get("volume")
+            if cur_pvol is None or cur_pvol < 0.50 or cur_pvol > 0.80:
+                prog_obj["mixable"]["volume"] = 0.7079457640647888
+
+        drum = track.get("program", {}).get("drum") if isinstance(track.get("program"), dict) else None
         if not drum or not isinstance(drum, dict):
             continue
         instruments = drum.get("instruments", [])
         for inst in instruments:
+            if not isinstance(inst, dict):
+                continue
             layersv = inst.get("layersv", [])
             sname = ""
-            if layersv and isinstance(layersv, list) and len(layersv) > 0:
-                sname = (layersv[0].get("sampleName") or layersv[0].get("sampleFile") or "").strip()
-            if sname:
-                kind = detect_sound_type(sname)
-                target_vol = default_pad_volume(kind)
+            sfile = ""
+            if layersv and isinstance(layersv, list) and len(layersv) > 0 and isinstance(layersv[0], dict):
+                sname = (layersv[0].get("sampleName") or "").strip()
+                sfile = (layersv[0].get("sampleFile") or "").strip()
+            name_for_detect = sname or sfile
+            mixable = inst.get("mixable")
+            if isinstance(mixable, dict):
+                ar = mixable.get("audioRoute")
+                if isinstance(ar, dict):
+                    dest = ar.get("destination", 0)
+                    sub_idx = ar.get("audioRouteSubIndex", 0)
+                    if not (dest == 1 and sub_idx in custom_submix_indices):
+                        ar["destination"] = 0
+                        ar["audioRouteSubIndex"] = 0
+
+            if name_for_detect:
+                kind = detect_sound_type(name_for_detect)
+                wav_cand: Optional[Path] = None
+                if smart_acoustics:
+                    search_dirs = [d for d in (pdata_dir, xpj_path.parent) if d is not None]
+                    cand_names = [sfile]
+                    if sname:
+                        cand_names.append(sname if sname.lower().endswith(".wav") else f"{sname}.wav")
+                    for sdir in search_dirs:
+                        for cname in cand_names:
+                            if cname:
+                                cand = sdir / Path(cname).name
+                                if cand.is_file():
+                                    wav_cand = cand
+                                    break
+                        if wav_cand is not None:
+                            break
+                if smart_acoustics and wav_cand is not None:
+                    target_vol = compute_smart_pad_volume(kind, wav_cand)["volume"]
+                else:
+                    target_vol = default_pad_volume(kind)
                 cur_mute = inst.get("whichMuteGroup", 0)
                 target_mute = cur_mute if cur_mute > 3 else default_mute_group(kind)
-                if "mixable" in inst and isinstance(inst["mixable"], dict):
-                    inst["mixable"]["volume"] = target_vol
+                if isinstance(mixable, dict):
+                    mixable["volume"] = target_vol
+                    mixable["muteGroup"] = target_mute
                 inst["whichMuteGroup"] = target_mute
                 modified += 1
 
@@ -3314,7 +3651,11 @@ def calibrate_xpj(xpj_path: Union[str, Path], backup: bool = True) -> int:
     return modified
 
 
-def calibrate_library_projects(root_path: Path, backup: bool = True) -> Dict[str, Any]:
+def calibrate_library_projects(
+    root_path: Path,
+    backup: bool = True,
+    smart_acoustics: bool = True,
+) -> Dict[str, Any]:
     """Escanea y recalibra todos los proyectos y programas de la biblioteca."""
     root_p = Path(root_path).resolve()
     xpm_count = 0
@@ -3325,7 +3666,7 @@ def calibrate_library_projects(root_path: Path, backup: bool = True) -> Dict[str
     for xpm in root_p.rglob("*.xpm"):
         if "Expansions" in xpm.parts or "templates" in xpm.parts or xpm.name.endswith(".bak-calib.xpm"):
             continue
-        pads_mod = calibrate_xpm(xpm, backup=backup)
+        pads_mod = calibrate_xpm(xpm, backup=backup, smart_acoustics=smart_acoustics)
         if pads_mod > 0:
             xpm_count += 1
             pads_calibrated += pads_mod
@@ -3334,7 +3675,7 @@ def calibrate_library_projects(root_path: Path, backup: bool = True) -> Dict[str
     for xpj in root_p.rglob("*.xpj"):
         if "Expansions" in xpj.parts or "templates" in xpj.parts or xpj.name.endswith(".bak-calib.xpj"):
             continue
-        pads_mod = calibrate_xpj(xpj, backup=backup)
+        pads_mod = calibrate_xpj(xpj, backup=backup, smart_acoustics=smart_acoustics)
         if pads_mod > 0:
             xpj_count += 1
             pads_calibrated += pads_mod
