@@ -224,23 +224,23 @@ def detect_sound_type(filename: str) -> str:
         return "SNARE"
     if any(k in f for k in ["clap", "cp_", "clp", "cp-"]):
         return "CLAP"
-    if any(k in f for k in ["tom", "flr", "floor_tom", "floortom", "lowtom", "midtom", "hitom"]):
+    if any(k in f for k in ["tom", "flr", "floor_tom", "floortom", "lowtom", "midtom", "hitom", "racktom"]):
         return "TOM"
-    if any(k in f for k in ["cymbal", "ride", "crash"]):
+    if any(k in f for k in ["cymbal", "ride", "crash", "splash", "china"]):
         return "CYMBAL"
-    if any(k in f for k in ["hat", "hh_", "hihat", "openhh", "closedhh"]):
+    if any(k in f for k in ["hat", "hh_", "hihat", "openhh", "closedhh", "shaker", "maraca"]):
         return "HIHAT"
     if any(k in f for k in ["bass", "808", "sub", "subbass", "reese"]):
         return "BASS_808"
-    if any(k in f for k in ["perc", "shaker", "conga", "bongo", "rim", "cowbell", "timbale", "wood"]):
+    if any(k in f for k in ["perc", "conga", "bongo", "rim", "cowbell", "timbale", "wood"]):
         return "PERCUSSION"
     if any(k in f for k in ["vox", "vocal", "chant", "acapella"]):
         return "VOCAL"
     if any(k in f for k in ["synth", "key", "piano", "chord", "rhodes", "pad", "lead", "arp", "pluck"]):
         return "KEYS_SYNTH"
-    if any(k in f for k in ["fx", "sweep", "riser", "downlifter", "hit", "impact", "noise"]):
+    if any(k in f for k in ["fx", "sweep", "riser", "downlifter", "hit", "impact", "noise", "laser"]):
         return "FX"
-    if any(k in f for k in ["loop", "break", "groove"]):
+    if any(k in f for k in ["loop", "break", "groove", "chop", "slice"]):
         return "MELODIC_LOOP"
     return "PERCUSSION"
 
@@ -248,6 +248,29 @@ def detect_sound_type(filename: str) -> str:
 def default_mute_group(sound_type: str) -> int:
     """Core punch instruments (Kicks, Snares, Toms) choke in Group 1 to prevent master clipping."""
     return {"KICK": 1, "SNARE": 1, "TOM": 1, "HIHAT": 2, "BASS_808": 3}.get(sound_type, 0)
+
+
+def default_pad_volume(sound_type: str) -> float:
+    """Opción A: Jerarquía Acústica Headroom para Akai MPC
+    - KICK / SNARE: -5.0 dB (0.562341) -> Transitorios principales y pegada limpia
+    - TOM / BASS_808 / CLAP / CYMBAL / PERCUSSION / MELODIC_LOOP / KEYS_SYNTH: -6.0 dB (0.501187) -> Control de subgraves y cuerpo
+    - HIHAT / SHAKER: -7.5 dB (0.421697) -> Techo agudo suave y natural, sin estridencia
+    - FX: -8.0 dB (0.398107) -> Texturas y transiciones de fondo
+    """
+    levels = {
+        "KICK": 0.562341,
+        "SNARE": 0.562341,
+        "TOM": 0.501187,
+        "BASS_808": 0.501187,
+        "CLAP": 0.501187,
+        "CYMBAL": 0.501187,
+        "PERCUSSION": 0.501187,
+        "MELODIC_LOOP": 0.501187,
+        "KEYS_SYNTH": 0.501187,
+        "HIHAT": 0.421697,
+        "FX": 0.398107,
+    }
+    return levels.get(sound_type, 0.501187)
 
 
 MUTE_PROFILES: Dict[str, Dict[str, Any]] = {
@@ -1107,7 +1130,9 @@ def export_mpc_program(
                 or p_info.get("source_path")
                 or (f"{s_name}.wav" if s_name else "")
             )
-            vol = float(p_info.get("volume", 0.707946))
+            stype = p_info.get("sound_type") or detect_sound_type(s_name or s_file)
+            raw_vol = p_info.get("volume")
+            vol = float(raw_vol) if raw_vol is not None and raw_vol != 0.707946 else default_pad_volume(stype)
             pan = float(p_info.get("pan", 0.500000))
             tune = int(p_info.get("tune", 0))
             mute = pad_mute_group(p_info)
@@ -1375,11 +1400,13 @@ def export_mpc_project(
                         lay["sliceInfo"]["End"] = 0
                         lay["sliceInfo"]["LoopStart"] = 0
 
-                if s_file and layersv:
+                if (s_file or s_stem) and layersv:
+                    file_name = s_file or (f"{s_stem}.wav" if not s_stem.endswith(".wav") else s_stem)
+                    stem_name = s_stem or Path(file_name).stem
                     lay0 = layersv[0]
                     lay0["active"] = True
-                    lay0["sampleName"] = s_stem or Path(s_file).stem
-                    lay0["sampleFile"] = s_file
+                    lay0["sampleName"] = stem_name
+                    lay0["sampleFile"] = file_name
                     lay0["sliceIndex"] = 129
                     lay0["coarseTune"] = tune
                     lay0["pitch"] = float(tune)
@@ -2414,14 +2441,17 @@ def create_kit(
 
             raw_sname = (item.get("sample_name") or item.get("sampleName") or "").strip()
             fallback_stem = Path(rel_path or src_path).stem if (rel_path or src_path) else ""
+            stype = item.get("sound_type", item.get("soundType", "")) or detect_sound_type(raw_sname or fallback_stem or src_path)
+            raw_vol = item.get("volume")
+            vol_val = float(raw_vol) if raw_vol is not None and raw_vol != 0.707946 else default_pad_volume(stype)
             pads_dict[pad_num] = {
                 "pad_number": pad_num,
                 "sample_name": raw_sname or fallback_stem,
                 "pad_sample_name": item.get("pad_sample_name", ""),
                 "sample_file": Path(src_path or rel_path).name if (src_path or rel_path) else "",
-                "sound_type": item.get("sound_type", item.get("soundType", "SAMPLE")),
+                "sound_type": stype,
                 "source_path": src_path,
-                "volume": float(item.get("volume", 0.707946)),
+                "volume": vol_val,
                 "pan": float(item.get("pan", 0.5)),
                 "tune": int(item.get("tune", 0)),
                 "mute_group": pad_mute_group(item),
@@ -2641,7 +2671,7 @@ def create_chromatic_kit(
             "sample_name": pad_sample_name,
             "pad_sample_name": pad_sample_name,
             "source_path": str(sample_file),
-            "volume": 0.707946,
+            "volume": default_pad_volume("BASS_808" if monophonic else "KEYS_SYNTH"),
             "pan": 0.5,
             "tune": tune,
             "mute_group": mute_group,
@@ -2862,7 +2892,7 @@ def create_custom_expansion(
                 "source_path": str(dest_wav),
                 "sample_file": dest_name,
                 "sample_name": Path(dest_name).stem,
-                "volume": float(pinfo.get("volume", 0.707946)),
+                "volume": float(pinfo.get("volume") if pinfo.get("volume") is not None and pinfo.get("volume") != 0.707946 else default_pad_volume(pinfo.get("sound_type", "PERCUSSION"))),
                 "pan": float(pinfo.get("pan", 0.5)),
                 "tune": int(pinfo.get("tune", 0)),
                 "mute_group": int(pinfo.get("mute_group", 0)),
@@ -3171,7 +3201,7 @@ def autochop_sample_to_16_pads(
             "sound_type": "MELODIC_LOOP" if "loop" in src_p.name.lower() else "PERCUSSION",
             "duration_sec": round(len(slice_pcm) / float(sr), 3),
             "mute_group": 6,  # Grupo 6: Slicer / Chop monofónico (cada slice corta al anterior)
-            "volume": 0.78,
+            "volume": 0.501187,
             "pan": 0.5,
             "tune": 0,
         })
@@ -3183,6 +3213,138 @@ def autochop_sample_to_16_pads(
         "slices_count": len(pads_out),
         "chop_folder": chop_dir.relative_to(root_p).as_posix(),
         "pads": pads_out,
+    }
+
+
+def calibrate_xpm(xpm_path: Union[str, Path], backup: bool = True) -> int:
+    """Calibra un archivo .xpm según la jerarquía Opción A y punch_clean choke."""
+    xpm_path = Path(xpm_path)
+    try:
+        tree = ET.parse(xpm_path)
+    except Exception:
+        return 0
+    root = tree.getroot()
+    instruments = root.findall(".//Instrument")
+    if not instruments:
+        return 0
+    if backup:
+        bak = xpm_path.with_suffix(xpm_path.suffix + ".bak-calib")
+        if not bak.exists():
+            shutil.copy2(xpm_path, bak)
+    modified = 0
+    for inst in instruments:
+        layers = inst.findall("Layers/Layer")
+        sname = ""
+        sfile = ""
+        for lay in layers:
+            sname = (lay.findtext("SampleName") or "").strip()
+            sfile = (lay.findtext("SampleFile") or "").strip()
+            if sname or sfile:
+                break
+        name_for_detect = sname or sfile
+        if name_for_detect:
+            kind = detect_sound_type(name_for_detect)
+            target_vol = default_pad_volume(kind)
+            current_mute = int(inst.findtext("MuteGroup", "0"))
+            # Preserve user custom chop mute groups (> 3)
+            target_mute = current_mute if current_mute > 3 else default_mute_group(kind)
+            _set_xml_text(inst, "Volume", f"{target_vol:.6f}")
+            _set_xml_text(inst, "MuteGroup", str(target_mute))
+            modified += 1
+        else:
+            _set_xml_text(inst, "Volume", "0.501187")
+    tree.write(xpm_path, encoding="utf-8", xml_declaration=True)
+    return modified
+
+
+def calibrate_xpj(xpj_path: Union[str, Path], backup: bool = True) -> int:
+    """Calibra un archivo .xpj (GZIP JSON) ajustando volúmenes de mixer, tracks y drum pads."""
+    xpj_path = Path(xpj_path)
+    try:
+        raw = xpj_path.read_bytes()
+        data = gzip.decompress(raw)
+    except Exception:
+        return 0
+    lines = data.split(b"\n", 5)
+    if len(lines) < 6:
+        return 0
+    header = b"\n".join(lines[:5]) + b"\n"
+    try:
+        obj = json.loads(lines[5].decode("utf-8"))
+    except Exception:
+        return 0
+
+    if backup:
+        bak = xpj_path.with_suffix(xpj_path.suffix + ".bak-calib")
+        if not bak.exists():
+            shutil.copy2(xpj_path, bak)
+
+    modified = 0
+    data_dict = obj.get("data", {})
+    # Calibrate master mixer volume to -3 dB (0.707946) to guarantee absolute ceiling
+    if "mixer" in data_dict and isinstance(data_dict["mixer"], dict):
+        cur_mix_vol = data_dict["mixer"].get("volume", 1.0)
+        if cur_mix_vol is not None and cur_mix_vol > 0.707946:
+            data_dict["mixer"]["volume"] = 0.7079457640647888
+
+    tracks = data_dict.get("tracks", [])
+    for track in tracks:
+        drum = track.get("program", {}).get("drum")
+        if not drum or not isinstance(drum, dict):
+            continue
+        instruments = drum.get("instruments", [])
+        for inst in instruments:
+            layersv = inst.get("layersv", [])
+            sname = ""
+            if layersv and isinstance(layersv, list) and len(layersv) > 0:
+                sname = (layersv[0].get("sampleName") or layersv[0].get("sampleFile") or "").strip()
+            if sname:
+                kind = detect_sound_type(sname)
+                target_vol = default_pad_volume(kind)
+                cur_mute = inst.get("whichMuteGroup", 0)
+                target_mute = cur_mute if cur_mute > 3 else default_mute_group(kind)
+                if "mixable" in inst and isinstance(inst["mixable"], dict):
+                    inst["mixable"]["volume"] = target_vol
+                inst["whichMuteGroup"] = target_mute
+                modified += 1
+
+    new_json_bytes = json.dumps(obj, separators=(",", ":")).encode("utf-8")
+    new_payload = header + new_json_bytes
+    xpj_path.write_bytes(gzip.compress(new_payload))
+    return modified
+
+
+def calibrate_library_projects(root_path: Path, backup: bool = True) -> Dict[str, Any]:
+    """Escanea y recalibra todos los proyectos y programas de la biblioteca."""
+    root_p = Path(root_path).resolve()
+    xpm_count = 0
+    xpj_count = 0
+    pads_calibrated = 0
+
+    # 1. Calibrar todos los .xpm fuera de Expansions y BeatOS/templates
+    for xpm in root_p.rglob("*.xpm"):
+        if "Expansions" in xpm.parts or "templates" in xpm.parts or xpm.name.endswith(".bak-calib.xpm"):
+            continue
+        pads_mod = calibrate_xpm(xpm, backup=backup)
+        if pads_mod > 0:
+            xpm_count += 1
+            pads_calibrated += pads_mod
+
+    # 2. Calibrar todos los .xpj fuera de Expansions y BeatOS/templates
+    for xpj in root_p.rglob("*.xpj"):
+        if "Expansions" in xpj.parts or "templates" in xpj.parts or xpj.name.endswith(".bak-calib.xpj"):
+            continue
+        pads_mod = calibrate_xpj(xpj, backup=backup)
+        if pads_mod > 0:
+            xpj_count += 1
+            pads_calibrated += pads_mod
+
+    return {
+        "success": True,
+        "root": str(root_p),
+        "xpm_calibrated": xpm_count,
+        "xpj_calibrated": xpj_count,
+        "total_pads_updated": pads_calibrated,
     }
 
 
@@ -3211,6 +3373,10 @@ if __name__ == "__main__":
         chromatic.add_argument("--out", type=Path, default=None, help="Directorio de salida para Custom_Kits")
         chromatic.add_argument("--tempo", type=float, default=120.0, help="Tempo BPM")
 
+        calibrate = commands.add_parser("calibrate", help="Recalibra ganancia y mute groups de proyectos existentes a Opción A")
+        calibrate.add_argument("--path", required=True, type=Path, help="Ruta a la tarjeta o directorio de proyectos")
+        calibrate.add_argument("--no-backup", action="store_true", help="Omitir creación de copias .bak-calib")
+
         args = parser.parse_args()
         if args.command == "create":
             pads = json.loads(base64.b64decode(args.b64, validate=True))
@@ -3232,6 +3398,10 @@ if __name__ == "__main__":
                 output_base_dir=args.out,
                 tempo=args.tempo,
             )
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            sys.exit(0)
+        elif args.command == "calibrate":
+            result = calibrate_library_projects(args.path, backup=not args.no_backup)
             print(json.dumps(result, ensure_ascii=False, indent=2))
             sys.exit(0)
     print("=================================================================")

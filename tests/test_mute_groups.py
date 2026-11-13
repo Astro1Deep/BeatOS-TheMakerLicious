@@ -201,4 +201,50 @@ class MuteGroups(unittest.TestCase):
             self.assertFalse(any(f.name.startswith('050_PAD50_') for f in ep_sounds.glob('*.wav')))
             self.assertIn({'target': 'ep133', 'omitted_pads': [50]}, res['warnings'])
 
+    def test_default_pad_volume_option_a(self):
+        from hardware_kit_builder import default_pad_volume
+        self.assertAlmostEqual(default_pad_volume("KICK"), 0.562341, places=5)
+        self.assertAlmostEqual(default_pad_volume("SNARE"), 0.562341, places=5)
+        self.assertAlmostEqual(default_pad_volume("TOM"), 0.501187, places=5)
+        self.assertAlmostEqual(default_pad_volume("BASS_808"), 0.501187, places=5)
+        self.assertAlmostEqual(default_pad_volume("HIHAT"), 0.421697, places=5)
+        self.assertAlmostEqual(default_pad_volume("FX"), 0.398107, places=5)
+
+    def test_calibrate_xpm_and_xpj(self):
+        from hardware_kit_builder import calibrate_xpm, calibrate_xpj, export_mpc_program, export_mpc_project
+        import xml.etree.ElementTree as ET
+        with tempfile.TemporaryDirectory() as d:
+            pads = {
+                1: {"sample_name": "Kick_Hard.wav", "volume": 0.8},
+                2: {"sample_name": "Snare_Trap.wav", "volume": 0.9},
+                3: {"sample_name": "Open_Hat.wav", "volume": 0.7},
+                4: {"sample_name": "808_Sub.wav", "volume": 1.0},
+            }
+            prog_path = Path(export_mpc_program("TestCalib", pads, Path(d) / "prog", copy_samples=False))
+            proj_path = Path(export_mpc_project("TestCalib", pads, Path(d) / "proj"))
+
+            mod_xpm = calibrate_xpm(prog_path, backup=True)
+            self.assertGreater(mod_xpm, 0)
+            self.assertTrue(prog_path.with_suffix(".xpm.bak-calib").exists())
+
+            root = ET.parse(prog_path).getroot()
+            insts = root.findall(".//Instruments/Instrument")
+            # Pad 1 (Kick): -5 dB (0.562341), MuteGroup 1
+            self.assertEqual(insts[0].findtext("Volume"), "0.562341")
+            self.assertEqual(insts[0].findtext("MuteGroup"), "1")
+            # Pad 2 (Snare): -5 dB (0.562341), MuteGroup 1
+            self.assertEqual(insts[1].findtext("Volume"), "0.562341")
+            self.assertEqual(insts[1].findtext("MuteGroup"), "1")
+            # Pad 3 (Hat): -7.5 dB (0.421697), MuteGroup 2
+            self.assertEqual(insts[2].findtext("Volume"), "0.421697")
+            self.assertEqual(insts[2].findtext("MuteGroup"), "2")
+            # Pad 4 (808): -6.0 dB (0.501187), MuteGroup 3
+            self.assertEqual(insts[3].findtext("Volume"), "0.501187")
+            self.assertEqual(insts[3].findtext("MuteGroup"), "3")
+
+            mod_xpj = calibrate_xpj(Path(proj_path), backup=True)
+            self.assertGreater(mod_xpj, 0)
+            self.assertTrue(Path(proj_path).with_suffix(".xpj.bak-calib").exists())
+
+
 
