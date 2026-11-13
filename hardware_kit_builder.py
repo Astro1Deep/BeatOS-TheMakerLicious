@@ -1290,7 +1290,7 @@ def _find_mpc_template(filename: str, fallback_rel: str) -> Optional[Path]:
 
 
 def _get_wav_frames(path_cand: Optional[str | Path]) -> int:
-    """Devuelve el número total de frames de un archivo WAV, o 0 si no se puede leer."""
+    """Devuelve el número total de frames PCM de un archivo WAV (con fallback RIFF chunk), o 0 si no es válido."""
     if not path_cand:
         return 0
     p = Path(path_cand)
@@ -1298,9 +1298,30 @@ def _get_wav_frames(path_cand: Optional[str | Path]) -> int:
         return 0
     try:
         with wave.open(str(p), "rb") as wf:
-            return wf.getnframes()
+            return int(wf.getnframes() or 0)
     except Exception:
-        return 0
+        pass
+    try:
+        data = p.read_bytes()
+        if len(data) < 20 or data[:4] != b"RIFF" or data[8:12] != b"WAVE":
+            return 0
+        block_align = 0
+        data_size = 0
+        offset = 12
+        while offset + 8 <= len(data):
+            cid = data[offset : offset + 4]
+            csize = struct.unpack_from("<I", data, offset + 4)[0]
+            bstart = offset + 8
+            if cid == b"fmt " and bstart + 16 <= len(data):
+                block_align = struct.unpack_from("<H", data, bstart + 12)[0]
+            elif cid == b"data":
+                data_size = min(csize, len(data) - bstart)
+            offset = bstart + csize + (csize & 1)
+        if block_align > 0 and data_size > 0:
+            return data_size // block_align
+    except Exception:
+        pass
+    return 0
 
 
 def _set_xml_text(parent: ET.Element, tag: str, value: str) -> None:
@@ -1565,8 +1586,14 @@ def export_mpc_project(
             if isinstance(seq, dict) and isinstance(seq.get("value"), dict):
                 seq["value"]["bpm"] = float(tempo)
 
-        data["samples"] = [
-            {
+        deduped_samples: List[Dict[str, Any]] = []
+        seen_sample_keys = set()
+        for s_stem, s_file, _ in linked_samples:
+            skey = (s_stem, s_file)
+            if skey in seen_sample_keys:
+                continue
+            seen_sample_keys.add(skey)
+            deduped_samples.append({
                 "version": 1,
                 "name": s_stem,
                 "path": s_file,
@@ -1577,9 +1604,8 @@ def export_mpc_project(
                     "tune": 0.0,
                     "key": key_str,
                 },
-            }
-            for s_stem, s_file, _ in linked_samples
-        ]
+            })
+        data["samples"] = deduped_samples
 
         mixer_obj = data.get("mixer")
         if isinstance(mixer_obj, dict):
@@ -1619,7 +1645,7 @@ def export_mpc_project(
                     inferred_type = p_info.get("sound_type") or detect_sound_type(s_stem or s_file)
                     vol = default_pad_volume(inferred_type)
                 pan = float(p_info.get("pan", 0.500000))
-                tune = int(p_info.get("tune", 0))
+                tune = max(-24, min(24, int(p_info.get("tune", 0))))
                 mute = pad_mute_group(p_info)
 
                 inst["coarseTune"] = tune
@@ -1642,6 +1668,9 @@ def export_mpc_project(
                     lay["active"] = False
                     lay["sampleName"] = ""
                     lay["sampleFile"] = ""
+                    if isinstance(lay.get("volume"), dict):
+                        lay["volume"]["gainCoefficient"] = 1.0
+                        lay["volume"]["controlValue"] = 1.0
                     if isinstance(lay.get("sliceInfo"), dict):
                         lay["sliceInfo"]["Start"] = 0
                         lay["sliceInfo"]["End"] = 0
@@ -1657,6 +1686,9 @@ def export_mpc_project(
                     lay0["sliceIndex"] = 129
                     lay0["coarseTune"] = tune
                     lay0["pitch"] = float(tune)
+                    if isinstance(lay0.get("volume"), dict):
+                        lay0["volume"]["gainCoefficient"] = 1.0
+                        lay0["volume"]["controlValue"] = 1.0
                     if isinstance(lay0.get("sliceInfo"), dict):
                         lay0["sliceInfo"]["Start"] = 0
                         lay0["sliceInfo"]["End"] = n_frames
@@ -3643,6 +3675,24 @@ def calibrate_xpj(
                     mixable["volume"] = target_vol
                     mixable["muteGroup"] = target_mute
                 inst["whichMuteGroup"] = target_mute
+                ctune = inst.get("coarseTune")
+                if isinstance(ctune, (int, float)) and not isinstance(ctune, bool):
+                    inst["coarseTune"] = max(-24, min(24, int(round(ctune))))
+                if layersv and isinstance(layersv[0], dict):
+                    lay0 = layersv[0]
+                    lvol = lay0.get("volume")
+                    if isinstance(lvol, dict):
+                        lvol["gainCoefficient"] = 1.0
+                        lvol["controlValue"] = 1.0
+                    sinfo = lay0.get("sliceInfo")
+                    if isinstance(sinfo, dict) and wav_cand is not None:
+                        cur_end = int(sinfo.get("End", 0) or 0)
+                        if cur_end <= 0:
+                            n_frames = _get_wav_frames(wav_cand)
+                            if n_frames > 0:
+                                if sinfo.get("Start") is None:
+                                    sinfo["Start"] = 0
+                                sinfo["End"] = n_frames
                 modified += 1
 
     new_json_bytes = json.dumps(obj, separators=(",", ":")).encode("utf-8")

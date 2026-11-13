@@ -248,6 +248,7 @@ class MuteGroups(unittest.TestCase):
 
     def test_smart_acoustic_gain_staging_and_pad_routing(self):
         import math
+        import shutil
         import struct
         import wave
         from hardware_kit_builder import (
@@ -346,6 +347,23 @@ class MuteGroups(unittest.TestCase):
             self.assertEqual(insts2[1]["mixable"]["audioRoute"]["destination"], 0)
             self.assertEqual(insts2[2]["mixable"]["audioRoute"]["destination"], 1)
             self.assertEqual(insts2[2]["mixable"]["audioRoute"]["audioRouteSubIndex"], 1)
+
+            # Verify cross-tool layer unity normalization, sliceInfo.End repair & coarseTune clamping
+            pdata = proj_path.parent / f"{proj_path.stem}_[ProjectData]"
+            pdata.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(quiet_wav, pdata / "Kick_Quiet.wav")
+            insts2[0]["coarseTune"] = 48
+            insts2[0]["layersv"][0]["volume"] = {"gainCoefficient": 0.45, "controlValue": 0.45, "law": 1}
+            insts2[0]["layersv"][0].setdefault("sliceInfo", {})["End"] = 0
+            proj_path.write_bytes(gzip.compress(header + json.dumps(obj2).encode("utf-8")))
+
+            calibrate_xpj(proj_path, backup=False, smart_acoustics=True)
+            obj3 = json.loads(gzip.decompress(proj_path.read_bytes()).split(b"\n", 5)[5].decode("utf-8"))
+            inst0_repaired = obj3["data"]["tracks"][0]["program"]["drum"]["instruments"][0]
+            self.assertEqual(inst0_repaired["coarseTune"], 24)
+            self.assertEqual(inst0_repaired["layersv"][0]["volume"]["gainCoefficient"], 1.0)
+            self.assertEqual(inst0_repaired["layersv"][0]["volume"]["controlValue"], 1.0)
+            self.assertEqual(inst0_repaired["layersv"][0]["sliceInfo"]["End"], len(quiet_kick))
 
 
 
