@@ -48,6 +48,93 @@ logger = logging.getLogger(__name__)
 DEFAULT_PO_DIR = Path.home() / "Documents" / "PO- POCKET OPERATORS"
 PO_IMPORT_LOCK = threading.Lock()
 
+# ---------------------------------------------------------------------------
+# Escalas musicales y utilidades melódicas / cromáticas para MPC Sample
+# ---------------------------------------------------------------------------
+SCALES: dict[str, list[int]] = {
+    "chromatic": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+    "major": [0, 2, 4, 5, 7, 9, 11],
+    "minor": [0, 2, 3, 5, 7, 8, 10],            # Menor natural / Eólica
+    "natural_minor": [0, 2, 3, 5, 7, 8, 10],
+    "harmonic_minor": [0, 2, 3, 5, 7, 8, 11],
+    "melodic_minor": [0, 2, 3, 5, 7, 9, 11],
+    "dorian": [0, 2, 3, 5, 7, 9, 10],
+    "phrygian": [0, 1, 3, 5, 7, 8, 10],
+    "lydian": [0, 2, 4, 6, 7, 9, 11],
+    "mixolydian": [0, 2, 4, 5, 7, 9, 10],
+    "pentatonic_minor": [0, 3, 5, 7, 10],
+    "pentatonic_major": [0, 2, 4, 7, 9],
+    "blues": [0, 3, 5, 6, 7, 10],
+}
+
+NOTE_NAMES: list[str] = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+NOTE_NAME_MAP: dict[str, int] = {
+    "C": 0, "B#": 0,
+    "C#": 1, "DB": 1,
+    "D": 2,
+    "D#": 3, "EB": 3,
+    "E": 4, "FB": 4,
+    "F": 5, "E#": 5,
+    "F#": 6, "GB": 6,
+    "G": 7,
+    "G#": 8, "AB": 8,
+    "A": 9,
+    "A#": 10, "BB": 10,
+    "B": 11, "CB": 11,
+}
+
+
+def parse_note(note_str: str) -> tuple[int, int]:
+    """Parsea una nota como 'C2', 'F#1', 'Eb3' en (pitch_class 0-11, octave)."""
+    m = re.match(r"^([A-Ga-g][#b]?)(-?\d+)?$", str(note_str).strip())
+    if not m:
+        raise ValueError(f"Formato de nota inválido: '{note_str}'. Ejemplos válidos: 'C2', 'F#1', 'Eb3'")
+    pitch_name = m.group(1).upper()
+    octave = int(m.group(2)) if m.group(2) is not None else 2
+    if pitch_name not in NOTE_NAME_MAP:
+        raise ValueError(f"Nombre de nota desconocido: '{pitch_name}'")
+    return NOTE_NAME_MAP[pitch_name], octave
+
+
+def note_from_root_offset(root_pc: int, root_oct: int, semitone_offset: int) -> str:
+    """Calcula el nombre de nota y octava resultantes a partir de la raíz y el offset en semitonos."""
+    total_semitones = (root_oct * 12) + root_pc + semitone_offset
+    final_oct = total_semitones // 12
+    final_pc = total_semitones % 12
+    return f"{NOTE_NAMES[final_pc]}{final_oct}"
+
+
+def build_scale_offsets(
+    scale_name: str,
+    count: int = 16,
+    start_octave: int = 0,
+    clamp_range: tuple[int, int] = (-24, 24)
+) -> list[int]:
+    """
+    Genera una lista de 'count' semitones correspondientes a la escala seleccionada.
+    start_octave=0 comienza en 0 semitonos.
+    start_octave=-1 comienza 1 octava abajo (-12 semitonos).
+    Todos los offsets se aseguran dentro del rango de afinación del MPC (-24 a +24 semitonos).
+    """
+    scale_lower = scale_name.lower().strip()
+    if scale_lower not in SCALES:
+        valid = ", ".join(sorted(SCALES.keys()))
+        raise ValueError(f"Escala desconocida: '{scale_name}'. Escalas disponibles: {valid}")
+
+    intervals = SCALES[scale_lower]
+    offsets: list[int] = []
+    octave_shift = start_octave * 12
+
+    for idx in range(count):
+        octave = idx // len(intervals)
+        note_idx = idx % len(intervals)
+        semitone = (octave * 12) + intervals[note_idx] + octave_shift
+        clamped = max(clamp_range[0], min(clamp_range[1], semitone))
+        offsets.append(clamped)
+
+    return offsets
+
+
 
 def po33_backup_dirs(root: str | Path) -> list[Path]:
     root_p = Path(root)
@@ -977,7 +1064,8 @@ def export_mpc_program(
             p_info = dict(info)
             src = p_info.get("source_path", "")
             if src and Path(src).is_file():
-                name = f"PAD{pad_num:03d}_{Path(src).stem}.wav"
+                stem = p_info.get("pad_sample_name") or Path(src).stem
+                name = f"PAD{pad_num:03d}_{stem}.wav"
                 _convert_audio(src, out_dir / name, mono=False)
                 p_info.update(sample_file=name, sample_name=Path(name).stem, n_frames=_get_wav_frames(out_dir/name))
             copied[pad_num] = p_info
@@ -1013,6 +1101,9 @@ def export_mpc_program(
             _set_xml_text(inst, "TuneCoarse", str(tune))
             _set_xml_text(inst, "TuneFine", "0")
             _set_xml_text(inst, "MuteGroup", str(mute))
+            if "monophonic" in p_info:
+                _set_xml_text(inst, "Mono", "True" if p_info["monophonic"] else "False")
+                _set_xml_text(inst, "Polyphony", "1" if p_info["monophonic"] else "8")
             for target in inst:
                 if re.fullmatch(r"MuteTarget[1-4]?", target.tag):
                     target.text = "0"
@@ -1150,7 +1241,8 @@ def export_mpc_project(
         src = p_info.get("source_path", "")
         s_file = p_info.get("sample_file") or (Path(src).name if src else "")
         if src and os.path.exists(src):
-            s_name = f"PAD{pad_num:03d}_{Path(src).stem}.wav"
+            stem = p_info.get("pad_sample_name") or Path(src).stem
+            s_name = f"PAD{pad_num:03d}_{stem}.wav"
             dest = proj_data_dir / s_name
             _convert_audio(src, dest, mono=False)
             s_stem = Path(s_name).stem
@@ -1248,6 +1340,9 @@ def export_mpc_project(
 
                 inst["coarseTune"] = tune
                 inst["whichMuteGroup"] = mute
+                if "monophonic" in p_info:
+                    inst["monophonic"] = bool(p_info["monophonic"])
+                    inst["polyphony"] = 1 if p_info["monophonic"] else 8
                 if isinstance(inst.get("muteTargets"), dict):
                     inst["muteTargets"] = {k: 0 for k in inst["muteTargets"]}
                 if isinstance(inst.get("mixable"), dict):
@@ -1270,6 +1365,8 @@ def export_mpc_project(
                     lay0["sampleName"] = s_stem or Path(s_file).stem
                     lay0["sampleFile"] = s_file
                     lay0["sliceIndex"] = 129
+                    lay0["coarseTune"] = tune
+                    lay0["pitch"] = float(tune)
                     if isinstance(lay0.get("sliceInfo"), dict):
                         lay0["sliceInfo"]["Start"] = 0
                         lay0["sliceInfo"]["End"] = n_frames
@@ -1338,27 +1435,6 @@ def export_sp404mk2_kit(
 
     with open(kit_dir / "sp404mk2_manifest.json", "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
-
-    # Exportar mapa CSV compatible con Roland SP-404MKII App
-    csv_lines = ["Bank,Pad,BankPad,Filename,OriginalSample"]
-    for p in manifest["pads"]:
-        csv_lines.append(f"{p['bank']},{p['pad']},{p['bank_pad']},{p['file']},{p['original']}")
-    with open(kit_dir / "SP404MK2_BANK_MAP.csv", "w", encoding="utf-8") as f_csv:
-        f_csv.write("\n".join(csv_lines) + "\n")
-
-    readme_txt = f"""=== ROLAND SP-404MK2 & DOOM OS KIT: {kit_name} ===
-Generado por BeatOS (The MakerLicious) · Frecuencia Nativa 48.000 Hz Stereo PCM
-
-INSTRUCCIONES DE IMPORTACIÓN:
-1. Con Tarjeta SD en Roland SP-404MK2:
-   - Copia los archivos .wav de esta carpeta dentro de 'ROLAND/SP-404MKII/SMPL/' en tu tarjeta SD.
-   - En tu SP-404MK2, pulsa SHIFT + PAD 14 (IMPORT) y selecciona los archivos correspondientes a cada Banco (A a J).
-2. Con Roland SP-404MKII App (Mac/PC):
-   - Abre la app oficial con tu SP-404MK2 conectada por USB-C.
-   - Arrastra directamente los archivos .wav a los 16 pads del banco deseado consultando 'SP404MK2_BANK_MAP.csv'.
-"""
-    with open(kit_dir / "README_SP404MK2.txt", "w", encoding="utf-8") as f_readme:
-        f_readme.write(readme_txt)
 
     return str(kit_dir)
 
@@ -1458,7 +1534,7 @@ def export_ep133_ko2_kit(
 ) -> tuple[str, str]:
     """
     Genera un paquete de Drum Kit estructurado para Teenage Engineering EP-133 K.O. II.
-    Mapea hasta 16 pads con slots de sonido (001 a 016), grupos A y B, y genera:
+    Mapea hasta 48 sonidos sobre las 12 teclas de los grupos A–D y genera:
     1. Carpeta con samples .wav listos para arrastrar al EP Sample Tool (teenage.engineering/apps/ep-sample-tool)
     2. Archivo meta.json con asignaciones de grupo, tecla, volumen, afinación y paneo.
     3. Archivo ZIP de transporte de muestras y mapa; no es un backup nativo del EP-133.
@@ -1469,7 +1545,6 @@ def export_ep133_ko2_kit(
     clean_kit_name = re.sub(r"[^a-zA-Z0-9_\-]", "_", kit_name.strip()) or "EP133_Kit"
     kit_dir = Path(output_dir) / clean_kit_name
     sounds_dir = kit_dir / "sounds"
-    sounds_dir.mkdir(parents=True, exist_ok=True)
 
     # Mapeo de teclas de hardware EP-133 (12 teclas por grupo: 1-9, ., 0, ENTER en Grupos A, B, C, D)
     base_group_keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "ENTER"]
@@ -1478,6 +1553,9 @@ def export_ep133_ko2_kit(
         for grp in ("A", "B", "C", "D")
         for k in base_group_keys
     ]
+    if any(not 1 <= int(number) <= len(ep_keys) for number in pads_data):
+        raise ValueError('EP-133: el mapa de un kit admite 4 grupos de 12 sonidos (48 en total)')
+    sounds_dir.mkdir(parents=True, exist_ok=True)
 
     manifest = {
         "version": 1,
@@ -1492,8 +1570,6 @@ def export_ep133_ko2_kit(
     copied_count = 0
     for raw_key in sorted(pads_data, key=lambda k: int(k)):
         pad_num = int(raw_key)
-        if not 1 <= pad_num <= 64:
-            continue
         p_info = pads_data[raw_key]
         src_path = p_info.get("source_path", "")
         s_name = p_info.get("sample_name", f"Sound_{pad_num:02d}")
@@ -1501,7 +1577,7 @@ def export_ep133_ko2_kit(
         slot_filename = f"{pad_num:03d}_PAD{pad_num:02d}_{clean_name}.wav"
         dest_file = sounds_dir / slot_filename
 
-        grp, key = ep_keys[pad_num - 1] if pad_num - 1 < len(ep_keys) else ("D", str(pad_num))
+        grp, key = ep_keys[pad_num - 1]
 
         if not src_path or not Path(src_path).is_file():
             raise ValueError(f"Muestra ausente en pad {pad_num}")
@@ -1532,7 +1608,7 @@ def export_ep133_ko2_kit(
 TEENAGE ENGINEERING EP-133 K.O. II — KIT DE SAMPLES (BeatOS The MakerLicious)
 ================================================================================
 Kit: {clean_kit_name}
-Total de Muestras: {copied_count} / 16
+Total de Muestras: {copied_count} / 48
 
 INSTRUCCIONES DE IMPORTACIÓN:
 1. Conecta tu EP-133 K.O. II por USB-C a tu ordenador y enciéndelo.
@@ -1540,7 +1616,7 @@ INSTRUCCIONES DE IMPORTACIÓN:
    https://teenage.engineering/apps/ep-sample-tool
 3. Método A (Arrastrar y Soltar):
    - Abre la carpeta 'sounds/' y arrastra los archivos .wav directamente a los
-     slots de sonido deseados (001 - 016).
+     slots de sonido deseados.
 4. El ZIP es un contenedor de transporte de BeatOS. Extráelo y carga los WAV.
    No lo restaures como backup nativo. Los grupos de choke del mapa son una
    referencia: configura las asignaciones en el hardware.
@@ -1562,13 +1638,14 @@ MAPEO DE PADS A TECLAS EP-133:
 - Pad 14 -> Grupo B, Tecla 2
 - Pad 15 -> Grupo B, Tecla 3
 - Pad 16 -> Grupo B, Tecla 4
+- Pads 17–24: Grupo B, teclas 5–ENTER; 25–36: Grupo C; 37–48: Grupo D.
 ================================================================================
 """
     readme_en_content = f"""================================================================================
 TEENAGE ENGINEERING EP-133 K.O. II — BEATOS SAMPLE KIT
 ================================================================================
 Kit: {clean_kit_name}
-Samples: {copied_count} / 16
+Samples: {copied_count} / 48
 
 IMPORT INSTRUCTIONS:
 1. Connect EP-133 K.O. II to the computer with a USB-C data cable.
@@ -1587,6 +1664,7 @@ BEATOS PAD → EP-133 GROUP / KEY:
   05=A/5   06=A/6   07=A/7   08=A/8
   09=A/9   10=A/.   11=A/0   12=A/ENTER
   13=B/1   14=B/2   15=B/3   16=B/4
+  17–24=B/5–ENTER   25–36=Group C   37–48=Group D
 ================================================================================
 """
     with open(kit_dir / "README_EP133_KO_II.txt", "w", encoding="utf-8") as f:
@@ -2323,6 +2401,7 @@ def create_kit(
             pads_dict[pad_num] = {
                 "pad_number": pad_num,
                 "sample_name": raw_sname or fallback_stem,
+                "pad_sample_name": item.get("pad_sample_name", ""),
                 "sample_file": Path(src_path or rel_path).name if (src_path or rel_path) else "",
                 "sound_type": item.get("sound_type", item.get("soundType", "SAMPLE")),
                 "source_path": src_path,
@@ -2330,6 +2409,7 @@ def create_kit(
                 "pan": float(item.get("pan", 0.5)),
                 "tune": int(item.get("tune", 0)),
                 "mute_group": pad_mute_group(item),
+                "monophonic": item.get("monophonic", True),
             }
     elif isinstance(pads, dict):
         for k, v in pads.items():
@@ -2351,7 +2431,7 @@ def create_kit(
     if target_lower not in valid_targets:
         raise ValueError("Destino de exportación no reconocido")
     target_max_pads = {
-        'universal': 160,
+        'universal': 128,
         'mpc': 128,
         'mpc1000': 64,
         'mpc2500': 64,
@@ -2361,17 +2441,20 @@ def create_kit(
         'maschine': 128,
         'sp404mk2': 160,
         'sp404a': 160,
-        'ep133': 64,
-        'ep-133': 64,
-        'ko2': 64,
-        'ko-ii': 64,
-        'ko_ii': 64,
+        'ep133': 48,
+        'ep-133': 48,
+        'ko2': 48,
+        'ko-ii': 48,
+        'ko_ii': 48,
         'po33': 16,
         'po-33': 16,
         'pocket_operator': 16,
     }.get(target_lower, 128)
     if not pads_dict or any(not 1 <= n <= target_max_pads for n in pads_dict):
-        raise ValueError("El rack admite pads 1 a 16 y necesita al menos una muestra")
+        raise ValueError(f"El destino '{target}' admite pads 1 a {target_max_pads}; selecciona un destino específico para más bancos")
+    sp404a_omitted = [number for number in sorted(pads_dict) if (number - 1) % 16 >= 12]
+    if target_lower == 'sp404a' and sp404a_omitted:
+        raise ValueError('SP-404A/SX: cada banco tiene 12 pads; mueve los sonidos de las posiciones 13–16 antes de exportar')
     for number, pad in pads_dict.items():
         source = Path(pad.get('source_path', '')).resolve()
         if not source.is_relative_to(source_root.resolve()) or not source.is_file():
@@ -2386,6 +2469,14 @@ def create_kit(
         raise FileExistsError("Ya existe un kit con ese nombre. Elige otro para conservar el original.")
     output_base_dir.mkdir(parents=True, exist_ok=False)
     targets_result = {}
+    warnings = []
+
+    def supported_pads(destination, allowed):
+        selected = {number: pad for number, pad in pads_dict.items() if number in allowed}
+        omitted = sorted(pads_dict.keys() - selected.keys())
+        if omitted:
+            warnings.append({'target': destination, 'omitted_pads': omitted})
+        return selected
 
     try:
         # 1. Akai MPC (Modern Standalone: Live / One / X / Key / Beats)
@@ -2400,18 +2491,18 @@ def create_kit(
             }
 
         # 1b. Akai MPC 1000 / 2500 / 500 / JJOS (.PGM 10,756 bytes + WAV 16/44.1)
-        if target_lower in ("universal", "mpc1000", "mpc2500", "mpc_legacy"):
+        if target_lower in ("universal", "mpc1000", "mpc2500", "mpc_legacy") and (mpc1k_pads := supported_pads('mpc1000', range(1, 65))):
             mpc1k_dir = output_base_dir / "Akai_MPC1000_2500"
-            pgm1k_path = export_mpc1000_pgm_kit(clean_kit_name, pads_dict, mpc1k_dir)
+            pgm1k_path = export_mpc1000_pgm_kit(clean_kit_name, mpc1k_pads, mpc1k_dir)
             targets_result["mpc1000"] = {
                 "pgm_path": str(pgm1k_path),
                 "folder": str(mpc1k_dir),
             }
 
         # 1c. Akai MPC 2000 / 2000XL (.PGM 2,308 bytes + WAV DOS 8.3 16/44.1)
-        if target_lower in ("universal", "mpc2000xl", "mpc2000", "mpc_legacy"):
+        if target_lower in ("universal", "mpc2000xl", "mpc2000", "mpc_legacy") and (mpc2k_pads := supported_pads('mpc2000xl', range(1, 65))):
             mpc2k_dir = output_base_dir / "Akai_MPC2000XL"
-            pgm2k_path = export_mpc2000xl_pgm_kit(clean_kit_name, pads_dict, mpc2k_dir)
+            pgm2k_path = export_mpc2000xl_pgm_kit(clean_kit_name, mpc2k_pads, mpc2k_dir)
             targets_result["mpc2000xl"] = {
                 "pgm_path": str(pgm2k_path),
                 "folder": str(mpc2k_dir),
@@ -2430,16 +2521,16 @@ def create_kit(
             targets_result["sp404mk2"] = {"import_folder": mk2_path}
 
         # 4. Roland SP-404A / SX
-        if target_lower in ("universal", "sp404a"):
+        if target_lower in ("universal", "sp404a") and (sp_a_pads := supported_pads('sp404a', {n for n in pads_dict if (n-1) % 16 < 12})):
             sp_a_dir = output_base_dir / "Roland_SP404A"
-            a_path = export_sp404a_kit(clean_kit_name, pads_dict, sp_a_dir)
+            a_path = export_sp404a_kit(clean_kit_name, sp_a_pads, sp_a_dir)
             targets_result["sp404a"] = {"folder": a_path}
 
         # 5. Teenage Engineering Pocket Operator PO-33 / PO-133
-        if target_lower in ("universal", "po33", "po-33", "pocket_operator"):
+        if target_lower in ("universal", "po33", "po-33", "pocket_operator") and (po_pads := supported_pads('po33', sorted(pads_dict)[:16])):
             po_dir = output_base_dir / "Pocket_Operator_PO33"
             reel_wav, duration, slices = export_po33_drum_reel(
-                clean_kit_name, pads_dict, po_dir, **(po_options or {})
+                clean_kit_name, po_pads, po_dir, **(po_options or {})
             )
             targets_result["po33"] = {
                 "reel_wav": reel_wav,
@@ -2449,14 +2540,14 @@ def create_kit(
             }
 
         # 6. Teenage Engineering EP-133 K.O. II
-        if target_lower in ("universal", "ep133", "ep-133", "ko2", "ko-ii", "ko_ii"):
+        if target_lower in ("universal", "ep133", "ep-133", "ko2", "ko-ii", "ko_ii") and (ep_pads := supported_pads('ep133', range(1, 49))):
             ep_dir = output_base_dir / "Teenage_Engineering_EP133"
             ep_dir.mkdir(parents=True, exist_ok=True)
-            ep_folder, ep_pak = export_ep133_ko2_kit(clean_kit_name, pads_dict, ep_dir)
+            ep_folder, ep_pak = export_ep133_ko2_kit(clean_kit_name, ep_pads, ep_dir)
             targets_result["ep133"] = {
                 "folder": ep_folder,
                 "pak_package": ep_pak,
-                "slots_count": len(pads_dict),
+                "slots_count": len(ep_pads),
             }
 
         return {
@@ -2466,6 +2557,7 @@ def create_kit(
             "kit_path": str(output_base_dir),
             "samples_count": len(pads_dict),
             "targets": targets_result,
+            "warnings": warnings,
             "message": f"Kit '{clean_kit_name}' generado exitosamente para destino '{target}'.",
         }
     except Exception:
@@ -2475,6 +2567,87 @@ def create_kit(
             logger.warning("No se pudo retirar el kit incompleto %s: %s", output_base_dir, cleanup_error)
         raise
 
+
+
+def create_chromatic_kit(
+    sample_path: str | Path,
+    kit_name: str,
+    scale: str = "minor",
+    root_note: str = "C2",
+    start_octave: int = 0,
+    monophonic: bool = True,
+    target: str = "universal",
+    source_root: Optional[str | Path] = None,
+    output_base_dir: Optional[str | Path] = None,
+    tempo: float = 120.0,
+) -> dict:
+    """
+    Crea un instrumento melódico o bajo cromático de 16 pads afinados sobre la escala seleccionada
+    a partir de una única muestra de audio one-shot.
+    Apto para 808s, bajos sintetizados, leads, plucks o instrumentos acústicos.
+    """
+    sample_file = Path(sample_path).resolve()
+    if not sample_file.is_file():
+        raise FileNotFoundError(f"Muestra de audio no encontrada: {sample_path}")
+
+    clean_kit_name = re.sub(r"[^a-zA-Z0-9_\-]", "_", kit_name.strip()) or "Chromatic_Instrument"
+
+    # Determinar source_root y output_base_dir de forma segura
+    mpc_root = Path("/Volumes/MPCSMPL")
+    if source_root is None:
+        if mpc_root.is_dir() and sample_file.is_relative_to(mpc_root):
+            source_root = mpc_root
+        elif sample_file.is_relative_to(Path.cwd().resolve()):
+            source_root = Path.cwd().resolve()
+        else:
+            source_root = sample_file.parent
+    else:
+        source_root = Path(source_root).resolve()
+
+    if output_base_dir is None:
+        output_base_dir = source_root / "Custom_Kits"
+
+    root_pc, root_oct = parse_note(root_note)
+    offsets = build_scale_offsets(scale, count=16, start_octave=start_octave)
+
+    pads_list: list[dict] = []
+    sound_type = "BASS" if monophonic else "MELODIC"
+    mute_group = 1 if monophonic else 0
+
+    for idx, tune in enumerate(offsets):
+        pad_num = idx + 1
+        note_label = note_from_root_offset(root_pc, root_oct, tune)
+        pad_sample_name = f"{clean_kit_name}_{note_label}"
+
+        pads_list.append({
+            "pad_number": pad_num,
+            "pad": pad_num,
+            "sample_name": pad_sample_name,
+            "pad_sample_name": pad_sample_name,
+            "source_path": str(sample_file),
+            "volume": 0.707946,
+            "pan": 0.5,
+            "tune": tune,
+            "mute_group": mute_group,
+            "monophonic": monophonic,
+            "sound_type": sound_type,
+        })
+
+    key_str = f"{NOTE_NAMES[root_pc]} {scale.capitalize()}"
+    res = create_kit(
+        kit_name=clean_kit_name,
+        pads=pads_list,
+        target=target,
+        source_root=source_root,
+        output_base_dir=output_base_dir,
+        tempo=tempo,
+    )
+    res["scale"] = scale
+    res["root_note"] = root_note
+    res["start_octave"] = start_octave
+    res["monophonic"] = monophonic
+    res["musical_key"] = key_str
+    return res
 
 
 def list_exportable_user_kits(source_root: Optional[str | Path] = None) -> List[Dict[str, Any]]:
@@ -3009,13 +3182,42 @@ if __name__ == "__main__":
         create.add_argument("--target", default="universal", choices=["universal", "mpc", "mpc1000", "mpc2500", "mpc2000xl", "mpc2000", "mpc_legacy", "maschine", "sp404mk2", "sp404a", "po33", "ep133"])
         create.add_argument("--b64", required=True)
         create.add_argument("--root", type=Path, required=True)
+
+        chromatic = commands.add_parser("chromatic", help="Crea un instrumento melódico/cromático de 16 pads afinados")
+        chromatic.add_argument("--sample", required=True, type=Path, help="Ruta al archivo WAV one-shot")
+        chromatic.add_argument("--name", required=True, help="Nombre del kit o instrumento")
+        chromatic.add_argument("--scale", default="minor", choices=list(SCALES.keys()), help="Escala musical")
+        chromatic.add_argument("--root-note", default="C2", help="Nota base del sample (ej. C2, F#1)")
+        chromatic.add_argument("--start-octave", default=0, type=int, help="Offset de octava inicial (ej. -1, 0, 1)")
+        chromatic.add_argument("--polyphonic", action="store_true", help="Desactiva mute groups (polifónico)")
+        chromatic.add_argument("--target", default="universal", choices=["universal", "mpc", "mpc1000", "mpc2500", "mpc2000xl", "mpc2000", "mpc_legacy", "maschine", "sp404mk2", "sp404a", "po33", "ep133"])
+        chromatic.add_argument("--root", type=Path, default=None, help="Directorio raíz de biblioteca")
+        chromatic.add_argument("--out", type=Path, default=None, help="Directorio de salida para Custom_Kits")
+        chromatic.add_argument("--tempo", type=float, default=120.0, help="Tempo BPM")
+
         args = parser.parse_args()
-        pads = json.loads(base64.b64decode(args.b64, validate=True))
-        if not args.root.is_dir():
-            parser.error("La biblioteca no existe")
-        result = create_kit(args.name, pads, target=args.target, source_root=args.root)
-        print(json.dumps(result, ensure_ascii=False))
-        sys.exit(0)
+        if args.command == "create":
+            pads = json.loads(base64.b64decode(args.b64, validate=True))
+            if not args.root.is_dir():
+                parser.error("La biblioteca no existe")
+            result = create_kit(args.name, pads, target=args.target, source_root=args.root)
+            print(json.dumps(result, ensure_ascii=False))
+            sys.exit(0)
+        elif args.command == "chromatic":
+            result = create_chromatic_kit(
+                sample_path=args.sample,
+                kit_name=args.name,
+                scale=args.scale,
+                root_note=args.root_note,
+                start_octave=args.start_octave,
+                monophonic=not args.polyphonic,
+                target=args.target,
+                source_root=args.root,
+                output_base_dir=args.out,
+                tempo=args.tempo,
+            )
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            sys.exit(0)
     print("=================================================================")
     print("Universal Hardware Kit Builder & Multi-Sampler Bridge v3.5 cargado")
     print(f"Directorio de Backups PO-33 detectado: {DEFAULT_PO_DIR}")

@@ -33,7 +33,7 @@ class DocumentationLinks(unittest.TestCase):
         missing = []
         total = 0
         for document in sorted(ROOT.rglob("*.md")):
-            if ".git" in document.parts:
+            if ".git" in document.parts or document.name.startswith("._"):
                 continue
             for href in destinations(document.read_text(encoding="utf-8")):
                 if not href or href.startswith(("#", "http://", "https://", "mailto:", "data:")):

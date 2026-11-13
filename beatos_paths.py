@@ -3,7 +3,12 @@ from pathlib import Path
 
 APP_FOLDER = 'BeatOS'
 CATALOG_REL = 'BeatOS/data/catalogo.html'
-ENTRY_NAMES = ('catalogo_universal.html', 'catalogo_mpc_sample.html')
+ENTRY_DEFINITIONS = {
+    'catalogo_beatos.html': ('beatos', 'Catálogo BeatOS (Beatmaker Station · Rack & Proyectos)'),
+    'catalogo_universal.html': ('universal', 'Audioteca Universal (Explorador Global de Muestras)'),
+    'catalogo_mpc_sample.html': ('beatos', 'Catálogo BeatOS (Acceso Compatible MPC)'),
+}
+ENTRY_NAMES = ('catalogo_beatos.html', 'catalogo_universal.html', 'catalogo_mpc_sample.html')
 
 
 def default_library_root(code_dir):
@@ -26,20 +31,22 @@ def database_path(root):
     return next((p for p in candidates if p.is_file()), candidates[0])
 
 
-def entry_html():
-    return ('<!doctype html><html lang="en"><meta charset="utf-8">'
+def entry_html(name='catalogo_beatos.html'):
+    view, label = ENTRY_DEFINITIONS.get(name, ('beatos', 'Abrir BeatOS'))
+    target_url = f'{CATALOG_REL}?view={view}'
+    return ('<!doctype html><html lang="es"><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width, initial-scale=1">'
-            '<title>BeatOS</title><meta http-equiv="refresh" content="0;url=' + CATALOG_REL + '">'
-            '<p><a href="' + CATALOG_REL + '">Abrir BeatOS</a></p>'
+            f'<title>{label}</title><meta http-equiv="refresh" content="0;url={target_url}">'
+            f'<p><a href="{target_url}">{label}</a></p>'
             '<p>Para las acciones locales inicia BeatOS/ABRIR_BEATOS.command '
-            'or run BeatOS/installer.py.</p></html>')
+            'o ejecuta BeatOS/installer.py.</p></html>')
 
 
 def write_catalog(root, html):
     root = Path(root)
     target = root / CATALOG_REL
     target.parent.mkdir(parents=True, exist_ok=True)
-    payloads = {target: html, **{root / name: entry_html() for name in ENTRY_NAMES}}
+    payloads = {target: html, **{root / name: entry_html(name) for name in ENTRY_NAMES}}
     for path, text in payloads.items():
         temporary = path.with_suffix(path.suffix + '.new')
         try:

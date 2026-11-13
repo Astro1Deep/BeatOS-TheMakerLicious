@@ -113,24 +113,13 @@ class ServerSecurityTests(unittest.TestCase):
             self.assertEqual(self.request(url + '/inside.txt', headers={'Origin': url})[0], 200)
             self.assertEqual(self.request(url + '/api/po33_backups', headers={'Sec-Fetch-Site':'cross-site'})[0],403)
 
-    def test_supports_null_origin_for_local_file_catalog(self):
-        import urllib.request, json
+    def test_opaque_web_origins_cannot_read_or_preflight_local_api(self):
         with self.server() as (url, _):
-            status, body = self.request(url + '/api/status', headers={'Origin': 'null'})
-            self.assertEqual(status, 200)
-            data = json.loads(body.decode('utf-8'))
-            self.assertEqual(data.get('status'), 'online')
-
-            req = urllib.request.Request(url + '/api/theme', headers={
-                'Origin': 'null',
-                'Access-Control-Request-Method': 'POST',
-                'Access-Control-Request-Headers': 'content-type',
-            })
-            req.get_method = lambda: 'OPTIONS'
-            with urllib.request.urlopen(req) as resp:
-                self.assertEqual(resp.status, 204)
-                self.assertEqual(resp.headers.get('Access-Control-Allow-Origin'), 'null')
-                self.assertEqual(resp.headers.get('Access-Control-Allow-Private-Network'), 'true')
+            for site in ('cross-site', 'none'):
+                headers = {'Origin': 'null', 'Sec-Fetch-Site': site}
+                self.assertEqual(self.request(url + '/api/status', headers=headers)[0], 403)
+                preflight_headers = {**headers, 'Access-Control-Request-Method': 'POST'}
+                self.assertEqual(self.request(url + '/api/theme', method='OPTIONS', headers=preflight_headers)[0], 403)
 
     def test_rejects_oversized_or_negative_request_lengths(self):
         with self.server() as (url, _):

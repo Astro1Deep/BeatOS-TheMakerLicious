@@ -77,7 +77,9 @@ def main():
         cmd = [sys.executable, os.path.join(script_dir, "index_mpc_library.py"), "--path", path]
         subprocess.run(cmd, check=True, env={**os.environ, "BEATOS_LANG": get_language()})
         
-        cat_path = os.path.join(path, "catalogo_mpc_sample.html")
+        cat_path = os.path.join(path, "catalogo_beatos.html")
+        if not os.path.exists(cat_path):
+            cat_path = os.path.join(path, "catalogo_mpc_sample.html")
         cat_sub = os.path.join(path, "SQLITE_DATABASE", "catalogo_mpc_sample.html")
         target_cat = cat_path if os.path.exists(cat_path) else (cat_sub if os.path.exists(cat_sub) else None)
         

@@ -12,7 +12,9 @@ Servidor HTTP de alto rendimiento con:
    - GET  /api/task_status: Estado de tareas de reindexación en segundo plano.
    - GET  /api/po33_backups: Inspección de audio de respaldos; no valida sus datos.
    - GET  /api/po33_backup_audio: Descarga de audio de respaldo de PO-33.
+   - GET  /api/scales: Lista de escalas musicales y notas para creación melódica.
    - POST /api/create_kit: Síntesis y exportación universal de kits para Akai MPC (.xpm/.xpj), NI Maschine (WAV + mapa JSON), Roland SP-404MK2 y PO-33 Drum Reel.
+   - POST /api/create_chromatic_kit: Generación de instrumento melódico afinado en escala a partir de un sample one-shot.
    - POST /api/load_project: Carga de proyectos MPC (.xpj) en el Beatmaker Rack.
    - POST /api/reindex: Re-indexación autónoma en segundo plano.
    - POST /api/clean_metadata: Purga de residuos AppleDouble (._*) y .DS_Store.
@@ -23,6 +25,8 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import contextlib
+import hashlib
 import json
 import mimetypes
 import os
@@ -912,10 +916,8 @@ def import_external_sample_to_library(root_dir: str, payload: dict) -> dict:
 
 
 def get_system_status(root_dir: str):
-    root_resolved = str(Path(root_dir).resolve()) if os.path.exists(root_dir) else ""
-    card_mounted = os.path.isdir("/Volumes/MPCSMPL") or (
-        bool(root_resolved) and root_resolved.startswith(("/Volumes/", "/media/", "/mnt/"))
-    )
+    library_available = os.path.isdir(root_dir)
+    card_mounted = library_available and os.path.ismount(root_dir)
     disk_stat = shutil.disk_usage(root_dir) if os.path.exists(root_dir) else None
 
     db_candidates = [database_path(root_dir)]
@@ -935,7 +937,8 @@ def get_system_status(root_dir: str):
                 pass
 
     return {
-        "status": "online",
+        "status": "online" if library_available else "library_unavailable",
+        "library_available": library_available,
         "card_mounted": card_mounted,
         "root_dir": root_dir,
         "sample_count": sample_count,
@@ -1008,7 +1011,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                     and parsed_origin.hostname in {'127.0.0.1', 'localhost', '::1'}
                     and parsed_origin.port == server_port
                 )
-                if is_local or origin == 'null' or parsed_origin.netloc == host:
+                if is_local:
                     self.send_header('Access-Control-Allow-Origin', origin)
                     self.send_header('Vary', 'Origin')
                     self.send_header('Access-Control-Allow-Private-Network', 'true')
@@ -1037,11 +1040,11 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 and parsed_origin.hostname in {'127.0.0.1', 'localhost', '::1'}
                 and parsed_origin.port == server_port
             )
-            valid_origin = not origin or is_local_origin or (parsed_origin and parsed_origin.netloc == host) or origin == 'null'
+            valid_origin = not origin or is_local_origin
         except ValueError:
             valid_host = valid_origin = False
         is_cross_site = self.headers.get('Sec-Fetch-Site') == 'cross-site'
-        if not valid_host or not valid_origin or (is_cross_site and origin != 'null'):
+        if not valid_host or not valid_origin or is_cross_site:
             self.send_error(403, 'Use la interfaz local de BeatOS')
             return False
         return True
@@ -1147,6 +1150,23 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(self._api_json_dumps({"success": False, "error": "Módulo hardware_kit_builder no disponible.", "kits": []}, ensure_ascii=False).encode("utf-8"))
             return
 
+        elif clean_path == "/api/scales":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_cors_headers()
+            self.end_headers()
+            kit_mod = get_hardware_kit_builder(self.server.root_dir)
+            scales_dict = getattr(kit_mod, "SCALES", {}) if kit_mod else {}
+            notes_list = getattr(kit_mod, "NOTE_NAMES", ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]) if kit_mod else []
+            payload = {
+                "success": True,
+                "scales": sorted(list(scales_dict.keys())),
+                "default_scale": "minor",
+                "notes": notes_list,
+            }
+            self.wfile.write(self._api_json_dumps(payload, ensure_ascii=False).encode("utf-8"))
+            return
+
         elif clean_path == "/api/po33_backup_audio":
             query = urllib.parse.parse_qs(parsed.query)
             file_name = query.get("file", [""])[0] or query.get("path", [""])[0]
@@ -1166,15 +1186,25 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(self._api_json_dumps({"error": "Audio de backup no encontrado."}).encode("utf-8"))
                 return
             try:
-                size = target_path.stat().st_size
-                self.send_response(200)
-                self.send_header("Content-Type", "audio/wav")
-                self.send_header("Content-Length", str(size))
-                self.send_header("Content-Disposition", "inline; filename*=UTF-8''" + urllib.parse.quote(target_path.name, safe=''))
-                self.send_cors_headers()
-                self.end_headers()
-                with target_path.open('rb') as source:
-                    shutil.copyfileobj(source, self.wfile, length=64 * 1024)
+                expected = query.get('sha256', [''])[0]
+                if expected and not re.fullmatch('[a-fA-F0-9]{64}', expected):
+                    self.send_error(400, 'Invalid SHA-256')
+                    return
+                with target_path.open('rb') as source, (tempfile.TemporaryFile() if expected else contextlib.nullcontext(source)) as transfer:
+                    if expected:
+                        shutil.copyfileobj(source, transfer, length=64 * 1024)
+                        transfer.seek(0)
+                        if hashlib.file_digest(transfer, 'sha256').hexdigest() != expected.lower():
+                            self.send_error(409, 'Backup changed since inspection; refresh the library before restoring')
+                            return
+                        transfer.seek(0)
+                    self.send_response(200)
+                    self.send_header("Content-Type", "audio/wav")
+                    self.send_header("Content-Length", str(os.fstat(transfer.fileno()).st_size))
+                    self.send_header("Content-Disposition", "inline; filename*=UTF-8''" + urllib.parse.quote(target_path.name, safe=''))
+                    self.send_cors_headers()
+                    self.end_headers()
+                    shutil.copyfileobj(transfer, self.wfile, length=64 * 1024)
             except Exception:
                 self.send_response(500)
                 self.end_headers()
@@ -1577,6 +1607,58 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 err_resp = {"success": False, "error": str(e)}
                 self.wfile.write(self._api_json_dumps(err_resp).encode("utf-8"))
+            return
+
+        elif clean_api == "/api/create_chromatic_kit":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                payload = json.loads(body)
+
+                kit_mod = get_hardware_kit_builder(self.server.root_dir)
+                if not kit_mod or not hasattr(kit_mod, "create_chromatic_kit"):
+                    raise RuntimeError("Función create_chromatic_kit no disponible en hardware_kit_builder.")
+
+                kit_name = payload.get("name") or payload.get("kit_name", "Chromatic_Instrument")
+                target = payload.get("target", "universal")
+                sample_rel = payload.get("sample_path") or payload.get("sample") or payload.get("rel_path", "")
+                if not sample_rel:
+                    raise ValueError("Falta el parámetro 'sample_path' o 'sample'")
+
+                sample_full = resolve_library_path(self.server.root_dir, sample_rel)
+                if not sample_full.is_file():
+                    raise FileNotFoundError(f"Archivo de muestra no encontrado: {sample_rel}")
+
+                scale = payload.get("scale", "minor")
+                root_note = payload.get("root_note", "C2")
+                start_octave = int(payload.get("start_octave", 0))
+                monophonic = bool(payload.get("monophonic", True))
+                tempo = float(payload.get("tempo", 120.0))
+
+                result = kit_mod.create_chromatic_kit(
+                    sample_path=sample_full,
+                    kit_name=kit_name,
+                    scale=scale,
+                    root_note=root_note,
+                    start_octave=start_octave,
+                    monophonic=monophonic,
+                    target=target,
+                    source_root=self.server.root_dir,
+                    tempo=tempo,
+                )
+
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_cors_headers()
+                self.end_headers()
+                self.wfile.write(self._api_json_dumps(result, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_cors_headers()
+                self.end_headers()
+                err_resp = {"success": False, "error": str(e)}
+                self.wfile.write(self._api_json_dumps(err_resp, ensure_ascii=False).encode("utf-8"))
             return
 
         elif clean_api == "/api/reveal_in_finder":
@@ -2005,6 +2087,9 @@ def run_server(custom_path: str | None = None, port: int | None = None, auto_ope
     target_root = str(Path(custom_path).expanduser().resolve()) if custom_path else find_card_root(script_dir)
     if not Path(target_root).is_dir():
         raise ValueError(translate_text(f"La biblioteca no existe: {target_root}", (os.environ.get("BEATOS_LANG") or "en")))
+    from index_mpc_library import restore_empty_catalog
+    if restore_empty_catalog(target_root, Path(script_dir) / 'templates/catalogo.html'):
+        emit('Recovered the empty catalog from the existing index; audio and database were preserved.')
 
     desired_port = port or 8888
     port = find_available_port(desired_port)

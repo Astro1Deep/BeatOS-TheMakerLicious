@@ -27,6 +27,11 @@ from hardware_kit_builder import (
     export_ep133_ko2_kit,
     export_po33_drum_reel,
     parse_xpm_program,
+    create_chromatic_kit,
+    parse_note,
+    build_scale_offsets,
+    SCALES,
+    NOTE_NAMES,
 )
 
 class TestHardwareKitBuilder(unittest.TestCase):
@@ -223,6 +228,124 @@ class TestHardwareKitBuilder(unittest.TestCase):
         self.assertEqual(pads[3]["sound_type"], "HIHAT")
         self.assertEqual(pads[4]["sound_type"], "HIHAT")
         self.assertTrue(pads[1]["full_path"].endswith("test_sample_1.wav"))
+
+    def test_11_chromatic_helpers_and_scale_offsets(self):
+        # 1. Parse note
+        pc, octv = parse_note("C2")
+        self.assertEqual(pc, 0)
+        self.assertEqual(octv, 2)
+
+        pc, octv = parse_note("F#1")
+        self.assertEqual(pc, 6)
+        self.assertEqual(octv, 1)
+
+        pc, octv = parse_note("Eb3")
+        self.assertEqual(pc, 3)
+        self.assertEqual(octv, 3)
+
+        with self.assertRaises(ValueError):
+            parse_note("H2")
+
+        # 2. Scale offsets
+        chrom_offsets = build_scale_offsets("chromatic", count=16, start_octave=0)
+        self.assertEqual(chrom_offsets, list(range(16)))
+
+        minor_offsets = build_scale_offsets("minor", count=16, start_octave=0)
+        self.assertEqual(minor_offsets[:7], [0, 2, 3, 5, 7, 8, 10])
+        # Pad 15 and 16 clamped to <= 24
+        self.assertLessEqual(max(minor_offsets), 24)
+        self.assertGreaterEqual(min(minor_offsets), -24)
+
+        # Scale with negative start octave
+        penta_neg = build_scale_offsets("pentatonic_minor", count=16, start_octave=-1)
+        self.assertEqual(len(penta_neg), 16)
+        self.assertEqual(penta_neg[0], -12)
+        self.assertLessEqual(max(penta_neg), 24)
+
+    def test_12_create_chromatic_kit_mpc_export_and_tuning(self):
+        ck_dir = self.test_dir / "Custom_Kits"
+        res = create_chromatic_kit(
+            sample_path=self.sample_files[0],
+            kit_name="TestBass_808",
+            scale="minor",
+            root_note="C2",
+            start_octave=0,
+            monophonic=True,
+            target="mpc",
+            source_root=self.test_dir,
+            output_base_dir=ck_dir,
+            tempo=128.0,
+        )
+        self.assertTrue(res["success"])
+        self.assertEqual(res["kit_name"], "TestBass_808")
+        self.assertEqual(res["scale"], "minor")
+        self.assertEqual(res["musical_key"], "C Minor")
+        self.assertEqual(res["samples_count"], 16)
+
+        mpc_out = ck_dir / "TestBass_808" / "Akai_MPC"
+        xpj_file = mpc_out / "TestBass_808" / "TestBass_808.xpj"
+        self.assertTrue(xpj_file.exists(), f"No se encontró el .xpj en {xpj_file}")
+
+        # Comprobar que en [ProjectData] las 16 muestras llevan los nombres de nota
+        pdata_dir = mpc_out / "TestBass_808" / "TestBass_808_[ProjectData]"
+        self.assertTrue(pdata_dir.is_dir())
+        c2_sample = pdata_dir / "PAD001_TestBass_808_C2.wav"
+        self.assertTrue(c2_sample.exists(), f"Falta {c2_sample}")
+
+        # Descomprimir y auditar .xpj
+        raw = gzip.decompress(xpj_file.read_bytes()).decode("utf-8")
+        self.assertTrue(raw.startswith("ACVS"))
+        payload = json.loads(raw[raw.index("{"):])
+        data = payload["data"]
+        self.assertEqual(data["masterTempo"], 128.0)
+        drum = data["tracks"][0]["program"]["drum"]
+        insts = drum["instruments"]
+        self.assertGreaterEqual(len(insts), 16)
+
+        expected_offsets = build_scale_offsets("minor", count=16, start_octave=0)
+        for i in range(16):
+            inst = insts[i]
+            expected_tune = expected_offsets[i]
+            self.assertEqual(inst["coarseTune"], expected_tune, f"Pad {i+1} coarseTune mismatch")
+            self.assertEqual(inst["whichMuteGroup"], 1, f"Pad {i+1} debe tener muteGroup 1 (monofónico)")
+            lay0 = inst["layersv"][0]
+            self.assertTrue(lay0["active"])
+            self.assertEqual(lay0["coarseTune"], expected_tune)
+            self.assertEqual(lay0["pitch"], float(expected_tune))
+
+    def test_13_create_chromatic_kit_polyphonic_and_validation(self):
+        ck_dir = self.test_dir / "Custom_Kits"
+        res = create_chromatic_kit(
+            sample_path=self.sample_files[1],
+            kit_name="TestKeys_Poly",
+            scale="pentatonic_major",
+            root_note="G1",
+            monophonic=False,
+            target="mpc",
+            source_root=self.test_dir,
+            output_base_dir=ck_dir,
+        )
+        self.assertTrue(res["success"])
+        self.assertFalse(res["monophonic"])
+
+        # En kit polifónico, mute group debe ser 0
+        xpj_file = ck_dir / "TestKeys_Poly" / "Akai_MPC" / "TestKeys_Poly" / "TestKeys_Poly.xpj"
+        raw = gzip.decompress(xpj_file.read_bytes()).decode("utf-8")
+        payload = json.loads(raw[raw.index("{"):])
+        insts = payload["data"]["tracks"][0]["program"]["drum"]["instruments"]
+        for i in range(16):
+            self.assertEqual(insts[i]["whichMuteGroup"], 0, f"Pad polifónico {i+1} no debe tener muteGroup")
+
+        # Validaciones de error
+        with self.assertRaises(ValueError):
+            create_chromatic_kit(self.sample_files[0], "BadScale", scale="escala_inexistente", source_root=self.test_dir)
+
+        with self.assertRaises(ValueError):
+            create_chromatic_kit(self.sample_files[0], "BadNote", root_note="NotaInvalida", source_root=self.test_dir)
+
+        with self.assertRaises(FileNotFoundError):
+            create_chromatic_kit("/ruta/falsa/sample_fantasma.wav", "NoSample", source_root=self.test_dir)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -84,7 +84,7 @@ def build_release(destination):
     blank_templates(payload)
     payload = {'BeatOS/' + name: data for name, data in payload.items()}
     payload[CATALOG_REL] = empty_catalog
-    payload.update({name: entry_html().encode() for name in ENTRY_NAMES})
+    payload.update({name: entry_html(name).encode() for name in ENTRY_NAMES})
     payload['BeatOS/VERSION'] = (VERSION + '\n').encode()
     manifest = {name: hashlib.sha256(data).hexdigest() for name, data in sorted(payload.items())}
     payload['BeatOS/MANIFEST.sha256.json'] = (json.dumps(manifest, indent=2) + '\n').encode()
