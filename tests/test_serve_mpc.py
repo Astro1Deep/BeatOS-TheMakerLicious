@@ -56,7 +56,7 @@ class ServerSecurityTests(unittest.TestCase):
             deployed.parent.mkdir(parents=True)
             deployed.write_text(expected, encoding='utf-8')
             (root / 'catalogo_universal.html').write_text('<html>OUTDATED UI</html>', encoding='utf-8')
-            (root / 'catalogo_mpc_sample.html').write_text('<html>OUTDATED UI</html>', encoding='utf-8')
+            (root / 'catalogo_beatos.html').write_text('<html>OUTDATED UI</html>', encoding='utf-8')
             for endpoint in ('/', '/catalogo', '/catalogo.html', '/BeatOS/data/catalogo.html'):
                 with self.subTest(endpoint=endpoint):
                     status, payload = self.request(url + endpoint)
@@ -276,3 +276,7 @@ class ServerSecurityTests(unittest.TestCase):
                 self.assertIn(self.request(url+endpoint)[0],(403,404))
             status,body=self.request(url+'/BeatOS/docs/assets/branding/blueprint_bone_sin_marcas.png')
             self.assertEqual(status,200);self.assertTrue(body.startswith(b'\x89PNG'))
+            (app/'docs').mkdir(parents=True,exist_ok=True)
+            (app/'docs/MASTER_ECOSISTEMA_DISCOS.html').write_text('<html>master ecosystem dashboard</html>',encoding='utf-8')
+            for endpoint in ['/catalogo_universal.html','/BeatOS/docs/MASTER_ECOSISTEMA_DISCOS.html']:
+                status,body=self.request(url+endpoint);self.assertEqual(status,200);self.assertIn(b'master ecosystem dashboard',body)

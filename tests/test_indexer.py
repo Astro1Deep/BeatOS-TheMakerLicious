@@ -100,13 +100,15 @@ class IndexerTests(unittest.TestCase):
         script = Path(__file__).resolve().parents[1] / 'index_mpc_library.py'
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);(root/'Broken.xpj').write_bytes(b'invalid project');(root/'_INDEX_MPC_SAMPLE').mkdir()
+            (root/'catalogo_mpc_sample.html').write_text('<html>legacy</html>', encoding='utf-8')
             subprocess.run([sys.executable,str(script),'--path',str(root)],check=True,capture_output=True)
             html=(root/'BeatOS/data/catalogo.html').read_text()
             self.assertTrue('Revisar referencias' in html);self.assertIn('data-path="Broken.xpj"',html)
-            for name in ['catalogo_universal.html','catalogo_mpc_sample.html']:
+            for name in ['catalogo_beatos.html','catalogo_universal.html']:
                 entry=(root/name).read_text()
                 self.assertIn('BeatOS/data/catalogo.html',entry)
                 self.assertNotIn('const SAMPLES',entry)
+            self.assertFalse((root/'catalogo_mpc_sample.html').exists())
             self.assertFalse((root/'SQLITE_DATABASE').exists())
             self.assertFalse(any((root/'_INDEX_MPC_SAMPLE').iterdir()))
 
@@ -117,10 +119,21 @@ class IndexerTests(unittest.TestCase):
             (root/'BeatOS/templates/private.xpj').write_bytes(b'ignored')
             for attempt in range(2):
                 subprocess.run([sys.executable,str(script),'--path',str(root)],check=True,capture_output=True)
-                self.assertEqual({p.name for p in root.iterdir()},{'BeatOS','catalogo_universal.html','catalogo_mpc_sample.html','catalogo_beatos.html'})
+                self.assertEqual({p.name for p in root.iterdir()},{'BeatOS','catalogo_beatos.html','catalogo_universal.html'})
                 self.assertFalse(list(root.rglob('__pycache__')))
                 with sqlite3.connect(root/'BeatOS/data/mpc_sample.db') as db:
                     self.assertEqual(db.execute('SELECT COUNT(*) FROM projects').fetchone()[0],0)
+
+    def test_catalogo_universal_points_to_master_ecosystem_dashboard_when_present(self):
+        from beatos_paths import write_catalog
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            dash = root / 'BeatOS/docs/MASTER_ECOSISTEMA_DISCOS.html'
+            dash.parent.mkdir(parents=True)
+            dash.write_text('<html>Master Ecosystem</html>', encoding='utf-8')
+            write_catalog(root, '<html>BeatOS</html>')
+            self.assertIn('BeatOS/docs/MASTER_ECOSISTEMA_DISCOS.html', (root / 'catalogo_universal.html').read_text(encoding='utf-8'))
+            self.assertIn('BeatOS/data/catalogo.html', (root / 'catalogo_beatos.html').read_text(encoding='utf-8'))
 
     def test_failed_catalog_replace_preserves_old_catalog_and_cleans_temporary(self):
         from beatos_paths import write_catalog

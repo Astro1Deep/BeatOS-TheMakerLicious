@@ -640,7 +640,7 @@ def main():
     write_catalog(root_path, html_code)
 
     emit(f"✔ Catálogo BeatOS (Raíz): {os.path.join(root_path, 'catalogo_beatos.html')}")
-    emit(f"✔ Audioteca Universal (Raíz): {os.path.join(root_path, 'catalogo_universal.html')}")
+    emit(f"✔ Catálogo Universal de Discos (Raíz): {os.path.join(root_path, 'catalogo_universal.html')}")
     emit(f"✔ Catálogo Central BeatOS: {html_sqlite_path}")
     emit(f"✔ Base de Datos SQLite: {db_path}")
     emit("\n🎉 Indexación completada con éxito. Inicia BeatOS/ABRIR_BEATOS.command o el instalador de tu carpeta de código.")

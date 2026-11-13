@@ -10,7 +10,7 @@ import serve_mpc
 class InstallerTests(unittest.TestCase):
     def test_index_option_runs_and_open_uses_local_server(self):
         with tempfile.TemporaryDirectory(prefix='Biblioteca Productor ') as tmp:
-            (Path(tmp)/'catalogo_mpc_sample.html').write_text('<html></html>')
+            (Path(tmp)/'catalogo_beatos.html').write_text('<html></html>')
             with patch('builtins.input',side_effect=['1',tmp,'s']),patch('builtins.print'),patch('installer.subprocess.run') as run,patch('serve_mpc.run_server') as server:
                 installer.main()
             self.assertEqual(run.call_args.args[0][-2:],['--path',tmp]);server.assert_called_once_with(tmp)

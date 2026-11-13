@@ -47,7 +47,7 @@ import webbrowser
 import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer as HTTPServer
 from pathlib import Path
-from beatos_paths import CATALOG_REL, config_dir, database_path, default_library_root
+from beatos_paths import CATALOG_REL, MASTER_DASHBOARD_REL, config_dir, database_path, default_library_root
 from beatos_i18n import get_request_language, localize_api_payload, translate_text
 
 mimetypes.init()
@@ -1966,7 +1966,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
         clean_path = urllib.parse.unquote(parsed.path).lstrip("/")
 
         if clean_path in ("", "index.html", "catalogo", "catalogo.html"):
-            for candidate in (CATALOG_REL, "catalogo_universal.html", "catalogo_mpc_sample.html", "SQLITE_DATABASE/catalogo_mpc_sample.html"):
+            for candidate in (CATALOG_REL, "catalogo_beatos.html", "catalogo_universal.html", "catalogo_mpc_sample.html", "SQLITE_DATABASE/catalogo_mpc_sample.html"):
                 if os.path.isfile(os.path.join(self.server.root_dir, candidate)):
                     clean_path = candidate
                     break
@@ -1975,6 +1975,12 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
         if clean_path == CATALOG_REL:
             file_root = os.path.join(self.server.root_dir, 'BeatOS', 'data')
             clean_path = 'catalogo.html'
+        elif clean_path == MASTER_DASHBOARD_REL or (
+            clean_path == 'catalogo_universal.html'
+            and os.path.isfile(os.path.join(self.server.root_dir, MASTER_DASHBOARD_REL))
+        ):
+            file_root = os.path.join(self.server.root_dir, 'BeatOS', 'docs')
+            clean_path = 'MASTER_ECOSISTEMA_DISCOS.html'
         elif clean_path in {'SQLITE_DATABASE/catalogo_mpc_sample.html', 'SQLITE_DATABASE/catalogo_universal.html',
                             '_INDEX_MPC_SAMPLE/catalogo_mpc_sample.html', '_INDEX_MPC_SAMPLE/catalogo_universal.html'} and os.path.isfile(os.path.join(self.server.root_dir,CATALOG_REL)):
             file_root = os.path.join(self.server.root_dir, 'BeatOS', 'data')
@@ -2107,13 +2113,15 @@ def run_server(custom_path: str | None = None, port: int | None = None, auto_ope
     port = find_available_port(desired_port)
 
     catalog_rel = None
-    for cand in (CATALOG_REL, "catalogo_universal.html", "catalogo_mpc_sample.html", "SQLITE_DATABASE/catalogo_mpc_sample.html"):
+    for cand in (CATALOG_REL, "catalogo_beatos.html", "catalogo_universal.html", "catalogo_mpc_sample.html", "SQLITE_DATABASE/catalogo_mpc_sample.html"):
         if os.path.isfile(os.path.join(target_root, cand)):
             catalog_rel = cand
             break
 
     if not catalog_rel:
-        if os.path.isfile(os.path.join(script_dir, "catalogo_universal.html")):
+        if os.path.isfile(os.path.join(script_dir, "catalogo_beatos.html")):
+            catalog_rel = "catalogo_beatos.html"
+        elif os.path.isfile(os.path.join(script_dir, "catalogo_universal.html")):
             catalog_rel = "catalogo_universal.html"
         elif os.path.isfile(os.path.join(script_dir, "catalogo_mpc_sample.html")):
             catalog_rel = "catalogo_mpc_sample.html"
