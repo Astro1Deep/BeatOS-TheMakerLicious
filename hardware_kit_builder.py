@@ -224,6 +224,8 @@ def detect_sound_type(filename: str) -> str:
         return "SNARE"
     if any(k in f for k in ["clap", "cp_", "clp", "cp-"]):
         return "CLAP"
+    if any(k in f for k in ["tom", "flr", "floor_tom", "floortom", "lowtom", "midtom", "hitom"]):
+        return "TOM"
     if any(k in f for k in ["cymbal", "ride", "crash"]):
         return "CYMBAL"
     if any(k in f for k in ["hat", "hh_", "hihat", "openhh", "closedhh"]):
@@ -244,15 +246,21 @@ def detect_sound_type(filename: str) -> str:
 
 
 def default_mute_group(sound_type: str) -> int:
-    """Only like percussion families choke each other; all other pads stay free."""
-    return {"KICK": 1, "HIHAT": 2, "SNARE": 3}.get(sound_type, 0)
+    """Core punch instruments (Kicks, Snares, Toms) choke in Group 1 to prevent master clipping."""
+    return {"KICK": 1, "SNARE": 1, "TOM": 1, "HIHAT": 2, "BASS_808": 3}.get(sound_type, 0)
 
 
 MUTE_PROFILES: Dict[str, Dict[str, Any]] = {
+    "punch_clean": {
+        "id": "punch_clean",
+        "name_es": "🥊 Punch & Clean Master (Kick/Snare/Tom=1 · Hat Cl/Op=2 · 808=3 · Clap=Libre)",
+        "name_en": "🥊 Punch & Clean Master (Kick/Snare/Tom=1 · Hat Cl/Op=2 · 808=3 · Clap=Free)",
+        "description_es": "Kicks, Snares y Toms comparten corte mutuo (Grupo 1) eliminando colas residuales en graves y medios-graves para evitar saturación y clips en el máster. Charles en Grupo 2, 808 en Grupo 3 y Claps/Platos libres.",
+    },
     "real_drums": {
         "id": "real_drums",
-        "name_es": "🥁 Batería Real / Estándar (Kick/Tom=1 · Hat Cl/Op=2 · Snare=3 · Clap=Libre)",
-        "name_en": "🥁 Real Drum Kit / Standard (Kick/Tom=1 · Hat Cl/Op=2 · Snare=3 · Clap=Free)",
+        "name_es": "🥁 Batería Real / Acústica (Kick/Tom=1 · Hat Cl/Op=2 · Snare=3 · Clap=Libre)",
+        "name_en": "🥁 Real Drum Kit / Acoustic (Kick/Tom=1 · Hat Cl/Op=2 · Snare=3 · Clap=Free)",
         "description_es": "Los Open Hats se cortan al golpear un Closed/Pedal Hat (Grupo 2), Kicks y Toms comparten corte de subgraves (Grupo 1), las cajas principales se cortan entre sí (Grupo 3) para evitar clip, y los Claps/Cymbals quedan libres (0) para poder apilar capas.",
     },
     "club_clean": {
@@ -276,21 +284,29 @@ MUTE_PROFILES: Dict[str, Dict[str, Any]] = {
 }
 
 
-def mute_group_for_profile(sound_type: str, sample_name: str = "", profile: str = "real_drums") -> int:
-    """Calcula el grupo de muteo coherente según la física de una batería real y el perfil musical elegido."""
-    prof = (profile or "real_drums").strip().lower()
+def mute_group_for_profile(sound_type: str, sample_name: str = "", profile: str = "punch_clean") -> int:
+    """Calcula el grupo de muteo coherente según la acústica y el perfil musical elegido."""
+    prof = (profile or "punch_clean").strip().lower()
     st = (sound_type or "").strip().upper()
     low_name = (sample_name or "").lower()
-    is_tom = bool(re.search(r"(?:^|[\s_\-.])(?:tom|flr|floor\s*tom)(?:[\s_\-.0-9]|$)", low_name))
+    is_tom = bool(re.search(r"(?:^|[\s_\-.])(?:tom|flr|floor\s*tom)(?:[\s_\-.0-9]|$)", low_name)) or st == "TOM"
 
     if prof == "free_poly":
         return 0
     if prof == "jazz_funk":
         return 2 if st == "HIHAT" else 0
     if prof == "club_clean":
-        if is_tom:
+        if is_tom or st == "TOM":
             return 5
-        if st == "KICK":
+        if st in ("KICK", "SNARE"):
+            return 1
+        if st == "HIHAT":
+            return 2
+        if st == "BASS_808":
+            return 4
+        return 0
+    if prof == "real_drums":
+        if is_tom or st == "KICK":
             return 1
         if st == "HIHAT":
             return 2
@@ -299,18 +315,18 @@ def mute_group_for_profile(sound_type: str, sample_name: str = "", profile: str 
         if st == "BASS_808":
             return 4
         return 0
-    # Default: real_drums
-    if is_tom or st == "KICK":
+    # Default: punch_clean (Kick, Snare, Tom = 1, Hat = 2, 808 = 3)
+    if is_tom or st in ("KICK", "SNARE", "TOM"):
         return 1
     if st == "HIHAT":
         return 2
-    if st == "SNARE":
+    if st == "BASS_808":
         return 3
     # CLAP, CYMBAL, PERCUSSION, KEYS_SYNTH, VOCAL, FX stay 0 so they layer naturally
     return 0
 
 
-def compute_kit_mute_groups(pads_dict: Dict[int, dict], profile: str = "real_drums") -> Dict[int, int]:
+def compute_kit_mute_groups(pads_dict: Dict[int, dict], profile: str = "punch_clean") -> Dict[int, int]:
     """Devuelve el mapa {pad_num: mute_group} aplicando coherencia del kit (no asigna grupo si solo hay 1 pad en ese grupo, salvo 808/Hat)."""
     raw_groups: Dict[int, int] = {}
     counts: Dict[int, int] = {}

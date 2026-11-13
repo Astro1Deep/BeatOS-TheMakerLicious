@@ -1,19 +1,22 @@
 import gzip
 import json
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import tempfile
 import unittest
 from hardware_kit_builder import default_mute_group, pad_mute_group, detect_sound_type, parse_xpj_project, export_mpc_program, export_mpc_project
 
 class MuteGroups(unittest.TestCase):
     def test_defaults_and_overrides(self):
-        for kind, group in [('KICK',1),('SNARE',3),('HIHAT',2),('BASS_808',0),('CYMBAL',0),('CLAP',0),('FX',0)]:
+        for kind, group in [('KICK',1),('SNARE',1),('TOM',1),('HIHAT',2),('BASS_808',3),('CYMBAL',0),('CLAP',0),('FX',0)]:
             self.assertEqual(default_mute_group(kind), group)
             self.assertEqual(pad_mute_group({'sound_type':kind}), group)
             self.assertEqual(pad_mute_group({'sound_type':kind, 'mute_group':0}), 0)
             self.assertEqual(pad_mute_group({'soundType':kind, 'muteGroup':9}), 9)
         self.assertEqual(detect_sound_type('Crash_01.wav'), 'CYMBAL')
         self.assertEqual(detect_sound_type('ClosedHH_01.wav'), 'HIHAT')
+        self.assertEqual(detect_sound_type('Floor_Tom_01.wav'), 'TOM')
         for group in [-1,33]:
             with self.assertRaises(ValueError): pad_mute_group({'mute_group':group})
 
@@ -38,13 +41,13 @@ class MuteGroups(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             xpm=ET.parse(export_mpc_program('Groups',pads,Path(d)/'program',copy_samples=False))
             instruments=xpm.getroot().findall('.//Instruments/Instrument')
-            self.assertEqual([int(i.findtext('MuteGroup')) for i in instruments[:6]], [1,2,3,0,0,9])
+            self.assertEqual([int(i.findtext('MuteGroup')) for i in instruments[:6]], [1,2,1,3,0,9])
             self.assertTrue(all(int(n.text or '0')==0 for i in instruments for n in i if n.tag.startswith('MuteTarget')))
             path=export_mpc_project('Groups',pads,Path(d)/'project')
             text=gzip.decompress(Path(path).read_bytes()).decode()
             data=json.loads(text[text.index('{'):])['data']
             instruments=data['tracks'][0]['program']['drum']['instruments']
-            self.assertEqual([i['whichMuteGroup'] for i in instruments[:6]], [1,2,3,0,0,9])
+            self.assertEqual([i['whichMuteGroup'] for i in instruments[:6]], [1,2,1,3,0,9])
             self.assertTrue(all(not any(i.get('muteTargets',{}).values()) for i in instruments))
 
     def test_offline_create_command_actually_generates_kit(self):
@@ -70,6 +73,14 @@ class MuteGroups(unittest.TestCase):
 
     def test_mute_profiles_and_underground_styles(self):
         from hardware_kit_builder import mute_group_for_profile, detect_musical_style
+        # Punch & Clean Master profile (default): Kick, Snare & Tom = 1, Hats = 2, 808 = 3, Clap = 0
+        self.assertEqual(mute_group_for_profile('KICK', 'Kick_Sub.wav', 'punch_clean'), 1)
+        self.assertEqual(mute_group_for_profile('PERCUSSION', 'Floor_Tom_01.wav', 'punch_clean'), 1)
+        self.assertEqual(mute_group_for_profile('TOM', 'Rack_Tom_02.wav', 'punch_clean'), 1)
+        self.assertEqual(mute_group_for_profile('SNARE', 'Snare_Main.wav', 'punch_clean'), 1)
+        self.assertEqual(mute_group_for_profile('HIHAT', 'Open_Hat_909.wav', 'punch_clean'), 2)
+        self.assertEqual(mute_group_for_profile('BASS_808', '808_Sub.wav', 'punch_clean'), 3)
+        self.assertEqual(mute_group_for_profile('CLAP', 'Clap_Wide.wav', 'punch_clean'), 0)
         # Real drum kit logic: Kick & Tom = 1, Closed & Open Hats = 2, Snare = 3, Clap = 0
         self.assertEqual(mute_group_for_profile('KICK', 'Kick_Sub.wav', 'real_drums'), 1)
         self.assertEqual(mute_group_for_profile('PERCUSSION', 'Floor_Tom_01.wav', 'real_drums'), 1)
