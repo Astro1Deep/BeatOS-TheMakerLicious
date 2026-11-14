@@ -150,9 +150,22 @@ window.addEventListener('load', () => {
           localStorage.getItem('ecosystem_theme') === 'astro1deep-obsidian' &&
           styles.getPropertyValue('--bg-dark').trim() === '#08090a' &&
           styles.getPropertyValue('--text-primary').trim() === '#f4f5f7';
-        reporter.textContent = initialEnglish && spanishOK && englishOK && filenameOK && themeOK
-          ? 'BEATOS_BROWSER_ES_EN_PASS'
-          : 'FAIL:initial=' + initialEnglish + ',es=' + spanishOK + ',en=' + englishOK + ',filename=' + filenameOK + ',theme=' + themeOK + ',es-diagnostic=' + spanishDiagnostics;
+        const check = async () => {
+          await executeLibraryAction('status');
+          const statusOK = document.getElementById('terminalModalOverlay').style.display === 'flex' &&
+            document.getElementById('terminalStatusTag').textContent === 'Completed' &&
+            document.getElementById('terminalOutput').textContent.includes(location.origin);
+          closeTerminalModal();
+          await executeLibraryAction('sync_dashboard');
+          const syncOK = document.getElementById('terminalModalOverlay').style.display === 'flex' &&
+            document.getElementById('terminalStatusTag').textContent === 'Completed' &&
+            document.getElementById('terminalOutput').textContent.includes('Ecosystem inventory refreshed.');
+          closeTerminalModal();
+          reporter.textContent = initialEnglish && spanishOK && englishOK && filenameOK && themeOK && statusOK && syncOK
+            ? 'BEATOS_BROWSER_ES_EN_PASS'
+            : 'FAIL:initial=' + initialEnglish + ',es=' + spanishOK + ',en=' + englishOK + ',filename=' + filenameOK + ',theme=' + themeOK + ',status=' + statusOK + ',sync=' + syncOK + ',es-diagnostic=' + spanishDiagnostics;
+        };
+        check().catch(error => { reporter.textContent = 'FAIL:' + error.message; });
       }, 250);
     }, 250);
   } catch (error) {reporter.textContent = 'FAIL:' + error.message;}

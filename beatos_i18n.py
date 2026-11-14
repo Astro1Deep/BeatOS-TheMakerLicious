@@ -10,6 +10,12 @@ from http.cookies import SimpleCookie
 import re
 
 EXACT_EN = {
+    "Inventario del ecosistema actualizado.": "Ecosystem inventory refreshed.",
+    "La biblioteca ya no está disponible.": "The library is no longer available.",
+    "No se pudo limpiar toda la biblioteca.": "Could not clean the entire library.",
+    "Ya hay una tarea de mantenimiento en curso.": "A maintenance task is already running.",
+    "Ya hay una reindexación en ejecución en segundo plano.": "A maintenance task is already running.",
+    "🚀 Reindexación iniciada en segundo plano con éxito.": "🚀 Reindexing started in the background.",
     'La biblioteca indicada no existe o no es una carpeta': 'The selected library does not exist or is not a directory',
     'Tema del ecosistema no válido.': 'Invalid ecosystem theme.',
     'No se pudo guardar el tema del ecosistema.': 'Could not save the ecosystem theme.',

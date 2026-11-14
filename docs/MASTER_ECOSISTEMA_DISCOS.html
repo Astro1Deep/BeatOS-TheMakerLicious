@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BeatOS · Master Ecosystem</title>
+<style>
+  :root { color-scheme: dark; font: 16px/1.55 system-ui, sans-serif; background: #08090a; color: #f4f5f7; }
+  body { max-width: 1050px; margin: auto; padding: clamp(1rem,3vw,2rem); }
+  header { padding-block: .5rem 1.5rem; }
+  header nav, .actions { display: flex; flex-wrap: wrap; gap: .7rem; align-items: center; }
+  h1 { font-size: clamp(1.8rem,5vw,3rem); margin: .75rem 0 .25rem; line-height: 1.15; }
+  h2 { margin: 2rem 0 .6rem; }
+  p { color: #b8bec8; }
+  a { color: #afc8e3; }
+  button, .action { box-sizing: border-box; display: inline-block; font: inherit; color: #f4f5f7;
+    background: #20232a; border: 1px solid #747d8c; padding: .5rem .85rem; border-radius: .45rem; cursor: pointer; }
+  button:disabled { opacity: .65; cursor: wait; }
+  :focus-visible { outline: 3px solid #afc8e3; outline-offset: 3px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%, 18rem),1fr)); gap: .8rem; }
+  article, dialog { background: #141519; border: 1px solid #555d6a; border-radius: .65rem; padding: 1rem; }
+  article h3 { margin: 0; }
+  article p, article li { overflow-wrap: anywhere; margin: .3rem 0; }
+  article ul { margin: .8rem 0 0; padding-left: 1.3rem; }
+  dialog { box-sizing: border-box; color: inherit; width: min(90vw, 46rem); }
+  dialog::backdrop { background: #000b; }
+  #log { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 50vh; overflow: auto; color: #b8bec8; }
+</style>
+<script>
+if (location.protocol !== 'file:') document.write('<base href="/BeatOS/docs/">');
+</script>
+<script src="assets/beatos-maintenance.js"></script>
+</head>
+<body>
+<header>
+  <nav>
+    <a id="catalog" href="../data/catalogo.html">BeatOS catalog</a>
+    <button id="language" type="button" aria-label="Switch language">ES</button>
+  </nav>
+  <h1 id="title">Master Ecosystem</h1>
+  <p id="description">Production, audio libraries, DJing and hardware samplers.</p>
+  <p id="connection" role="status"></p>
+</header>
+<div class="actions">
+  <button id="refresh" type="button">Check API connection</button>
+  <button id="sync" type="button">Sync Master Dashboard</button>
+  <a id="maintenance" class="action" href="../data/catalogo.html#tab-maintenance">Library maintenance</a>
+</div>
+<h2 id="volumeTitle">Mounted volumes</h2>
+<div id="volumes" class="cards"></div>
+<dialog id="activity" aria-labelledby="activityTitle">
+  <h2 id="activityTitle"></h2>
+  <p id="activityStatus" role="status"></p>
+  <pre id="log"></pre>
+  <form method="dialog"><button id="close" autofocus>Close</button></form>
+</dialog>
+<script>
+const strings = {
+  en: {
+    title: 'Master Ecosystem', description: 'Production, audio libraries, DJing and hardware samplers.',
+    catalog: 'BeatOS catalog', refresh: 'Check API connection', sync: 'Sync Master Dashboard',
+    maintenance: 'Library maintenance', volumeTitle: 'Mounted volumes', close: 'Close',
+    connecting: 'Checking the active BeatOS library…', online: 'Connected', active: 'Active library',
+    free: 'GB free', empty: 'No compatible SQLite index found', items: 'entries',
+    launch: 'Start BeatOS/ABRIR_BEATOS.command on macOS, or select option 2 in installer.py, then check again.',
+    complete: 'Completed', failed: 'Could not complete the request', working: 'Working…',
+    count: 'Volumes detected', bridgeSkipped: 'Cerebro OS is not installed.',
+    bridgeOK: 'Local Cerebro bridge updated.', bridgeFail: 'Cerebro is installed, but its bridge could not be written.'
+  },
+  es: {
+    title: 'Ecosistema Maestro', description: 'Producción, bibliotecas de audio, DJing y samplers.',
+    catalog: 'Catálogo de BeatOS', refresh: 'Verificar conexión API', sync: 'Sincronizar Master Dashboard',
+    maintenance: 'Mantenimiento de la biblioteca', volumeTitle: 'Volúmenes montados', close: 'Cerrar',
+    connecting: 'Comprobando la biblioteca activa de BeatOS…', online: 'Conectado', active: 'Biblioteca activa',
+    free: 'GB libres', empty: 'Sin índice SQLite compatible', items: 'registros',
+    launch: 'Inicia BeatOS/ABRIR_BEATOS.command en macOS o elige la opción 2 de installer.py y vuelve a comprobar.',
+    complete: 'Completado', failed: 'No se pudo completar la solicitud', working: 'En curso…',
+    count: 'Volúmenes detectados', bridgeSkipped: 'Cerebro OS no está instalado.',
+    bridgeOK: 'Puente local de Cerebro actualizado.', bridgeFail: 'Cerebro está instalado, pero no se pudo escribir su puente.'
+  }
+};
+const byId = id => document.getElementById(id);
+const fromFile = location.protocol === 'file:';
+const query = new URLSearchParams(location.search);
+let language = query.get('lang') === 'es' ? 'es' : 'en';
+let inventory;
+let connection;
+let busy = false;
+const t = key => strings[language][key];
+
+function draw() {
+  document.documentElement.lang = language;
+  for (const key of ['title','description','catalog','refresh','sync','maintenance','volumeTitle','close']) byId(key).textContent = t(key);
+  byId('language').textContent = language === 'en' ? 'ES' : 'EN';
+  const locale = '?lang=' + language;
+  byId('catalog').href = fromFile ? '../data/catalogo.html' + locale : '/' + locale;
+  byId('maintenance').href = byId('catalog').href + '#tab-maintenance';
+  if (connection) byId('connection').textContent = t('online') + ' · ' + connection;
+  const cards = byId('volumes');
+  cards.replaceChildren();
+  if (!inventory) return;
+  for (const volume of inventory.volumes) {
+    const card = document.createElement('article');
+    const heading = document.createElement('h3');
+    heading.textContent = volume.name + (volume.active ? ' · ' + t('active') : '');
+    const locationLine = document.createElement('p');
+    locationLine.textContent = volume.path;
+    const space = document.createElement('p');
+    space.textContent = (volume.free_bytes / 1e9).toLocaleString(language, {maximumFractionDigits: 1}) + ' ' + t('free');
+    card.append(heading, locationLine, space);
+    const details = document.createElement('ul');
+    const libraries = inventory.libraries.filter(library => library.mount_path === volume.path);
+    for (const library of libraries) {
+      const detail = document.createElement('li');
+      detail.textContent = library.table_name + ' · ' + library.sample_count.toLocaleString(language) + ' ' + t('items');
+      details.append(detail);
+    }
+    if (libraries.length) card.append(details);
+    else {
+      const detail = document.createElement('p');
+      detail.textContent = t('empty');
+      card.append(detail);
+    }
+    cards.append(card);
+  }
+}
+
+async function refresh(action = 'refresh', show = true) {
+  if (busy) return;
+  busy = true;
+  const dialog = byId('activity');
+  const status = byId('activityStatus');
+  const log = byId('log');
+  byId('refresh').disabled = byId('sync').disabled = true;
+  if (show) {
+    byId('activityTitle').textContent = t(action);
+    status.textContent = t('working');
+    log.textContent = '';
+    if (!dialog.open) dialog.showModal();
+  }
+  try {
+    if (fromFile) {
+      byId('connection').textContent = t('connecting');
+      const base = await window.readBeatOSConnection?.('../data/beatos-connection.js');
+      if (!base) throw new Error(t('launch'));
+      const parameters = new URLSearchParams({lang: language});
+      if (show) parameters.set('activity', '1');
+      location.replace(base + '/ecosystem?' + parameters);
+      return;
+    }
+    const response = await fetch(action === 'sync' ? '/api/sync_dashboard' : '/api/ecosystem', {
+      method: action === 'sync' ? 'POST' : 'GET', headers: {'X-BeatOS-Language': language},
+      signal: AbortSignal.timeout(action === 'sync' ? 120000 : 15000), cache: 'no-store'
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.error_es && language === 'es' ? data.error_es : data.error || 'HTTP ' + response.status);
+    inventory = data.inventory;
+    connection = location.origin + ' · ' + inventory.root_dir;
+    draw();
+    status.textContent = t('complete');
+    log.textContent = t('count') + ' · ' + inventory.volumes.length;
+    if (action === 'sync') {
+      log.textContent += '\n' + t(inventory.cerebro_installed
+        ? (inventory.cerebro_synced ? 'bridgeOK' : 'bridgeFail') : 'bridgeSkipped');
+    }
+  } catch (error) {
+    byId('connection').textContent = error.message;
+    status.textContent = t('failed');
+    log.textContent = error.message;
+  } finally {
+    busy = false;
+    byId('refresh').disabled = byId('sync').disabled = false;
+  }
+}
+
+byId('refresh').onclick = () => refresh();
+byId('sync').onclick = () => refresh('sync');
+byId('language').onclick = () => { language = language === 'en' ? 'es' : 'en'; draw(); };
+const showActivity = query.get('activity') === '1';
+if (showActivity && !fromFile) {
+  query.delete('activity');
+  history.replaceState(null, '', location.pathname + '?' + query + location.hash);
+}
+draw();
+refresh('refresh', showActivity);
+</script>
+</body>
+</html>
