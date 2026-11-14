@@ -62,6 +62,8 @@ window.addEventListener('load', () => {
     return cookie ? cookie.slice('beatos_locale='.length) : null;
   };
   const deviceGuide=document.getElementById('poBackupDeviceGuide');
+  const bankSubtitle=document.getElementById('rackActiveBankSubtitle');
+  const bankText = () => bankSubtitle?.textContent;
   const backupInfoText=() => {
     const card=[...document.querySelectorAll('#po33BackupsList .card')]
       .find(el=>el.textContent.includes('Synthetic Browser Test'));
@@ -78,7 +80,6 @@ window.addEventListener('load', () => {
     ['🔊 808s & Sub Bajos','🔊 808s & sub bass'],
     ['📂 Explorar Kits','📂 Browse kits'],
     ['🔀 Modo Mover','🔀 Move mode'],
-    ['(Banco A: Pads 1 al 16)','(Bank A: pads 1–16)'],
     ['🎛️ Editar Pads en Rack','🎛️ Edit pads in rack'],
     ['⚡ Generar Kit EP-133','⚡ Generate EP-133 kit'],
     ['📁 Revelar en Finder','📁 Show in Finder'],
@@ -110,6 +111,7 @@ window.addEventListener('load', () => {
   try {
     const initialEnglish = document.documentElement.lang === 'en' &&
       localeCookie() === 'en' &&
+      bankText() === '(Bank A: pads 1–16)' &&
       recording.textContent.trim() === '⏺ Record backup' &&
       deviceGuide.textContent.includes('Send: WRITE + SOUND + PLAY') &&
       backupInfoText().includes('Modem payload NOT verified.') &&
@@ -123,6 +125,7 @@ window.addEventListener('load', () => {
         backupInfoText().includes('Datos del módem NO verificados.'),
         document.documentElement.lang === 'es',
         localeCookie() === 'es',
+        bankText() === '(Banco A: Pads 1 al 16)',
         ...localeNodes.filter(x => x.node.nodeValue.trim() !== x.es).map(x => x.es),
         ...localeAttrs.filter(x => x.node.getAttribute(x.attr) !== x.es).map(x => x.es)
       ];
@@ -134,6 +137,7 @@ window.addEventListener('load', () => {
           backupInfoText().includes('Modem payload NOT verified.') &&
           document.documentElement.lang === 'en' &&
           localeCookie() === 'en' &&
+          bankText() === '(Bank A: pads 1–16)' &&
           localStorage.getItem('mpc_lang') === 'en' &&
           localeNodes.every(x => x.node.nodeValue.trim() === x.en) &&
           localeAttrs.every(x => x.node.getAttribute(x.attr) === x.en);
