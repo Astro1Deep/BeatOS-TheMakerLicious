@@ -969,25 +969,53 @@ def _resolve_sample_file(
     root = Path(source_root or Path.cwd()).resolve()
     reference = Path(str(sample_ref).replace("\\", "/"))
     directories = [Path(d).resolve() for d in search_dirs if d and Path(d).is_dir()]
-    def usable(candidate):
-        return candidate.is_file() and candidate.resolve().is_relative_to(root)
+
+    def usable(candidate: Path) -> bool:
+        try:
+            return (
+                not candidate.name.startswith("._")
+                and candidate.is_file()
+                and candidate.resolve().is_relative_to(root)
+            )
+        except OSError:
+            return False
+
     exact = [reference] if reference.is_absolute() else [d / reference for d in directories] + [root / reference]
     for candidate in exact:
         if usable(candidate):
             return candidate.resolve(), candidate.resolve().relative_to(root).as_posix()
-    # Basename fallback must be unique: never substitute a different layer silently.
+        try:
+            parent_dir = candidate.parent
+            if parent_dir.is_dir() and parent_dir.resolve().is_relative_to(root):
+                target_low = candidate.name.lower()
+                for child in parent_dir.iterdir():
+                    if child.name.lower() == target_low and usable(child):
+                        return child.resolve(), child.resolve().relative_to(root).as_posix()
+        except OSError:
+            pass
+
+    # Basename fallback must be unique within the highest-priority search directory.
     name = reference.name
-    for normalized in (False, True):
-        matches = set()
-        for directory in directories:
+    for directory in directories:
+        dir_is_proj_data = directory.name.endswith(("_[ProjectData]", "_ProjectData"))
+        for normalized in (False, True):
+            matches = set()
             for candidate in directory.rglob('*'):
                 if (candidate.name == name if not normalized else _normalize_name(candidate.name) == _normalize_name(name)) and usable(candidate):
                     matches.add(candidate.resolve())
-        if len(matches) == 1:
-            match = matches.pop()
-            return match, match.relative_to(root).as_posix()
-        if matches:
-            return None, ''
+            if len(matches) == 1:
+                match = matches.pop()
+                return match, match.relative_to(root).as_posix()
+            if len(matches) > 1 and not dir_is_proj_data:
+                non_proj_matches = {
+                    m for m in matches
+                    if not any(pt.endswith(("_[ProjectData]", "_ProjectData")) for pt in m.relative_to(directory).parts)
+                }
+                if len(non_proj_matches) == 1:
+                    match = non_proj_matches.pop()
+                    return match, match.relative_to(root).as_posix()
+            if matches:
+                return None, ''
     return None, ''
 
 
@@ -996,10 +1024,10 @@ def parse_xpm_program(xpm_path: str | Path, source_root: Optional[str | Path] = 
     Extrae instrumentos, samples vinculados, volumen, pan y afinación de un .xpm de MPC,
     resolviendo las rutas relativas exactas a las muestras de audio en disco.
     """
-    xpm_p = Path(xpm_path)
-    root_p = Path(source_root) if source_root else (
+    xpm_p = Path(xpm_path).resolve()
+    root_p = (Path(source_root) if source_root else (
         Path("/Volumes/MPCSMPL") if Path("/Volumes/MPCSMPL").is_dir() else xpm_p.parent
-    )
+    )).resolve()
 
     tree = ET.parse(str(xpm_p))
     root = tree.getroot()
@@ -1011,12 +1039,18 @@ def parse_xpm_program(xpm_path: str | Path, source_root: Optional[str | Path] = 
     )
     prog_type = prog_elem.get("type", "Drum") if prog_elem is not None else "Drum"
 
-    # Directorios de búsqueda para muestras
-    search_dirs = [xpm_p.parent]
+    # Directorios de búsqueda para muestras (priorizando [ProjectData] propio antes de la expansión)
+    search_dirs: List[Path] = []
+    data_dir = _resolve_project_data_dir(xpm_p)
+    if data_dir and data_dir.is_dir():
+        search_dirs.append(data_dir)
+    if xpm_p.parent.is_dir():
+        search_dirs.append(xpm_p.parent)
     # Si está dentro de una expansión, agregar la raíz de la expansión
     for parent_cand in xpm_p.parents:
-        if parent_cand.parent.name == "Expansions":
-            search_dirs.append(parent_cand)
+        if parent_cand.parent.name == "Expansions" or (parent_cand / "Expansion.xml").is_file():
+            if parent_cand not in search_dirs:
+                search_dirs.append(parent_cand)
             break
 
     pads = {}
@@ -1030,9 +1064,24 @@ def parse_xpm_program(xpm_path: str | Path, source_root: Optional[str | Path] = 
         pan = float(inst.findtext("Pan", "0.500000"))
         mute_group = int(inst.findtext("MuteGroup", "0"))
         tune_coarse = int(inst.findtext("TuneCoarse", "0"))
+        tune_fine = int(inst.findtext("TuneFine", "0") or 0)
+        one_shot_txt = (inst.findtext("OneShot", "True") or "True").strip().lower()
+        trigger_mode = "oneshot" if one_shot_txt != "false" else "noteon"
+        mono_txt = (inst.findtext("Mono", "True") or "True").strip().lower()
+        monophonic = mono_txt != "false"
+        simult1 = int(inst.findtext("SimultTarget1", "0") or 0)
+        pad_link = (simult1 - 35) if 36 <= simult1 <= 51 else 0
+        submix = 0
+        route_el = inst.find("AudioRoute")
+        if route_el is not None:
+            ar_type = int(route_el.findtext("AudioRoute", "0") or 0)
+            ar_sub = int(route_el.findtext("AudioRouteSubIndex", "0") or 0)
+            if ar_type == 1:
+                submix = ar_sub + 1
 
         sample_name = ""
         sample_file = ""
+        first_layer = None
         layers = [layer for layer in inst.findall(".//Layer") if layer.findtext("Active", "True").lower() != "false" and (layer.findtext("SampleName") or layer.findtext("SampleFile"))]
         for layer in layers:
             sn = layer.findtext("SampleName", "").strip()
@@ -1040,6 +1089,7 @@ def parse_xpm_program(xpm_path: str | Path, source_root: Optional[str | Path] = 
             if sf or sn:
                 sample_name = sn
                 sample_file = sf
+                first_layer = layer
                 break
 
         if not sample_file and not sample_name:
@@ -1055,6 +1105,14 @@ def parse_xpm_program(xpm_path: str | Path, source_root: Optional[str | Path] = 
         actual_filename = found_path.name if found_path else target_ref
         actual_stem = found_path.stem if found_path else (sample_name or Path(target_ref).stem)
         stype = detect_sound_type(f"{actual_filename} {actual_stem} {sample_name}")
+        root_note = int(first_layer.findtext("RootNote", "0") or 0) if first_layer is not None else 0
+        key_track = (first_layer.findtext("KeyTrack", "False") or "False").strip().lower() == "true" if first_layer is not None else False
+        direction = int(first_layer.findtext("Direction", "0") or 0) if first_layer is not None else 0
+        reverse = direction == 1
+        loop_mode = 1 if first_layer is not None and (
+            (first_layer.findtext("Loop", "False") or "False").strip().lower() == "true"
+            or int(first_layer.findtext("SliceLoop", "0") or 0) > 0
+        ) else 0
 
         pads[num] = {
             "pad_number": num,
@@ -1065,6 +1123,15 @@ def parse_xpm_program(xpm_path: str | Path, source_root: Optional[str | Path] = 
             "volume": vol,
             "pan": pan,
             "tune": tune_coarse,
+            "fine_tune": tune_fine,
+            "trigger_mode": trigger_mode,
+            "monophonic": monophonic,
+            "root_note": root_note,
+            "key_track": key_track,
+            "reverse": reverse,
+            "loop_mode": loop_mode,
+            "pad_link": pad_link,
+            "submix": submix,
             "mute_group": mute_group,
             "sound_type": stype,
             "missing": found_path is None,
@@ -1182,29 +1249,34 @@ def list_expansion_kits(
     con metadatos como tipo de kit, cantidad de pads y primer sample de prueba.
     Usa caché en memoria para respuestas ultra-rápidas en el navegador.
     """
-    card_root = Path(source_root) if source_root else (
+    card_root = (Path(source_root) if source_root else (
         Path("/Volumes/MPCSMPL") if Path("/Volumes/MPCSMPL").is_dir() else Path.cwd()
-    )
-    exp_base = Path(expansions_root) if expansions_root else card_root / "Expansions"
+    )).resolve()
+    exp_base = Path(expansions_root).resolve() if expansions_root else card_root / "Expansions"
 
     cache_key = f"{expansion_name}::{str(card_root)}::{str(exp_base)}"
     if cache_key in _EXPANSION_KITS_CACHE:
         return _EXPANSION_KITS_CACHE[cache_key]
 
-    if not exp_base.is_dir():
-        return []
-    exp_dir = (exp_base / expansion_name).resolve()
-    if not exp_dir.is_relative_to(exp_base.resolve()):
-        raise ValueError("Expansión fuera de la biblioteca")
-    if not exp_dir.is_dir():
-        # Probar coincidencias tolerantes
-        norm_exp = _normalize_name(expansion_name)
-        for cand in exp_base.iterdir():
-            if cand.is_dir() and _normalize_name(cand.name) == norm_exp:
-                exp_dir = cand
-                break
+    card_resolved = card_root.resolve()
+    rel_candidate = (card_resolved / expansion_name).resolve()
+    exp_dir = None
+    if rel_candidate.is_relative_to(card_resolved) and rel_candidate.is_dir() and rel_candidate != card_resolved:
+        exp_dir = rel_candidate
+    elif exp_base.is_dir():
+        direct_candidate = (exp_base / expansion_name).resolve()
+        if not direct_candidate.is_relative_to(exp_base.resolve()):
+            raise ValueError("Expansión fuera de la biblioteca")
+        if direct_candidate.is_dir():
+            exp_dir = direct_candidate
+        else:
+            norm_exp = _normalize_name(Path(expansion_name).name)
+            for cand in exp_base.iterdir():
+                if cand.is_dir() and _normalize_name(cand.name) == norm_exp:
+                    exp_dir = cand
+                    break
 
-    if not exp_dir.is_dir():
+    if not exp_dir or not exp_dir.is_dir():
         return []
 
     kits = []

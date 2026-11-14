@@ -126,6 +126,7 @@ def run_reindex_thread(root_dir: str):
     try:
         reindex_env = os.environ.copy()
         reindex_env["PYTHONIOENCODING"] = "utf-8"
+        reindex_env["PYTHONUNBUFFERED"] = "1"
         proc = subprocess.Popen(
             [sys.executable, "-B", script_path, "--path", root_dir],
             stdin=subprocess.DEVNULL,
@@ -145,6 +146,11 @@ def run_reindex_thread(root_dir: str):
         proc.wait()
 
         TASK_STATE["success"] = (proc.returncode == 0)
+        if proc.returncode == 0:
+            _DISCOVERED_LIBS_CACHE["timestamp"] = 0.0
+            kit_mod = get_hardware_kit_builder(root_dir)
+            if kit_mod and hasattr(kit_mod, "clear_expansion_kits_cache"):
+                kit_mod.clear_expansion_kits_cache()
         TASK_STATE["logs"].append(
             "✔ Proceso finalizado correctamente."
             if proc.returncode == 0
@@ -159,13 +165,21 @@ def run_reindex_thread(root_dir: str):
 
 def run_clean_metadata(root_dir: str):
     logs = []
+    excluded_dirs = {
+        ".Spotlight-V100",
+        ".fseventsd",
+        ".Trashes",
+        ".TemporaryItems",
+        ".DocumentRevisions-V100",
+    }
     try:
         if sys.platform == "darwin":
-            subprocess.run(["dot_clean", "-m", root_dir], stderr=subprocess.DEVNULL, check=False)
+            subprocess.run(["dot_clean", "-m", root_dir], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
             logs.append("✔ dot_clean ejecutado en el volumen.")
 
         deleted_count = 0
-        for dirpath, _, filenames in os.walk(root_dir):
+        for dirpath, dirnames, filenames in os.walk(root_dir):
+            dirnames[:] = [d for d in dirnames if d not in excluded_dirs]
             for f in filenames:
                 if f.startswith("._") or f == ".DS_Store":
                     try:
@@ -179,14 +193,53 @@ def run_clean_metadata(root_dir: str):
         return {"success": False, "error": str(e)}
 
 def run_sync_dashboard():
-    dashboard_script = os.path.expanduser("~/.gemini/antigravity/scratch/sync_master_dashboard.py")
-    if os.path.isfile(dashboard_script):
-        try:
-            res = subprocess.run([sys.executable, dashboard_script], stdin=subprocess.DEVNULL, capture_output=True, text=True, check=True)
-            return {"success": True, "output": res.stdout}
-        except subprocess.CalledProcessError as e:
-            return {"success": False, "error": e.stderr}
-    return {"success": False, "error": "Script sync_master_dashboard.py no encontrado."}
+    candidates = [
+        os.path.expanduser("~/.gemini/antigravity/scratch/sync_master_dashboard.py"),
+        os.path.expanduser("~/Music/Audiotheque_Index/sync_master_dashboard.py"),
+    ]
+    for dashboard_script in candidates:
+        if os.path.isfile(dashboard_script):
+            try:
+                res = subprocess.run([sys.executable, dashboard_script], stdin=subprocess.DEVNULL, capture_output=True, text=True, check=True)
+                return {"success": True, "output": res.stdout}
+            except subprocess.CalledProcessError as e:
+                return {"success": False, "error": (e.stderr or e.stdout or str(e)).strip()}
+
+    # Respaldo directo en Python si no existe el script externo de Cerebro OS
+    source_candidates = [
+        Path.home() / "Music" / "Audiotheque_Index" / "master_ecosistema_discos.html",
+        Path("/Volumes/Realtek RTL9210B-CG Media/MASTER_ECOSISTEMA_DISCOS.html"),
+        Path("/Volumes/samsung PSSDT7/MASTER_ECOSISTEMA_DISCOS.html"),
+        Path("/Volumes/SanDisk SSD/MASTER_ECOSISTEMA_DISCOS.html"),
+        Path("/Volumes/MPCSMPL/BeatOS/docs/MASTER_ECOSISTEMA_DISCOS.html"),
+        Path("/Volumes/MPC-SAMPL3/BeatOS/docs/MASTER_ECOSISTEMA_DISCOS.html"),
+    ]
+    source_path = next((sc for sc in source_candidates if sc.is_file()), None)
+    if not source_path:
+        return {"success": False, "error": "Script sync_master_dashboard.py y plantilla MASTER_ECOSISTEMA_DISCOS.html no encontrados."}
+
+    destinations = [
+        Path("/Volumes/Realtek RTL9210B-CG Media/MASTER_ECOSISTEMA_DISCOS.html"),
+        Path("/Volumes/samsung PSSDT7/MASTER_ECOSISTEMA_DISCOS.html"),
+        Path("/Volumes/SanDisk SSD/MASTER_ECOSISTEMA_DISCOS.html"),
+        Path("/Volumes/MPCSMPL/BeatOS/docs/MASTER_ECOSISTEMA_DISCOS.html"),
+        Path("/Volumes/MPC-SAMPL3/BeatOS/docs/MASTER_ECOSISTEMA_DISCOS.html"),
+        Path.home() / "Music" / "Audiotheque_Index" / "master_ecosistema_discos.html",
+    ]
+    synced = []
+    for dest in destinations:
+        if dest.parent.is_dir():
+            try:
+                if dest.exists() and dest.resolve() == source_path.resolve():
+                    continue
+                shutil.copy2(str(source_path), str(dest))
+                synced.append(str(dest))
+            except OSError:
+                pass
+    return {
+        "success": True,
+        "output": f"Sincronizado desde {source_path} hacia {len(synced)} destinos.",
+    }
 
 def _probe_local_port(port: int, timeout: float = 0.04) -> bool:
     try:
@@ -1065,7 +1118,26 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             valid_origin = not origin or is_local_origin
         except ValueError:
             valid_host = valid_origin = False
-        is_cross_site = self.headers.get('Sec-Fetch-Site') == 'cross-site'
+        clean_req_path = urllib.parse.unquote(self.path.split('?', 1)[0])
+        is_top_level_nav = (
+            self.command in ('GET', 'HEAD')
+            and not clean_req_path.startswith('/api/')
+            and not origin
+            and (
+                self.headers.get('Sec-Fetch-Mode') == 'navigate'
+                or self.headers.get('Sec-Fetch-Dest') in ('document', 'iframe')
+            )
+        )
+        is_local_probe = (
+            self.command in ('GET', 'HEAD')
+            and clean_req_path == '/beatos-online.js'
+            and not origin
+        )
+        is_cross_site = (
+            self.headers.get('Sec-Fetch-Site') == 'cross-site'
+            and not is_top_level_nav
+            and not is_local_probe
+        )
         if not valid_host or not valid_origin or is_cross_site:
             self.send_error(403, 'Use la interfaz local de BeatOS')
             return False
@@ -1084,6 +1156,18 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             return
         parsed = urllib.parse.urlparse(self.path)
         clean_path = parsed.path.rstrip("/")
+
+        if clean_path == "/beatos-online.js":
+            port = self.server.server_address[1]
+            payload_js = f'window.__BEATOS_LOCAL_SERVER_ONLINE = "http://127.0.0.1:{port}";\n'.encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/javascript; charset=utf-8")
+            self.send_header("Content-Length", str(len(payload_js)))
+            self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+            self.send_cors_headers()
+            self.end_headers()
+            self.wfile.write(payload_js)
+            return
 
         # Endpoints API
         if clean_path == "/api/status":
@@ -1912,15 +1996,17 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 content_length = int(self.headers.get("Content-Length", 0))
                 body = self.rfile.read(content_length).decode("utf-8")
                 payload = json.loads(body)
-                expansion_name = payload.get("expansion_name", "").strip()
-                if not expansion_name:
+                expansion_name = str(payload.get("expansion_name") or "").strip()
+                expansion_path = str(payload.get("expansion_path") or "").strip()
+                target_exp = expansion_path or expansion_name
+                if not target_exp:
                     raise ValueError("Falta parámetro 'expansion_name'")
 
                 kit_mod = get_hardware_kit_builder(self.server.root_dir)
                 if kit_mod and hasattr(kit_mod, "list_expansion_kits"):
                     exp_root = Path(self.server.root_dir) / "Expansions"
-                    kits = kit_mod.list_expansion_kits(expansion_name, expansions_root=exp_root, source_root=self.server.root_dir)
-                    resp = {"success": True, "expansion_name": expansion_name, "programs": kits, "total": len(kits)}
+                    kits = kit_mod.list_expansion_kits(target_exp, expansions_root=exp_root, source_root=self.server.root_dir)
+                    resp = {"success": True, "expansion_name": expansion_name or target_exp, "programs": kits, "total": len(kits)}
                 else:
                     raise RuntimeError("Función list_expansion_kits no disponible.")
             except Exception as e:

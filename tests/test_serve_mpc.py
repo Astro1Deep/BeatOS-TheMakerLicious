@@ -280,3 +280,57 @@ class ServerSecurityTests(unittest.TestCase):
             (app/'docs/MASTER_ECOSISTEMA_DISCOS.html').write_text('<html>master ecosystem dashboard</html>',encoding='utf-8')
             for endpoint in ['/catalogo_universal.html','/BeatOS/docs/MASTER_ECOSISTEMA_DISCOS.html']:
                 status,body=self.request(url+endpoint);self.assertEqual(status,200);self.assertIn(b'master ecosystem dashboard',body)
+
+    def test_cross_site_top_level_navigation_probe_clean_metadata_and_expansion_kit_load(self):
+        import json
+        with self.server() as (url, parent):
+            app = parent / 'library/BeatOS'
+            (app / 'data').mkdir(parents=True, exist_ok=True)
+            (app / 'data/catalogo.html').write_text('<html>beatos catalog</html>', encoding='utf-8')
+            exp_root = parent / 'library/Expansions/DemoPack'
+            proj_data = exp_root / 'Demo Kit_[ProjectData]'
+            proj_data.mkdir(parents=True, exist_ok=True)
+            (proj_data / 'Kick.wav').write_bytes(b'RIFFdemo')
+            (proj_data / '._Kick.wav').write_bytes(b'AppleDouble')
+            (exp_root / 'Demo Kit.xpm').write_text(
+                '<MPCVObject><Program type="Drum"><Instruments>'
+                '<Instrument number="1"><Layers><Layer number="1"><SampleName>Kick</SampleName><SampleFile>Kick.wav</SampleFile></Layer></Layers></Instrument>'
+                '</Instruments></Program></MPCVObject>',
+                encoding='utf-8',
+            )
+
+            status, body = self.request(url + '/', headers={'Sec-Fetch-Site': 'cross-site', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-Dest': 'document'})
+            self.assertEqual(status, 200)
+            self.assertIn(b'beatos catalog', body)
+
+            status, body = self.request(url + '/beatos-online.js')
+            self.assertEqual(status, 200)
+            self.assertIn(b'window.__BEATOS_LOCAL_SERVER_ONLINE', body)
+            self.assertEqual(self.request(url + '/beatos-online.js', headers={'Origin': 'https://evil.example'})[0], 403)
+
+            status, body = self.request(url + '/api/clean_metadata', method='POST', data=b'', headers={'Origin': url})
+            self.assertEqual(status, 200, body)
+            self.assertTrue(json.loads(body)['success'])
+            self.assertFalse((proj_data / '._Kick.wav').exists())
+
+            status, body = self.request(
+                url + '/api/list_expansion_programs',
+                method='POST',
+                data=json.dumps({'expansion_name': 'OtroAlias', 'expansion_path': 'Expansions/DemoPack'}).encode(),
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+            )
+            self.assertEqual(status, 200, body)
+            programs = json.loads(body)['programs']
+            self.assertEqual(len(programs), 1)
+            self.assertEqual(programs[0]['rel_path'], 'Expansions/DemoPack/Demo Kit.xpm')
+
+            status, body = self.request(
+                url + '/api/load_xpm_program',
+                method='POST',
+                data=json.dumps({'rel_path': programs[0]['rel_path']}).encode(),
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+            )
+            self.assertEqual(status, 200, body)
+            pad1 = json.loads(body)['program']['pads']['1']
+            self.assertFalse(pad1['missing'])
+            self.assertEqual(pad1['rel_path'], 'Expansions/DemoPack/Demo Kit_[ProjectData]/Kick.wav')

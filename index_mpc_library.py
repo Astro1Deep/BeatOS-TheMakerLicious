@@ -339,7 +339,8 @@ def render_catalog(template, records, metadata, root_path=None):
           <h3 translate="no">{title}</h3><p class="library-manufacturer" translate="no">{manufacturer}</p>
           <dl><dt>Samples</dt><dd>{samples}</dd><dt>Tamaño</dt><dd>{esc(expansion.get('size_mb'))} MB</dd></dl>
           <details class="library-location"><summary>Ubicación de la expansión</summary><code>{path}</code></details>
-          <div class="card-actions"><button type="button" class="po33-btn-secondary library-action primary" data-expansion="{folder}" onclick="openExpansionBrowser(this.dataset.expansion)">🎛️ Ver programas</button>
+          <div class="card-actions"><button type="button" class="po33-btn-secondary library-action primary" data-expansion="{folder}" data-path="{path}" data-title="{title}" onclick="openExpansionBrowser(this.dataset.expansion,this.dataset.path,this.dataset.title)">🎛️ Ver programas</button>
+          <button type="button" class="po33-btn-secondary library-action" data-expansion="{folder}" data-path="{path}" data-title="{title}" onclick="quickLoadExpansionFirstKit(this.dataset.expansion,this,this.dataset.path,this.dataset.title)">⚡ Cargar kit al rack</button>
           <button type="button" class="po33-btn-secondary library-action" data-path="{path}" data-title="{title}" onclick="viewExpansionProjects(this.dataset.path,this.dataset.title)">📁 Ver proyectos ({project_count})</button>
           <button type="button" class="po33-btn-secondary library-action" data-path="{path}" data-title="{title}" data-folder="{folder}" onclick="viewExpansionSamples(this.dataset.path,this.dataset.title,this.dataset.folder)">🔊 Explorar samples</button>
           <button type="button" class="po33-btn-secondary library-action" data-path="{path}" onclick="revealLibraryPath(this.dataset.path,this)">📁 Mostrar en Finder</button>
