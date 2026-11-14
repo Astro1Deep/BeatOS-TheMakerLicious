@@ -61,6 +61,24 @@ class APILanguageTests(unittest.TestCase):
             self.assertEqual(bridge["api_base"], "http://127.0.0.1:8891")
             self.assertEqual(bridge["root_dir"], folder)
 
+    def test_reading_other_card_status_preserves_the_synced_cerebro_library(self):
+        with tempfile.TemporaryDirectory() as folder, patch.object(Path, "home", return_value=Path(folder)):
+            home = Path(folder)
+            stack = home / ".mlx-stack"
+            stack.mkdir()
+            (stack / "cerebro").touch()
+            first, second = home / "First", home / "Second"
+            first.mkdir()
+            second.mkdir()
+            with patch.object(serve_mpc, "_probe_local_port", return_value=False), \
+                 patch.object(serve_mpc, "mounted_volume_paths", return_value=[]):
+                self.assertTrue(serve_mpc.run_sync_dashboard(str(first), 8888)["inventory"]["cerebro_synced"])
+                status = serve_mpc.get_system_status(str(second), 8889)
+            bridge = json.loads((stack / "beatos_bridge.json").read_text())
+            self.assertEqual(bridge["root_dir"], str(first.resolve()))
+            self.assertEqual(bridge["api_base"], "http://127.0.0.1:8888")
+            self.assertEqual((status["root_dir"], status["port"]), (str(second), 8889))
+
     def test_hardware_errors_are_translated_without_modifying_pad_number(self):
         from beatos_i18n import translate_text
         cases = {

@@ -26,6 +26,27 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(Path(command[2]).parent,Path(serve_mpc.__file__).resolve().parent)
             self.assertEqual(command[-2:],['--path',tmp])
 
+    def test_installed_launcher_stays_with_its_own_card_without_generated_catalog(self):
+        with tempfile.TemporaryDirectory(prefix="BeatOS libraries ") as folder:
+            parent = Path(folder).resolve()
+            second = parent / "MPC-SAMPL3"
+            code = second / "BeatOS"
+            code.mkdir(parents=True)
+            (code / "serve_mpc.py").touch()
+            (code / "installer.py").touch()
+            self.assertFalse((code / "data/catalogo.html").exists())
+            self.assertEqual(serve_mpc.find_card_root(str(code)), str(second))
+            self.assertEqual(installer.default_library_root(code), second)
+
+    def test_standalone_source_does_not_select_a_different_mounted_library(self):
+        with tempfile.TemporaryDirectory() as folder:
+            source = Path(folder).resolve() / "source"
+            source.mkdir()
+            isdir = serve_mpc.os.path.isdir
+            with patch.object(serve_mpc.os.path, "isdir",
+                              side_effect=lambda path: str(path) == "/Volumes/MPCSMPL" or isdir(path)):
+                self.assertEqual(serve_mpc.find_card_root(str(source)), str(source))
+
     def test_offline_export_script_requests_user_paths(self):
         html=(Path(__file__).resolve().parents[1]/'templates/catalogo.html').read_text()
         script=html[html.index('const scriptLines = ['):html.index('const scriptContent =')]

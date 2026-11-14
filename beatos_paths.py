@@ -14,7 +14,11 @@ LEGACY_ENTRY_NAMES = ('catalogo_mpc_sample.html',)
 
 def default_library_root(code_dir):
     code = Path(code_dir).resolve()
-    return code.parent if code.name == APP_FOLDER and (code / 'data/catalogo.html').is_file() else code
+    # Installed archives have a code directory at <library>/BeatOS. A
+    # user can rebuild or delete the catalog without changing that layout.
+    if code.name == APP_FOLDER and (code / 'serve_mpc.py').is_file() and (code / 'installer.py').is_file():
+        return code.parent
+    return code
 
 
 def data_dir(root):

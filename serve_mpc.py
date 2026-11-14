@@ -415,7 +415,7 @@ def run_sync_dashboard(root_dir: str, port: int) -> dict:
     if not Path(root_dir).is_dir():
         return {"success": False, "error": "La biblioteca ya no está disponible."}
     inventory = dashboard_inventory(root_dir, refresh=True)
-    cerebro = detect_cerebro_os(root_dir, port, mounted_libraries=inventory["libraries"])
+    cerebro = detect_cerebro_os(inventory["root_dir"], port, mounted_libraries=inventory["libraries"])
     inventory["cerebro_installed"] = cerebro["installed"]
     inventory["cerebro_synced"] = cerebro.get("bridge_synced", False)
     write_state_json(config_dir(root_dir) / "ecosystem_inventory.json", inventory)
@@ -1483,11 +1483,12 @@ def get_system_status(root_dir: str, port: int = 8888):
         "library_available": library_available,
         "card_mounted": card_mounted,
         "root_dir": root_dir,
+        "port": port,
         "sample_count": sample_count,
         "disk_free_gb": round(disk_stat.free / (1024**3), 2) if disk_stat else 0,
         "disk_total_gb": round(disk_stat.total / (1024**3), 2) if disk_stat else 0,
         "task_state": TASK_STATE,
-        "cerebro_os": detect_cerebro_os(root_dir, port),
+        "cerebro_os": detect_cerebro_os(root_dir),
     }
 
 def find_card_root(start_dir: str) -> str:
@@ -1501,13 +1502,6 @@ def find_card_root(start_dir: str) -> str:
     parent = os.path.dirname(os.path.abspath(start_dir))
     if os.path.isdir(os.path.join(parent, "MPC-Sample")) or os.path.isdir(os.path.join(parent, "Expansions")):
         return parent
-
-    if os.path.isdir("/Volumes/MPCSMPL"):
-        return "/Volumes/MPCSMPL"
-
-    docs_repo = os.path.expanduser("~/Documents/mpc-sample-database")
-    if os.path.isdir(docs_repo):
-        return docs_repo
 
     return os.path.abspath(start_dir)
 
@@ -1679,7 +1673,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_cors_headers()
             self.end_headers()
-            data = {"success": True, "cerebro_os": detect_cerebro_os(self.server.root_dir, self.server.server_port)}
+            data = {"success": True, "cerebro_os": detect_cerebro_os(self.server.root_dir)}
             self.wfile.write(self._api_json_dumps(data, ensure_ascii=False).encode("utf-8"))
             return
 
@@ -2810,7 +2804,9 @@ def existing_library_root(port):
     try:
         with urllib.request.urlopen(f'http://127.0.0.1:{port}/api/status', timeout=0.5) as response:
             state = json.loads(response.read(65536))
-        return Path(state['root_dir']).resolve() if state.get('status') == 'online' else None
+        if isinstance(state, dict) and state.get("status") == "online" and isinstance(state.get("root_dir"), str):
+            return Path(state["root_dir"]).resolve()
+        return None
     except (OSError, ValueError, KeyError):
         return None
 
