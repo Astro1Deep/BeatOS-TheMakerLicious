@@ -3053,9 +3053,9 @@ audio::-webkit-media-controls-panel { background-color:rgba(10,12,18,0.12); }
           <strong style="font-size:13.5px; color:var(--mpc-cyan);">🧠 Cerebro OS · Motor Acústico Activo</strong>
           <span id="cerebroOsStatusBadge" style="font-size:11px; font-weight:800; padding:3px 8px; border-radius:8px; background:rgba(46,204,113,0.18); color:var(--mpc-green);">MLX DSP</span>
         </div>
-        <p style="font-size:12.5px; color:var(--text-muted); line-height:1.55; margin-bottom:8px;">Analiza el espectro PCM de tus muestras (subgraves, brillo de hi-hats, transientes) y detecta estilos underground (Baile Funk, Drill, Grime, UK Garage, 2-Step, Dubstep).</p>
+        <p style="font-size:12.5px; color:var(--text-muted); line-height:1.55; margin-bottom:8px;">Analiza el espectro PCM, el patrón rítmico y el compás de tus muestras (Bolero, Soul, Jazz, Bossa, Lo-Fi/Boom Bap y estilos underground como Baile Funk, Drill, Grime, UK Garage, 2-Step, Dubstep) para adaptarlas a Hip-Hop / Lo-Fi y cortarlas musicalmente.</p>
         <div style="display:flex; gap:6px; margin-bottom:8px;">
-          <input type="text" id="cerebroPromptInput" class="rack-input" style="flex:1; padding:7px 9px; font-size:12px;" placeholder="Ej: Baile Funk 130, UK Garage 132, Drill 142...">
+          <input type="text" id="cerebroPromptInput" class="rack-input" style="flex:1; padding:7px 9px; font-size:12px;" placeholder="Ej: Bolero a Lo-Fi 84, Soul Boom Bap 88, Jazz Hop 86, Baile Funk 130...">
           <button type="button" class="po33-btn-action" style="padding:7px 12px; font-size:12px; white-space:nowrap;" onclick="runCerebroSmartKit(this)" title="Armar kit inteligente de 16 pads según estilo o descripción">✨ Armar Kit</button>
         </div>
         <div style="display:grid; grid-template-columns:1fr; gap:6px;">
@@ -5840,11 +5840,27 @@ function runCerebroRackAnalysis(btn) {
         lastCerebroTuningAdjustments.map(t => 'PAD ' + t.pad + ' (' + escapeHtml(t.detected_note) + ' → ' + (t.recommended_tune >= 0 ? '+' : '') + t.recommended_tune + ' st' + (t.recommended_fine_tune ? ' ' + (t.recommended_fine_tune > 0 ? '+' : '') + t.recommended_fine_tune + 'c' : '') + ')').join(', ') +
         '</div>';
     }
+    const rhy = data.rhythm_analysis || null;
+    const adp = data.hiphop_adaptation || null;
+    let rhythmHtml = '';
+    if (rhy && adp) {
+      const semi = Number(adp.repitch_semitones || 0);
+      const cents = Number(adp.repitch_fine_tune_cents || 0);
+      const pitchStr = (semi >= 0 ? '+' : '') + semi + ' st' + (cents ? ' (' + (cents > 0 ? '+' : '') + cents + ' c)' : '');
+      const rubStr = Number(rhy.rubato_index || 0) >= 0.2 ? (' · Rubato ' + escapeHtml(String(rhy.rubato_index))) : '';
+      rhythmHtml =
+        '<div style="margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.08);">' +
+          '<div><strong>🥁 Patrón Rítmico:</strong> ' + escapeHtml(rhy.groove_pattern || '4/4') + ' · <strong>Compás:</strong> ' + escapeHtml(rhy.time_signature || '4/4') + ' · <strong>Original:</strong> ' + escapeHtml(String(rhy.source_bpm || recBpm)) + ' BPM · Swing ' + escapeHtml(String(rhy.swing_pct || 50)) + '%' + rubStr + '</div>' +
+          '<div style="margin-top:3px; color:var(--mpc-cyan);"><strong>🎧 Adaptación ' + escapeHtml(adp.target_style || 'Hip-Hop / Lo-Fi') + ':</strong> ' + escapeHtml(String(adp.target_bpm || recBpm)) + ' BPM (' + escapeHtml(String(adp.stretch_ratio || 1.0)) + 'x · Pitch ' + escapeHtml(pitchStr) + ')</div>' +
+          '<div style="margin-top:2px; color:var(--text-muted); font-size:11.5px;">' + escapeHtml(adp.meter_bridge_note || '') + '</div>' +
+        '</div>';
+    }
     if (box) {
       box.innerHTML =
         '<div><strong>🎵 Estilo detectado:</strong> <span style="color:var(--mpc-cyan);">' + escapeHtml(st.label || 'Electronic / Beats') + '</span> (' + escapeHtml(String(Math.round((st.confidence || 0.6) * 100))) + '%)</div>' +
         '<div><strong>⏱️ Tempo óptimo:</strong> ' + escapeHtml(String(recBpm)) + ' BPM · <strong>✂️ Perfil Choke:</strong> <code>' + escapeHtml(recProfile) + '</code></div>' +
         '<div style="margin-top:4px; color:var(--text-muted); font-size:12px;">' + escapeHtml(st.notes || '') + '</div>' +
+        rhythmHtml +
         tuneHtml +
         warnHtml +
         '<div style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;">' +
@@ -5889,6 +5905,7 @@ function applyCerebroRecommendations(bpm, profileId, applyHeadroom = true) {
       } else if (gainProfile === 'uniform_b' && typeof rep.uniform_volume === 'number') {
         item.volume = rep.uniform_volume;
       }
+      if (typeof rep.recommended_tune === 'number' && rep.recommended_tune !== 0) item.tune = rep.recommended_tune;
       if (typeof rep.recommended_fine_tune === 'number') item.fineTune = rep.recommended_fine_tune;
       if (rep.recommended_root_note !== undefined) item.rootNote = rep.recommended_root_note;
       if (rep.recommended_trigger_mode) item.triggerMode = rep.recommended_trigger_mode;
@@ -5929,6 +5946,7 @@ function mountCerebroPadsIntoRack(padsList, kitName = '', bpm = 0, profileId = '
       volume: Number(p.volume ?? 0.78),
       pan: Number(p.pan ?? 0.5),
       tune: Number(p.tune ?? 0),
+      fineTune: Number(p.fine_tune ?? 0),
       muteGroup: Number(p.mute_group ?? defaultMuteGroup(stype)),
       playMode: 'ONE_SHOT',
       reverse: false,
@@ -5958,12 +5976,12 @@ function mountCerebroPadsIntoRack(padsList, kitName = '', bpm = 0, profileId = '
 function runCerebroSmartKit(btn) {
   if (!requireConnectedView()) return;
   const promptEl = document.getElementById('cerebroPromptInput');
-  const prompt = (promptEl?.value || 'Baile Funk 130').trim();
+  const prompt = (promptEl?.value || 'Bolero a Lo-Fi 84').trim();
   const box = document.getElementById('cerebroAnalysisResultBox');
   if (btn) btn.disabled = true;
   if (box) {
     box.hidden = false;
-    box.textContent = '⏳ Seleccionando 16 muestras y perfil de Chokes con Cerebro OS...';
+    box.textContent = '⏳ Seleccionando 16 muestras, patrón y perfil de Chokes con Cerebro OS...';
   }
   fetch(getApiBaseUrl() + '/api/cerebro_smart_kit', {
     method: 'POST',
@@ -5975,7 +5993,9 @@ function runCerebroSmartKit(btn) {
     if (!data.success) throw new Error(data.error || 'No se pudo armar el kit');
     mountCerebroPadsIntoRack(data.pads, data.kit_name, data.recommended_bpm, data.recommended_mute_profile);
     if (box) {
-      box.innerHTML = '<div>✔ <strong>' + escapeHtml(data.kit_name) + '</strong> montado en los 16 pads (' + escapeHtml(String(data.recommended_bpm)) + ' BPM · <code>' + escapeHtml(data.recommended_mute_profile) + '</code>).</div>';
+      const adp = data.hiphop_adaptation;
+      const adpHtml = adp ? '<div style="margin-top:4px; color:var(--text-muted); font-size:11.5px;">🎧 ' + escapeHtml(adp.meter_bridge_note || '') + '</div>' : '';
+      box.innerHTML = '<div>✔ <strong>' + escapeHtml(data.kit_name) + '</strong> montado en los 16 pads (' + escapeHtml(String(data.recommended_bpm)) + ' BPM · <code>' + escapeHtml(data.recommended_mute_profile) + '</code>).</div>' + adpHtml;
     }
     showToast('✨ Kit inteligente montado en el Rack: ' + data.kit_name);
   })
@@ -5991,6 +6011,7 @@ function runCerebroAutoChop(btn) {
   if (!requireConnectedView()) return;
   const padItem = RACK_PADS[currentTargetPad - 1];
   const relPath = padItem?.relPath || '';
+  const styleHint = (document.getElementById('cerebroPromptInput')?.value || '').trim();
   const box = document.getElementById('cerebroAnalysisResultBox');
   if (!relPath) {
     showToast('⚠️ Selecciona primero un pad con muestra o loop para cortarlo en 16 slices.');
@@ -5999,19 +6020,36 @@ function runCerebroAutoChop(btn) {
   if (btn) btn.disabled = true;
   if (box) {
     box.hidden = false;
-    box.textContent = '🔪 Detectando transientes y cortando en 16 pads con ajuste a cruces por cero...';
+    box.textContent = '🔪 Analizando compás, patrón rítmico y transientes para Auto-Chop (Zero-Crossing)...';
   }
   fetch(getApiBaseUrl() + '/api/cerebro_autochop', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ rel_path: relPath, max_slices: 16, kit_name: padItem.filename.replace(/\.[^/.]+$/, '') })
+    body: JSON.stringify({
+      rel_path: relPath,
+      max_slices: 16,
+      kit_name: padItem.filename.replace(/\.[^/.]+$/, ''),
+      style_hint: styleHint
+    })
   })
   .then(res => res.json())
   .then(data => {
     if (!data.success) throw new Error(data.error || 'No se pudo dividir la muestra');
-    mountCerebroPadsIntoRack(data.pads, data.kit_name);
+    mountCerebroPadsIntoRack(data.pads, data.kit_name, Number(data.recommended_bpm || 0), data.recommended_mute_profile || '');
     if (box) {
-      box.innerHTML = '<div>🔪 <strong>' + escapeHtml(String(data.slices_count)) + ' cortes (Zero-Crossing)</strong> montados en Pads A01–A16 (Mute Group M6).</div>';
+      const rhy = data.rhythm_analysis;
+      const adp = data.hiphop_adaptation;
+      let extraHtml = '';
+      if (rhy && adp) {
+        const semi = Number(adp.repitch_semitones || 0);
+        const cents = Number(adp.repitch_fine_tune_cents || 0);
+        const pitchStr = (semi >= 0 ? '+' : '') + semi + ' st' + (cents ? ' (' + (cents > 0 ? '+' : '') + cents + ' c)' : '');
+        extraHtml =
+          '<div style="margin-top:4px;"><strong>🥁 Patrón:</strong> ' + escapeHtml(rhy.groove_pattern || '') + ' (' + escapeHtml(rhy.time_signature || '4/4') + ' · ' + escapeHtml(String(rhy.source_bpm || '')) + ' BPM · Swing ' + escapeHtml(String(rhy.swing_pct || 50)) + '%)</div>' +
+          '<div style="margin-top:2px; color:var(--mpc-cyan);"><strong>🎧 Adaptación ' + escapeHtml(adp.target_style || 'Hip-Hop / Lo-Fi') + ':</strong> ' + escapeHtml(String(adp.target_bpm || '')) + ' BPM · Pitch ' + escapeHtml(pitchStr) + ' (Stretch ' + escapeHtml(String(adp.stretch_ratio || 1.0)) + 'x)</div>' +
+          '<div style="margin-top:2px; color:var(--text-muted); font-size:11.5px;">' + escapeHtml(adp.meter_bridge_note || '') + '</div>';
+      }
+      box.innerHTML = '<div>🔪 <strong>' + escapeHtml(String(data.slices_count)) + ' cortes (Zero-Crossing)</strong> montados en Pads A01–A16 (Mute Group M6).</div>' + extraHtml;
     }
     showToast('🔪 Muestra dividida en ' + data.slices_count + ' pads');
   })

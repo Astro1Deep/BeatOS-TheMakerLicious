@@ -635,6 +635,8 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
     sub_heavy_count = 0
     open_hat_count = 0
     closed_hat_count = 0
+    candidate_loop_wav: Optional[Path] = None
+    candidate_loop_score = -1.0
 
     for item in pads_in:
         if not isinstance(item, dict):
@@ -710,6 +712,15 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
             stype = "HIHAT"
         elif is_tom:
             acoustic_role = "TOM"
+
+        # Candidato principal de loop/frase melódica para análisis de compás, patrón rítmico y adaptación Hip-Hop/Lo-Fi
+        if resolved_wav is not None and duration_sec >= 0.85:
+            loop_prio = duration_sec + (3.0 if stype in ("MELODIC_LOOP", "KEYS_SYNTH", "VOCAL") else 0.0)
+            if any(k in low_sname or k in rel_path.lower() for k in ("bolero", "soul", "jazz", "bossa", "loop", "guitar", "rhodes", "piano", "sax", "break")):
+                loop_prio += 2.5
+            if loop_prio > candidate_loop_score:
+                candidate_loop_score = loop_prio
+                candidate_loop_wav = resolved_wav
 
         smart_vol = (
             kit_mod.compute_smart_pad_volume(stype, resolved_wav)
@@ -825,6 +836,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
         if kit_mod and hasattr(kit_mod, "detect_musical_style")
         else {"id": "standard", "style": "Hip-Hop / Electrónica", "bpm": current_tempo, "mute_profile": "punch_clean"}
     )
+    style_id = style_info.get("id", "standard")
 
     # Si el análisis acústico detecta colas subgraves/808 densas, priorizar perfil club_clean
     recommended_profile = style_info.get("mute_profile", "punch_clean")
@@ -832,6 +844,68 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
         recommended_profile = "club_clean"
 
     inferred_bpm = kit_mod.infer_kit_bpm(combined_text, fallback=style_info.get("bpm", current_tempo)) if kit_mod else current_tempo
+
+    # Análisis de Patrón Rítmico, Compás (4/4, 3/4, 6/8) y Adaptación Hip-Hop / Lo-Fi
+    rhythm_analysis = None
+    hiphop_adaptation = None
+    is_crate_digging_style = style_id in ("bolero", "soul_vintage", "jazz_hop", "lofi", "boombap", "rnb_soul", "funk_jazz")
+    if kit_mod and hasattr(kit_mod, "analyze_rhythmic_pattern_and_hiphop_adaptation"):
+        if candidate_loop_wav is not None and candidate_loop_wav.is_file():
+            try:
+                rhythm_bundle = kit_mod.analyze_rhythmic_pattern_and_hiphop_adaptation(
+                    candidate_loop_wav,
+                    style_hint=combined_text,
+                    target_bpm_hint=current_tempo if current_tempo != 120.0 else None,
+                )
+                rhythm_analysis = rhythm_bundle.get("rhythm_analysis")
+                hiphop_adaptation = rhythm_bundle.get("hiphop_adaptation")
+            except Exception:
+                rhythm_analysis = None
+                hiphop_adaptation = None
+        elif is_crate_digging_style:
+            src_b = round(float(inferred_bpm or style_info.get("bpm") or 86.0), 1)
+            tgt_b = round(float(84.0 if style_id == "bolero" else (86.0 if style_id in ("soul_vintage", "lofi") else 88.0)), 1)
+            eff_b = src_b / 2.0 if src_b >= 132.0 else src_b
+            ratio = max(0.55, min(1.85, tgt_b / max(30.0, eff_b)))
+            semi_f = max(-7.0, min(7.0, 12.0 * math.log2(ratio)))
+            semi_i = int(round(semi_f))
+            cents_i = int(round((semi_f - semi_i) * 100))
+            rhythm_analysis = {
+                "source_bpm": src_b,
+                "effective_source_bpm": round(eff_b, 1),
+                "time_signature": "3/4" if any(k in combined_text.lower() for k in ("vals", "waltz", "3/4")) else ("6/8" if "6/8" in combined_text.lower() else "4/4"),
+                "groove_pattern": (
+                    "Bolero Clásico / Tresillo Melódico" if style_id == "bolero"
+                    else ("Soul Swing Vintage / Backbeat" if style_id == "soul_vintage" else ("Jazz Swing / Chord Phrasing" if style_id == "jazz_hop" else "Groove Hip-Hop / Lo-Fi"))
+                ),
+                "swing_pct": 58.0 if style_id in ("soul_vintage", "jazz_hop") else 54.0,
+                "rubato_index": 0.15 if style_id == "bolero" else 0.08,
+                "onset_count": 0,
+                "duration_sec": 0.0,
+            }
+            hiphop_adaptation = {
+                "target_style": "Hip-Hop / Lo-Fi" if style_id in ("bolero", "lofi") else "Boom Bap & Lo-Fi",
+                "target_bpm": tgt_b,
+                "stretch_ratio": round(ratio, 4),
+                "repitch_semitones": semi_i,
+                "repitch_fine_tune_cents": cents_i,
+                "half_time_applied": bool(src_b >= 132.0),
+                "meter_bridge_note": (
+                    "Para adaptar este kit de Bolero/Soul/Jazz a Hip-Hop o Lo-Fi: mantén los chops en Mute Group M6, "
+                    "aplica swing 56–62% en charles y usa la afinación recomendada o Time Stretch al BPM objetivo."
+                ),
+            }
+
+    if hiphop_adaptation and style_id in ("bolero", "soul_vintage", "jazz_hop"):
+        inferred_bpm = float(hiphop_adaptation["target_bpm"])
+        # Sugerir adaptación tonal/temporal en pads melódicos o loops largos del rack
+        rep_st = int(hiphop_adaptation.get("repitch_semitones", 0))
+        rep_ct = int(hiphop_adaptation.get("repitch_fine_tune_cents", 0))
+        if abs(rep_st) <= 5 and (rep_st != 0 or abs(rep_ct) >= 8):
+            for pr in pad_reports:
+                if pr["sound_type"] in ("MELODIC_LOOP", "KEYS_SYNTH") and pr.get("duration_sec", 0.0) >= 0.85:
+                    pr["recommended_tune"] = rep_st
+                    pr["recommended_fine_tune"] = rep_ct
 
     tuning_adjustments = []
     for pr in pad_reports:
@@ -859,6 +933,10 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
         f"Pads sub-graves: {sub_heavy_count}",
         f"Pareja Hi-Hat (Open+Closed): {'Sí' if (open_hat_count >= 1 and closed_hat_count >= 1) else 'No'}",
     ]
+    if rhythm_analysis and hiphop_adaptation:
+        notes_parts.append(
+            f"Compás {rhythm_analysis['time_signature']} ({rhythm_analysis['source_bpm']} → {hiphop_adaptation['target_bpm']} BPM Hip-Hop/Lo-Fi)"
+        )
     if anchor_note_label:
         notes_parts.append(f"Tono ancla: {anchor_note_label}")
     if phase_warnings:
@@ -868,7 +946,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
         "success": True,
         "cerebro_os": detect_cerebro_os(root_dir),
         "detected_style": style_info.get("style", "Hip-Hop / Electrónica"),
-        "style_id": style_info.get("id", "standard"),
+        "style_id": style_id,
         "recommended_bpm": inferred_bpm,
         "recommended_mute_profile": recommended_profile,
         "anchor_key": anchor_note_label,
@@ -876,13 +954,15 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
         "hihat_pair_detected": bool(open_hat_count >= 1 and closed_hat_count >= 1),
         "phase_warnings": phase_warnings,
         "tuning_adjustments": tuning_adjustments,
+        "rhythm_analysis": rhythm_analysis,
+        "hiphop_adaptation": hiphop_adaptation,
         "style": {
-            "id": style_info.get("id", "standard"),
+            "id": style_id,
             "label": style_info.get("style", "Hip-Hop / Electrónica"),
             "bpm": inferred_bpm,
             "mute_profile": recommended_profile,
             "anchor_key": anchor_note_label,
-            "confidence": 0.92 if style_info.get("id", "standard") != "standard" else 0.78,
+            "confidence": 0.92 if style_id != "standard" else 0.78,
             "notes": " · ".join(notes_parts),
         },
         "pads": pad_reports,
@@ -892,9 +972,10 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
 def build_cerebro_smart_kit(root_dir: str, payload: dict) -> dict:
     """
     Construye un Kit inteligente de 16 pads a partir de una descripción en lenguaje natural / género
-    (Baile Funk, Drill, Grime, UK Garage, 2-Step, Dubstep, Boom Bap, Jungle, Amapiano, etc.),
+    (Bolero, Soul, Jazz → Hip-Hop/Lo-Fi, Baile Funk, Drill, Grime, UK Garage, 2-Step, Dubstep, Boom Bap, etc.),
     emparejando BPM, perfil de Choke y tonalidad desde la base SQLite activa.
     """
+    import math
     import random
 
     kit_mod = get_hardware_kit_builder(root_dir)
@@ -904,7 +985,19 @@ def build_cerebro_smart_kit(root_dir: str, payload: dict) -> dict:
         if kit_mod and hasattr(kit_mod, "detect_musical_style")
         else {"id": "standard", "style": "Hip-Hop / Electrónica", "bpm": 120.0, "mute_profile": "punch_clean"}
     )
-    target_bpm = float(payload.get("bpm") or (kit_mod.infer_kit_bpm(prompt, fallback=style_info["bpm"]) if kit_mod else style_info["bpm"]))
+    style_id = style_info.get("id", "standard")
+    explicit_prompt_bpm = None
+    m_prompt = re.search(r"\b(6\d|[7-9]\d|1[0-8]\d)(?:\s*bpm)?\b", prompt, re.I)
+    if m_prompt:
+        val_bpm = float(m_prompt.group(1))
+        if val_bpm not in (808, 909, 303):
+            explicit_prompt_bpm = val_bpm
+
+    target_bpm = float(
+        payload.get("bpm")
+        or explicit_prompt_bpm
+        or (kit_mod.infer_kit_bpm(prompt, fallback=style_info["bpm"]) if kit_mod else style_info["bpm"])
+    )
     mute_profile = str(payload.get("mute_profile") or style_info.get("mute_profile") or "punch_clean")
 
     db_file = database_path(root_dir)
@@ -915,24 +1008,54 @@ def build_cerebro_smart_kit(root_dir: str, payload: dict) -> dict:
     stop_words = {"kit", "de", "con", "para", "en", "el", "la", "los", "las", "un", "una", "y", "a", "bpm", "style", "estilo", "pads", "pad"}
     raw_words = [w.lower() for w in re.findall(r"[a-zA-Z0-9#]+", prompt) if len(w) >= 3 and w.lower() not in stop_words and not w.isdigit()]
 
-    slot_plan = [
-        (1, "KICK", ["kick", "bd", "bombo"]),
-        (2, "KICK", ["kick", "sub", "punch"]),
-        (3, "SNARE", ["snare", "sd", "caja"]),
-        (4, "SNARE", ["rim", "snare", "snap"]),
-        (5, "CLAP", ["clap", "cp", "snap"]),
-        (6, "CLAP", ["clap", "perc"]),
-        (7, "HIHAT", ["closed", "ch", "chh", "hat"]),
-        (8, "HIHAT", ["closed", "pedal", "hat"]),
-        (9, "HIHAT", ["open", "oh", "ohh", "hat"]),
-        (10, "HIHAT", ["open", "hat", "cymbal"]),
-        (11, "PERCUSSION", ["perc", "atabaque", "bongo", "conga", "shaker", "wood"]),
-        (12, "PERCUSSION", ["tom", "perc", "cowbell", "tamb", "fx"]),
-        (13, "BASS_808", ["808", "sub", "bass", "reese", "donk"]),
-        (14, "BASS_808", ["808", "bass", "glide", "sub"]),
-        (15, "KEYS_SYNTH", ["chord", "synth", "keys", "rhodes", "stab", "pad"]),
-        (16, "MELODIC_LOOP", ["loop", "melod", "vocal", "vox", "sample", "riff"]),
-    ]
+    is_organic_sampling = style_id in ("bolero", "soul_vintage", "jazz_hop", "lofi", "boombap")
+    if is_organic_sampling:
+        slot_plan = [
+            (1, "KICK", ["boom bap", "lofi", "dusty", "vinyl", "warm", "kick", "bombo"]),
+            (2, "KICK", ["dusty", "lofi", "acoustic", "kick", "sub"]),
+            (3, "SNARE", ["boom bap", "lofi", "vinyl", "snare", "caja"]),
+            (4, "SNARE", ["rim", "brush", "snare", "sidestick", "snap"]),
+            (5, "CLAP", ["clap", "dusty", "snap", "lofi"]),
+            (6, "HIHAT", ["closed", "brush", "ch", "hat", "vinyl"]),
+            (7, "HIHAT", ["closed", "shaker", "hat", "lofi"]),
+            (8, "HIHAT", ["open", "oh", "ride", "cymbal"]),
+            (9, "PERCUSSION", ["bongo", "conga", "maraca", "clave", "shaker", "perc", "guiro"]),
+            (10, "PERCUSSION", ["tamb", "wood", "perc", "bong", "shaker"]),
+            (11, "BASS_808", ["upright", "contrabajo", "bass", "acoustic", "warm", "sub"]),
+            (12, "BASS_808", ["bass", "warm", "808", "sub"]),
+            (13, "KEYS_SYNTH", ["guitar", "requinto", "rhodes", "piano", "chord", "keys"]),
+            (14, "KEYS_SYNTH", ["wurlitzer", "organ", "rhodes", "jazz", "soul", "chord"]),
+            (15, "MELODIC_LOOP", ["bolero", "soul", "jazz", "bossa", "guitar", "sax", "strings", "loop"]),
+            (16, "MELODIC_LOOP", ["vocal", "horn", "flute", "loop", "sample", "chop"]),
+        ]
+    else:
+        slot_plan = [
+            (1, "KICK", ["kick", "bd", "bombo"]),
+            (2, "KICK", ["kick", "sub", "punch"]),
+            (3, "SNARE", ["snare", "sd", "caja"]),
+            (4, "SNARE", ["rim", "snare", "snap"]),
+            (5, "CLAP", ["clap", "cp", "snap"]),
+            (6, "CLAP", ["clap", "perc"]),
+            (7, "HIHAT", ["closed", "ch", "chh", "hat"]),
+            (8, "HIHAT", ["closed", "pedal", "hat"]),
+            (9, "HIHAT", ["open", "oh", "ohh", "hat"]),
+            (10, "HIHAT", ["open", "hat", "cymbal"]),
+            (11, "PERCUSSION", ["perc", "atabaque", "bongo", "conga", "shaker", "wood"]),
+            (12, "PERCUSSION", ["tom", "perc", "cowbell", "tamb", "fx"]),
+            (13, "BASS_808", ["808", "sub", "bass", "reese", "donk"]),
+            (14, "BASS_808", ["808", "bass", "glide", "sub"]),
+            (15, "KEYS_SYNTH", ["chord", "synth", "keys", "rhodes", "stab", "pad"]),
+            (16, "MELODIC_LOOP", ["loop", "melod", "vocal", "vox", "sample", "riff"]),
+        ]
+
+    style_kw_map = {
+        "bolero": ["bolero", "guitar", "requinto", "nylon", "acoustic", "bongo", "conga", "maraca", "latin", "ballad", "lofi", "dusty", "vinyl", "boom bap"],
+        "soul_vintage": ["soul", "motown", "rhodes", "wurlitzer", "organ", "gospel", "brass", "horn", "warm", "vintage", "boom bap", "lofi", "dusty"],
+        "jazz_hop": ["jazz", "bossa", "upright", "ride", "brush", "piano", "rhodes", "sax", "horn", "lofi", "chillhop", "boom bap", "vinyl"],
+        "lofi": ["lofi", "lo-fi", "chillhop", "dusty", "vinyl", "tape", "rhodes", "warm"],
+        "boombap": ["boom bap", "boombap", "marco polo", "cookin soul", "bodega", "deli", "east coast", "dusty", "vinyl"],
+    }
+    extra_style_kws = style_kw_map.get(style_id, [])
 
     conn = sqlite3.connect(Path(db_file).as_uri() + "?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
@@ -961,34 +1084,44 @@ def build_cerebro_smart_kit(root_dir: str, payload: dict) -> dict:
             for w in raw_words:
                 if w in fn_low:
                     sc += 4.0
+            for ek in extra_style_kws:
+                if ek in fn_low:
+                    sc += 1.6
             for h_idx, h in enumerate(hints):
                 if h in fn_low:
                     sc += 2.5 - (h_idx * 0.3)
-            # Para charles cerrados (Pads 7-8) vs abiertos (Pads 9-10)
+            # Para charles cerrados vs abiertos
             sz = float(r.get("size_mb") or 0.0)
-            if pad_num in (7, 8):
+            is_closed_slot = pad_num in ((6, 7) if is_organic_sampling else (7, 8))
+            is_open_slot = (pad_num == 8) if is_organic_sampling else (pad_num in (9, 10))
+            if is_closed_slot:
                 if "open" in fn_low or "oh" in fn_low:
                     sc -= 3.0
                 if 0.002 < sz <= 0.06:
                     sc += 1.5
-            elif pad_num in (9, 10):
-                if "open" in fn_low or "oh" in fn_low:
+            elif is_open_slot:
+                if "open" in fn_low or "oh" in fn_low or "ride" in fn_low:
                     sc += 3.5
                 if sz >= 0.05:
                     sc += 1.5
-            # Cercanía de BPM en loops/melodías
+            # Cercanía de BPM (incluyendo relación half-time / double-time) en loops/melodías
             r_bpm = float(r.get("bpm") or 0.0)
-            if r_bpm > 0 and abs(r_bpm - target_bpm) <= 8:
-                sc += 3.0
+            if r_bpm > 0:
+                best_diff = min(abs(r_bpm - target_bpm), abs(r_bpm - target_bpm * 2.0), abs(r_bpm * 2.0 - target_bpm))
+                if best_diff <= 8.0:
+                    sc += 3.0
             return sc
 
         best = max(rows, key=_score_row)
         used_paths.add(best["rel_path"])
-        mg = (
-            kit_mod.mute_group_for_profile(stype, best["filename"], profile=mute_profile)
-            if kit_mod
-            else (1 if stype == "KICK" else (2 if stype == "HIHAT" else (3 if stype == "SNARE" else 0)))
-        )
+        if is_organic_sampling and stype in ("KEYS_SYNTH", "MELODIC_LOOP"):
+            mg = 6  # Chops melódicos en grupo monofónico estilo MPC
+        else:
+            mg = (
+                kit_mod.mute_group_for_profile(stype, best["filename"], profile=mute_profile)
+                if kit_mod
+                else (1 if stype == "KICK" else (2 if stype == "HIHAT" else (3 if stype == "SNARE" else 0)))
+            )
         pads_out.append({
             "pad": pad_num,
             "rel_path": best["rel_path"],
@@ -1003,12 +1136,25 @@ def build_cerebro_smart_kit(root_dir: str, payload: dict) -> dict:
 
     conn.close()
     slug = re.sub(r"[^a-zA-Z0-9_-]+", "_", style_info.get("style", "Smart_Kit").split("/")[0].strip()).strip("_") or "Cerebro_Kit"
+    hiphop_adaptation = None
+    if is_organic_sampling:
+        hiphop_adaptation = {
+            "target_style": "Hip-Hop / Lo-Fi" if style_id in ("bolero", "lofi") else "Boom Bap & Lo-Fi",
+            "target_bpm": round(target_bpm, 1),
+            "stretch_ratio": 1.0,
+            "repitch_semitones": 0,
+            "repitch_fine_tune_cents": 0,
+            "meter_bridge_note": (
+                f"Batería cálida/orgánica (Pads 1–10) + Chops melódicos con corte mutuo M6 (Pads 13–16) listos a {round(target_bpm)} BPM."
+            ),
+        }
     return {
         "success": True,
         "kit_name": f"{slug}_{int(round(target_bpm))}BPM",
         "style": style_info,
         "recommended_bpm": target_bpm,
         "recommended_mute_profile": mute_profile,
+        "hiphop_adaptation": hiphop_adaptation,
         "pads": pads_out,
     }
 
@@ -1069,7 +1215,12 @@ def find_cerebro_similar_samples(root_dir: str, payload: dict) -> dict:
         if c.get("sample_format") != target_fmt:
             dist += 1.5
         if target_bpm > 0 and c_bpm > 0:
-            dist += abs(c_bpm - target_bpm) * 0.04
+            bpm_diff = min(
+                abs(c_bpm - target_bpm),
+                abs(c_bpm - target_bpm * 2.0),
+                abs(c_bpm * 2.0 - target_bpm),
+            )
+            dist += bpm_diff * 0.04
         similarity = round(max(0.10, min(0.99, 1.0 / (1.0 + dist))), 2)
         scored.append((
             similarity,
@@ -1770,6 +1921,8 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                     self.server.root_dir,
                     max_slices=int(payload.get("max_slices") or 16),
                     kit_name=payload.get("kit_name"),
+                    style_hint=str(payload.get("style_hint") or ""),
+                    target_bpm=payload.get("target_bpm"),
                 )
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")

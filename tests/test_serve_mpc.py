@@ -554,3 +554,125 @@ class ServerSecurityTests(unittest.TestCase):
             with wave.open(io.BytesIO(served_24), 'rb') as wf:
                 self.assertEqual((wf.getnchannels(), wf.getsampwidth(), wf.getframerate()), (1, 2, 44100))
                 self.assertEqual(struct.unpack('<2h', wf.readframes(2)), (16384, -16384))
+
+    def test_cerebro_bolero_soul_jazz_rhythm_and_hiphop_adaptation(self):
+        import json
+        import math
+        import hardware_kit_builder as hkb
+
+        # 1. Style classification rules (preserving existing Boom Bap & Trap Soul rules)
+        st_bolero = hkb.detect_musical_style('Bolero a Lo-Fi 84')
+        self.assertEqual(st_bolero['id'], 'bolero')
+        self.assertEqual(st_bolero['mute_profile'], 'jazz_funk')
+
+        st_soul = hkb.detect_musical_style('Vintage_Motown_Soul_Rhodes')
+        self.assertEqual(st_soul['id'], 'soul_vintage')
+
+        st_jazz = hkb.detect_musical_style('Blue_Note_Jazz_Bossa_Trio')
+        self.assertEqual(st_jazz['id'], 'jazz_hop')
+
+        self.assertEqual(hkb.detect_musical_style('Cookin_Soul_BoomBap')['id'], 'boombap')
+        self.assertEqual(hkb.detect_musical_style('Trap_Soul_Kit')['id'], 'rnb_soul')
+
+        sr = 44100
+
+        def _synth_pulse_wav(path: Path, beat_sec: float, pattern: list[float], freq_hz: float = 220.0, offbeat_pos: float = 0.5):
+            # Render repeating bar pattern with exponential decay plucks
+            total_beats = len(pattern) * 4
+            frames = [0] * int(sr * beat_sec * total_beats)
+            for bar_idx in range(4):
+                for idx_in_bar, amp in enumerate(pattern):
+                    if amp <= 0.0:
+                        continue
+                    beat_idx = bar_idx * len(pattern) + idx_in_bar
+                    start = int(round(beat_idx * beat_sec * sr))
+                    hit_len = min(int(sr * 0.18), len(frames) - start)
+                    for i in range(hit_len):
+                        env = math.exp(-i / (sr * 0.035))
+                        frames[start + i] = int(max(-32000, min(32000, 26000 * amp * env * math.sin(2.0 * math.pi * freq_hz * i / sr))))
+                    if offbeat_pos > 0.0 and len(pattern) in (3, 4):
+                        sub_start = int(round((beat_idx + offbeat_pos) * beat_sec * sr))
+                        if sub_start < len(frames):
+                            sub_len = min(int(sr * 0.10), len(frames) - sub_start)
+                            for i in range(sub_len):
+                                env = math.exp(-i / (sr * 0.025))
+                                frames[sub_start + i] = int(max(-32000, min(32000, 12000 * amp * env * math.sin(2.0 * math.pi * freq_hz * 1.5 * i / sr))))
+            with wave.open(str(path), 'wb') as wf:
+                wf.setparams((1, 2, sr, 0, 'NONE', ''))
+                wf.writeframes(struct.pack(f'<{len(frames)}h', *frames))
+
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            samples_dir = root / 'Samples'
+            samples_dir.mkdir(parents=True, exist_ok=True)
+            (root / 'BeatOS' / 'data').mkdir(parents=True, exist_ok=True)
+
+            # 2. Synthetic 3/4 Bolero-Vals at 90 BPM -> adapt to Lo-Fi 84 BPM
+            bolero_waltz = samples_dir / 'Requinto_Bolero_Melodia.wav'
+            _synth_pulse_wav(bolero_waltz, beat_sec=60.0 / 90.0, pattern=[1.0, 0.42, 0.42], freq_hz=261.63, offbeat_pos=0.0)
+            rhy_bol = hkb.analyze_rhythmic_pattern_and_hiphop_adaptation(bolero_waltz, style_hint='Bolero a Lo-Fi 84')
+            self.assertEqual(rhy_bol['rhythm_analysis']['time_signature'], '3/4')
+            self.assertAlmostEqual(rhy_bol['rhythm_analysis']['source_bpm'], 90.0, delta=4.0)
+            self.assertEqual(rhy_bol['hiphop_adaptation']['target_bpm'], 84.0)
+            self.assertLess(rhy_bol['hiphop_adaptation']['repitch_semitones'], 0)
+            self.assertIn('3/4', rhy_bol['hiphop_adaptation']['meter_bridge_note'])
+
+            # 3. Synthetic 6/8 Slow Soul Ballad at 68 BPM
+            soul_68 = samples_dir / 'Vintage_Soul_Ballad_6_8.wav'
+            _synth_pulse_wav(soul_68, beat_sec=60.0 / 68.0, pattern=[1.0, 0.35, 0.35], freq_hz=196.0, offbeat_pos=0.0)
+            rhy_soul = hkb.analyze_rhythmic_pattern_and_hiphop_adaptation(soul_68, style_hint='Soul Boom Bap 86')
+            self.assertEqual(rhy_soul['rhythm_analysis']['time_signature'], '6/8')
+            self.assertEqual(rhy_soul['hiphop_adaptation']['target_bpm'], 86.0)
+
+            # 4. Synthetic 4/4 Swing Jazz Loop at 96 BPM (swing offbeats at 0.65)
+            jazz_swing = samples_dir / 'Cool_Jazz_Piano_Chord_Loop.wav'
+            _synth_pulse_wav(jazz_swing, beat_sec=60.0 / 96.0, pattern=[1.0, 0.55, 0.78, 0.55], freq_hz=293.66, offbeat_pos=0.65)
+            rhy_jazz = hkb.analyze_rhythmic_pattern_and_hiphop_adaptation(jazz_swing, style_hint='Jazz Hop 88')
+            self.assertEqual(rhy_jazz['rhythm_analysis']['time_signature'], '4/4')
+            self.assertGreaterEqual(rhy_jazz['rhythm_analysis']['swing_pct'], 57.0)
+            self.assertEqual(rhy_jazz['hiphop_adaptation']['target_bpm'], 88.0)
+
+            # 5. Test live endpoints /api/cerebro_analyze and /api/cerebro_autochop
+        with self.server() as (url, parent):
+            srv_root = parent / 'library'
+            srv_samples = srv_root / 'Samples'
+            srv_samples.mkdir(parents=True, exist_ok=True)
+            bol_srv = srv_samples / 'Requinto_Bolero_Melodia.wav'
+            _synth_pulse_wav(bol_srv, beat_sec=60.0 / 90.0, pattern=[1.0, 0.42, 0.42], freq_hz=261.63, offbeat_pos=0.0)
+
+            status_a, raw_a = self.request(
+                url + '/api/cerebro_analyze',
+                method='POST',
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+                data=json.dumps({
+                    'kit_name': 'Bolero_LoFi_Session',
+                    'pads': [{'pad': 1, 'sample_name': 'Requinto_Bolero_Melodia', 'rel_path': 'Samples/Requinto_Bolero_Melodia.wav', 'sound_type': 'MELODIC_LOOP'}],
+                }).encode('utf-8'),
+            )
+            self.assertEqual(status_a, 200, raw_a)
+            data_a = json.loads(raw_a.decode('utf-8'))
+            self.assertEqual(data_a['style_id'], 'bolero')
+            self.assertIsNotNone(data_a.get('rhythm_analysis'))
+            self.assertIsNotNone(data_a.get('hiphop_adaptation'))
+            self.assertEqual(data_a['rhythm_analysis']['time_signature'], '3/4')
+
+            status_c, raw_c = self.request(
+                url + '/api/cerebro_autochop',
+                method='POST',
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+                data=json.dumps({
+                    'rel_path': 'Samples/Requinto_Bolero_Melodia.wav',
+                    'max_slices': 16,
+                    'kit_name': 'Bolero_Chops',
+                    'style_hint': 'Bolero a Lo-Fi 84',
+                }).encode('utf-8'),
+            )
+            self.assertEqual(status_c, 200, raw_c)
+            data_c = json.loads(raw_c.decode('utf-8'))
+            self.assertTrue(data_c['success'])
+            self.assertGreaterEqual(data_c['slices_count'], 8)
+            self.assertEqual(data_c['recommended_bpm'], 84.0)
+            self.assertEqual(data_c['rhythm_analysis']['time_signature'], '3/4')
+            self.assertEqual(data_c['hiphop_adaptation']['target_bpm'], 84.0)
+            self.assertTrue(all(p['mute_group'] == 6 for p in data_c['pads']))
+            self.assertTrue(all(p['sound_type'] == 'MELODIC_LOOP' for p in data_c['pads']))
