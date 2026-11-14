@@ -204,6 +204,31 @@ def measure_energy(path):
         return 'UNMEASURED'
 
 
+def render_expansion_card_html(expansion, project_paths=()):
+    esc = lambda value: html.escape(str(value if value is not None else '—'), quote=True)
+    title = esc(expansion.get('title', ''))
+    path_value = expansion.get('path') or expansion.get('full_path') or ''
+    path = esc(path_value)
+    project_count = sum(p.is_relative_to(Path(path_value)) for p in project_paths) if path_value else 0
+    folder = esc(Path(path_value).name if path_value else expansion.get('title', ''))
+    cover = expansion.get('cover_url', '')
+    picture = f'<img src="{esc(cover)}" alt="Carátula {title}" loading="lazy">' if cover and not cover.startswith(('http:', 'https:', '//', 'data:')) else '<div class="library-cover-placeholder" aria-hidden="true">🎛️</div>'
+    manufacturer = esc(expansion.get('mfg', expansion.get('manufacturer')))
+    programs = esc(expansion.get('programs', expansion.get('programs_count')))
+    samples = esc(expansion.get('samples', expansion.get('samples_count')))
+    return f'''<article class="card library-card" data-name="{title}" data-count="{programs}" data-samples="{samples}" data-search="{title} {manufacturer} {path}">
+          <div class="library-cover">{picture}</div><div class="library-card-heading"><span class="library-kind">Expansión MPC</span><span class="library-state">{programs} programas · {project_count} proyectos</span></div>
+          <h3 translate="no">{title}</h3><p class="library-manufacturer" translate="no">{manufacturer}</p>
+          <dl><dt>Samples</dt><dd>{samples}</dd><dt>Tamaño</dt><dd>{esc(expansion.get('size_mb'))} MB</dd></dl>
+          <details class="library-location"><summary>Ubicación de la expansión</summary><code>{path}</code></details>
+          <div class="card-actions"><button type="button" class="po33-btn-secondary library-action primary" data-expansion="{folder}" data-path="{path}" data-title="{title}" onclick="openExpansionBrowser(this.dataset.expansion,this.dataset.path,this.dataset.title)">🎛️ Ver programas</button>
+          <button type="button" class="po33-btn-secondary library-action" data-expansion="{folder}" data-path="{path}" data-title="{title}" onclick="quickLoadExpansionFirstKit(this.dataset.expansion,this,this.dataset.path,this.dataset.title)">⚡ Cargar kit al rack</button>
+          <button type="button" class="po33-btn-secondary library-action" data-path="{path}" data-title="{title}" onclick="viewExpansionProjects(this.dataset.path,this.dataset.title)">📁 Ver proyectos ({project_count})</button>
+          <button type="button" class="po33-btn-secondary library-action" data-path="{path}" data-title="{title}" data-folder="{folder}" onclick="viewExpansionSamples(this.dataset.path,this.dataset.title,this.dataset.folder)">🔊 Explorar samples</button>
+          <button type="button" class="po33-btn-secondary library-action" data-path="{path}" onclick="revealLibraryPath(this.dataset.path,this)">📁 Mostrar en Finder</button>
+          <button type="button" class="po33-btn-secondary library-action" data-path="{path}" onclick="copyLibraryPath(this.dataset.path)">📋 Copiar ruta</button></div></article>'''
+
+
 def render_catalog(template, records, metadata, root_path=None):
     marker = re.search(r'const SAMPLES\s*=\s*', template)
     if not marker:
@@ -322,29 +347,7 @@ def render_catalog(template, records, metadata, root_path=None):
           <button type="button" class="po33-btn-secondary library-action" data-path="{path}" onclick="revealLibraryPath(this.dataset.path,this)">📁 Mostrar en Finder</button>
           <button type="button" class="po33-btn-secondary library-action" data-path="{path}" onclick="copyLibraryPath(this.dataset.path)">📋 Copiar ruta</button></div></article>''')
     project_paths = [Path(p.get('rel_path') or p.get('file_path') or '') for p in projects]
-    expansion_cards = []
-    for expansion in expansions:
-        title = esc(expansion.get('title', ''))
-        path_value = expansion.get('path') or expansion.get('full_path') or ''
-        path = esc(path_value)
-        project_count = sum(p.is_relative_to(Path(path_value)) for p in project_paths) if path_value else 0
-        folder = esc(Path(path_value).name if path_value else expansion.get('title',''))
-        cover = expansion.get('cover_url', '')
-        picture = f'<img src="{esc(cover)}" alt="Carátula {title}" loading="lazy">' if cover and not cover.startswith(('http:', 'https:', '//', 'data:')) else '<div class="library-cover-placeholder" aria-hidden="true">🎛️</div>'
-        manufacturer = esc(expansion.get('mfg', expansion.get('manufacturer')))
-        programs = esc(expansion.get('programs', expansion.get('programs_count')))
-        samples = esc(expansion.get('samples', expansion.get('samples_count')))
-        expansion_cards.append(f'''<article class="card library-card" data-name="{title}" data-count="{programs}" data-samples="{samples}" data-search="{title} {manufacturer} {path}">
-          <div class="library-cover">{picture}</div><div class="library-card-heading"><span class="library-kind">Expansión MPC</span><span class="library-state">{programs} programas · {project_count} proyectos</span></div>
-          <h3 translate="no">{title}</h3><p class="library-manufacturer" translate="no">{manufacturer}</p>
-          <dl><dt>Samples</dt><dd>{samples}</dd><dt>Tamaño</dt><dd>{esc(expansion.get('size_mb'))} MB</dd></dl>
-          <details class="library-location"><summary>Ubicación de la expansión</summary><code>{path}</code></details>
-          <div class="card-actions"><button type="button" class="po33-btn-secondary library-action primary" data-expansion="{folder}" data-path="{path}" data-title="{title}" onclick="openExpansionBrowser(this.dataset.expansion,this.dataset.path,this.dataset.title)">🎛️ Ver programas</button>
-          <button type="button" class="po33-btn-secondary library-action" data-expansion="{folder}" data-path="{path}" data-title="{title}" onclick="quickLoadExpansionFirstKit(this.dataset.expansion,this,this.dataset.path,this.dataset.title)">⚡ Cargar kit al rack</button>
-          <button type="button" class="po33-btn-secondary library-action" data-path="{path}" data-title="{title}" onclick="viewExpansionProjects(this.dataset.path,this.dataset.title)">📁 Ver proyectos ({project_count})</button>
-          <button type="button" class="po33-btn-secondary library-action" data-path="{path}" data-title="{title}" data-folder="{folder}" onclick="viewExpansionSamples(this.dataset.path,this.dataset.title,this.dataset.folder)">🔊 Explorar samples</button>
-          <button type="button" class="po33-btn-secondary library-action" data-path="{path}" onclick="revealLibraryPath(this.dataset.path,this)">📁 Mostrar en Finder</button>
-          <button type="button" class="po33-btn-secondary library-action" data-path="{path}" onclick="copyLibraryPath(this.dataset.path)">📋 Copiar ruta</button></div></article>''')
+    expansion_cards = [render_expansion_card_html(expansion, project_paths) for expansion in expansions]
     return rendered.replace('<!--PROJECT_CARDS-->', ''.join(project_cards)).replace(
         '<!--EXPANSION_CARDS-->', ''.join(expansion_cards))
 
@@ -379,9 +382,177 @@ def restore_empty_catalog(root, template_path=None):
                 or len(metadata.get('expansions', [])) != connection.execute('SELECT COUNT(*) FROM expansions').fetchone()[0]):
             raise ValueError('Catalog recovery requires matching database and metadata; existing files were preserved')
     template = Path(template_path) if template_path else Path(__file__).parent / 'templates/catalogo.html'
-    html = render_catalog(template.read_text(encoding='utf-8'), records, metadata, root_path=str(root))
-    write_catalog(root, html)
+    html_out = render_catalog(template.read_text(encoding='utf-8'), records, metadata, root_path=str(root))
+    write_catalog(root, html_out)
     return True
+
+
+def sync_expansion_into_catalog(root_path, exp_dir, template_path=None):
+    """Registra de inmediato una expansión recién creada en SQLite, JSON y catálogo HTML sin esperar reindexación total."""
+    root = Path(root_path).resolve()
+    exp_p = Path(exp_dir).resolve()
+    if not exp_p.is_dir() or not exp_p.is_relative_to(root):
+        return None
+    xml_path = exp_p / 'Expansion.xml'
+    title = exp_p.name
+    mfg = 'Astro1Deep'
+    etype = 'drum'
+    cover_img = ''
+    if xml_path.is_file():
+        try:
+            tree = ET.parse(str(xml_path))
+            root_el = tree.getroot()
+            title = root_el.findtext('title') or title
+            mfg = root_el.findtext('manufacturer') or mfg
+            etype = root_el.findtext('type') or etype
+            cover_img = root_el.findtext('img') or ''
+        except Exception:
+            pass
+
+    p_count = 0
+    s_count = 0
+    sz_bytes = 0
+    AUDIO_EXTS = {'.wav', '.aif', '.aiff', '.mp3', '.flac'}
+    sample_rows = []
+    new_projects = []
+
+    for er, _, efiles in os.walk(str(exp_p)):
+        in_proj_data = '_[ProjectData]' in er or '_ProjectData' in er
+        for ef in efiles:
+            if ef.startswith('.'):
+                continue
+            ext = os.path.splitext(ef)[1].lower()
+            efp = os.path.join(er, ef)
+            try:
+                fsize = os.path.getsize(efp)
+                sz_bytes += fsize
+            except OSError:
+                fsize = 0
+            if ext in {'.xpm', '.pgm', '.akp'} and not in_proj_data:
+                p_count += 1
+            elif ext in AUDIO_EXTS and not in_proj_data:
+                s_count += 1
+                rel_p = os.path.relpath(efp, str(root)).replace('\\', '/')
+                rel_dir = os.path.relpath(er, str(root)).replace('\\', '/')
+                parts = rel_dir.split('/')
+                macro = parts[0] if parts else 'Expansions'
+                sub = parts[1] if len(parts) > 1 else exp_p.name
+                stype = classify_sound_type(ef, rel_dir)
+                sfmt = classify_sample_format(ef, stype, rel_dir)
+                bpm = extract_bpm(ef)
+                btier = get_bpm_tier(bpm)
+                mkey, camelot = extract_key(ef)
+                energy = measure_energy(efp)
+                sample_rows.append((ef, stype, sfmt, macro, sub, bpm, btier, mkey, camelot, energy, ext, round(fsize / (1024 * 1024), 3), efp, rel_p))
+            elif ext == '.xpj' and not in_proj_data:
+                p_name = ef[:-4]
+                tempo = 120.0
+                key = None
+                missing_count = 0
+                unique_paths = set()
+                parse_error = False
+                data_dir = os.path.join(er, p_name + '_[ProjectData]')
+                if not os.path.exists(data_dir):
+                    alt_dir = os.path.join(er, p_name, p_name + '_[ProjectData]')
+                    if os.path.exists(alt_dir):
+                        data_dir = alt_dir
+                try:
+                    with gzip.open(efp, 'rt', encoding='utf-8', errors='ignore') as gz:
+                        content = gz.read()
+                    mk = re.search(r'"key"\s*:\s*"([^"]+)"', content)
+                    if mk:
+                        key = mk.group(1)
+                    mt = re.search(r'"(?:masterTempo|tempo)"\s*:\s*([0-9\.]+)', content)
+                    if mt:
+                        tempo = float(mt.group(1))
+                    unique_paths = set(p for p in re.findall(r'"path"\s*:\s*"([^"]+)"', content) if p and not p.startswith('.'))
+                    if os.path.exists(data_dir):
+                        for p in unique_paths:
+                            if not os.path.exists(os.path.join(data_dir, p)):
+                                missing_count += 1
+                    else:
+                        missing_count = len(unique_paths)
+                except Exception:
+                    parse_error = True
+                status = 'ERROR' if parse_error else ('INDEX_OK' if missing_count == 0 else 'ATTENTION')
+                sz_kb = round(fsize / 1024, 2)
+                new_projects.append({
+                    'name': p_name,
+                    'file_path': efp,
+                    'rel_path': os.path.relpath(efp, str(root)).replace('\\', '/'),
+                    'tempo': round(tempo, 1),
+                    'key': key,
+                    'samples': len(unique_paths),
+                    'missing': missing_count,
+                    'status': status,
+                    'size_kb': sz_kb,
+                })
+
+    sz_mb = round(sz_bytes / (1024 * 1024), 2)
+    exp_rel = exp_p.relative_to(root).as_posix()
+    cover_rel = (exp_p / cover_img).relative_to(root).as_posix() if cover_img and (exp_p / cover_img).is_file() else ''
+    exp_entry = {
+        'title': title,
+        'mfg': mfg,
+        'type': etype,
+        'programs': p_count,
+        'samples': s_count,
+        'size_mb': sz_mb,
+        'path': exp_rel,
+        'cover_url': cover_rel,
+    }
+    proj_paths = [Path(p['rel_path']) for p in new_projects]
+
+    database = database_path(root)
+    metadata_file = database.parent / 'mpc_sample.json'
+    if database.is_file() and metadata_file.is_file():
+        conn = sqlite3.connect(str(database))
+        try:
+            cur = conn.cursor()
+            cur.execute('DELETE FROM expansions WHERE full_path = ? OR title = ?', (str(exp_p), title))
+            cur.execute(
+                'INSERT INTO expansions (title, identifier, manufacturer, exp_type, version, cover_image, programs_count, samples_count, size_mb, full_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                (title, title.lower(), mfg, etype, '1.0', cover_img, p_count, s_count, sz_mb, str(exp_p)),
+            )
+            for np in new_projects:
+                cur.execute('DELETE FROM projects WHERE file_path = ?', (np['file_path'],))
+                cur.execute(
+                    'INSERT INTO projects (name, file_path, tempo, musical_key, sample_refs_count, missing_samples_count, status, size_kb) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    (np['name'], np['file_path'], np['tempo'], np['key'], np['samples'], np['missing'], np['status'], np['size_kb']),
+                )
+            for sr in sample_rows:
+                exists = cur.execute('SELECT 1 FROM samples WHERE rel_path = ? LIMIT 1', (sr[13],)).fetchone()
+                if not exists:
+                    cur.execute(
+                        'INSERT INTO samples (filename, sound_type, sample_format, macro_category, sub_pack, bpm, bpm_tier, musical_key, camelot, energy_level, extension, size_mb, full_path, rel_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                        sr,
+                    )
+            conn.commit()
+            records = cur.execute(CATALOG_QUERY).fetchall()
+        finally:
+            conn.close()
+
+        metadata = json.loads(metadata_file.read_text(encoding='utf-8'))
+        exps = [e for e in metadata.get('expansions', []) if e.get('path') != exp_rel and e.get('title') != title]
+        exps.append(exp_entry)
+        new_proj_rels = {p['rel_path'] for p in new_projects}
+        projs = [p for p in metadata.get('projects', []) if p.get('rel_path') not in new_proj_rels]
+        projs.extend({k: v for k, v in p.items() if k != 'file_path'} for p in new_projects)
+        metadata['expansions'] = exps
+        metadata['projects'] = projs
+        metadata['total_expansions'] = len(exps)
+        metadata['total_projects'] = len(projs)
+        metadata['total_samples'] = len(records)
+        metadata_file.write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding='utf-8')
+        proj_paths = [Path(p.get('rel_path') or p.get('file_path') or '') for p in projs]
+
+        tpl = Path(template_path) if template_path and Path(template_path).is_file() else Path(__file__).parent / 'templates/catalogo.html'
+        if tpl.is_file():
+            rendered_html = render_catalog(tpl.read_text(encoding='utf-8'), records, metadata, root_path=str(root))
+            write_catalog(root, rendered_html)
+
+    card_html = render_expansion_card_html(exp_entry, proj_paths)
+    return {'expansion': exp_entry, 'card_html': card_html, 'projects_added': len(new_projects)}
 
 
 def main():

@@ -775,31 +775,46 @@ def detect_musical_style(
 
 def infer_kit_bpm(path_or_name: str | Path, fallback: float = 120.0) -> float:
     """Infiere el BPM real de un kit o proyecto por nombre explícito, muestras internas o estilo/artista."""
-    p = Path(str(path_or_name))
-    stem = p.stem
-    full_str = str(p)
+    full_str = str(path_or_name)
     low = full_str.lower()
+    p: Optional[Path] = None
+    is_existing_path = False
+    if "\n" not in full_str and len(full_str) <= 1024:
+        try:
+            cand_p = Path(full_str)
+            if all(len(part.encode("utf-8", errors="ignore")) <= 255 for part in cand_p.parts):
+                is_existing_path = cand_p.exists()
+                p = cand_p
+        except OSError:
+            is_existing_path = False
+    stem = p.stem if p is not None else Path(full_str[:240]).stem
 
     m = re.search(r"(?:^|[\s_-])(6\d|[7-9]\d|1[0-8]\d)\s*bpm\b", stem, re.I)
+    if not m:
+        m = re.search(r"(?:^|[\s_\-/])(6\d|[7-9]\d|1[0-8]\d)\s*bpm\b", full_str, re.I)
     if m:
         return float(m.group(1))
     m2 = re.search(r"[\s_-](6\d|[7-9]\d|1[0-8]\d)$", stem)
     if m2 and int(m2.group(1)) not in (808, 909, 303, 140):
         return float(m2.group(1))
 
-    if p.exists():
-        search_dir = (p.parent / f"{stem}_[ProjectData]") if (p.parent / f"{stem}_[ProjectData]").is_dir() else (p if p.is_dir() else p.parent)
-        if search_dir.is_dir():
-            for w in sorted(search_dir.glob("*.[wW][aA][vV]")):
-                if w.name.startswith("._"):
-                    continue
-                mw = re.search(r"(?:^|[\s_-])(6\d|[7-9]\d|1[0-8]\d)\s*bpm\b", w.stem, re.I)
-                if not mw:
-                    mw = re.search(r"bpm_[a-z0-9_]*?_(6\d|[7-9]\d|1[0-8]\d)_", w.stem, re.I)
-                if mw:
-                    val = float(mw.group(1))
-                    if 60.0 <= val <= 185.0:
-                        return val
+    if is_existing_path and p is not None:
+        try:
+            proj_cand = p.parent / f"{stem}_[ProjectData]"
+            search_dir = proj_cand if proj_cand.is_dir() else (p if p.is_dir() else p.parent)
+            if search_dir.is_dir():
+                for w in sorted(search_dir.glob("*.[wW][aA][vV]")):
+                    if w.name.startswith("._"):
+                        continue
+                    mw = re.search(r"(?:^|[\s_-])(6\d|[7-9]\d|1[0-8]\d)\s*bpm\b", w.stem, re.I)
+                    if not mw:
+                        mw = re.search(r"bpm_[a-z0-9_]*?_(6\d|[7-9]\d|1[0-8]\d)_", w.stem, re.I)
+                    if mw:
+                        val = float(mw.group(1))
+                        if 60.0 <= val <= 185.0:
+                            return val
+        except OSError:
+            pass
 
     if any(k in low for k in ["baile funk", "funk carioca", "favela", "mandelao", "mandelão", "tamborzao", "tamborzão", "montagem", "brega funk"]):
         return 130.0
@@ -2983,50 +2998,26 @@ def export_mpc2000xl_pgm_kit(
 # 4. DISPATCHER UNIVERSAL: CREATE_KIT
 # ==============================================================================
 
-def create_kit(
-    kit_name: str,
-    pads: list[dict] | dict,
-    target: str = "universal",
-    source_root: Optional[str | Path] = None,
-    output_base_dir: Optional[str | Path] = None,
-    tempo: float = 120.0,
-    po_options: Optional[dict] = None,
-    mpc_options: Optional[dict] = None,
-) -> dict:
-    """
-    Función maestra llamada por la API web (/api/create_kit) o por línea de comandos.
-    Genera kits optimizados para MPC (Modern & Legacy 1000/2500/2000XL), Maschine, SP-404MK2, SP-404A, EP-133 o PO-33.
-    """
-    clean_kit_name = re.sub(r"[^a-zA-Z0-9_\-]", "_", kit_name.strip()) or "Custom_Beatmaker_Kit"
-
-    if source_root is None:
-        source_root = Path.cwd()
-    else:
-        source_root = Path(source_root)
-
-    if output_base_dir is None:
-        output_base_dir = source_root / "Custom_Kits" / clean_kit_name
-    else:
-        output_base_dir = Path(output_base_dir) / clean_kit_name
-
-
-    if output_base_dir.exists():
-        raise FileExistsError("Ya existe un kit con ese nombre. Elige otro para conservar el original.")
-
-    opts = mpc_options if isinstance(mpc_options, dict) else {}
-    gain_profile = str(opts.get("gain_profile") or "smart_pcm").strip().lower()
-
-    # Normalizar pads_data en un diccionario de 1 a 16 (o más)
-    pads_dict = {}
+def _normalize_pads_input(
+    pads: Any,
+    source_root: Path,
+    gain_profile: str = "smart_pcm",
+) -> Dict[int, Dict[str, Any]]:
+    """Normaliza una lista o diccionario de pads del Rack al esquema interno indexado por número de pad."""
+    pads_dict: Dict[int, Dict[str, Any]] = {}
     if isinstance(pads, list):
         for item in pads:
+            if not isinstance(item, dict):
+                continue
             pad_num = int(item.get("pad", item.get("pad_number", 0)))
+            if pad_num <= 0:
+                continue
             if pad_num in pads_dict:
                 raise ValueError("Pad duplicado")
             rel_path = item.get("rel_path", item.get("relPath", ""))
             src_path = item.get("source_path", "")
             if not src_path and rel_path:
-                src_path = str(source_root / rel_path)
+                src_path = str(source_root / str(rel_path).lstrip("/"))
 
             raw_sname = (item.get("sample_name") or item.get("sampleName") or "").strip()
             fallback_stem = Path(rel_path or src_path).stem if (rel_path or src_path) else ""
@@ -3064,12 +3055,52 @@ def create_kit(
             pads_dict[pad_num] = pad_entry
     elif isinstance(pads, dict):
         for k, v in pads.items():
+            if not isinstance(v, dict):
+                continue
             pad_num = int(k)
-            pads_dict[pad_num] = dict(v)
-            if not pads_dict[pad_num].get("source_path") and pads_dict[pad_num].get("rel_path"):
-                pads_dict[pad_num]["source_path"] = str(
-                    source_root / pads_dict[pad_num]["rel_path"]
-                )
+            entry = dict(v)
+            rel_val = entry.get("rel_path") or entry.get("relPath") or ""
+            if not entry.get("source_path") and rel_val:
+                entry["source_path"] = str(source_root / str(rel_val).lstrip("/"))
+            entry.setdefault("pad_number", pad_num)
+            pads_dict[pad_num] = entry
+    return pads_dict
+
+
+def create_kit(
+    kit_name: str,
+    pads: list[dict] | dict,
+    target: str = "universal",
+    source_root: Optional[str | Path] = None,
+    output_base_dir: Optional[str | Path] = None,
+    tempo: float = 120.0,
+    po_options: Optional[dict] = None,
+    mpc_options: Optional[dict] = None,
+) -> dict:
+    """
+    Función maestra llamada por la API web (/api/create_kit) o por línea de comandos.
+    Genera kits optimizados para MPC (Modern & Legacy 1000/2500/2000XL), Maschine, SP-404MK2, SP-404A, EP-133 o PO-33.
+    """
+    clean_kit_name = re.sub(r"[^a-zA-Z0-9_\-]", "_", kit_name.strip()) or "Custom_Beatmaker_Kit"
+
+    if source_root is None:
+        source_root = Path.cwd()
+    else:
+        source_root = Path(source_root)
+
+    if output_base_dir is None:
+        output_base_dir = source_root / "Custom_Kits" / clean_kit_name
+    else:
+        output_base_dir = Path(output_base_dir) / clean_kit_name
+
+
+    if output_base_dir.exists():
+        raise FileExistsError("Ya existe un kit con ese nombre. Elige otro para conservar el original.")
+
+    opts = mpc_options if isinstance(mpc_options, dict) else {}
+    gain_profile = str(opts.get("gain_profile") or "smart_pcm").strip().lower()
+
+    pads_dict = _normalize_pads_input(pads, source_root, gain_profile=gain_profile)
 
     tempo = float(tempo)
     if not math.isfinite(tempo) or not 30 <= tempo <= 300:
@@ -3439,7 +3470,7 @@ def create_custom_expansion(
     exported_kits: List[Dict[str, Any]] = []
 
     if rack_pads:
-        r_name = re.sub(r"[^a-zA-Z0-9_\-\s]", "", (rack_kit_name or f"{clean_mfg}_Rack_Kit").strip()).strip() or f"{clean_mfg}_Rack_Kit"
+        r_name = (re.sub(r"[^a-zA-Z0-9_\-\s]", "", (rack_kit_name or f"{clean_mfg}_Rack_Kit").strip()).strip() or f"{clean_mfg}_Rack_Kit")[:60]
         pads_dict = _normalize_pads_input(rack_pads, root)
         if pads_dict:
             kit_leaf = artist_dir / r_name
@@ -3451,8 +3482,13 @@ def create_custom_expansion(
             local_pads = {}
             first_wav_src = None
             for pad_num, pinfo in sorted(pads_dict.items()):
-                src = Path(pinfo["source_path"])
-                dest_name = f"{pad_num:02d} {src.stem} ({r_name}).wav"
+                src_raw = pinfo.get("source_path") or ""
+                if not src_raw:
+                    continue
+                src = Path(src_raw)
+                if not src.is_file():
+                    continue
+                dest_name = f"{pad_num:02d} {src.stem[:100]} ({r_name[:60]}).wav"
                 dest_wav = kit_leaf / dest_name
                 _convert_audio(src, dest_wav, mono=False)
                 shutil.copy2(dest_wav, proj_data / dest_name)
@@ -3463,13 +3499,14 @@ def create_custom_expansion(
                 p_copy["sample_file"] = dest_name
                 p_copy["sample_name"] = Path(dest_name).stem
                 local_pads[pad_num] = p_copy
-            export_mpc_program(r_name, local_pads, kit_leaf, copy_samples=False)
-            export_mpc_project(r_name, local_pads, artist_dir, tempo=bpm_val)
-            # Eliminar .xpm duplicado dentro de _[ProjectData] para no duplicar el conteo de programas
-            (proj_data / f"{r_name}.xpm").unlink(missing_ok=True)
-            if first_wav_src and first_wav_src.is_file():
-                shutil.copy2(first_wav_src, previews_dir / f"{r_name}.wav")
-            exported_kits.append({"name": r_name, "artist_folder": clean_sub, "pads": len(local_pads), "tempo": bpm_val})
+            if local_pads:
+                export_mpc_program(r_name, local_pads, kit_leaf, copy_samples=False)
+                export_mpc_project(r_name, local_pads, artist_dir, tempo=bpm_val)
+                # Eliminar .xpm duplicado dentro de _[ProjectData] para no duplicar el conteo de programas
+                (proj_data / f"{r_name}.xpm").unlink(missing_ok=True)
+                if first_wav_src and first_wav_src.is_file():
+                    shutil.copy2(first_wav_src, previews_dir / f"{r_name}.wav")
+                exported_kits.append({"name": r_name, "artist_folder": clean_sub, "pads": len(local_pads), "tempo": bpm_val})
 
     for rel_kit in (selected_kit_paths or []):
         cand = (root / str(rel_kit).lstrip("/")).resolve()
@@ -3495,13 +3532,14 @@ def create_custom_expansion(
         first_wav_src = None
         for pad_num, pinfo in sorted(parsed["pads"].items()):
             pad_idx = int(pad_num)
-            if pad_idx < 1 or pad_idx > 16:
+            if pad_idx < 1 or pad_idx > 128:
                 continue
             fp = pinfo.get("full_path") or ""
             if not fp or not Path(fp).is_file():
                 continue
             src = Path(fp)
-            dest_name = src.name if re.match(r"^\d{2}\s", src.name) else f"{pad_idx:02d} {src.name}"
+            base_name = f"{src.stem[:110]}{src.suffix}"
+            dest_name = base_name if re.match(r"^\d{2}\s", base_name) else f"{pad_idx:02d} {base_name}"
             dest_wav = kit_leaf / dest_name
             if not dest_wav.is_file():
                 shutil.copy2(src, dest_wav)
@@ -3559,15 +3597,21 @@ def create_custom_expansion(
                 arcname = f"{clean_title}/{file_p.relative_to(exp_dir).as_posix()}"
                 zf.write(str(file_p), arcname=arcname)
 
+    rel_exp = exp_dir.relative_to(root).as_posix()
+    total_samples = sum(int(k.get("pads", 0)) for k in exported_kits)
     return {
         "success": True,
         "title": clean_title,
         "manufacturer": clean_mfg,
         "artist_subfolder": clean_sub,
-        "expansion_path": exp_dir.relative_to(root).as_posix(),
-        "artwork": f"{exp_dir.relative_to(root).as_posix()}/{art_name}",
+        "expansion_path": rel_exp,
+        "expansion_rel_path": rel_exp,
+        "artwork": f"{rel_exp}/{art_name}",
         "zip_download_path": zip_rel,
+        "zip_rel_path": zip_rel,
         "kits_count": len(exported_kits),
+        "kit_count": len(exported_kits),
+        "sample_count": total_samples,
         "kits": exported_kits,
     }
 

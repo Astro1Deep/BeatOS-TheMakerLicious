@@ -428,7 +428,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
         if not isinstance(item, dict):
             continue
         p_num = int(item.get("pad") or item.get("pad_number") or 0)
-        if not 1 <= p_num <= 16:
+        if not 1 <= p_num <= 128:
             continue
         sname = str(item.get("sample_name") or item.get("sampleName") or "").strip()
         rel_path = str(item.get("rel_path") or item.get("relPath") or "").strip()
@@ -1405,7 +1405,11 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
         except ValueError:
             self.send_error(400, 'Content-Length no válido')
             return
-        limit = 128 * 1024 * 1024 if clean_api == '/api/po33_backups' else 1024 * 1024
+        limit = (
+            128 * 1024 * 1024
+            if clean_api == '/api/po33_backups'
+            else (32 * 1024 * 1024 if clean_api == '/api/create_expansion' else 1024 * 1024)
+        )
         if length < 0 or length > limit:
             self.send_error(400 if length < 0 else 413, 'Tamaño de petición no permitido')
             return
@@ -1676,6 +1680,20 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                     rack_tempo=float(payload.get("rack_tempo") or 90.0),
                     source_root=self.server.root_dir,
                 )
+                if hasattr(kit_mod, "clear_expansion_kits_cache"):
+                    kit_mod.clear_expansion_kits_cache()
+                try:
+                    from index_mpc_library import sync_expansion_into_catalog
+                    sync_info = sync_expansion_into_catalog(
+                        self.server.root_dir,
+                        Path(self.server.root_dir) / result.get("expansion_path", ""),
+                        Path(__file__).resolve().parent / "templates" / "catalogo.html",
+                    )
+                    if isinstance(sync_info, dict):
+                        result["card_html"] = sync_info.get("card_html", "")
+                        result["expansion"] = sync_info.get("expansion", {})
+                except Exception as sync_err:
+                    sys.stderr.write(f"  [WARN sync_expansion_into_catalog] {sync_err}\n")
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.send_cors_headers()

@@ -5817,9 +5817,13 @@ function runCerebroRackAnalysis(btn) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ kit_name: kitName, pads: activePads })
   })
-  .then(res => res.json())
+  .then(async res => {
+    let data = {};
+    try { data = await res.json(); } catch (_) {}
+    if (!res.ok || !data.success) throw new Error(data.error || ('HTTP ' + res.status));
+    return data;
+  })
   .then(data => {
-    if (!data.success) throw new Error(data.error || 'Error en análisis');
     const st = data.style || {};
     const recBpm = Number(data.recommended_bpm || st.bpm || 120);
     const recProfile = data.recommended_mute_profile || st.mute_profile || 'real_drums';
@@ -8874,8 +8878,9 @@ async function createOfficialMpcExpansion(button) {
   const includeRack = !!document.getElementById('expBuildIncludeRack')?.checked;
   const selectedRelPaths = [...document.querySelectorAll('.exp-kit-checkbox:checked')].map(b => b.value);
 
-  const rackPadsPayload = includeRack && typeof getActivePadsPayload === 'function' ? getActivePadsPayload() : {};
+  const rackPadsPayload = includeRack && typeof getActivePadsPayload === 'function' ? getActivePadsPayload() : [];
   if (rackPadsPayload === null) return;
+  const hasRackPads = Array.isArray(rackPadsPayload) ? rackPadsPayload.length > 0 : Object.keys(rackPadsPayload || {}).length > 0;
   const rackKitName = (document.getElementById('rackKitName')?.value || title || 'BeatOS_Rack_Kit').trim();
   const rackTempo = parseFloat(document.getElementById('rackTempo')?.value || '96') || 96.0;
 
@@ -8883,7 +8888,7 @@ async function createOfficialMpcExpansion(button) {
     showToast('⚠️ Introduce un título para la expansión.');
     return;
   }
-  if (!selectedRelPaths.length && Object.keys(rackPadsPayload).length === 0) {
+  if (!selectedRelPaths.length && !hasRackPads) {
     showToast('⚠️ Selecciona al menos un kit o asigna sonidos al Beatmaker Rack.');
     return;
   }
@@ -8905,23 +8910,45 @@ async function createOfficialMpcExpansion(button) {
         rack_tempo: rackTempo
       })
     });
-    const data = await r.json();
-    if (!r.ok || !data.success) throw new Error(data.error || 'Error creando expansión');
+    let data = {};
+    try { data = await r.json(); } catch (_) {}
+    if (!r.ok || !data.success) throw new Error(data.error || ('HTTP ' + r.status));
+    const expRelPath = data.expansion_rel_path || data.expansion_path || ('Expansions/' + (data.title || title));
+    const zipRelPath = data.zip_rel_path || data.zip_download_path || '';
+    const kitCount = data.kit_count ?? data.kits_count ?? 0;
+    const sampleCount = data.sample_count ?? 0;
     const resBox = document.getElementById('expBuildResultBox');
     if (resBox) {
       resBox.style.display = 'block';
       resBox.innerHTML = `
-        <div style="font-weight:700; color:#2ecc71; margin-bottom:4px;">✔ Expansión Oficial MPC creada: <span translate="no">${escapeHtml(data.title)}</span> (${data.kit_count} kits · ${data.sample_count} samples)</div>
-        <div style="font-size:11px; color:var(--text-primary); margin-bottom:8px;">📂 Ruta en tarjeta: <code translate="no">${escapeHtml(data.expansion_rel_path)}</code></div>
+        <div style="font-weight:700; color:#2ecc71; margin-bottom:4px;">✔ Expansión Oficial MPC creada: <span translate="no">${escapeHtml(data.title)}</span> (${kitCount} kits · ${sampleCount} samples)</div>
+        <div style="font-size:11px; color:var(--text-primary); margin-bottom:8px;">📂 Ruta en tarjeta: <code translate="no">${escapeHtml(expRelPath)}</code></div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <a href="${escapeHtml(getApiBaseUrl() + '/' + data.zip_rel_path)}" download class="po33-btn-action" style="text-decoration:none; font-size:11px; padding:6px 12px;">📥 Descargar Paquete .ZIP (${escapeHtml(data.zip_rel_path.split('/').pop())})</a>
-          <button type="button" class="po33-btn-secondary" style="font-size:11px; padding:6px 12px;" onclick="revealLibraryPath('${escapeHtml(data.expansion_rel_path)}', this)">📁 Mostrar en Finder</button>
+          ${zipRelPath ? `<a href="${escapeHtml(getApiBaseUrl() + '/' + zipRelPath)}" download class="po33-btn-action" style="text-decoration:none; font-size:11px; padding:6px 12px;">📥 Descargar Paquete .ZIP (${escapeHtml(zipRelPath.split('/').pop())})</a>` : ''}
+          <button type="button" class="po33-btn-secondary" style="font-size:11px; padding:6px 12px;" onclick="closeCreateExpansionModal(); switchTab('tab-expansions', document.getElementById('tabBtnExpansions')); openExpansionBrowser('${escapeHtml(data.title)}', '${escapeHtml(expRelPath)}', '${escapeHtml(data.title)}');">🎛️ Abrir Kits de la Expansión</button>
+          <button type="button" class="po33-btn-secondary" style="font-size:11px; padding:6px 12px;" onclick="revealLibraryPath('${escapeHtml(expRelPath)}', this)">📁 Mostrar en Finder</button>
         </div>
       `;
+    }
+    if (data.card_html) {
+      const expGrid = document.querySelector('#tab-expansions .grid-cards');
+      if (expGrid) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = data.card_html;
+        const newCard = tmp.firstElementChild;
+        if (newCard) {
+          expGrid.querySelectorAll('.library-card').forEach(c => {
+            if ((c.dataset?.name || '') === (newCard.dataset?.name || '')) c.remove();
+          });
+          expGrid.prepend(newCard);
+          if (typeof filterLibraryCards === 'function') filterLibraryCards('tab-expansions', null, false);
+        }
+      }
     }
     showToast('✔ Expansión MPC creada con éxito');
     if (typeof refreshLibraryMenu === 'function') {
       refreshLibraryMenu('tab-expansions');
+      refreshLibraryMenu('tab-projects');
     }
   } catch (err) {
     showToast('⚠️ ' + err.message);

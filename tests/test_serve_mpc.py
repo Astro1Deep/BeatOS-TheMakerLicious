@@ -334,3 +334,142 @@ class ServerSecurityTests(unittest.TestCase):
             pad1 = json.loads(body)['program']['pads']['1']
             self.assertFalse(pad1['missing'])
             self.assertEqual(pad1['rel_path'], 'Expansions/DemoPack/Demo Kit_[ProjectData]/Kick.wav')
+
+    def test_cerebro_analyze_long_paths_and_create_expansion_syncs_catalog(self):
+        import base64
+        import json
+        import struct
+        import wave
+        import zlib
+
+        def write_wav(path):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with wave.open(str(path), 'wb') as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)
+                wf.setframerate(44100)
+                wf.writeframes(b'\x00\x00' * 441)
+
+        def make_large_png_data_url(width=640, height=640):
+            def chunk(tag, data):
+                return (
+                    struct.pack('!I', len(data))
+                    + tag
+                    + data
+                    + struct.pack('!I', zlib.crc32(tag + data) & 0xFFFFFFFF)
+                )
+
+            ihdr = struct.pack('!IIBBBBB', width, height, 8, 2, 0, 0, 0)
+            raw_scanlines = (b'\x00' + (b'\x10\x20\x30' * width)) * height
+            idat = zlib.compress(raw_scanlines, 0)
+            png_bytes = (
+                b'\x89PNG\r\n\x1a\n'
+                + chunk(b'IHDR', ihdr)
+                + chunk(b'IDAT', idat)
+                + chunk(b'IEND', b'')
+            )
+            return 'data:image/png;base64,' + base64.b64encode(png_bytes).decode('ascii')
+
+        with self.server() as (url, parent):
+            root = parent / 'library'
+            long_sample_dir = (
+                root
+                / 'Samples'
+                / ('LongPackFolder_' + ('X' * 60))
+                / ('SubFolder_' + ('Y' * 60))
+            )
+            long_sample_rel_list = []
+            pads = []
+            for pad_num in range(1, 18):
+                name = f'SuperLongSampleName_{pad_num:02d}_124BPM_' + ('K' * 40) + '.wav'
+                wav_path = long_sample_dir / name
+                write_wav(wav_path)
+                rel = wav_path.relative_to(root).as_posix()
+                long_sample_rel_list.append(rel)
+                pads.append({
+                    'pad': pad_num,
+                    'sample_name': name,
+                    'rel_path': rel,
+                    'sound_type': 'Kick' if pad_num == 1 else 'Snare',
+                })
+
+            exp_dir = root / 'Expansions' / 'DemoPack'
+            write_wav(exp_dir / 'Demo Kit_[ProjectData]' / 'Kick.wav')
+            (exp_dir / 'Demo Kit.xpm').write_text(
+                '<MPCVObject><Program type="Drum"><Instruments>'
+                '<Instrument number="1"><Layers><Layer number="1">'
+                '<SampleName>Kick</SampleName>'
+                '</Layer></Layers></Instrument>'
+                '</Instruments></Program></MPCVObject>',
+                encoding='utf-8',
+            )
+
+            import io
+            from unittest.mock import patch
+            import index_mpc_library
+
+            with patch.object(sys, 'argv', ['index_mpc_library.py', '--path', str(root), '--lang', 'en']):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    index_mpc_library.main()
+
+            status, body = self.request(
+                url + '/api/cerebro_analyze',
+                method='POST',
+                data=json.dumps({'kit_name': 'Long Path Rack 124BPM', 'pads': pads}).encode('utf-8'),
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+            )
+            self.assertEqual(status, 200, body)
+            analyze_data = json.loads(body)
+            self.assertTrue(analyze_data.get('success'), analyze_data)
+
+            cover_data_url = make_large_png_data_url()
+            self.assertGreater(len(cover_data_url), 1_200_000)
+            payload = {
+                'title': 'My Custom Expansion',
+                'manufacturer': 'BeatOS',
+                'artist_subfolder': '',
+                'description': 'Regression test custom expansion',
+                'cover_data_url': cover_data_url,
+                'source_kits': ['Expansions/DemoPack/Demo Kit.xpm'],
+                'rack_pads': [pads[0], pads[16]],
+                'rack_kit_name': 'Custom Rack Kit',
+                'rack_tempo': 124,
+            }
+            status, body = self.request(
+                url + '/api/create_expansion',
+                method='POST',
+                data=json.dumps(payload).encode('utf-8'),
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+                timeout=30,
+            )
+            self.assertEqual(status, 200, body)
+            exp_data = json.loads(body)
+            self.assertTrue(exp_data.get('success'), exp_data)
+            self.assertTrue(exp_data.get('expansion_rel_path'))
+            self.assertTrue(exp_data.get('zip_rel_path'))
+            self.assertGreaterEqual(exp_data.get('kit_count', 0), 1)
+            self.assertGreaterEqual(exp_data.get('sample_count', 0), 1)
+            self.assertIn('My Custom Expansion', exp_data.get('card_html', ''))
+
+            catalog_html = (root / 'BeatOS' / 'data' / 'catalogo.html').read_text(encoding='utf-8')
+            self.assertIn('My Custom Expansion', catalog_html)
+
+            status, body = self.request(
+                url + '/api/list_expansion_programs',
+                method='POST',
+                data=json.dumps({
+                    'expansion_name': 'My Custom Expansion',
+                    'expansion_path': exp_data['expansion_rel_path'],
+                }).encode('utf-8'),
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+            )
+            self.assertEqual(status, 200, body)
+            programs = json.loads(body).get('programs', [])
+            self.assertGreaterEqual(len(programs), 2, programs)
+            self.assertTrue(
+                any(
+                    exp_data['expansion_rel_path'].rstrip('/') in p.get('rel_path', '')
+                    for p in programs
+                ),
+                programs,
+            )
