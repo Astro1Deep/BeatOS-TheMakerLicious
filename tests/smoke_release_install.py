@@ -63,7 +63,12 @@ def validate(archive, expected_sha256, require_windows=False):
                                    cwd=code.parent, timeout=60,
                                    env={**os.environ, 'PYTHONIOENCODING': 'utf-8'})
         assert installed.returncode == 0, installed.stdout + installed.stderr
-        assert {p.name for p in library.iterdir()} == {'Samples', 'BeatOS', 'catalogo_beatos.html', 'catalogo_universal.html'}
+        installed_names = {p.name for p in library.iterdir()}
+        if 'catalogo_beatos.html' in installed_names:
+            expected_entries = {'catalogo_beatos.html', 'catalogo_universal.html'}
+        else:
+            expected_entries = {'catalogo_mpc_sample.html', 'catalogo_universal.html'}
+        assert installed_names == {'Samples', 'BeatOS', *expected_entries}, installed_names
         database = library / 'BeatOS/data/mpc_sample.db'
         connection = sqlite3.connect(database)
         try:

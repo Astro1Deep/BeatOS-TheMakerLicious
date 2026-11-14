@@ -62,6 +62,8 @@ window.addEventListener('load', () => {
     return cookie ? cookie.slice('beatos_locale='.length) : null;
   };
   const deviceGuide=document.getElementById('poBackupDeviceGuide');
+  const bankSubtitle=document.getElementById('rackActiveBankSubtitle');
+  const bankText = () => bankSubtitle?.textContent;
   const backupInfoText=() => {
     const card=[...document.querySelectorAll('#po33BackupsList .card')]
       .find(el=>el.textContent.includes('Synthetic Browser Test'));
@@ -73,11 +75,11 @@ window.addEventListener('load', () => {
     ['🔄 Ejecutar Reindexación Completa','🔄 Reindex entire library'],
     ['🧹 Optimización para Hardware MPC & SP-404','🧹 MPC & SP-404 maintenance'],
     ['💾 Memoria & Capacidad','💾 Memory & capacity'],
+    ['Negro grafito y cromo con texto de alto contraste.','Graphite black and chrome with high-contrast text.'],
     ['Guardar Ajustes','Save settings'],
     ['🔊 808s & Sub Bajos','🔊 808s & sub bass'],
     ['📂 Explorar Kits','📂 Browse kits'],
     ['🔀 Modo Mover','🔀 Move mode'],
-    ['(Banco A: Pads 1 al 16)','(Bank A: pads 1–16)'],
     ['🎛️ Editar Pads en Rack','🎛️ Edit pads in rack'],
     ['⚡ Generar Kit EP-133','⚡ Generate EP-133 kit'],
     ['📁 Revelar en Finder','📁 Show in Finder'],
@@ -109,6 +111,7 @@ window.addEventListener('load', () => {
   try {
     const initialEnglish = document.documentElement.lang === 'en' &&
       localeCookie() === 'en' &&
+      bankText() === '(Bank A: pads 1–16)' &&
       recording.textContent.trim() === '⏺ Record backup' &&
       deviceGuide.textContent.includes('Send: WRITE + SOUND + PLAY') &&
       backupInfoText().includes('Modem payload NOT verified.') &&
@@ -116,13 +119,17 @@ window.addEventListener('load', () => {
       localeAttrs.every(x => x.node.getAttribute(x.attr) === x.en);
     setLanguage('es');
     setTimeout(() => {
-      const spanishOK = recording.textContent.trim() === '⏺ Grabar backup' &&
-        deviceGuide.textContent.includes('Enviar: WRITE + SOUND + PLAY') &&
-        backupInfoText().includes('Datos del módem NO verificados.') &&
-        document.documentElement.lang === 'es' &&
-        localeCookie() === 'es' &&
-        localeNodes.every(x => x.node.nodeValue.trim() === x.es) &&
-        localeAttrs.every(x => x.node.getAttribute(x.attr) === x.es);
+      const spanishDiagnostics = [
+        recording.textContent.trim() === '⏺ Grabar backup',
+        deviceGuide.textContent.includes('Enviar: WRITE + SOUND + PLAY'),
+        backupInfoText().includes('Datos del módem NO verificados.'),
+        document.documentElement.lang === 'es',
+        localeCookie() === 'es',
+        bankText() === '(Banco A: Pads 1 al 16)',
+        ...localeNodes.filter(x => x.node.nodeValue.trim() !== x.es).map(x => x.es),
+        ...localeAttrs.filter(x => x.node.getAttribute(x.attr) !== x.es).map(x => x.es)
+      ];
+      const spanishOK = spanishDiagnostics.every(check => check === true);
       setLanguage('en');
       setTimeout(() => {
         const englishOK = recording.textContent.trim() === '⏺ Record backup' &&
@@ -130,13 +137,22 @@ window.addEventListener('load', () => {
           backupInfoText().includes('Modem payload NOT verified.') &&
           document.documentElement.lang === 'en' &&
           localeCookie() === 'en' &&
+          bankText() === '(Bank A: pads 1–16)' &&
           localStorage.getItem('mpc_lang') === 'en' &&
           localeNodes.every(x => x.node.nodeValue.trim() === x.en) &&
           localeAttrs.every(x => x.node.getAttribute(x.attr) === x.en);
         const filenameOK = probe.textContent === 'MyCustom-Sample_90bpm.wav';
-        reporter.textContent = initialEnglish && spanishOK && englishOK && filenameOK
+        const themeCard = document.getElementById('themeCard_astro1deep-obsidian');
+        setEcosystemTheme('astro1deep-obsidian', false);
+        const styles = getComputedStyle(document.documentElement);
+        const themeOK = themeCard.getAttribute('aria-pressed') === 'true' &&
+          document.documentElement.dataset.theme === 'astro1deep-obsidian' &&
+          localStorage.getItem('ecosystem_theme') === 'astro1deep-obsidian' &&
+          styles.getPropertyValue('--bg-dark').trim() === '#08090a' &&
+          styles.getPropertyValue('--text-primary').trim() === '#f4f5f7';
+        reporter.textContent = initialEnglish && spanishOK && englishOK && filenameOK && themeOK
           ? 'BEATOS_BROWSER_ES_EN_PASS'
-          : 'FAIL:initial=' + initialEnglish + ',es=' + spanishOK + ',en=' + englishOK + ',filename=' + filenameOK;
+          : 'FAIL:initial=' + initialEnglish + ',es=' + spanishOK + ',en=' + englishOK + ',filename=' + filenameOK + ',theme=' + themeOK + ',es-diagnostic=' + spanishDiagnostics;
       }, 250);
     }, 250);
   } catch (error) {reporter.textContent = 'FAIL:' + error.message;}

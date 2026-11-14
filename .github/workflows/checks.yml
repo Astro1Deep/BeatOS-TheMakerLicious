@@ -40,6 +40,7 @@ jobs:
           node tests/test_creator_identity.cjs
           node tests/test_po33_backups.cjs
           node tests/test_i18n.cjs
+          node tests/test_target_bank_load.cjs
       - name: Build clean installer
         run: python build_release.py "${{ runner.temp }}/BeatOS.zip"
       - name: Upload bilingual source build (not the stable release)
