@@ -6158,17 +6158,33 @@ function playPadVoice(pNum, item, _depth = 0) {
     }
   }
   const encoded = item.relPath.split('/').map(encodeURIComponent).join('/');
-  const src = new URL(encoded, document.baseURI).href;
+  const parsedSrc = new URL(encoded, document.baseURI);
+  const src = parsedSrc.href;
   const altHttpUrl = (typeof location !== 'undefined' && location.protocol === 'file:') ? ('http://127.0.0.1:8888/' + encoded) : '';
-  const audio = new Audio(src);
-  if (typeof location !== 'undefined' && location.protocol && location.protocol.startsWith('http')) {
+  const isCrossOrigin = (
+    typeof location !== 'undefined'
+    && location.origin
+    && location.origin !== 'null'
+    && parsedSrc.origin !== location.origin
+    && parsedSrc.protocol.startsWith('http')
+  );
+  const audio = isCrossOrigin ? new Audio() : new Audio(src);
+  if (isCrossOrigin) {
     audio.crossOrigin = 'anonymous';
+    audio.src = src;
   }
-  audio.volume = Math.max(0, Math.min(1, item.volume ?? 0.707946));
+  const rawVol = Number(item.volume);
+  const safeVol = Math.max(0, Math.min(1, Number.isFinite(rawVol) ? rawVol : 0.707946));
+  audio.volume = safeVol;
   audio.preservesPitch = false;
-  audio.playbackRate = Math.pow(2, ((item.tune ?? 0) + ((item.fineTune ?? 0) / 100)) / 12);
-  let source = null, panner = null;
-  const pan = item.pan ?? 0.5;
+  const rawTune = Number(item.tune);
+  const rawFine = Number(item.fineTune);
+  const tuneSemis = (Number.isFinite(rawTune) ? rawTune : 0) + ((Number.isFinite(rawFine) ? rawFine : 0) / 100);
+  const safeRate = Math.max(0.25, Math.min(4, Math.pow(2, tuneSemis / 12)));
+  audio.playbackRate = safeRate;
+  let source = null, panner = null, bufferSource = null, gainNode = null;
+  const rawPan = Number(item.pan);
+  const pan = Number.isFinite(rawPan) ? rawPan : 0.5;
   const isFileProto = (typeof location !== 'undefined' && location.protocol === 'file:');
   if (typeof AudioContext !== 'undefined' && pan !== 0.5 && !isFileProto) {
     try {
@@ -6188,6 +6204,8 @@ function playPadVoice(pNum, item, _depth = 0) {
   }
   const release = () => {
     if (padVoices.get(pNum) === voice) padVoices.delete(pNum);
+    if (bufferSource) { try { bufferSource.stop(); bufferSource.disconnect(); } catch (_) {} bufferSource = null; }
+    if (gainNode) { try { gainNode.disconnect(); } catch (_) {} gainNode = null; }
     if (source) { try { source.disconnect(); } catch (_) {} source = null; }
     if (panner) { try { panner.disconnect(); } catch (_) {} panner = null; }
   };
@@ -6196,21 +6214,83 @@ function playPadVoice(pNum, item, _depth = 0) {
   audio.onended = release;
 
   let fallbackAttempted = false;
+  let webAudioAttempted = false;
+  const tryWebAudioDecodeFallback = () => {
+    if (webAudioAttempted || padVoices.get(pNum) !== voice || isFileProto || typeof fetch !== 'function' || typeof AudioContext === 'undefined') {
+      release();
+      showToast('No se pudo reproducir: ' + item.filename);
+      return;
+    }
+    webAudioAttempted = true;
+    try {
+      padAudioContext ||= new AudioContext();
+      if (padAudioContext.state === 'suspended' && typeof padAudioContext.resume === 'function') {
+        padAudioContext.resume().catch(() => {});
+      }
+      fetch(src)
+        .then(res => {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.arrayBuffer();
+        })
+        .then(buf => padAudioContext.decodeAudioData(buf))
+        .then(decoded => {
+          if (padVoices.get(pNum) !== voice) return;
+          bufferSource = padAudioContext.createBufferSource();
+          bufferSource.buffer = decoded;
+          bufferSource.playbackRate.value = safeRate;
+          gainNode = padAudioContext.createGain();
+          gainNode.gain.value = safeVol;
+          bufferSource.connect(gainNode);
+          if (pan !== 0.5 && typeof padAudioContext.createStereoPanner === 'function') {
+            panner = padAudioContext.createStereoPanner();
+            panner.pan.value = pan * 2 - 1;
+            gainNode.connect(panner);
+            panner.connect(padAudioContext.destination);
+          } else {
+            gainNode.connect(padAudioContext.destination);
+          }
+          bufferSource.onended = release;
+          bufferSource.start(0);
+        })
+        .catch(() => {
+          if (padVoices.get(pNum) === voice) {
+            release();
+            showToast('No se pudo reproducir: ' + item.filename);
+          }
+        });
+    } catch (_) {
+      release();
+      showToast('No se pudo reproducir: ' + item.filename);
+    }
+  };
+
   const tryFallbackOrError = (error) => {
+    if ((error && error.name === 'AbortError') || padVoices.get(pNum) !== voice) {
+      release();
+      return;
+    }
     if (altHttpUrl && !fallbackAttempted) {
       fallbackAttempted = true;
       audio.src = altHttpUrl;
       const secondTry = audio.play();
       if (secondTry && typeof secondTry.catch === 'function') {
         secondTry.catch(e => {
+          if ((e && e.name === 'AbortError') || padVoices.get(pNum) !== voice) {
+            release();
+            return;
+          }
           release();
-          if (!e || e.name !== 'AbortError') showToast('No se pudo reproducir: ' + item.filename);
+          showToast('No se pudo reproducir: ' + item.filename);
         });
       }
       return;
     }
+    if (!isFileProto && typeof fetch === 'function' && typeof AudioContext !== 'undefined') {
+      tryWebAudioDecodeFallback();
+      return;
+    }
     release();
-    if (!error || error.name !== 'AbortError') showToast('No se pudo reproducir: ' + item.filename);
+    showToast('No se pudo reproducir: ' + item.filename);
   };
 
   audio.onerror = () => tryFallbackOrError();
@@ -6235,13 +6315,8 @@ function triggerPadAudio(pNum) {
   if (Date.now() - lastPadDropTimestamp < 200) {
     return;
   }
-  if (typeof AudioContext !== 'undefined') {
-    try {
-      padAudioContext ||= new AudioContext();
-      if (padAudioContext.state === 'suspended' && typeof padAudioContext.resume === 'function') {
-        padAudioContext.resume().catch(() => {});
-      }
-    } catch (_) {}
+  if (padAudioContext && padAudioContext.state === 'suspended' && typeof padAudioContext.resume === 'function') {
+    padAudioContext.resume().catch(() => {});
   }
   const dockEl = document.getElementById('dock-pad-' + pNum);
   if (dockEl) {
@@ -7011,6 +7086,16 @@ function mountSourceBank(bank, remember = true) {
   document.getElementById('rackBank').value = bank;
   renderRackGrid(); renderDockMatrix(); updateRackCounts(); updatePo33StudioView();
 }
+function getSourceBankCount(source) {
+  const pads = source && source.pads ? source.pads : {};
+  const bankSet = new Set();
+  for (const [k, pad] of Object.entries(pads)) {
+    if (!pad || pad.missing || !pad.rel_path) continue;
+    const num = Number(k);
+    if (Number.isFinite(num) && num >= 1) bankSet.add(Math.floor((num - 1) / 16));
+  }
+  return bankSet.size;
+}
 function setImportedSource(source, path, kind, targetBank = null) {
   if (targetBank !== null && targetBank !== 'all' && !isNaN(Number(targetBank))) {
     const tBank = Math.max(0, Math.min(9, Number(targetBank)));
@@ -7409,7 +7494,11 @@ async function loadXpmProgramToRack(relPath, programName, kitIdx = -1, button = 
     if (String(data.program.program_type).toLowerCase() !== 'drum') throw new Error('Este programa requiere el motor Keygroup de MPC; no es un kit de batería.');
     
     let resolvedTargetBank = targetBank;
-    if (resolvedTargetBank === null) {
+    if (resolvedTargetBank === 'auto_kit') {
+      resolvedTargetBank = getSourceBankCount(data.program) > 1
+        ? 'all'
+        : (typeof currentRackBank === 'number' ? currentRackBank : 0);
+    } else if (resolvedTargetBank === null) {
       const targetSel = typeof document !== 'undefined' ? document.getElementById('rackTargetBankSelect') : null;
       if (targetSel && targetSel.value === 'all') {
         resolvedTargetBank = 'all';
@@ -7457,7 +7546,7 @@ function onRackKitSelectChange(relPath) {
   let targetBank = null;
   if (targetSel && targetSel.value) {
     const val = targetSel.value;
-    targetBank = (val === 'active') ? (typeof currentRackBank === 'number' ? currentRackBank : 0) : (val === 'all' ? 'all' : parseInt(val, 10));
+    targetBank = (val === 'active') ? 'auto_kit' : (val === 'all' ? 'all' : parseInt(val, 10));
   }
   loadXpmProgramToRack(relPath, progName, idx, null, targetBank);
 }
@@ -7474,7 +7563,7 @@ function stepExpansionProgram(delta) {
   let targetBank = null;
   if (targetSel && targetSel.value) {
     const val = targetSel.value;
-    targetBank = (val === 'active') ? (typeof currentRackBank === 'number' ? currentRackBank : 0) : (val === 'all' ? 'all' : parseInt(val, 10));
+    targetBank = (val === 'active') ? 'auto_kit' : (val === 'all' ? 'all' : parseInt(val, 10));
   }
   const nextChoice = choices[(position + delta + choices.length) % choices.length];
   selectAndLoadExpansionKit(nextChoice.index, null, targetBank);
@@ -7499,7 +7588,7 @@ function quickLoadExpansionRandomKit() {
   let targetBank = null;
   if (targetSel && targetSel.value) {
     const val = targetSel.value;
-    targetBank = (val === 'active') ? (typeof currentRackBank === 'number' ? currentRackBank : 0) : (val === 'all' ? 'all' : parseInt(val, 10));
+    targetBank = (val === 'active') ? 'auto_kit' : (val === 'all' ? 'all' : parseInt(val, 10));
   }
   const nextChoice = choices[Math.floor(Math.random()*choices.length)];
   selectAndLoadExpansionKit(nextChoice.index, null, targetBank);
@@ -8965,13 +9054,35 @@ function openRackTargetBankModal(task) {
   if (!modal) return;
   const nameEl = document.getElementById('rackTargetBankKitName');
   const padsEl = document.getElementById('rackTargetBankKitPads');
+  const allBtn = document.getElementById('rackTargetBankAllBtn');
   const name = task.data?.project_name || task.data?.program_name || task.projectName || task.programName || 'Kit';
   const padCount = Object.keys(task.data?.pads || {}).filter(k => {
     const p = task.data.pads[k];
     return p && !p.missing && p.rel_path;
   }).length;
+  const bankCount = typeof getSourceBankCount === 'function' ? getSourceBankCount(task.data) : 1;
+  const en = typeof currentLang !== 'undefined' && currentLang === 'en';
   if (nameEl) nameEl.textContent = name;
-  if (padsEl) padsEl.textContent = `${padCount} pads`;
+  if (padsEl) {
+    padsEl.textContent = bankCount > 1
+      ? `${padCount} pads · ${bankCount} ${en ? 'banks' : 'bancos'}`
+      : `${padCount} pads`;
+  }
+  if (allBtn) {
+    if (bankCount > 1) {
+      allBtn.textContent = en
+        ? `📦 Load full kit (${bankCount} banks · ${padCount} pads)`
+        : `📦 Cargar kit completo (${bankCount} bancos · ${padCount} pads)`;
+      allBtn.style.color = 'var(--mpc-cyan)';
+      allBtn.style.borderColor = 'rgba(0,240,255,0.5)';
+      allBtn.style.fontWeight = '700';
+    } else {
+      allBtn.textContent = en ? '🔄 Replace entire Rack' : '🔄 Reemplazar todo el Rack';
+      allBtn.style.color = 'var(--mpc-red)';
+      allBtn.style.borderColor = '';
+      allBtn.style.fontWeight = '';
+    }
+  }
 
   renderRackTargetBankGrid();
   modal.style.display = 'flex';
@@ -9418,7 +9529,7 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
     <div id="rackTargetBankButtonsGrid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin:12px 0;"></div>
     <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color); padding-top:14px; margin-top:8px;">
-      <button type="button" class="po33-btn-secondary" style="padding:7px 14px; font-size:12px; color:var(--mpc-red);" onclick="selectRackTargetBank('all')">
+      <button id="rackTargetBankAllBtn" type="button" class="po33-btn-secondary" style="padding:7px 14px; font-size:12px; color:var(--mpc-red);" onclick="selectRackTargetBank('all')">
         🔄 Reemplazar todo el Rack
       </button>
       <button type="button" class="po33-btn-secondary" style="padding:7px 16px; font-size:12px;" onclick="closeRackTargetBankModal()">

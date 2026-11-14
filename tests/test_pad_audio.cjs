@@ -41,3 +41,33 @@ ctx.AudioContext=AudioContext;
 ctx.play(1,{...pad('KICK',0),pan:0});ctx.play(2,{...pad('HIHAT',0),pan:1});
 assert.deepEqual(pans.map(p=>p.pan.value),[-1,1]);ctx.stop();
 console.log('Pad panorama: left/right graph and cleanup OK');
+
+// Regression: same-origin HTTP must NOT mutate audio.crossOrigin (avoids AbortError/CORS mismatch),
+// and null/undefined fineTune/tune/volume must never produce NaN playbackRate or volume.
+const sameOriginCtx = vm.createContext({
+  Audio,
+  URL,
+  document: { baseURI: 'http://127.0.0.1:8888/BeatOS/data/catalogo.html' },
+  location: { protocol: 'http:', origin: 'http://127.0.0.1:8888', pathname: '/BeatOS/data/catalogo.html' },
+  showToast: m => errors.push(m)
+});
+vm.runInContext(source + '\nthis.play = playPadVoice; this.stop = stopPadVoices;', sameOriginCtx);
+const prevLen = made.length;
+sameOriginCtx.play(1, {
+  relPath: 'MPC-Sample/Projects/#Dr#uMeR#TrES-AsSEs_[ProjectData]/PAD010_BoomBap-Snare-MP Anatomy Snr1002.wav',
+  filename: 'PAD010_BoomBap-Snare-MP Anatomy Snr1002.wav',
+  soundType: 'SNARE',
+  muteGroup: 1,
+  volume: 0.580764,
+  pan: 0.5,
+  tune: null,
+  fineTune: undefined
+});
+const lastAudio = made[made.length - 1];
+assert.equal(made.length, prevLen + 1);
+assert.equal(lastAudio.crossOrigin, undefined);
+assert.equal(Number.isFinite(lastAudio.playbackRate), true);
+assert.equal(lastAudio.playbackRate, 1);
+assert.equal(lastAudio.volume, 0.580764);
+sameOriginCtx.stop();
+console.log('Same-origin HTTP pad audio: no crossOrigin mutation, encoded # path, safe playbackRate/volume OK');

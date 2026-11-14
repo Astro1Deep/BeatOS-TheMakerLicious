@@ -24,14 +24,19 @@ Servidor HTTP de alto rendimiento con:
 from __future__ import annotations
 
 import argparse
+import array
+from collections import OrderedDict
 import datetime
 import contextlib
 import hashlib
+import io
 import json
+import math
 import mimetypes
 import os
 import re
 import shutil
+import struct
 from typing import Any
 import socket
 import sqlite3
@@ -65,6 +70,213 @@ mimetypes.add_type("application/json", ".json")
 TASK_LOCK = threading.Lock()
 PO_BACKUP_LOCK = threading.Lock()
 PO_BACKUP_CACHE = {}
+
+_BROWSER_WAV_LOCK = threading.Lock()
+_BROWSER_WAV_CACHE: OrderedDict[tuple[str, int, int], bytes | None] = OrderedDict()
+_BROWSER_WAV_CACHE_BYTES = 0
+_BROWSER_WAV_CACHE_MAX_ITEMS = 64
+_BROWSER_WAV_CACHE_MAX_BYTES = 128 * 1024 * 1024
+_BROWSER_WAV_MAX_FILE_BYTES = 64 * 1024 * 1024
+
+try:
+    import numpy as _np
+except Exception:
+    _np = None
+
+
+def _convert_pcm_to_pcm16(pcm: bytes, afmt: int, bps: int, ch: int) -> bytes | None:
+    """Convierte PCM (8/16/24/32 int o 32/64 IEEE float LE) a PCM signed 16-bit LE."""
+    ch = max(1, int(ch or 1))
+    sample_bytes = bps // 8
+    frame_bytes = sample_bytes * ch
+    if sample_bytes <= 0 or frame_bytes <= 0:
+        return None
+    aligned_len = len(pcm) - (len(pcm) % frame_bytes)
+    if aligned_len <= 0:
+        return b""
+    mv = memoryview(pcm)[:aligned_len]
+
+    if afmt == 1 and bps == 16:
+        return bytes(mv)
+    if afmt == 1 and bps == 24:
+        n_samples = aligned_len // 3
+        out = bytearray(n_samples * 2)
+        out[0::2] = mv[1::3]
+        out[1::2] = mv[2::3]
+        return bytes(out)
+    if afmt == 1 and bps == 32:
+        n_samples = aligned_len // 4
+        out = bytearray(n_samples * 2)
+        out[0::2] = mv[2::4]
+        out[1::2] = mv[3::4]
+        return bytes(out)
+    if afmt == 1 and bps == 8:
+        if _np is not None:
+            arr = _np.frombuffer(mv, dtype=_np.uint8).astype(_np.int16)
+            return ((arr - 128) << 8).astype("<i2").tobytes()
+        arr_h = array.array("h", ((b - 128) << 8 for b in mv))
+        if sys.byteorder != "little":
+            arr_h.byteswap()
+        return arr_h.tobytes()
+    if afmt == 3 and bps == 32:
+        if _np is not None:
+            arr = _np.frombuffer(mv, dtype="<f4")
+            clean = _np.nan_to_num(arr, nan=0.0, posinf=1.0, neginf=-1.0)
+            return (_np.clip(clean, -1.0, 1.0) * 32767.0).astype("<i2").tobytes()
+        arr_f = array.array("f")
+        arr_f.frombytes(bytes(mv))
+        if sys.byteorder != "little":
+            arr_f.byteswap()
+        arr_h = array.array(
+            "h",
+            (int(max(-1.0, min(1.0, x if math.isfinite(x) else 0.0)) * 32767.0) for x in arr_f),
+        )
+        if sys.byteorder != "little":
+            arr_h.byteswap()
+        return arr_h.tobytes()
+    if afmt == 3 and bps == 64:
+        if _np is not None:
+            arr = _np.frombuffer(mv, dtype="<f8")
+            clean = _np.nan_to_num(arr, nan=0.0, posinf=1.0, neginf=-1.0)
+            return (_np.clip(clean, -1.0, 1.0) * 32767.0).astype("<i2").tobytes()
+        arr_d = array.array("d")
+        arr_d.frombytes(bytes(mv))
+        if sys.byteorder != "little":
+            arr_d.byteswap()
+        arr_h = array.array(
+            "h",
+            (int(max(-1.0, min(1.0, x if math.isfinite(x) else 0.0)) * 32767.0) for x in arr_d),
+        )
+        if sys.byteorder != "little":
+            arr_h.byteswap()
+        return arr_h.tobytes()
+    return None
+
+
+def get_browser_playable_wav_bytes(full_path: str) -> bytes | None:
+    """Devuelve un WAV PCM 16-bit estándar cuando un .wav tiene RIFF corrupto, chunks Akai (atem/slic) o float32/24-bit."""
+    global _BROWSER_WAV_CACHE_BYTES
+    if not full_path.lower().endswith(".wav"):
+        return None
+    try:
+        st = os.stat(full_path)
+    except OSError:
+        return None
+    if st.st_size < 44 or st.st_size > _BROWSER_WAV_MAX_FILE_BYTES:
+        return None
+
+    cache_key = (full_path, int(getattr(st, "st_mtime_ns", int(st.st_mtime * 1e9))), int(st.st_size))
+    with _BROWSER_WAV_LOCK:
+        if cache_key in _BROWSER_WAV_CACHE:
+            _BROWSER_WAV_CACHE.move_to_end(cache_key)
+            return _BROWSER_WAV_CACHE[cache_key]
+
+    result: bytes | None = None
+    try:
+        with open(full_path, "rb") as fp:
+            hdr = fp.read(min(st.st_size, 65536))
+        if len(hdr) >= 44 and hdr[:4] == b"RIFF" and hdr[8:12] == b"WAVE":
+            riff_sz = struct.unpack_from("<I", hdr, 4)[0]
+            pos = 12
+            afmt = ch = sr = bps = 0
+            fmt_found = False
+            data_off = None
+            data_sz = 0
+            proprietary_chunks = False
+
+            def _scan_chunks(buf: bytes):
+                nonlocal afmt, ch, sr, bps, fmt_found, data_off, data_sz, proprietary_chunks
+                afmt = ch = sr = bps = 0
+                fmt_found = False
+                data_off = None
+                data_sz = 0
+                proprietary_chunks = False
+                p = 12
+                buf_len = len(buf)
+                while p + 8 <= buf_len:
+                    cid = buf[p:p + 4]
+                    csz = struct.unpack_from("<I", buf, p + 4)[0]
+                    payload_off = p + 8
+                    if cid == b"fmt " and csz >= 16 and payload_off + 16 <= buf_len:
+                        raw_fmt, ch, sr, _, _, bps = struct.unpack_from("<HHIIHH", buf, payload_off)
+                        if raw_fmt == 0xFFFE and csz >= 40 and payload_off + 26 <= buf_len:
+                            afmt = struct.unpack_from("<H", buf, payload_off + 24)[0]
+                        else:
+                            afmt = raw_fmt
+                        fmt_found = True
+                    elif cid == b"data":
+                        data_off = payload_off
+                        data_sz = csz
+                        break
+                    elif cid in (b"atem", b"slic", b"meta"):
+                        proprietary_chunks = True
+                    p += 8 + csz + (csz & 1)
+
+            _scan_chunks(hdr)
+            raw = None
+            if (not fmt_found or data_off is None) and st.st_size > len(hdr):
+                with open(full_path, "rb") as fp:
+                    raw = fp.read()
+                _scan_chunks(raw)
+
+            if fmt_found and data_off is not None and ch > 0 and sr > 0:
+                needs_normalize = (
+                    (riff_sz + 8 != st.st_size)
+                    or (afmt != 1)
+                    or (bps != 16)
+                    or proprietary_chunks
+                    or (data_off + data_sz > st.st_size)
+                )
+                if needs_normalize:
+                    if raw is None:
+                        with open(full_path, "rb") as fp:
+                            raw = fp.read()
+                    pcm_end = min(len(raw), data_off + data_sz) if data_sz > 0 else len(raw)
+                    pcm_raw = raw[data_off:pcm_end]
+                    pcm16 = _convert_pcm_to_pcm16(pcm_raw, afmt, bps, ch)
+                    if pcm16 is not None:
+                        block_align = ch * 2
+                        byte_rate = sr * block_align
+                        data_len = len(pcm16)
+                        wav_hdr = struct.pack(
+                            "<4sI4s4sIHHIIHH4sI",
+                            b"RIFF",
+                            36 + data_len,
+                            b"WAVE",
+                            b"fmt ",
+                            16,
+                            1,
+                            ch,
+                            sr,
+                            byte_rate,
+                            block_align,
+                            16,
+                            b"data",
+                            data_len,
+                        )
+                        result = wav_hdr + pcm16
+    except Exception:
+        result = None
+
+    with _BROWSER_WAV_LOCK:
+        # Eliminar entradas obsoletas del mismo path para no duplicar memoria
+        stale_keys = [k for k in _BROWSER_WAV_CACHE if k[0] == full_path and k != cache_key]
+        for sk in stale_keys:
+            old_val = _BROWSER_WAV_CACHE.pop(sk, None)
+            if old_val is not None:
+                _BROWSER_WAV_CACHE_BYTES -= len(old_val)
+        val_size = len(result) if result is not None else 0
+        if val_size <= 28 * 1024 * 1024:
+            _BROWSER_WAV_CACHE[cache_key] = result
+            _BROWSER_WAV_CACHE_BYTES += val_size
+            while (len(_BROWSER_WAV_CACHE) > _BROWSER_WAV_CACHE_MAX_ITEMS) or (
+                _BROWSER_WAV_CACHE_BYTES > _BROWSER_WAV_CACHE_MAX_BYTES and _BROWSER_WAV_CACHE
+            ):
+                _, evicted = _BROWSER_WAV_CACHE.popitem(last=False)
+                if evicted is not None:
+                    _BROWSER_WAV_CACHE_BYTES -= len(evicted)
+
+    return result
 TASK_STATE = {
     "running": False,
     "task_name": "",
@@ -1088,10 +1300,10 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 )
                 if is_local:
                     self.send_header('Access-Control-Allow-Origin', origin)
-                    self.send_header('Vary', 'Origin')
                     self.send_header('Access-Control-Allow-Private-Network', 'true')
             except ValueError:
                 pass
+        self.send_header('Vary', 'Origin')
         self.send_header("Access-Control-Allow-Methods", "GET, HEAD, POST, OPTIONS")
         self.send_header(
             "Access-Control-Allow-Headers",
@@ -2224,7 +2436,8 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_error(403, 'Ruta fuera de la biblioteca')
             return
 
-        file_size = os.path.getsize(target_path)
+        wav_bytes = get_browser_playable_wav_bytes(target_path)
+        file_size = len(wav_bytes) if wav_bytes is not None else os.path.getsize(target_path)
         mime_type, _ = mimetypes.guess_type(target_path)
         if not mime_type:
             mime_type = "application/octet-stream"
@@ -2237,9 +2450,17 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 ranges = range_header.replace("bytes=", "").split("-")
                 start = int(ranges[0]) if ranges[0] else 0
                 end = int(ranges[1]) if ranges[1] else file_size - 1
+                if start < 0:
+                    start = 0
                 if end >= file_size:
                     end = file_size - 1
-                length = end - start + 1
+                if start > end and file_size > 0:
+                    self.send_response(416)
+                    self.send_header("Content-Range", f"bytes */{file_size}")
+                    self.send_cors_headers()
+                    self.end_headers()
+                    return
+                length = max(0, end - start + 1)
 
                 self.send_response(206)
                 self.send_header("Content-Type", mime_type)
@@ -2251,7 +2472,12 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
 
                 if send_body:
                     try:
-                        with open(target_path, "rb") as f:
+                        stream_ctx = (
+                            contextlib.nullcontext(io.BytesIO(wav_bytes))
+                            if wav_bytes is not None
+                            else open(target_path, "rb")
+                        )
+                        with stream_ctx as f:
                             f.seek(start)
                             remaining = length
                             chunk_size = 64 * 1024
@@ -2280,7 +2506,12 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
 
         if send_body:
             try:
-                with open(target_path, "rb") as f:
+                stream_ctx = (
+                    contextlib.nullcontext(io.BytesIO(wav_bytes))
+                    if wav_bytes is not None
+                    else open(target_path, "rb")
+                )
+                with stream_ctx as f:
                     chunk_size = 64 * 1024
                     while True:
                         chunk = f.read(chunk_size)

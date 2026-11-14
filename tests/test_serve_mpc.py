@@ -1,9 +1,12 @@
 import contextlib
+import io
+import struct
 import tempfile
 import threading
 import unittest
 import urllib.error
 import urllib.request
+import wave
 from http.server import HTTPServer
 from pathlib import Path
 import sys
@@ -473,3 +476,81 @@ class ServerSecurityTests(unittest.TestCase):
                 ),
                 programs,
             )
+
+    def test_mpc_wav_streaming_repairs_riff_atem_and_float32_24bit(self):
+        with self.server() as (url, parent):
+            root = parent / 'library'
+            samples_dir = root / 'Samples'
+            samples_dir.mkdir(parents=True, exist_ok=True)
+
+            # 1) Standard 16-bit PCM WAV should pass through without normalization
+            std_path = samples_dir / 'standard_16bit.wav'
+            with wave.open(str(std_path), 'wb') as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)
+                wf.setframerate(44100)
+                wf.writeframes(struct.pack('<4h', 0, 12000, -12000, 4000))
+            self.assertIsNone(serve_mpc.get_browser_playable_wav_bytes(str(std_path)))
+
+            # 2) Akai MPC 16-bit WAV with proprietary atem/smpl chunks & truncated riff_sz
+            pcm16 = struct.pack('<4h', 1000, -2000, 16000, -16000)
+            fmt_chunk = b'fmt ' + struct.pack('<IHHIIHH', 16, 1, 1, 44100, 88200, 2, 16)
+            atem_payload = b'\x01' * 496
+            atem_chunk = b'atem' + struct.pack('<I', len(atem_payload)) + atem_payload
+            smpl_payload = b'\x00' * 94
+            smpl_chunk = b'smpl' + struct.pack('<I', len(smpl_payload)) + smpl_payload
+            data_chunk = b'data' + struct.pack('<I', len(pcm16)) + pcm16
+            body_chunks = fmt_chunk + atem_chunk + smpl_chunk + data_chunk
+            broken_riff_sz = 4 + len(body_chunks) - (8 + len(atem_payload))
+            akai_bytes = b'RIFF' + struct.pack('<I', broken_riff_sz) + b'WAVE' + body_chunks
+            akai_path = samples_dir / 'akai_atem_broken_riff.wav'
+            akai_path.write_bytes(akai_bytes)
+
+            status, served_200 = self.request(url + '/Samples/akai_atem_broken_riff.wav')
+            self.assertEqual(status, 200)
+            self.assertEqual(struct.unpack_from('<I', served_200, 4)[0] + 8, len(served_200))
+            with wave.open(io.BytesIO(served_200), 'rb') as wf:
+                self.assertEqual((wf.getnchannels(), wf.getsampwidth(), wf.getframerate()), (1, 2, 44100))
+                self.assertEqual(wf.readframes(4), pcm16)
+            # Disk file preserved for Akai hardware
+            self.assertEqual(akai_path.read_bytes(), akai_bytes)
+
+            # Range request 206 must use normalized WAV length
+            status_r, part = self.request(url + '/Samples/akai_atem_broken_riff.wav', headers={'Range': 'bytes=0-43'})
+            self.assertEqual(status_r, 206)
+            self.assertEqual(part, served_200[:44])
+
+            # 3) 32-bit IEEE float WAV (afmt=3, bps=32) + atem chunk
+            f32_pcm = struct.pack('<4f', 0.0, 0.5, -0.5, 1.0)
+            f32_fmt = b'fmt ' + struct.pack('<IHHIIHH', 16, 3, 2, 44100, 352800, 8, 32)
+            f32_data = b'data' + struct.pack('<I', len(f32_pcm)) + f32_pcm
+            f32_body = f32_fmt + atem_chunk + f32_data
+            f32_path = samples_dir / 'chop_float32.wav'
+            f32_path.write_bytes(b'RIFF' + struct.pack('<I', 4 + len(f32_body) - 504) + b'WAVE' + f32_body)
+
+            status_f, served_f = self.request(url + '/Samples/chop_float32.wav')
+            self.assertEqual(status_f, 200)
+            with wave.open(io.BytesIO(served_f), 'rb') as wf:
+                self.assertEqual((wf.getnchannels(), wf.getsampwidth(), wf.getframerate()), (2, 2, 44100))
+                decoded_samples = struct.unpack('<4h', wf.readframes(2))
+                self.assertEqual(decoded_samples[0], 0)
+                self.assertGreater(decoded_samples[1], 15000)
+                self.assertLess(decoded_samples[2], -15000)
+                self.assertGreater(decoded_samples[3], 30000)
+
+            # 4) 24-bit PCM WAV (afmt=1, bps=24)
+            p24_bytes = b''.join([
+                b'\x00\x00\x40',   # +0.5 (~ +16384 in int16)
+                b'\x00\x00\xc0',   # -0.5 (~ -16384 in int16)
+            ])
+            p24_fmt = b'fmt ' + struct.pack('<IHHIIHH', 16, 1, 1, 44100, 132300, 3, 24)
+            p24_data = b'data' + struct.pack('<I', len(p24_bytes)) + p24_bytes
+            p24_path = samples_dir / 'sample_24bit.wav'
+            p24_body = p24_fmt + p24_data
+            p24_path.write_bytes(b'RIFF' + struct.pack('<I', 4 + len(p24_body)) + b'WAVE' + p24_body)
+
+            status_24, served_24 = self.request(url + '/Samples/sample_24bit.wav')
+            self.assertEqual(status_24, 200)
+            with wave.open(io.BytesIO(served_24), 'rb') as wf:
+                self.assertEqual((wf.getnchannels(), wf.getsampwidth(), wf.getframerate()), (1, 2, 44100))
+                self.assertEqual(struct.unpack('<2h', wf.readframes(2)), (16384, -16384))
