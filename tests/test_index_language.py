@@ -49,5 +49,16 @@ class IndexLocaleTests(unittest.TestCase):
             self.assertIn("Indexación completada", lines)
 
 
+    def test_missing_library_reports_selected_language(self):
+        with tempfile.TemporaryDirectory() as folder:
+            cases = {"en": "The selected library does not exist", "es": "La biblioteca indicada no existe"}
+            for language, expected in cases.items():
+                stderr = io.StringIO()
+                with self.subTest(language=language), contextlib.redirect_stderr(stderr):
+                    with self.assertRaises(SystemExit) as error:
+                        self.run_index(Path(folder) / "missing", language)
+                    self.assertEqual(error.exception.code, 2)
+                    self.assertIn(expected, stderr.getvalue())
+
 if __name__ == "__main__":
     unittest.main()

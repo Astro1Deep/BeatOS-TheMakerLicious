@@ -567,7 +567,7 @@ def main():
 
     root_path = os.path.abspath(args.path)
     if not Path(root_path).is_dir():
-        parser.error("La biblioteca indicada no existe o no es una carpeta")
+        parser.error(translate_text("La biblioteca indicada no existe o no es una carpeta", args.lang))
     output_dir = os.path.abspath(args.output) if args.output else str(library_data_dir(root_path))
     os.makedirs(output_dir, exist_ok=True)
 

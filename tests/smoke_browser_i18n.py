@@ -73,6 +73,7 @@ window.addEventListener('load', () => {
     ['🔄 Ejecutar Reindexación Completa','🔄 Reindex entire library'],
     ['🧹 Optimización para Hardware MPC & SP-404','🧹 MPC & SP-404 maintenance'],
     ['💾 Memoria & Capacidad','💾 Memory & capacity'],
+    ['Negro grafito y cromo con texto de alto contraste.','Graphite black and chrome with high-contrast text.'],
     ['Guardar Ajustes','Save settings'],
     ['🔊 808s & Sub Bajos','🔊 808s & sub bass'],
     ['📂 Explorar Kits','📂 Browse kits'],
@@ -134,9 +135,16 @@ window.addEventListener('load', () => {
           localeNodes.every(x => x.node.nodeValue.trim() === x.en) &&
           localeAttrs.every(x => x.node.getAttribute(x.attr) === x.en);
         const filenameOK = probe.textContent === 'MyCustom-Sample_90bpm.wav';
-        reporter.textContent = initialEnglish && spanishOK && englishOK && filenameOK
+        const themeCard = document.getElementById('themeCard_astro1deep-obsidian');
+        setEcosystemTheme('astro1deep-obsidian', false);
+        const styles = getComputedStyle(document.body);
+        const themeOK = themeCard.getAttribute('aria-pressed') === 'true' &&
+          document.documentElement.dataset.theme === 'astro1deep-obsidian' &&
+          localStorage.getItem('ecosystem_theme') === 'astro1deep-obsidian' &&
+          styles.backgroundColor === 'rgb(8, 9, 10)' && styles.color === 'rgb(244, 245, 247)';
+        reporter.textContent = initialEnglish && spanishOK && englishOK && filenameOK && themeOK
           ? 'BEATOS_BROWSER_ES_EN_PASS'
-          : 'FAIL:initial=' + initialEnglish + ',es=' + spanishOK + ',en=' + englishOK + ',filename=' + filenameOK;
+          : 'FAIL:initial=' + initialEnglish + ',es=' + spanishOK + ',en=' + englishOK + ',filename=' + filenameOK + ',theme=' + themeOK;
       }, 250);
     }, 250);
   } catch (error) {reporter.textContent = 'FAIL:' + error.message;}

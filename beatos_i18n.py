@@ -10,6 +10,25 @@ from http.cookies import SimpleCookie
 import re
 
 EXACT_EN = {
+    'La biblioteca indicada no existe o no es una carpeta': 'The selected library does not exist or is not a directory',
+    'Tema del ecosistema no válido.': 'Invalid ecosystem theme.',
+    'No se pudo guardar el tema del ecosistema.': 'Could not save the ecosystem theme.',
+    'Existe un enlace en el destino; no se ha sustituido': 'An existing link at the destination was preserved',
+    'EP-133: el mapa de un kit admite 4 grupos de 12 sonidos (48 en total)': 'EP-133: a kit map supports four groups of 12 sounds (48 total)',
+    'Presupuesto PO: entre 1 y 40 segundos': 'PO time budget must be between 1 and 40 seconds',
+    'Pad duplicado': 'Duplicate pad',
+    'SP-404A/SX: cada banco tiene 12 pads; mueve los sonidos de las posiciones 13–16 antes de exportar': 'SP-404A/SX: each bank has 12 pads; move any sounds from slots 13–16 before exporting',
+    'El título de la expansión es obligatorio.': 'Expansion title is required.',
+    'Ruta de expansión fuera del directorio Expansions': 'Expansion path is outside the Expansions directory',
+    'Selecciona al menos un kit/proyecto con muestras válidas o carga muestras en el Rack de 16 pads.': 'Select at least one kit/project with valid samples or load samples into the 16-pad rack.',
+    'La muestra es demasiado corta para dividirla en múltiples cortes.': 'The sample is too short to split into multiple slices.',
+    'Script sync_master_dashboard.py y plantilla MASTER_ECOSISTEMA_DISCOS.html no encontrados.': 'The sync_master_dashboard.py script and MASTER_ECOSISTEMA_DISCOS.html template were not found.',
+    'No se pudo abrir el archivo de descarga.': 'Could not open the file for download.',
+    'Motor autochop no disponible.': 'Auto-chop engine is unavailable.',
+    'Motor create_custom_expansion no disponible en el servidor.': 'The custom expansion builder is unavailable on the server.',
+    'Función create_chromatic_kit no disponible en hardware_kit_builder.': 'The hardware kit builder does not provide create_chromatic_kit.',
+    'Función build_rack_scale_bank no disponible.': 'The build_rack_scale_bank function is unavailable.',
+    'Gestor mpcqol.conf no disponible.': 'The mpcqol.conf manager is unavailable.',
     "Falta parámetro 'rel_path'": "Missing parameter 'rel_path'",
     "Falta parámetro 'path'": "Missing parameter 'path'",
     "Falta parámetro 'expansion_name'": "Missing parameter 'expansion_name'",
@@ -66,6 +85,12 @@ EXACT_EN = {
     "Acción rechazada": "Action rejected",
 }
 PREFIX_EN = {
+    'Archivo de muestra no encontrado: ': 'Sample file not found: ',
+    'Muestra no encontrada: ': 'Sample not found: ',
+    'Muestra de audio no encontrada: ': 'Audio sample not found: ',
+    'Nombre de nota desconocido: ': 'Unknown note name: ',
+    'No se pudo decodificar ': 'Could not decode ',
+    'Preset mpcqol.conf desconocido: ': 'Unknown mpcqol.conf preset: ',
     "Ruta no encontrada: ": "Path not found: ",
     "Proyecto no encontrado: ": "Project not found: ",
     "La biblioteca no existe: ": "Library does not exist: ",
@@ -115,6 +140,15 @@ def get_request_language(headers):
     return "en"
 
 
+_DIAGNOSTIC_PATTERNS = tuple((re.compile(pattern), replacement) for pattern, replacement in (
+    (r"Formato de nota inválido: (.+)\. Ejemplos válidos: (.+)", r"Invalid note format: \1. Valid examples: \2"),
+    (r"Escala desconocida: (.+)\. Escalas disponibles: (.+)", r"Unknown scale: \1. Available scales: \2"),
+    (r"El destino '([^']+)' admite pads 1 a (\d+); selecciona un destino específico para más bancos",
+     r"Target '\1' supports pads 1–\2. Select a specific target to use more banks"),
+    (r"Valor inválido (.+) para (.+) \(permitidos: (.+)\)", r"Invalid value \1 for \2 (allowed: \3)"),
+))
+
+
 def translate_text(value, lang="en"):
     if lang != "en" or not isinstance(value, str):
         return value
@@ -137,6 +171,12 @@ def translate_text(value, lang="en"):
     pad_range = re.fullmatch(r"Pad (\d+): (volume|pan|tune|mute_group|tempo) fuera de rango", body)
     if pad_range:
         return indentation + f"Pad {pad_range.group(1)}: {pad_range.group(2)} out of range"
+    pad_error = re.fullmatch(r"No se pudo procesar pad (\d+): (.+)", body, re.DOTALL)
+    if pad_error:
+        return indentation + f"Could not process pad {pad_error[1]}: {translate_text(pad_error[2], lang)}"
+    for pattern, replacement in _DIAGNOSTIC_PATTERNS:
+        if match := pattern.fullmatch(body):
+            return indentation + match.expand(replacement)
     for prefix, english in _SORTED_PREFIXES:
         if body.startswith(prefix):
             return indentation + english + body[len(prefix):]

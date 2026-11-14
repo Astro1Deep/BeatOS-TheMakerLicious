@@ -553,14 +553,50 @@ def discover_mounted_audio_libraries(active_root: str = "") -> list[dict]:
     return discovered
 
 
-def detect_cerebro_os(root_dir: str = "") -> dict:
+def write_state_json(path: Path, data: dict) -> None:
+    """Replace a state file atomically so concurrent readers get complete JSON."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent,
+                                     prefix=f".{path.name}.", delete=False) as stream:
+        pending = Path(stream.name)
+        try:
+            json.dump(data, stream, indent=2, ensure_ascii=False)
+            stream.close()
+            pending.replace(path)
+        finally:
+            pending.unlink(missing_ok=True)
+
+
+ECOSYSTEM_THEMES = frozenset({
+    "te-arcade", "te-ko", "mpc-vintage", "mpc-blue-le", "sp404-studio",
+    "maschine-studio", "makerlicious-bone", "cerebro-neon", "astro1deep-obsidian",
+})
+
+
+def ecosystem_theme_path() -> Path:
+    return Path.home() / ".gemini" / "antigravity" / "scratch" / "ecosystem_theme.json"
+
+
+def read_ecosystem_theme(root_dir: str) -> str | None:
+    for path in (ecosystem_theme_path(), config_dir(root_dir) / "theme_config.json"):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            theme = payload.get("theme") if isinstance(payload, dict) else None
+            if isinstance(theme, str) and theme in ECOSYSTEM_THEMES:
+                return theme
+        except (OSError, ValueError):
+            continue
+    return None
+
+
+def detect_cerebro_os(root_dir: str = "", port: int = 8888) -> dict:
     """Detecta si Cerebro OS (~/.mlx-stack) está instalado en el sistema anfitrión y sincroniza el puente bidireccional."""
     if os.environ.get("BEATOS_FORCE_HIDE_CEREBRO") == "1":
         return {"installed": False, "venv_ready": False, "mlx_server_online": False, "dashboard_online": False, "capabilities": [], "mounted_libraries": []}
     mlx_root = Path.home() / ".mlx-stack"
     cerebro_dir = mlx_root / "cerebro"
     venv_py = mlx_root / "venv" / "bin" / "python"
-    installed = mlx_root.is_dir() and (cerebro_dir.is_dir() or venv_py.is_file())
+    installed = mlx_root.is_dir() and (cerebro_dir.exists() or venv_py.is_file())
     venv_ready = venv_py.is_file() and os.access(venv_py, os.X_OK)
     mlx_online = _probe_local_port(8080) if installed else False
     dash_online = _probe_local_port(3050) if installed else False
@@ -574,7 +610,7 @@ def detect_cerebro_os(root_dir: str = "") -> dict:
                 "beatos_active": True,
                 "root_dir": str(root_dir),
                 "database_path": str(database_path(root_dir)),
-                "api_base": "http://127.0.0.1:8888",
+                "api_base": f"http://127.0.0.1:{port}",
                 "mounted_libraries": mounted_libs,
                 "updated_at": datetime.datetime.now().isoformat(),
                 "capabilities": [
@@ -592,7 +628,7 @@ def detect_cerebro_os(root_dir: str = "") -> dict:
                     "federated_library_search",
                 ],
             }
-            bridge_file.write_text(json.dumps(bridge_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+            write_state_json(bridge_file, bridge_payload)
         except OSError:
             pass
 
@@ -992,7 +1028,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
 
     return {
         "success": True,
-        "cerebro_os": detect_cerebro_os(root_dir),
+        "cerebro_os": detect_cerebro_os(root_dir, port),
         "detected_style": style_info.get("style", "Hip-Hop / Electrónica"),
         "style_id": style_id,
         "recommended_bpm": inferred_bpm,
@@ -1423,7 +1459,7 @@ def import_external_sample_to_library(root_dir: str, payload: dict) -> dict:
     }
 
 
-def get_system_status(root_dir: str):
+def get_system_status(root_dir: str, port: int = 8888):
     library_available = os.path.isdir(root_dir)
     card_mounted = library_available and os.path.ismount(root_dir)
     disk_stat = shutil.disk_usage(root_dir) if os.path.exists(root_dir) else None
@@ -1608,7 +1644,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_cors_headers()
             self.end_headers()
-            data = get_system_status(self.server.root_dir)
+            data = get_system_status(self.server.root_dir, self.server.server_port)
             self.wfile.write(self._api_json_dumps(data, ensure_ascii=False).encode("utf-8"))
             return
 
@@ -1617,7 +1653,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_cors_headers()
             self.end_headers()
-            data = {"success": True, "cerebro_os": detect_cerebro_os(self.server.root_dir)}
+            data = {"success": True, "cerebro_os": detect_cerebro_os(self.server.root_dir, self.server.server_port)}
             self.wfile.write(self._api_json_dumps(data, ensure_ascii=False).encode("utf-8"))
             return
 
@@ -1634,15 +1670,7 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_cors_headers()
             self.end_headers()
-            theme_file = os.path.expanduser("~/.gemini/antigravity/scratch/ecosystem_theme.json")
-            current_theme = "te-arcade"
-            if os.path.isfile(theme_file):
-                try:
-                    with open(theme_file, "r", encoding="utf-8") as f:
-                        data = json.load(f)
-                        current_theme = data.get("theme", "te-arcade")
-                except Exception:
-                    pass
+            current_theme = read_ecosystem_theme(self.server.root_dir)
             self.wfile.write(self._api_json_dumps({"success": True, "theme": current_theme}, ensure_ascii=False).encode("utf-8"))
             return
 
@@ -2557,39 +2585,45 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
 
         elif clean_api == "/api/theme":
             try:
-                content_length = int(self.headers.get("Content-Length", 0))
-                body = self.rfile.read(content_length).decode("utf-8")
-                payload = json.loads(body)
-                theme_name = payload.get("theme", "te-arcade")
-                
-                theme_file = os.path.expanduser("~/.gemini/antigravity/scratch/ecosystem_theme.json")
-                os.makedirs(os.path.dirname(theme_file), exist_ok=True)
+                length = int(self.headers.get("Content-Length", 0))
+                if not 0 < length <= 4096:
+                    raise ValueError
+                payload = json.loads(self.rfile.read(length))
+                theme_name = payload.get("theme") if isinstance(payload, dict) else None
+                if not isinstance(theme_name, str) or theme_name not in ECOSYSTEM_THEMES:
+                    raise ValueError
+            except ValueError:
+                status = 400
+                response = {"success": False, "error": "Tema del ecosistema no válido."}
+            else:
                 theme_data = {
                     "theme": theme_name,
                     "updated_at": datetime.datetime.now().isoformat(),
                     "source": "mpc_sample_database",
-                    "synchronized_ecosystem": ["cerebro_os", "djproduccertool", "open_webui", "audiotheque"]
                 }
-                with open(theme_file, "w", encoding="utf-8") as f:
-                    json.dump(theme_data, f, indent=2)
-                
-                local_dir = config_dir(self.server.root_dir)
-                local_dir.mkdir(parents=True, exist_ok=True)
-                local_theme = local_dir / "theme_config.json"
-                with open(local_theme, "w", encoding="utf-8") as f:
-                    json.dump(theme_data, f, indent=2)
-
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.send_cors_headers()
-                self.end_headers()
-                self.wfile.write(self._api_json_dumps({"success": True, "theme": theme_name}, ensure_ascii=False).encode("utf-8"))
-            except Exception as e:
-                self.send_response(500)
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.send_cors_headers()
-                self.end_headers()
-                self.wfile.write(self._api_json_dumps({"success": False, "error": str(e)}).encode("utf-8"))
+                try:
+                    write_state_json(ecosystem_theme_path(), theme_data)
+                except OSError:
+                    try:
+                        write_state_json(config_dir(self.server.root_dir) / "theme_config.json", theme_data)
+                    except OSError:
+                        status = 500
+                        response = {"success": False, "error": "No se pudo guardar el tema del ecosistema."}
+                    else:
+                        status = 200
+                        response = {"success": True, "theme": theme_name}
+                else:
+                    try:
+                        write_state_json(config_dir(self.server.root_dir) / "theme_config.json", theme_data)
+                    except OSError:
+                        pass
+                    status = 200
+                    response = {"success": True, "theme": theme_name}
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_cors_headers()
+            self.end_headers()
+            self.wfile.write(self._api_json_dumps(response).encode("utf-8"))
             return
 
         self.send_response(404)
