@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+title: "BeatOS — The MakerLicious"
+message: "If you use BeatOS — The MakerLicious in your audio production workflow, documentation, or research, please cite it using this metadata."
+type: software
+authors:
+  - alias: Astro1Deep
+    name: Astro1Deep
+repository-code: "https://github.com/Astro1Deep/BeatOS-TheMakerLicious"
+url: "https://astro1deep.github.io/BeatOS-TheMakerLicious/"
+version: "3.8.0"
+keywords:
+  - akai-mpc
+  - mpc-sample
+  - sampqol
+  - sp-404mk2
+  - pocket-operator
+  - ep-133
+  - beatmaking
+  - sample-library
+  - auto-chop
+  - dsp
+  - music-production
+license: MIT

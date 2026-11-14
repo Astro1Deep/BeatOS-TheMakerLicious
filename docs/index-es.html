@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BeatOS — Explorador de Samples y Kits de 16 Pads para Beatmakers</title>
-<meta name="description" content="BeatOS — The MakerLicious: explorador de samples y rack de 16 pads para beatmakers. Preparación de kits Akai MPC, Maschine, SP-404, Pocket Operator y EP-133.">
+<meta name="description" content="BeatOS — The MakerLicious: explorador de samples y rack de 16 pads para beatmakers. Akai MPC XPM/XPJ/PGM y Expansiones, SampQOL OS, Cerebro OS Auto-Chop, Maschine, SP-404MKII, PO-33 y EP-133.">
+<meta name="keywords" content="BeatOS, Akai MPC, MPC Sample, SampQOL OS, MPC 1000 PGM, MPC 2000XL, Expansion MPC, SP-404MKII, Pocket Operator PO-33, EP-133 KO II, Maschine, Auto-Chop Bolero Soul Jazz Lo-Fi Boom Bap">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://astro1deep.github.io/BeatOS-TheMakerLicious/index-es.html">
 <link rel="alternate" hreflang="en" href="https://astro1deep.github.io/BeatOS-TheMakerLicious/">
@@ -12,12 +13,12 @@
 <link rel="alternate" hreflang="x-default" href="https://astro1deep.github.io/BeatOS-TheMakerLicious/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="BeatOS — Explorador de Samples y Kits de 16 Pads para Beatmakers">
-<meta property="og:description" content="BeatOS — The MakerLicious: explorador de samples y rack de 16 pads para beatmakers. Preparación de kits Akai MPC, Maschine, SP-404, Pocket Operator y EP-133.">
+<meta property="og:description" content="Estación open-source para beatmakers: Akai MPC XPM/XPJ/PGM y Expansiones, SampQOL OS, Cerebro OS DSP Auto-Chop (Bolero, Soul, Jazz a Boom Bap y Lo-Fi), SP-404MKII, Maschine, PO-33 y EP-133.">
 <meta property="og:url" content="https://astro1deep.github.io/BeatOS-TheMakerLicious/index-es.html">
 <meta property="og:image" content="https://astro1deep.github.io/BeatOS-TheMakerLicious/assets/screenshots/beatos-overview-en.png">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"BeatOS — The MakerLicious","description":"Open-source local sample-library browser and 16-pad kit builder with Akai MPC project inspection and hardware-specific audio exports for beatmakers.","operatingSystem":"Windows, macOS, Linux","applicationCategory":"MultimediaApplication","softwareVersion":"3.8.0","author":{"@type":"Person","name":"Astro1Deep","url":"https://github.com/Astro1Deep"},"url":"https://github.com/Astro1Deep/BeatOS-TheMakerLicious","downloadUrl":"https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases/latest","image":"https://astro1deep.github.io/BeatOS-TheMakerLicious/assets/screenshots/beatos-overview-en.png"}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"BeatOS — The MakerLicious","description":"Explorador local de bibliotecas de samples y rack de 8 bancos (128 pads) con soporte Akai MPC (.xpm, .xpj, .pgm y Expansiones), SampQOL OS, generador cromático MPCTK y motor DSP Cerebro OS para Hip-Hop y Lo-Fi.","operatingSystem":"Windows, macOS, Linux","applicationCategory":"MultimediaApplication","softwareVersion":"3.8.0","featureList":["Inspector y exportador Multi-Track Akai MPC (.xpm y .xpj)","Constructor de Expansiones oficiales MPC (Expansion.xml + .xpansion.zip)","Gestor seguro /mpcqol.conf para SampQOL OS v0.2.0","Exportación binaria .PGM para Akai MPC 1000/2500/500 (JJOS) y MPC 2000/2000XL","Motor DSP Cerebro OS: timbre 3 bandas, compases 4/4 3/4 6/8 5/4 y clave latina","Auto-Chop puente 3/4 a 4/4 y adaptación multi-perfil a Boom Bap y Lo-Fi","Generador de escalas cromáticas MPCTK de 16 pads","Flujos Roland SP-404MKII, SP-404A, NI Maschine, TE PO-33/PO-133 y EP-133 K.O. II"],"author":{"@type":"Person","name":"Astro1Deep","url":"https://github.com/Astro1Deep"},"url":"https://github.com/Astro1Deep/BeatOS-TheMakerLicious","downloadUrl":"https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases/latest","image":"https://astro1deep.github.io/BeatOS-TheMakerLicious/assets/screenshots/beatos-overview-en.png"}
 </script>
 <style>
 :root{font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark;background:#080a12;color:#f4f6fa}
@@ -52,9 +53,9 @@ code{background:#1a2235;padding:2px 5px;border-radius:4px}
 <figure class="visual"><img src="assets/screenshots/beatos-rack-en.png" width="1500" height="1050" alt="Vista del rack de 16 pads BeatOS en inglés, captura real del navegador." loading="lazy"><figcaption>Vista de rack de 16 pads. El idioma se cambia dentro de BeatOS.</figcaption></figure></section>
 <section><h2>Funciones para sampling y beatmaking</h2><div class="grid">
 <div class="card"><h3>Explorador de samples</h3><p>Bibliotecas locales, búsqueda, escucha, pistas de BPM y tonalidad a partir de nombres, y energía RMS estimada en ventanas.</p></div>
-<div class="card"><h3>Proyectos Akai MPC</h3><p>Inspección de XPJ y programas XPM compatibles, detección de referencias ausentes y carga de una copia de 16 pads.</p></div>
-<div class="card"><h3>Rack universal de 16 pads</h3><p>Escucha, organización de pads, controles individuales y exportación por formato de destino.</p></div>
-<div class="card"><h3>Flujos por sampler</h3><p>Akai MPC, Maschine (WAV y JSON), Roland SP-404MKII / SP-404A/SX, PO-33 / PO-133 (reel de audio) y EP-133 (WAV/ZIP).</p></div>
+<div class="card"><h3>Akai MPC, Expansiones y SampQOL</h3><p>Inspección XPM/XPJ, creador de Expansiones MPC oficiales, exportación binaria .PGM (MPC 1000/2000XL) y gestor seguro para SampQOL OS.</p></div>
+<div class="card"><h3>Cerebro OS DSP y Auto-Chop</h3><p>Análisis espectral en 3 bandas, detección de compás (4/4, 3/4, 6/8, 5/4) y clave latina para adaptar Bolero, Soul, Jazz, Bossa o Cumbia a Boom Bap y Lo-Fi.</p></div>
+<div class="card"><h3>Rack 8 Bancos y Escalas MPCTK</h3><p>Hasta 128 pads con simulación de Mute Groups, generador cromático MPCTK de 16 notas y exportación hacia SP-404MKII, Maschine, PO-33 y EP-133.</p></div>
 <div class="card"><h3>Interfaz ES / EN</h3><p>Controles y manuales bilingües con pruebas automatizadas. La localización absoluta de errores excepcionales continúa su auditoría.</p></div>
 <div class="card"><h3>Local y verificable</h3><p>Python, SQLite y servidor HTTP local, sin necesidad de subir a la nube tus samples para las funciones básicas.</p></div></div></section>
 <section><h2>Cómo comenzar</h2><ol><li>Descarga el <strong>ZIP adjunto a una release</strong> y comprueba su SHA-256.</li><li>Instala Python 3.11 o posterior; FFmpeg es necesario para determinadas conversiones.</li><li>Consulta la <a href="https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/GUIA_INSTALACION.md">guía de instalación</a> y la <a href="https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/COMPATIBILIDAD_HARDWARE.md">matriz de compatibilidad</a>.</li><li>Inicia BeatOS, indexa tu biblioteca, selecciona ES/EN y construye tu kit de 16 pads.</li></ol></section>

@@ -3,19 +3,16 @@
 ## What is currently true
 
 - Official project: **Astro1Deep/BeatOS-TheMakerLicious**. Avoid confusing it with other projects named **BeatOS**.
-- GitHub repository description and 14 topics already exist (observed 30 October 2026). The topics include: `akai-mpc`, `audio-tools`, `beatmaking`, `beatos`, `drum-kits`, `ep-133`, `maschine`, `mpc`, `music-production`, `po-33`, `python`, `sample-library`, `sampling`, `sp-404`.
-- GitHub searches can discover terms in the repository **name, description, topics and README**. Keep capability claims accurate.
-- GitHub Pages **is not enabled at the time this landing page is prepared**. The `docs/index.html` and `docs/index-es.html` files do not become a live site until Pages deployment is configured.
-- The latest stable ZIP can be older than `main`. Do not advertise a development build as an already published stable release.
+- GitHub repository description, homepage URL (`https://astro1deep.github.io/BeatOS-TheMakerLicious/`), and **20 repository topics** are active: `akai-mpc`, `audio-tools`, `beatmaking`, `boombap`, `drum-kits`, `ep-133`, `lofi-hiphop`, `maschine`, `mpc`, `mpc-sample`, `music-production`, `po-33`, `pocket-operator`, `python`, `sample-library`, `sampling`, `sampqol`, `sp-404`, `sp404mk2`, `teenage-engineering`.
+- GitHub Pages is configured to serve from `main` → `/docs` at `https://astro1deep.github.io/BeatOS-TheMakerLicious/`.
+- The latest stable ZIP (`v3.8.0`) can be older than `main`; point testers who want the latest **Cerebro OS DSP / SampQOL OS / Legacy .PGM / Official Expansion Builder** features to clone/checkout `main` or wait for the next release tag.
+- See the ready-to-use community & developer outreach templates in [KIT_DIFUSION_Y_COMUNIDAD.md](KIT_DIFUSION_Y_COMUNIDAD.md).
 
-## Website publish and index procedure
+## Search Console & Webmaster Indexing Checklist
 
-1. In the repository **Settings → Pages**, set **Build and deployment → Deploy from a branch**, select **main** and **/docs**, then Save. GitHub Pages should publish at `https://astro1deep.github.io/BeatOS-TheMakerLicious/` (subject to account and deployment settings).
-2. Wait for a successful Pages deployment and *open the actual EN and ES URLs*. Check images, screenshots, CTA links, favicon, mobile layout, alternate `hreflang` links, and the sitemap.
-3. In **Google Search Console**, verify ownership of the published URL/property. Inspect the live page, request indexing when eligible, and submit `https://astro1deep.github.io/BeatOS-TheMakerLicious/sitemap.xml`. Submitting requests is not a guarantee of indexing or placement.
-4. In **Bing Webmaster Tools**, use URL Inspection and submit the same sitemap after the Pages site is live and verifiable.
-5. Once Pages is live, set the repository **About → Website** URL to `https://astro1deep.github.io/BeatOS-TheMakerLicious/`. The connected GitHub tools do not currently expose repository About/Pages editing, so this setting needs an authorized UI action.
-6. Inspect indexing later with `site:astro1deep.github.io/BeatOS-TheMakerLicious/` and Search Console. Public search results alone can be incomplete or delayed.
+1. Verify `https://astro1deep.github.io/BeatOS-TheMakerLicious/` in **Google Search Console** (HTML tag or URL-prefix property once live) and submit `https://astro1deep.github.io/BeatOS-TheMakerLicious/sitemap.xml`.
+2. Verify and submit the same sitemap in **Bing Webmaster Tools** (which also feeds DuckDuckGo/Yahoo organic search).
+3. Inspect indexing with `site:astro1deep.github.io/BeatOS-TheMakerLicious/` and track clicks in Search Console. Submitting sitemaps accelerates discovery without guaranteeing immediate ranking.
 
 ## Accurate search phrases and topics
 

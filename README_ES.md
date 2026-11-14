@@ -41,12 +41,20 @@ Utiliza la opción **1** para indexar y **2** para abrir el servidor local. En u
 
 | Sistema | Exportación de BeatOS | Limitación esencial |
 | --- | --- | --- |
-| **Akai MPC** | Programa Drum `.xpm`, proyecto `.xpj` derivado de plantilla Sample y WAV | El proyecto Sample/AC50 no equivale automáticamente al formato nativo de MPC One/Live/X. |
+| **Akai MPC Standalone & SampQOL OS** | Programa Drum `.xpm`, proyecto `.xpj` (1 pista o 4 buses submix), Expansión oficial (`Expansion.xml` + `.xpansion.zip`), editor `/mpcqol.conf` | El proyecto Sample/AC50 no equivale automáticamente al formato nativo de MPC One/Live/X. |
+| **Akai MPC 1000 / 2500 / 500 (JJOS) & MPC 2000 / 2000XL** | `.PGM` binario + WAV PCM 16-bit/44.1 kHz (nombres DOS 8.3 en 2000/2000XL) | Exportación orientada a programas de batería estándar; verifica la carga en tu máquina real. |
 | **NI Maschine** | WAV y mapa JSON de asignaciones | No genera un `.mxgrp` nativo; hay que realizar la asignación en Maschine. |
 | **Roland SP-404MKII** | WAV PCM 16-bit/48 kHz para hasta 16 pads; manifiesto JSON | No genera copia nativa de proyecto o patrones; requiere importación. |
 | **Roland SP-404A/SX** | WAV PCM 16-bit/44.1 kHz, pads A01–A12 | No es un backup nativo y se limita a 12 pads de un banco. |
-| **PO-33/PO-133** | Reel de batería mono 44.1 kHz con mapa de cortes | Se graba por audio y se revisa en TRIM; no constituye backup módem. |
+| **PO-33/PO-133** | Reel de batería mono 44.1 kHz con mapa de cortes y archivo FSK local | Se graba por audio y se revisa en TRIM; el reel WAV no sustituye al backup módem. |
 | **EP-133 K.O. II** | WAV 16-bit/44.1 kHz, `meta.json` y ZIP | El ZIP solo transporta archivos; no es un backup restaurable del aparato. |
+
+## Capacidades clave para beatmakers y samplers hardware
+
+- **Akai MPC Standalone & SampQOL OS v0.2.0:** Lectura y edición `.xpm`/`.xpj`, constructor de Expansiones oficiales MPC (`Expansion.xml` + previews + `.xpansion.zip`), gestor seguro de `/mpcqol.conf` con copias de respaldo y ruteo Multi-Track de 4 buses submix.
+- **MPC clásicas (Legacy `.PGM`):** Exportación binaria compatible con **MPC 1000 / 2500 / 500 (JJOS)** y **MPC 2000 / 2000XL** en PCM 16-bit/44.1 kHz.
+- **Motor DSP Cerebro OS para Crate-Digging:** Análisis espectral PCM en 3 bandas (`Sub / Calidez Media / Aire`), detección de compás (`4/4`, `3/4`, `6/8`, `5/4`), clave latina y swing (`Bolero`, `Soul`, `Jazz`, `Bossa/Samba`, `Cumbia/Son`, `Tango/Vals`, `Drumless`, `Psych` y géneros club), adaptación multi-perfil a Hip-Hop / Boom Bap / Lo-Fi, Auto-Chop inteligente con puente `3/4→4/4` y ajuste tonal de 808.
+- **Generador Cromático MPCTK y Rack de 8 Bancos (128 Pads):** Despliega muestras en 16 notas de escala, preescucha con simulación real de Mute Groups y exporta hacia tu hardware.
 
 **Generar un archivo no equivale a verificar su carga.** Consulta las guías para comprobar nombres, parámetros PCM, referencias, límites de memoria, mapeo de pads y reproducción en hardware real.
 
@@ -65,6 +73,6 @@ Utiliza la opción **1** para indexar y **2** para abrir el servidor local. En u
 
 El servidor se utiliza **en local**, sin autenticación de usuarios remotos: no publiques su puerto en Internet. Conserva los WAV de origen, proyectos originales y copias de seguridad del hardware. Las pruebas automáticas verifican integridad, estructura, API e interacción web, pero la fidelidad final exige cargar, reproducir, guardar y volver a abrir el kit en el modelo y firmware concretos.
 
-**Autoría:** [Astro1Deep](https://github.com/Astro1Deep) · [Repositorio](https://github.com/Astro1Deep/BeatOS-TheMakerLicious) · [Versiones estables](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases) · [Sitio en español](docs/index-es.html).
+**Autoría:** [Astro1Deep](https://github.com/Astro1Deep) · [Repositorio](https://github.com/Astro1Deep/BeatOS-TheMakerLicious) · [Versiones estables](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases) · [Web oficial (ES)](https://astro1deep.github.io/BeatOS-TheMakerLicious/index-es.html) · [Kit de difusión, redes y desarrolladores](docs/KIT_DIFUSION_Y_COMUNIDAD.md).
 
-**Versión estable documentada:** 3.8.0. Comprueba siempre el manifiesto y la suma SHA-256 de la descarga concreta.
+**Versión estable documentada:** 3.8.0 (la rama `main` incluye además el motor rítmico DSP Cerebro OS, gestor SampQOL OS, exportación binaria `.PGM` y creador de Expansiones MPC). Comprueba siempre el manifiesto y la suma SHA-256 de la descarga concreta.

@@ -50,12 +50,20 @@ python3 BeatOS/serve_mpc.py "/path/to/Your Samples" --port 8888
 
 | Destination | BeatOS output | What you load | Native-equivalence limits |
 | --- | --- | --- | --- |
-| **Akai MPC** | Drum `.xpm`; Sample-derived `.xpj` and project data; WAV | Compatible MPC Drum program or project, according to model and firmware | Sample/AC50-derived XPJ is **not** a verified universal One/Live/X project. Validate on the target engine. |
+| **Akai MPC Standalone & SampQOL OS** | Drum `.xpm`, `.xpj` projects (1-track or 4-track submix busses), Official Expansion Pack (`Expansion.xml` + `.xpansion.zip`), `/mpcqol.conf` editor | Compatible MPC Drum program, Expansion, or project, according to model and firmware | Sample/AC50-derived XPJ is **not** a verified universal One/Live/X project. Validate on the target engine. |
+| **Akai MPC 1000 / 2500 / 500 (JJOS) & MPC 2000 / 2000XL** | Binary `.PGM` + 16-bit 44.1 kHz PCM WAVs (DOS 8.3 naming on 2000/2000XL) | Copy `.PGM` and WAV files to CF/SD media and load in MPC OS / JJOS | Classic `.PGM` export targets standard drum programs; verify pad/keygroup behavior on target hardware. |
 | **NI Maschine** | WAV files and a BeatOS `*_Maschine_Map.json` | Import WAV files and map the pads in Maschine | **Not** an `.mxgrp` project; JSON is guidance, not an auto-import format. |
 | **Roland SP-404MKII** | 16 pad-labelled PCM WAVs (16-bit/48 kHz), JSON manifest | Import WAVs via a supported transfer workflow | No native SP-404MKII backup/project is generated; pad settings may require manual configuration. |
 | **Roland SP-404A / SX** | 12 pad-labelled PCM WAVs (16-bit/44.1 kHz) | Import WAV samples into a suitable bank | Not a native SP-404 backup/pattern. The first 12 source pads are used. |
-| **PO-33 / PO-133** | Mono PCM WAV drum reel (44.1 kHz), slice timing JSON | Record the played reel over audio input and review slices | Not a modem backup or restorable pattern file. Budget must match actual free memory. |
+| **PO-33 / PO-133** | Mono PCM WAV drum reel (44.1 kHz), slice timing JSON, local FSK backup archive | Record the played reel over audio input and review slices | Audio reel is not a modem backup or restorable pattern file. Budget must match actual free memory. |
 | **EP-133 K.O. II** | PCM WAVs (16-bit/44.1 kHz), `meta.json`, transport ZIP | Extract WAVs, transfer through supported Sample Tool workflow, configure assignments | Transport ZIP is **not** a native backup. Metadata does not automatically assign every parameter. |
+
+## Key capabilities for beatmakers & hardware samplers
+
+- **Akai MPC Standalone & SampQOL OS v0.2.0:** Read/edit `.xpm` & `.xpj`, build Official MPC Expansion packs (`Expansion.xml` + audio previews + `.xpansion.zip`), edit `/mpcqol.conf` safely with backups, and route multi-track submix busses (Drums/Hats/808/Melodic).
+- **Legacy Akai MPC Support:** Direct binary `.PGM` + 16-bit/44.1 kHz WAV generation for **MPC 1000 / 2500 / 500 (JJOS)** and **MPC 2000 / 2000XL** (with DOS 8.3 safe filenames).
+- **Cerebro OS DSP Acoustic & Crate-Digging Engine:** 3-band PCM spectral timbre analysis (`Sub / Mid Warmth / High Air`), meter detection (`4/4`, `3/4`, `6/8`, `5/4`), Latin Clave & swing detection (`Bolero`, `Soul`, `Jazz`, `Bossa/Samba`, `Cumbia/Son`, `Tango/Vals`, `Drumless`, `Psych/Library` plus club genres), multi-profile Hip-Hop / Boom Bap / Lo-Fi adaptation with repitch/time-stretch calculation, `3/4→4/4` phrase Auto-Chop with zero-crossing snap, and 808 pitch/phase calibration.
+- **MPCTK Chromatic Scale Generator & 8-Bank Rack (128 Pads):** Spread tonal samples across 16 chromatic or scale pads, preview polyphonically with Mute Group choke simulation in the browser, and export across all supported hardware destinations.
 
 Consult the [advanced per-device export and validation guide](docs/en/HARDWARE_EXPORT_PROTOCOLS.md) before using a kit on hardware. It explains sample-rate conversion, instrument mapping, path references, channel layout, what remains manual, and device-by-device acceptance checks.
 
@@ -78,8 +86,8 @@ Automated CI checks include Python regression tests, Node UI logic, a real brows
 
 ## Project identity and discovery
 
-Created by [Astro1Deep](https://github.com/Astro1Deep) · [GitHub repository](https://github.com/Astro1Deep/BeatOS-TheMakerLicious) · [Latest stable releases](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases) · [English website source](docs/index.html) · [Sitio en español](docs/index-es.html).
+Created by [Astro1Deep](https://github.com/Astro1Deep) · [GitHub repository](https://github.com/Astro1Deep/BeatOS-TheMakerLicious) · [Latest stable releases](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases) · [Live Landing Page (EN)](https://astro1deep.github.io/BeatOS-TheMakerLicious/) · [Sitio en español](https://astro1deep.github.io/BeatOS-TheMakerLicious/index-es.html) · [Community & Outreach Kit](docs/KIT_DIFUSION_Y_COMUNIDAD.md).
 
-Relevant repository topics: `beatmaking`, `sample-library`, `akai-mpc`, `maschine`, `sp-404`, `po-33`, `ep-133`, `drum-kits`, `music-production`. GitHub repository **Topics** affect repository discovery; Markdown hashtags do not substitute for configured topics. GitHub Pages must be enabled before treating the website as live.
+Configured GitHub repository topics: `akai-mpc`, `mpc`, `mpc-sample`, `sampqol`, `sp-404`, `sp404mk2`, `maschine`, `po-33`, `pocket-operator`, `ep-133`, `teenage-engineering`, `beatmaking`, `boombap`, `lofi-hiphop`, `drum-kits`, `sample-library`, `sampling`, `music-production`, `audio-tools`, `python`.
 
-**Version documented:** stable 3.8.0. Check `VERSION`, the build manifest and release checksums for the actual installed artifact.
+**Version documented:** stable 3.8.0 (development on `main` includes Cerebro OS DSP rhythmic/spectral engine, SampQOL OS manager, legacy `.PGM` exporters & Official MPC Expansion builder). Check `VERSION`, the build manifest and release checksums for the actual installed artifact.

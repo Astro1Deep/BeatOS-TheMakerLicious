@@ -1,11 +1,13 @@
 # BeatOS — The MakerLicious (Astro1Deep)
 
-> Open-source local-first sample library browser, Akai MPC project inspector, and 16-pad beatmaking kit workspace with ES/EN web interface. Developer: Astro1Deep. Repository: https://github.com/Astro1Deep/BeatOS-TheMakerLicious
+> Open-source local-first sample library browser, Akai MPC / SampQOL OS workstation, and 128-pad (8-bank) beatmaking rack with Cerebro OS DSP rhythmic/spectral Auto-Chop and ES/EN web interface. Developer: Astro1Deep. Repository: https://github.com/Astro1Deep/BeatOS-TheMakerLicious
 
-Important: BeatOS runs on the user's computer and does not install sampler firmware. The hardware export targets differ in compatibility; WAV/JSON transport bundles are not native hardware backups. Indexing estimates BPM/key from names and energy from a small number of PCM RMS windows, not full-file beat/key or loudness recognition. Download a release ZIP rather than assuming GitHub's source ZIP is an installer.
+Important: BeatOS runs on the user's computer and does not install sampler firmware. Hardware export targets differ in native equivalence; WAV/JSON transport bundles are not native hardware backups. Download a release ZIP rather than assuming GitHub's source ZIP is an installer.
 
 ## Primary references
 
+- Live Landing Page (EN): https://astro1deep.github.io/BeatOS-TheMakerLicious/
+- Live Landing Page (ES): https://astro1deep.github.io/BeatOS-TheMakerLicious/index-es.html
 - Repository and source: https://github.com/Astro1Deep/BeatOS-TheMakerLicious
 - Latest stable release: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases/latest
 - Complete English manual: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/en/MANUAL_COMPLETO.md
@@ -14,15 +16,17 @@ Important: BeatOS runs on the user's computer and does not install sampler firmw
 - Compatibilidad hardware ES: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/COMPATIBILIDAD_HARDWARE.md
 - Technical reference and API: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/en/REFERENCIA_TECNICA.md
 - Supported documentation index: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/tree/main/docs/wiki/en
-- Evidence-based QA report: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/AUDITORIA_INTEGRAL_BILINGUE_2026-10-30.md
+- Community, Social & Developer Outreach Kit: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/KIT_DIFUSION_Y_COMUNIDAD.md
 
-## Hardware export workflows
+## Key workflows & DSP features
 
-- Akai MPC: Drum XPM and XPJ based on a specific MPC Sample AC50 template. Not a certified universal MPC project.
-- Native Instruments Maschine: WAV audio plus JSON mapping, not native MXGRP.
-- Roland SP-404MKII: WAV16/48 kHz import files, pad placement subject to firmware workflow.
-- Roland SP-404A / SX: 12-pad WAV16/44.1 kHz files.
-- Teenage Engineering PO-33 / PO-133: audio sampling reel, not an FSK modem-data backup.
+- Akai MPC Standalone & SampQOL OS v0.2.0: Drum XPM, Sample/AC50-derived XPJ (1-track or 4-track submix busses), Official MPC Expansion Builder (Expansion.xml + audio previews + .xpansion.zip), and `/mpcqol.conf` safe backup editor.
+- Legacy Akai MPC: Binary `.PGM` + 16-bit/44.1 kHz WAV exports for MPC 1000 / 2500 / 500 (JJOS) and MPC 2000 / 2000XL (DOS 8.3 safe names).
+- Cerebro OS DSP Acoustic Engine: 3-band PCM spectral timbre analysis, 4/4 / 3/4 / 6/8 / 5/4 meter and Latin Clave detection (Bolero, Soul, Jazz, Bossa, Cumbia, Waltz, Drumless, Psych, plus club genres), multi-profile Hip-Hop / Boom Bap / Lo-Fi repitch/stretch adaptation, 3/4->4/4 phrase Auto-Chop with zero-crossing snap, and 808 pitch/phase calibration.
+- MPCTK Chromatic Scale Generator: 16-pad chromatic/scale spreading across active rack bank.
+- NI Maschine: WAV audio plus JSON mapping, not native MXGRP.
+- Roland SP-404MKII: WAV 16-bit/48 kHz import files; Roland SP-404A/SX: 12-pad WAV 16-bit/44.1 kHz.
+- Teenage Engineering PO-33 / PO-133: Mono audio sampling reel (44.1 kHz) and local FSK backup archive verification.
 - Teenage Engineering EP-133 K.O. II: WAV/ZIP transport and mapping, not a native project backup.
 
 This document is an optional factual pointer for machine-readable discovery. It does not guarantee that any particular search engine or AI system will crawl or use it.
