@@ -143,3 +143,150 @@ class IndexerTests(unittest.TestCase):
             with patch.object(Path,'replace',side_effect=OSError('replace failed')):
                 with self.assertRaises(OSError):write_catalog(root,'new')
             self.assertEqual(target.read_text(),'old');self.assertFalse(list(root.rglob('*.new')))
+
+    def _write_test_wav(self, wav_path: Path, freq_hz: float = 55.0):
+        import math, struct
+        sr = 44100
+        n_frames = sr // 4
+        wav_path.parent.mkdir(parents=True, exist_ok=True)
+        with wave.open(str(wav_path), 'wb') as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(sr)
+            frames = bytearray()
+            for i in range(n_frames):
+                sample = int(18000 * math.sin(2.0 * math.pi * freq_hz * i / sr))
+                frames.extend(struct.pack('<h', sample))
+            wf.writeframes(bytes(frames))
+
+    def test_extended_mpc_kit_multitrack_and_flat_projects(self):
+        import gzip
+        import xml.etree.ElementTree as ET
+        import hardware_kit_builder as hkb
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bass_rel = 'Samples/808_A1.wav'
+            kick_rel = 'Samples/Kick_01.wav'
+            hat_rel = 'Samples/Hat_Closed.wav'
+            synth_rel = 'Samples/Lead_C4.wav'
+            self._write_test_wav(root / bass_rel, 55.0)
+            self._write_test_wav(root / kick_rel, 65.0)
+            self._write_test_wav(root / hat_rel, 4000.0)
+            self._write_test_wav(root / synth_rel, 261.63)
+
+            res = hkb.create_kit(
+                kit_name='SampQOL_TestKit',
+                source_root=str(root),
+                target='mpc',
+                tempo=132,
+                pads=[
+                    {
+                        'pad': 1, 'rel_path': bass_rel, 'sound_type': 'BASS_808',
+                        'mute_group': 4, 'volume': 0.9, 'pan': 0.5, 'tune': 0,
+                        'fine_tune': -12, 'root_note': 'F#2', 'key_track': True,
+                        'trigger_mode': 'noteon', 'monophonic': False, 'reverse': True,
+                        'loop_mode': 1, 'tail_length': 0.35, 'sample_offset': 0.05,
+                        'pad_link': 2, 'submix': 1
+                    },
+                    {'pad': 2, 'rel_path': kick_rel, 'sound_type': 'KICK', 'mute_group': 1},
+                    {'pad': 3, 'rel_path': hat_rel, 'sound_type': 'HIHAT', 'mute_group': 2},
+                    {'pad': 4, 'rel_path': synth_rel, 'sound_type': 'SYNTH', 'mute_group': 0},
+                ],
+                mpc_options={
+                    'multitrack_mode': 'role_split_4',
+                    'audio_route_mode': 'submix_split',
+                    'install_to_mpc_projects': True,
+                    'gain_profile': 'uniform_b',
+                    'force_gain_profile': True,
+                    'auto_tune_808': False,
+                },
+            )
+            self.assertTrue(res.get('success'))
+            mpc_info = res['targets']['mpc']
+            xpm_path = Path(mpc_info['program_path_root'])
+            xpj_path = Path(mpc_info['project_path'])
+            self.assertTrue(xpm_path.is_file())
+            self.assertTrue(xpj_path.is_file())
+
+            # Flat /MPC-Sample/Projects/<kit>.xpj & <kit>_[ProjectData]
+            flat_xpj = root / 'MPC-Sample/Projects/SampQOL_TestKit.xpj'
+            flat_data = root / 'MPC-Sample/Projects/SampQOL_TestKit_[ProjectData]'
+            self.assertTrue(flat_xpj.is_file())
+            self.assertTrue(flat_data.is_dir())
+
+            # Inspect XPM XML for Pad 1 extended attributes
+            xpm_root = ET.fromstring(xpm_path.read_text(encoding='utf-8'))
+            inst1 = xpm_root.find('.//Instrument[@number="1"]')
+            self.assertIsNotNone(inst1)
+            self.assertEqual(inst1.findtext('TuneFine'), '-12')
+            self.assertEqual(inst1.findtext('OneShot'), 'False')
+            self.assertEqual(inst1.findtext('Mono'), 'False')
+            self.assertEqual(inst1.findtext('SimultTarget1'), '37')
+            self.assertEqual(inst1.findtext('AudioRoute/AudioRoute'), '1')
+            self.assertEqual(inst1.findtext('AudioRoute/AudioRouteSubIndex'), '0')
+            layer1 = inst1.find('Layers/Layer')
+            self.assertIsNotNone(layer1)
+            self.assertEqual(layer1.findtext('RootNote'), '42')  # F#2
+            self.assertEqual(layer1.findtext('KeyTrack'), 'True')
+            self.assertEqual(layer1.findtext('Direction'), '1')
+            self.assertEqual(layer1.findtext('Loop'), 'True')
+            self.assertEqual(layer1.findtext('SliceLoop'), '1')
+
+            # Inspect XPJ JSON for 4-track split + Pad 1 fields
+            with gzip.open(str(xpj_path), 'rb') as gz:
+                raw_xpj = gz.read().decode('utf-8')
+            json_start = raw_xpj.find('{')
+            self.assertGreater(json_start, 0)
+            payload = json.loads(raw_xpj[json_start:])
+            tracks = payload['data']['tracks']
+            self.assertGreaterEqual(len(tracks), 4)
+            bass_track = next(t for t in tracks if 'Bass 808' in t.get('name', ''))
+            first_inst = bass_track['program']['drum']['instruments'][0]
+            self.assertEqual(first_inst['fineTune'], -12)
+            self.assertEqual(first_inst['triggerMode'], 2)
+            self.assertEqual(first_inst['monophonic'], False)
+            self.assertEqual(first_inst['simultPlayTargets']['value0'], 37)
+            self.assertEqual(first_inst['layersv'][0]['rootNote'], 42)
+            self.assertEqual(first_inst['layersv'][0]['keyTrackEnable'], True)
+            self.assertEqual(first_inst['layersv'][0]['direction'], 1)
+
+    def test_build_rack_scale_bank_clamped(self):
+        import hardware_kit_builder as hkb
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            rel = 'Samples/808_C2.wav'
+            self._write_test_wav(root / rel, 65.41)  # C2
+            res = hkb.build_rack_scale_bank(
+                sample_path=root / rel,
+                source_root=root,
+                scale='minor',
+                target_root_note='C3',
+                start_octave=0,
+                bank_index=0,
+                monophonic=True,
+                auto_detect_pitch=True,
+            )
+            self.assertTrue(res.get('success'))
+            self.assertEqual(len(res['pads']), 16)
+            for p in res['pads']:
+                self.assertGreaterEqual(p['tune'], -24)
+                self.assertLessEqual(p['tune'], 24)
+                self.assertTrue(p['monophonic'])
+
+    def test_read_and_update_mpcqol_conf(self):
+        import hardware_kit_builder as hkb
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'autorun').mkdir()
+            (root / 'autorun/mpcqol.so').write_bytes(b'ELF')
+            (root / 'mpcqol.conf').write_text('zerosnap=0\nkilleq=0\n', encoding='utf-8')
+            read1 = hkb.read_mpcqol_conf(str(root))
+            self.assertTrue(read1['sampqol_detected'])
+            self.assertTrue(read1['conf_exists'])
+            self.assertEqual(read1['raw_values']['zerosnap'], '0')
+
+            upd = hkb.update_mpcqol_conf(str(root), preset='beatos_master', updates={'killeq': 1})
+            self.assertTrue(upd['success'])
+            self.assertTrue((root / 'mpcqol.conf.bak-beatos').is_file())
+            self.assertEqual(upd['raw_values']['zerosnap'], '1')
+            self.assertEqual(upd['raw_values']['killeq'], '1')

@@ -20,6 +20,7 @@ Soporta de forma nativa, estable y sin dependencias externas:
 
 from __future__ import annotations
 
+import copy
 import datetime
 import gzip
 import hashlib
@@ -250,13 +251,17 @@ def default_mute_group(sound_type: str) -> int:
     return {"KICK": 1, "SNARE": 1, "TOM": 1, "HIHAT": 2, "BASS_808": 3}.get(sound_type, 0)
 
 
-def default_pad_volume(sound_type: str) -> float:
-    """Opción A: Jerarquía Acústica Headroom para Akai MPC
-    - KICK / SNARE: -5.0 dB (0.562341) -> Transitorios principales y pegada limpia
-    - TOM / BASS_808 / CLAP / CYMBAL / PERCUSSION / MELODIC_LOOP / KEYS_SYNTH: -6.0 dB (0.501187) -> Control de subgraves y cuerpo
-    - HIHAT / SHAKER: -7.5 dB (0.421697) -> Techo agudo suave y natural, sin estridencia
-    - FX: -8.0 dB (0.398107) -> Texturas y transiciones de fondo
+def default_pad_volume(sound_type: str, profile: str = "hierarchical_a") -> float:
+    """Perfiles de volumen de pad para Akai MPC:
+    - hierarchical_a (Opción A):
+        - KICK / SNARE: -5.0 dB (0.562341) -> Transitorios principales y pegada limpia
+        - TOM / BASS_808 / CLAP / CYMBAL / PERCUSSION / MELODIC_LOOP / KEYS_SYNTH: -6.0 dB (0.501187)
+        - HIHAT / SHAKER: -7.5 dB (0.421697)
+        - FX: -8.0 dB (0.398107)
+    - uniform_b (Opción B): -6.0 dB (0.501187) uniforme en todos los pads.
     """
+    if str(profile or "hierarchical_a").strip().lower() == "uniform_b":
+        return 0.501187
     levels = {
         "KICK": 0.562341,
         "SNARE": 0.562341,
@@ -1324,6 +1329,66 @@ def _get_wav_frames(path_cand: Optional[str | Path]) -> int:
     return 0
 
 
+def _resolve_midi_root_note(val: Any, default: int = 0) -> int:
+    """Convierte nota textual (ej. 'C3', 'F#2') o número MIDI en entero [0, 127]."""
+    if val is None or val == "":
+        return default
+    if isinstance(val, (int, float)) and not isinstance(val, bool):
+        return max(0, min(127, int(round(val))))
+    text = str(val).strip()
+    if not text:
+        return default
+    if re.fullmatch(r"-?\d+", text):
+        return max(0, min(127, int(text)))
+    try:
+        pc, octv = parse_note(text)
+        return max(0, min(127, (octv + 1) * 12 + pc))
+    except ValueError:
+        return default
+
+
+def _extract_extended_pad_params(p_info: Dict[str, Any], default_submix: int = 0) -> Dict[str, Any]:
+    """Extrae y normaliza los parámetros extendidos de un pad para `.xpm` y `.xpj`."""
+    raw_fine = p_info.get("fine_tune", p_info.get("fineTune", 0))
+    fine_tune = max(-90, min(90, int(round(float(raw_fine or 0)))))
+    trigger_raw = p_info.get("trigger_mode", p_info.get("triggerMode"))
+    if trigger_raw is None and "playMode" in p_info:
+        trigger_raw = p_info.get("playMode")
+    trigger_str = str(trigger_raw or "oneshot").strip().lower()
+    is_oneshot = trigger_str not in ("noteon", "note_on", "gate", "2", "false")
+    reverse = bool(p_info.get("reverse", False) or int(p_info.get("direction", 0) or 0) == 1)
+    loop_mode = 1 if bool(p_info.get("loop", p_info.get("loop_mode", p_info.get("loopMode", 0)))) else 0
+    sample_offset = max(0, int(p_info.get("sample_offset", p_info.get("offset", 0)) or 0))
+    root_note = _resolve_midi_root_note(p_info.get("root_note", p_info.get("rootNote", 0)), default=0)
+    raw_kt = p_info.get("key_track", p_info.get("keyTrack", p_info.get("keyTrackEnable")))
+    key_track = bool(raw_kt) if raw_kt is not None else (root_note > 0)
+    raw_link = int(p_info.get("pad_link", p_info.get("padLink", 0)) or 0)
+    pad_link = raw_link if 1 <= raw_link <= 128 else 0
+    simult_midi = (35 + pad_link) if pad_link else 0
+    raw_submix = p_info.get("submix")
+    if raw_submix is None or raw_submix == "":
+        submix = int(default_submix)
+    elif str(raw_submix).strip().lower() == "main":
+        submix = 9
+    else:
+        submix = max(0, min(9, int(raw_submix)))
+    tail_length = max(0.0, min(1.0, float(p_info.get("tail_length", p_info.get("tailLength", 0.0)) or 0.0)))
+    return {
+        "fine_tune": fine_tune,
+        "is_oneshot": is_oneshot,
+        "reverse": reverse,
+        "loop_mode": loop_mode,
+        "sample_offset": sample_offset,
+        "root_note": root_note,
+        "key_track": key_track,
+        "pad_link": pad_link,
+        "simult_midi": simult_midi,
+        "submix": submix,
+        "tail_length": tail_length,
+        "monophonic": bool(p_info.get("monophonic", True)),
+    }
+
+
 def _set_xml_text(parent: ET.Element, tag: str, value: str) -> None:
     el = parent.find(tag)
     if el is None:
@@ -1380,17 +1445,33 @@ def export_mpc_program(
             raw_vol = p_info.get("volume")
             vol = float(raw_vol) if raw_vol is not None and raw_vol != 0.707946 else default_pad_volume(stype)
             pan = float(p_info.get("pan", 0.500000))
-            tune = int(p_info.get("tune", 0))
+            tune = max(-24, min(24, int(p_info.get("tune", 0))))
             mute = pad_mute_group(p_info)
+            ext = _extract_extended_pad_params(p_info)
 
             _set_xml_text(inst, "Volume", f"{vol:.6f}")
             _set_xml_text(inst, "Pan", f"{pan:.6f}")
             _set_xml_text(inst, "TuneCoarse", str(tune))
-            _set_xml_text(inst, "TuneFine", "0")
+            _set_xml_text(inst, "TuneFine", str(ext["fine_tune"]))
             _set_xml_text(inst, "MuteGroup", str(mute))
+            _set_xml_text(inst, "OneShot", "True" if ext["is_oneshot"] else "False")
+            _set_xml_text(inst, "SimultTarget1", str(ext["simult_midi"]))
+            ar = inst.find("AudioRoute")
+            if ar is not None:
+                sub = ext["submix"]
+                if sub == 0:
+                    _set_xml_text(ar, "AudioRoute", "0")
+                    _set_xml_text(ar, "AudioRouteSubIndex", "0")
+                elif 1 <= sub <= 8:
+                    _set_xml_text(ar, "AudioRoute", "1")
+                    _set_xml_text(ar, "AudioRouteSubIndex", str(sub - 1))
+                else:
+                    _set_xml_text(ar, "AudioRoute", "2")
+                    _set_xml_text(ar, "AudioRouteSubIndex", "0")
+
             if "monophonic" in p_info:
-                _set_xml_text(inst, "Mono", "True" if p_info["monophonic"] else "False")
-                _set_xml_text(inst, "Polyphony", "1" if p_info["monophonic"] else "8")
+                _set_xml_text(inst, "Mono", "True" if ext["monophonic"] else "False")
+                _set_xml_text(inst, "Polyphony", "1" if ext["monophonic"] else "8")
             for target in inst:
                 if re.fullmatch(r"MuteTarget[1-4]?", target.tag):
                     target.text = "0"
@@ -1404,6 +1485,14 @@ def export_mpc_program(
                 _set_xml_text(lay, "SliceStart", "0")
                 _set_xml_text(lay, "SliceEnd", "0")
                 _set_xml_text(lay, "SliceLoopStart", "0")
+                _set_xml_text(lay, "TuneCoarse", "0")
+                _set_xml_text(lay, "TuneFine", "0")
+                _set_xml_text(lay, "RootNote", "0")
+                _set_xml_text(lay, "KeyTrack", "False")
+                _set_xml_text(lay, "Direction", "0")
+                _set_xml_text(lay, "Offset", "0")
+                _set_xml_text(lay, "Loop", "False")
+                _set_xml_text(lay, "SliceLoop", "0")
 
             if (s_file or s_name) and layers:
                 file_name = (
@@ -1427,6 +1516,14 @@ def export_mpc_program(
                 _set_xml_text(lay0, "SliceStart", "0")
                 _set_xml_text(lay0, "SliceEnd", str(n_frames))
                 _set_xml_text(lay0, "SliceLoopStart", "0")
+                _set_xml_text(lay0, "TuneCoarse", str(tune))
+                _set_xml_text(lay0, "TuneFine", str(ext["fine_tune"]))
+                _set_xml_text(lay0, "RootNote", str(ext["root_note"]))
+                _set_xml_text(lay0, "KeyTrack", "True" if ext["key_track"] else "False")
+                _set_xml_text(lay0, "Direction", "1" if ext["reverse"] else "0")
+                _set_xml_text(lay0, "Offset", str(ext["sample_offset"]))
+                _set_xml_text(lay0, "Loop", "True" if ext["loop_mode"] == 1 else "False")
+                _set_xml_text(lay0, "SliceLoop", str(ext["loop_mode"]))
 
         ET.indent(tree, space="  ", level=0)
         tree.write(str(out_path), encoding="utf-8", xml_declaration=True)
@@ -1455,16 +1552,21 @@ def export_mpc_program(
         )
         vol = float(p_info.get("volume", 0.707946))
         pan = float(p_info.get("pan", 0.500000))
-        tune = int(p_info.get("tune", 0))
+        tune = max(-24, min(24, int(p_info.get("tune", 0))))
         mute = pad_mute_group(p_info)
+        ext = _extract_extended_pad_params(p_info)
 
         inst = ET.SubElement(instruments, "Instrument", number=str(pad_num))
         ET.SubElement(inst, "Volume").text = f"{vol:.6f}"
         ET.SubElement(inst, "Pan").text = f"{pan:.6f}"
         ET.SubElement(inst, "TuneCoarse").text = str(int(tune))
-        ET.SubElement(inst, "TuneFine").text = "0"
+        ET.SubElement(inst, "TuneFine").text = str(ext["fine_tune"])
+        ET.SubElement(inst, "Mono").text = "True" if ext["monophonic"] else "False"
+        ET.SubElement(inst, "Polyphony").text = "1" if ext["monophonic"] else "8"
         ET.SubElement(inst, "MuteGroup").text = str(int(mute))
         ET.SubElement(inst, "MuteTarget").text = "0"
+        ET.SubElement(inst, "SimultTarget1").text = str(ext["simult_midi"])
+        ET.SubElement(inst, "OneShot").text = "True" if ext["is_oneshot"] else "False"
         ET.SubElement(inst, "PadColor").text = "2" if pad_num <= 16 else "1"
 
         layers = ET.SubElement(inst, "Layers")
@@ -1479,6 +1581,14 @@ def export_mpc_program(
                 ET.SubElement(layer, "SliceIndex").text = "129"
                 ET.SubElement(layer, "VelStart").text = "0"
                 ET.SubElement(layer, "VelEnd").text = "127"
+                ET.SubElement(layer, "TuneCoarse").text = str(int(tune))
+                ET.SubElement(layer, "TuneFine").text = str(ext["fine_tune"])
+                ET.SubElement(layer, "RootNote").text = str(ext["root_note"])
+                ET.SubElement(layer, "KeyTrack").text = "True" if ext["key_track"] else "False"
+                ET.SubElement(layer, "Direction").text = "1" if ext["reverse"] else "0"
+                ET.SubElement(layer, "Offset").text = str(ext["sample_offset"])
+                ET.SubElement(layer, "Loop").text = "True" if ext["loop_mode"] == 1 else "False"
+                ET.SubElement(layer, "SliceLoop").text = str(ext["loop_mode"])
             else:
                 ET.SubElement(layer, "Active").text = "False"
                 ET.SubElement(layer, "SampleName").text = ""
@@ -1506,56 +1616,108 @@ def _replace_template_kit_name(obj: Any, old_name: str, new_name: str) -> Any:
     return obj
 
 
+def _reset_xpj_instrument_slot(inst: Dict[str, Any]) -> None:
+    """Limpia un slot de instrumento en una pista clonada sin perder campos internos del firmware."""
+    inst["coarseTune"] = 0
+    inst["fineTune"] = 0
+    inst["whichMuteGroup"] = 0
+    if isinstance(inst.get("simultPlayTargets"), dict):
+        inst["simultPlayTargets"] = {k: 0 for k in inst["simultPlayTargets"]}
+    for lay in inst.get("layersv", []):
+        lay["active"] = False
+        lay["sampleName"] = ""
+        lay["sampleFile"] = ""
+        if isinstance(lay.get("sliceInfo"), dict):
+            lay["sliceInfo"]["Start"] = 0
+            lay["sliceInfo"]["End"] = 0
+            lay["sliceInfo"]["LoopStart"] = 0
+
+
 def export_mpc_project(
     kit_name: str,
     pads_data: dict,
     output_dir: str | Path,
     tempo: float = 120.0,
     key: str = "C",
+    mpc_options: Optional[dict] = None,
 ) -> str:
     """Genera un proyecto MPC genuino (.xpj con cabecera ACVS) junto a su carpeta [ProjectData]."""
+    opts = mpc_options if isinstance(mpc_options, dict) else {}
+    gain_profile = str(opts.get("gain_profile") or "smart_pcm").strip().lower()
+    force_gain_profile = bool(opts.get("force_gain_profile", False))
+    audio_route_mode = str(opts.get("audio_route_mode") or "track").strip().lower()
+    default_submix = 1 if audio_route_mode == "submix1" else (9 if audio_route_mode == "main" else 0)
+    multitrack_mode = str(opts.get("multitrack_mode") or "single").strip().lower()
+    auto_tune_808 = bool(opts.get("auto_tune_808", False))
+
     base_dir = Path(output_dir) / kit_name
     base_dir.mkdir(parents=True, exist_ok=True)
     proj_data_dir = base_dir / f"{kit_name}_[ProjectData]"
     proj_data_dir.mkdir(parents=True, exist_ok=True)
 
-    # Copiar muestras en [ProjectData]
-    linked_samples: list[tuple[str, str, int]] = []
+    # Copiar muestras en [ProjectData] y aplicar calibración/afinación previa compartida con .xpm/.xpj
+    linked_samples: list[tuple[str, str, int, int]] = []
     seen_files: set[str] = set()
-    normalized_pads = {}
+    normalized_pads: Dict[int, Dict[str, Any]] = {}
     for pad_num in range(1, 129):
         p_info = pads_data.get(pad_num) or pads_data.get(str(pad_num)) or {}
         src = p_info.get("source_path", "")
         s_file = p_info.get("sample_file") or (Path(src).name if src else "")
+        dest: Optional[Path] = None
         if src and os.path.exists(src):
             stem = p_info.get("pad_sample_name") or Path(src).stem
             s_name = f"PAD{pad_num:03d}_{stem}.wav"
             dest = proj_data_dir / s_name
             _convert_audio(src, dest, mono=False)
-            s_stem = Path(s_name).stem
-            n_frames = _get_wav_frames(dest)
-            if s_name not in seen_files:
-                seen_files.add(s_name)
-                linked_samples.append((s_stem, s_name, n_frames))
-            p_copy = dict(p_info)
-            p_copy["sample_file"] = s_name
-            p_copy["sample_name"] = s_stem
-            p_copy["n_frames"] = n_frames
-            normalized_pads[pad_num] = p_copy
         elif s_file and (proj_data_dir / s_file).is_file():
             dest = proj_data_dir / s_file
-            s_stem = Path(s_file).stem
-            n_frames = _get_wav_frames(dest)
-            if s_file not in seen_files:
-                seen_files.add(s_file)
-                linked_samples.append((s_stem, s_file, n_frames))
-            p_copy = dict(p_info)
-            p_copy["sample_file"] = s_file
-            p_copy["sample_name"] = s_stem
-            p_copy["n_frames"] = n_frames
-            normalized_pads[pad_num] = p_copy
+            s_name = s_file
         else:
-            normalized_pads[pad_num] = p_info
+            normalized_pads[pad_num] = dict(p_info)
+            continue
+
+        s_stem = Path(s_name).stem
+        n_frames = _get_wav_frames(dest)
+        p_copy = dict(p_info)
+        p_copy["sample_file"] = s_name
+        p_copy["sample_name"] = s_stem
+        p_copy["n_frames"] = n_frames
+
+        stype = str(p_copy.get("sound_type") or detect_sound_type(s_stem or s_name)).upper()
+        p_copy["sound_type"] = stype
+
+        if "submix" not in p_copy and default_submix != 0:
+            p_copy["submix"] = default_submix
+
+        raw_vol = p_copy.get("volume")
+        is_default_vol = raw_vol is None or abs(float(raw_vol) - 0.707946) < 1e-5
+        if gain_profile != "manual" and (force_gain_profile or is_default_vol):
+            if gain_profile == "hierarchical_a":
+                p_copy["volume"] = default_pad_volume(stype, "hierarchical_a")
+            elif gain_profile == "uniform_b":
+                p_copy["volume"] = default_pad_volume(stype, "uniform_b")
+            else:
+                p_copy["volume"] = compute_smart_pad_volume(stype, dest)["volume"]
+
+        if auto_tune_808 and stype in ("BASS_808", "BASS", "KEYS_SYNTH") and dest.is_file():
+            try:
+                pinfo = detect_sample_pitch_and_key(dest)
+                if float(pinfo.get("f0_hz") or 0.0) > 0.0:
+                    if not p_copy.get("root_note") and pinfo.get("midi_note"):
+                        p_copy["root_note"] = int(pinfo["midi_note"])
+                        p_copy.setdefault("key_track", True)
+                    if not int(p_copy.get("fine_tune", p_copy.get("fineTune", 0)) or 0):
+                        cents = int(round(float(pinfo.get("cents_offset") or 0)))
+                        p_copy["fine_tune"] = max(-90, min(90, -cents))
+            except Exception:
+                pass
+
+        ext_pad = _extract_extended_pad_params(p_copy, default_submix=default_submix)
+        sample_root = ext_pad["root_note"] if ext_pad["root_note"] > 0 else 60
+        if s_name not in seen_files:
+            seen_files.add(s_name)
+            linked_samples.append((s_stem, s_name, n_frames, sample_root))
+        normalized_pads[pad_num] = p_copy
 
     # Exportar el programa Drum .xpm genuino dentro de [ProjectData]
     export_mpc_program(kit_name, normalized_pads, proj_data_dir, copy_samples=False)
@@ -1588,7 +1750,7 @@ def export_mpc_project(
 
         deduped_samples: List[Dict[str, Any]] = []
         seen_sample_keys = set()
-        for s_stem, s_file, _ in linked_samples:
+        for s_stem, s_file, _, sample_root in linked_samples:
             skey = (s_stem, s_file)
             if skey in seen_sample_keys:
                 continue
@@ -1600,7 +1762,7 @@ def export_mpc_project(
                 "loadImpl": 0,
                 "metadata": {
                     "tempo": 0.0,
-                    "rootNote": 60,
+                    "rootNote": int(sample_root),
                     "tune": 0.0,
                     "key": key_str,
                 },
@@ -1621,12 +1783,9 @@ def export_mpc_project(
         tracks = data.get("tracks", [])[:1]
         data["tracks"] = tracks
         if tracks:
-            for t in tracks[1:]:
-                if isinstance(t, dict) and "samples" in t:
-                    t["samples"] = []
             tracks[0]["name"] = kit_name
             tracks[0]["volume"] = 0.7079457640647888
-            tracks[0]["samples"] = copy.deepcopy(data["samples"]) if "copy" in globals() else list(data["samples"])
+            tracks[0]["samples"] = copy.deepcopy(data["samples"])
             prog = tracks[0].get("program", {})
             prog["name"] = kit_name
             if isinstance(prog.get("mixable"), dict):
@@ -1647,12 +1806,21 @@ def export_mpc_project(
                 pan = float(p_info.get("pan", 0.500000))
                 tune = max(-24, min(24, int(p_info.get("tune", 0))))
                 mute = pad_mute_group(p_info)
+                ext = _extract_extended_pad_params(p_info, default_submix=default_submix)
 
                 inst["coarseTune"] = tune
+                inst["fineTune"] = ext["fine_tune"]
+                inst["triggerMode"] = 0 if ext["is_oneshot"] else 2
                 inst["whichMuteGroup"] = mute
-                if "monophonic" in p_info:
-                    inst["monophonic"] = bool(p_info["monophonic"])
-                    inst["polyphony"] = 1 if p_info["monophonic"] else 8
+                inst["monophonic"] = ext["monophonic"]
+                inst["polyphony"] = 1 if ext["monophonic"] else 8
+                if isinstance(inst.get("simultPlayTargets"), dict):
+                    inst["simultPlayTargets"] = {
+                        "value0": ext["simult_midi"],
+                        "value1": 0,
+                        "value2": 0,
+                        "value3": 0,
+                    }
                 if isinstance(inst.get("muteTargets"), dict):
                     inst["muteTargets"] = {k: 0 for k in inst["muteTargets"]}
                 if isinstance(inst.get("mixable"), dict):
@@ -1660,14 +1828,30 @@ def export_mpc_project(
                     inst["mixable"]["pan"] = pan
                     inst["mixable"]["muteGroup"] = mute
                     if isinstance(inst["mixable"].get("audioRoute"), dict):
-                        inst["mixable"]["audioRoute"]["destination"] = 0
-                        inst["mixable"]["audioRoute"]["audioRouteSubIndex"] = 0
+                        sub = ext["submix"]
+                        if sub == 0:
+                            inst["mixable"]["audioRoute"]["destination"] = 0
+                            inst["mixable"]["audioRoute"]["audioRouteSubIndex"] = 0
+                        elif 1 <= sub <= 8:
+                            inst["mixable"]["audioRoute"]["destination"] = 1
+                            inst["mixable"]["audioRoute"]["audioRouteSubIndex"] = sub - 1
+                        else:
+                            inst["mixable"]["audioRoute"]["destination"] = 2
+                            inst["mixable"]["audioRoute"]["audioRouteSubIndex"] = 0
 
                 layersv = inst.get("layersv", [])
                 for lay in layersv:
                     lay["active"] = False
                     lay["sampleName"] = ""
                     lay["sampleFile"] = ""
+                    lay["coarseTune"] = 0
+                    lay["fineTune"] = 0
+                    lay["rootNote"] = 0
+                    lay["keyTrackEnable"] = False
+                    lay["direction"] = 0
+                    lay["offset"] = 0
+                    lay["loop"] = False
+                    lay["loopMode"] = 0
                     if isinstance(lay.get("volume"), dict):
                         lay["volume"]["gainCoefficient"] = 1.0
                         lay["volume"]["controlValue"] = 1.0
@@ -1675,6 +1859,8 @@ def export_mpc_project(
                         lay["sliceInfo"]["Start"] = 0
                         lay["sliceInfo"]["End"] = 0
                         lay["sliceInfo"]["LoopStart"] = 0
+                        lay["sliceInfo"]["LoopMode"] = 0
+                        lay["sliceInfo"]["TailLength"] = 0.0
 
                 if (s_file or s_stem) and layersv:
                     file_name = s_file or (f"{s_stem}.wav" if not s_stem.endswith(".wav") else s_stem)
@@ -1685,7 +1871,14 @@ def export_mpc_project(
                     lay0["sampleFile"] = file_name
                     lay0["sliceIndex"] = 129
                     lay0["coarseTune"] = tune
+                    lay0["fineTune"] = ext["fine_tune"]
                     lay0["pitch"] = float(tune)
+                    lay0["rootNote"] = ext["root_note"]
+                    lay0["keyTrackEnable"] = ext["key_track"]
+                    lay0["direction"] = 1 if ext["reverse"] else 0
+                    lay0["offset"] = ext["sample_offset"]
+                    lay0["loop"] = bool(ext["loop_mode"] == 1)
+                    lay0["loopMode"] = ext["loop_mode"]
                     if isinstance(lay0.get("volume"), dict):
                         lay0["volume"]["gainCoefficient"] = 1.0
                         lay0["volume"]["controlValue"] = 1.0
@@ -1693,6 +1886,47 @@ def export_mpc_project(
                         lay0["sliceInfo"]["Start"] = 0
                         lay0["sliceInfo"]["End"] = n_frames
                         lay0["sliceInfo"]["LoopStart"] = 0
+                        lay0["sliceInfo"]["LoopMode"] = ext["loop_mode"]
+                        lay0["sliceInfo"]["TailLength"] = ext["tail_length"]
+
+            if multitrack_mode == "role_split_4":
+                base_track = copy.deepcopy(tracks[0])
+                bus_specs = [
+                    (f"{kit_name} Drums", {"KICK", "SNARE", "CLAP", "TOM"}),
+                    (f"{kit_name} Hats & Perc", {"HIHAT", "CYMBAL", "PERCUSSION"}),
+                    (f"{kit_name} Bass 808", {"BASS_808", "BASS"}),
+                    (f"{kit_name} Melodic & FX", None),
+                ]
+                assigned_pads: set[int] = set()
+                split_tracks: List[Dict[str, Any]] = []
+                for bus_name, role_set in bus_specs:
+                    bus_pad_nums: set[int] = set()
+                    used_files: set[str] = set()
+                    for pad_num, p_info in normalized_pads.items():
+                        s_file_p = p_info.get("sample_file", "")
+                        if not s_file_p:
+                            continue
+                        st_p = str(p_info.get("sound_type") or "PERCUSSION").upper()
+                        in_bus = (pad_num not in assigned_pads) if role_set is None else (st_p in role_set)
+                        if in_bus:
+                            bus_pad_nums.add(pad_num)
+                            assigned_pads.add(pad_num)
+                            used_files.add(s_file_p)
+                    if not bus_pad_nums and split_tracks:
+                        continue
+                    trk_clone = copy.deepcopy(base_track)
+                    trk_clone["name"] = bus_name
+                    trk_clone["volume"] = 0.7079457640647888
+                    trk_clone["samples"] = [s for s in data["samples"] if s.get("path") in used_files]
+                    t_prog = trk_clone.get("program", {})
+                    t_prog["name"] = bus_name
+                    t_insts = t_prog.get("drum", {}).get("instruments", [])
+                    for idx, inst in enumerate(t_insts):
+                        if (idx + 1) not in bus_pad_nums:
+                            _reset_xpj_instrument_slot(inst)
+                    split_tracks.append(trk_clone)
+                if split_tracks:
+                    data["tracks"] = split_tracks
 
         out_content = header + json.dumps(payload, indent=0)
         with gzip.open(str(xpj_path), "wb") as gz:
@@ -2685,6 +2919,7 @@ def create_kit(
     output_base_dir: Optional[str | Path] = None,
     tempo: float = 120.0,
     po_options: Optional[dict] = None,
+    mpc_options: Optional[dict] = None,
 ) -> dict:
     """
     Función maestra llamada por la API web (/api/create_kit) o por línea de comandos.
@@ -2706,6 +2941,9 @@ def create_kit(
     if output_base_dir.exists():
         raise FileExistsError("Ya existe un kit con ese nombre. Elige otro para conservar el original.")
 
+    opts = mpc_options if isinstance(mpc_options, dict) else {}
+    gain_profile = str(opts.get("gain_profile") or "smart_pcm").strip().lower()
+
     # Normalizar pads_data en un diccionario de 1 a 16 (o más)
     pads_dict = {}
     if isinstance(pads, list):
@@ -2722,8 +2960,13 @@ def create_kit(
             fallback_stem = Path(rel_path or src_path).stem if (rel_path or src_path) else ""
             stype = item.get("sound_type", item.get("soundType", "")) or detect_sound_type(raw_sname or fallback_stem or src_path)
             raw_vol = item.get("volume")
-            vol_val = float(raw_vol) if raw_vol is not None and raw_vol != 0.707946 else default_pad_volume(stype)
-            pads_dict[pad_num] = {
+            if raw_vol is not None and raw_vol != 0.707946:
+                vol_val = float(raw_vol)
+            elif gain_profile == "uniform_b":
+                vol_val = default_pad_volume(stype, "uniform_b")
+            else:
+                vol_val = default_pad_volume(stype, "hierarchical_a")
+            pad_entry: Dict[str, Any] = {
                 "pad_number": pad_num,
                 "sample_name": raw_sname or fallback_stem,
                 "pad_sample_name": item.get("pad_sample_name", ""),
@@ -2736,6 +2979,17 @@ def create_kit(
                 "mute_group": pad_mute_group(item),
                 "monophonic": item.get("monophonic", True),
             }
+            for ext_key in (
+                "fine_tune", "fineTune", "root_note", "rootNote",
+                "key_track", "keyTrack", "keyTrackEnable",
+                "trigger_mode", "triggerMode", "playMode",
+                "reverse", "direction", "loop", "loop_mode", "loopMode",
+                "tail_length", "tailLength", "sample_offset", "offset",
+                "pad_link", "padLink", "submix",
+            ):
+                if ext_key in item and item[ext_key] is not None:
+                    pad_entry[ext_key] = item[ext_key]
+            pads_dict[pad_num] = pad_entry
     elif isinstance(pads, dict):
         for k, v in pads.items():
             pad_num = int(k)
@@ -2808,12 +3062,28 @@ def create_kit(
         if target_lower in ("universal", "mpc"):
             mpc_dir = output_base_dir / "Akai_MPC"
             mpc_dir.mkdir(parents=True, exist_ok=True)
-            proj_path = export_mpc_project(clean_kit_name, pads_dict, mpc_dir, tempo=tempo)
+            proj_path = export_mpc_project(clean_kit_name, pads_dict, mpc_dir, tempo=tempo, mpc_options=opts)
             prog_path = export_mpc_program(clean_kit_name, pads_dict, mpc_dir, copy_samples=True)
-            targets_result["mpc"] = {
+            mpc_info: Dict[str, Any] = {
                 "project_path": proj_path,
                 "program_path_root": prog_path,
             }
+            if opts.get("install_to_mpc_projects"):
+                projects_root = source_root / "MPC-Sample" / "Projects"
+                projects_root.mkdir(parents=True, exist_ok=True)
+                src_xpj = Path(proj_path)
+                src_pdata = src_xpj.parent / f"{clean_kit_name}_[ProjectData]"
+                dst_xpj = projects_root / f"{clean_kit_name}.xpj"
+                dst_pdata = projects_root / f"{clean_kit_name}_[ProjectData]"
+                if dst_xpj.exists():
+                    shutil.copy2(dst_xpj, projects_root / f"{clean_kit_name}.xpj.bak-beatos")
+                shutil.copy2(src_xpj, dst_xpj)
+                if src_pdata.is_dir():
+                    if dst_pdata.exists():
+                        shutil.rmtree(dst_pdata)
+                    shutil.copytree(src_pdata, dst_pdata)
+                mpc_info["installed_project_path"] = str(dst_xpj)
+            targets_result["mpc"] = mpc_info
 
         # 1b. Akai MPC 1000 / 2500 / 500 / JJOS (.PGM 10,756 bytes + WAV 16/44.1)
         if target_lower in ("universal", "mpc1000", "mpc2500", "mpc_legacy") and (mpc1k_pads := supported_pads('mpc1000', range(1, 65))):
@@ -3332,6 +3602,7 @@ def detect_sample_pitch_and_key(wav_path: str | Path) -> Dict[str, Any]:
         "f0_hz": round(f0_hz, 2),
         "note": note_name,
         "note_root": _NOTE_NAMES_SHARP[pc],
+        "midi_note": midi_round,
         "pitch_class": pc,
         "cents_offset": cents_offset,
         "confidence": round(min(0.99, max(0.3, best_corr)), 2),
@@ -3737,6 +4008,251 @@ def calibrate_library_projects(
         "xpj_calibrated": xpj_count,
         "total_pads_updated": pads_calibrated,
     }
+
+
+# ==============================================================================
+# 5. INTEGRACIÓN BEATOS RACK <-> MPCTK ESCALAS & SAMPQOL OS (mpcqol.conf)
+# ==============================================================================
+
+SAMPQOL_CONF_SCHEMA: List[Dict[str, Any]] = [
+    {"key": "zerosnap", "label": "Snap to Zero Crossing", "values": {0: "Stock", 1: "Always"}, "default": 1, "group": "SAMPLE"},
+    {"key": "linkslices", "label": "Link Slices Default", "values": {0: "Off", 1: "On"}, "default": 1, "group": "SAMPLE"},
+    {"key": "chopwarn", "label": "Chop Threshold Warn", "values": {0: "After Edits", 1: "Always"}, "default": 0, "group": "SAMPLE"},
+    {"key": "thrmax", "label": "Threshold Max Slices", "values": {0: "16", 1: "32", 2: "64", 3: "128"}, "default": 2, "group": "SAMPLE"},
+    {"key": "askerasepad", "label": "Ask Before Erase Pad", "values": {0: "Off", 1: "On"}, "default": 1, "group": "SAMPLE"},
+    {"key": "killeq", "label": "Pad EQ / Kill EQ Engine", "values": {0: "Off", 1: "On"}, "default": 1, "group": "SAMPLE"},
+    {"key": "keysdefault", "label": "MIDI Keyboard Plays", "values": {0: "All Pads", 1: "Selected Pad"}, "default": 1, "group": "SAMPLE"},
+    {"key": "keyschops", "label": "MIDI Keys on Chop Pad", "values": {0: "Slices", 1: "Pitch"}, "default": 0, "group": "SAMPLE"},
+    {"key": "mutetype", "label": "Mute Type (5ms Fade)", "values": {0: "Audio (Instant+Fade)", 1: "Event (Notes)"}, "default": 0, "group": "SEQUENCE"},
+    {"key": "monitor", "label": "CPU/RAM & Clip Monitor", "values": {0: "Off", 1: "On (Always)", 2: "Warn Only"}, "default": 2, "group": "SYSTEM"},
+    {"key": "knobvalues", "label": "Show Knob Values", "values": {0: "Stock", 1: "Always"}, "default": 1, "group": "SYSTEM"},
+    {"key": "padfxfixed", "label": "Pad FX Routing", "values": {0: "Stock", 1: "Fixed"}, "default": 1, "group": "FX"},
+    {"key": "xpmix", "label": "Export Mixdown", "values": {0: "Off", 1: "On"}, "default": 1, "group": "EXPORT"},
+    {"key": "xpstems", "label": "Export Individual Stems", "values": {0: "Off", 1: "On"}, "default": 1, "group": "EXPORT"},
+    {"key": "xpmfx", "label": "Export Master FX", "values": {0: "Off", 1: "On"}, "default": 1, "group": "EXPORT"},
+    {"key": "xptail", "label": "Export Audio Tail", "values": {0: "0s", 1: "1s", 2: "2s", 3: "4s"}, "default": 2, "group": "EXPORT"},
+    {"key": "xpbpm", "label": "Append BPM to Exports", "values": {0: "Off", 1: "Mix Only", 2: "Mix + Stems"}, "default": 2, "group": "EXPORT"},
+    {"key": "rstail", "label": "Resample Tail", "values": {0: "0s", 1: "1s", 2: "2s", 3: "4s"}, "default": 2, "group": "SAMPLE"},
+]
+
+SAMPQOL_PRESETS: Dict[str, Dict[str, int]] = {
+    "beatos_master": {
+        "zerosnap": 1, "linkslices": 1, "chopwarn": 0, "thrmax": 2, "askerasepad": 1,
+        "killeq": 1, "keysdefault": 1, "mutetype": 0, "monitor": 2, "knobvalues": 1,
+        "padfxfixed": 1, "xpmix": 1, "xpstems": 1, "xpmfx": 1, "xptail": 2, "xpbpm": 2, "rstail": 2,
+    },
+    "live_performance": {
+        "zerosnap": 1, "linkslices": 1, "chopwarn": 0, "thrmax": 2, "askerasepad": 1,
+        "killeq": 1, "keysdefault": 1, "mutetype": 0, "monitor": 1, "knobvalues": 1,
+        "padfxfixed": 1,
+    },
+    "stock_defaults": {
+        "zerosnap": 0, "linkslices": 1, "chopwarn": 0, "thrmax": 0, "askerasepad": 0,
+        "killeq": 1, "keysdefault": 1, "mutetype": 0, "monitor": 0, "knobvalues": 0,
+        "padfxfixed": 0, "xpmix": 1, "xpstems": 0, "xpmfx": 1, "xptail": 0, "xpbpm": 0, "rstail": 0,
+    },
+}
+
+
+def build_rack_scale_bank(
+    sample_path: str | Path,
+    scale: str = "minor",
+    target_root_note: str = "C2",
+    source_root_note: Optional[str] = None,
+    start_octave: int = 0,
+    bank_index: int = 0,
+    monophonic: bool = True,
+    auto_detect_pitch: bool = True,
+    source_root: Optional[str | Path] = None,
+) -> Dict[str, Any]:
+    """
+    Expande una muestra única sobre los 16 pads de un banco del BeatOS Rack siguiendo una escala
+    musical (MPC-Sample-Toolkit style), compensando automáticamente su pitch original y cents.
+    """
+    sample_file = Path(sample_path).resolve()
+    if not sample_file.is_file():
+        raise FileNotFoundError(f"Muestra de audio no encontrada: {sample_path}")
+
+    pitch_info: Dict[str, Any] = {}
+    if auto_detect_pitch:
+        try:
+            pitch_info = detect_sample_pitch_and_key(sample_file)
+        except Exception:
+            pitch_info = {}
+
+    tgt_pc, tgt_oct = parse_note(target_root_note)
+    tgt_midi = (tgt_oct + 1) * 12 + tgt_pc
+
+    src_midi: Optional[int] = None
+    if source_root_note and str(source_root_note).strip():
+        s_pc, s_oct = parse_note(source_root_note)
+        src_midi = (s_oct + 1) * 12 + s_pc
+    elif pitch_info.get("midi_note"):
+        src_midi = int(pitch_info["midi_note"])
+    else:
+        src_midi = tgt_midi
+
+    base_shift = tgt_midi - src_midi
+    cents_offset = int(round(float(pitch_info.get("cents_offset") or 0))) if auto_detect_pitch else 0
+    fine_corr = max(-90, min(90, -cents_offset)) if float(pitch_info.get("f0_hz") or 0.0) > 0.0 else 0
+
+    offsets = build_scale_offsets(scale, count=16, start_octave=int(start_octave), clamp_range=(-48, 48))
+    stype = "BASS_808" if monophonic else "KEYS_SYNTH"
+    smart_vol = compute_smart_pad_volume(stype, sample_file)["volume"]
+    bank_idx = max(0, min(7, int(bank_index)))
+
+    rel_path = ""
+    if source_root:
+        try:
+            rel_path = sample_file.relative_to(Path(source_root).resolve()).as_posix()
+        except ValueError:
+            rel_path = ""
+
+    pads_out: List[Dict[str, Any]] = []
+    for idx, step_semi in enumerate(offsets):
+        slot = idx + 1
+        total_tune = max(-24, min(24, int(base_shift + step_semi)))
+        note_label = note_from_root_offset(tgt_pc, tgt_oct, step_semi)
+        pads_out.append({
+            "pad": bank_idx * 16 + slot,
+            "slot": slot,
+            "note_label": note_label,
+            "rel_path": rel_path,
+            "source_path": str(sample_file),
+            "filename": sample_file.name,
+            "sound_type": stype,
+            "volume": smart_vol,
+            "pan": 0.5,
+            "tune": total_tune,
+            "fine_tune": fine_corr,
+            "root_note": int(max(0, min(127, src_midi))),
+            "key_track": True,
+            "trigger_mode": "noteon" if monophonic else "oneshot",
+            "monophonic": bool(monophonic),
+            "mute_group": 3 if monophonic else 0,
+            "tail_length": 0.05 if monophonic else 0.0,
+        })
+
+    return {
+        "success": True,
+        "scale": scale,
+        "target_root_note": target_root_note,
+        "start_octave": int(start_octave),
+        "bank_index": bank_idx,
+        "source_midi_note": src_midi,
+        "fine_tune_correction": fine_corr,
+        "detected_pitch": pitch_info,
+        "pads": pads_out,
+    }
+
+
+def read_mpcqol_conf(source_root: str | Path) -> Dict[str, Any]:
+    """Lee `/mpcqol.conf` y detecta si SampQOL OS está instalado en la tarjeta SD (solo lectura)."""
+    root_p = Path(source_root)
+    conf_path = root_p / "mpcqol.conf"
+    autorun_so = root_p / "autorun" / "mpcqol.so"
+    values: Dict[str, str] = {}
+    if conf_path.is_file():
+        for raw_line in conf_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            values[k.strip()] = v.strip()
+
+    settings_view = []
+    for item in SAMPQOL_CONF_SCHEMA:
+        key = item["key"]
+        raw_val = values.get(key, str(item["default"]))
+        try:
+            int_val = int(raw_val)
+        except ValueError:
+            int_val = item["default"]
+        settings_view.append({
+            "key": key,
+            "label": item["label"],
+            "group": item["group"],
+            "value": int_val,
+            "value_label": item["values"].get(int_val, str(int_val)),
+            "choices": item["values"],
+            "default": item["default"],
+        })
+
+    return {
+        "success": True,
+        "sampqol_detected": autorun_so.is_file(),
+        "conf_exists": conf_path.is_file(),
+        "conf_path": str(conf_path),
+        "backup_exists": (root_p / "mpcqol.conf.bak-beatos").is_file(),
+        "raw_values": values,
+        "schema": settings_view,
+        "presets": list(SAMPQOL_PRESETS.keys()),
+        "preset_map": SAMPQOL_PRESETS,
+    }
+
+
+def update_mpcqol_conf(
+    source_root: str | Path,
+    updates: Optional[Dict[str, Any]] = None,
+    preset: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Actualiza `/mpcqol.conf` con backup `.bak-beatos`, conservando comentarios y claves existentes."""
+    root_p = Path(source_root)
+    conf_path = root_p / "mpcqol.conf"
+    backup_path = root_p / "mpcqol.conf.bak-beatos"
+
+    if conf_path.is_file() and not backup_path.is_file():
+        shutil.copy2(conf_path, backup_path)
+
+    valid_keys = {item["key"]: item for item in SAMPQOL_CONF_SCHEMA}
+    pending: Dict[str, int] = {}
+    if preset:
+        preset_key = str(preset).strip().lower()
+        if preset_key not in SAMPQOL_PRESETS:
+            raise ValueError(f"Preset mpcqol.conf desconocido: {preset}")
+        pending.update(SAMPQOL_PRESETS[preset_key])
+    if isinstance(updates, dict):
+        for k, v in updates.items():
+            if k not in valid_keys:
+                continue
+            iv = int(v)
+            allowed = valid_keys[k]["values"]
+            if iv not in allowed:
+                raise ValueError(f"Valor inválido {iv} para {k} (permitidos: {list(allowed.keys())})")
+            pending[k] = iv
+
+    existing_lines = (
+        conf_path.read_text(encoding="utf-8", errors="ignore").splitlines()
+        if conf_path.is_file()
+        else []
+    )
+    out_lines: List[str] = []
+    seen_keys: set[str] = set()
+    for raw_line in existing_lines:
+        stripped = raw_line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            out_lines.append(raw_line)
+            continue
+        k, _ = stripped.split("=", 1)
+        k_clean = k.strip()
+        if k_clean in pending:
+            out_lines.append(f"{k_clean}={pending[k_clean]}")
+            seen_keys.add(k_clean)
+        else:
+            out_lines.append(raw_line)
+
+    for k_clean, iv in pending.items():
+        if k_clean not in seen_keys:
+            out_lines.append(f"{k_clean}={iv}")
+
+    tmp_path = root_p / ".mpcqol.conf.tmp"
+    tmp_path.write_text("\n".join(out_lines) + ("\n" if out_lines else ""), encoding="utf-8")
+    os.replace(tmp_path, conf_path)
+
+    res = read_mpcqol_conf(root_p)
+    res["updated_keys"] = sorted(pending.keys())
+    res["applied_preset"] = preset or ""
+    return res
 
 
 if __name__ == "__main__":

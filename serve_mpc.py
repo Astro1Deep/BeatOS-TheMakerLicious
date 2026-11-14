@@ -467,7 +467,12 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
             "pitch_class": None,
             "cents_offset": 0,
             "recommended_tune": int(item.get("tune") or 0),
+            "recommended_fine_tune": 0,
+            "recommended_root_note": 0,
+            "recommended_trigger_mode": "noteon" if ((acoustic_role == "BASS_808" and duration_sec >= 0.8) or stype == "MELODIC_LOOP") else "oneshot",
             "recommended_volume": smart_vol["volume"],
+            "hierarchical_volume": kit_mod.default_pad_volume(stype, "hierarchical_a") if kit_mod else 0.501187,
+            "uniform_volume": 0.501187,
             "recommended_gain_db": smart_vol["gain_db"],
             "peak_dbfs": smart_vol["peak_dbfs"],
             "rms_dbfs": smart_vol["rms_dbfs"],
@@ -489,6 +494,9 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
                         pr["detected_note"] = pinfo.get("note", "")
                         pr["pitch_class"] = pinfo.get("pitch_class")
                         pr["cents_offset"] = pinfo.get("cents_offset", 0)
+                        if float(pinfo.get("f0_hz") or 0.0) > 0.0:
+                            pr["recommended_root_note"] = int(pinfo.get("midi_note") or 0)
+                            pr["recommended_fine_tune"] = max(-90, min(90, -int(round(float(pinfo.get("cents_offset") or 0)))))
                         if anchor_pc is None and pr["sound_type"] in ("MELODIC_LOOP", "KEYS_SYNTH") and pinfo.get("pitch_class") is not None:
                             anchor_pc = pinfo["pitch_class"]
                             anchor_note_label = pinfo.get("note_root") or pinfo.get("note") or ""
@@ -578,6 +586,8 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
                 "detected_note": pr["detected_note"],
                 "f0_hz": pr["f0_hz"],
                 "recommended_tune": pr["recommended_tune"],
+                "recommended_fine_tune": pr.get("recommended_fine_tune", 0),
+                "recommended_root_note": pr.get("recommended_root_note", 0),
             })
 
     notes_parts = [
@@ -1179,6 +1189,25 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(self._api_json_dumps(payload, ensure_ascii=False).encode("utf-8"))
             return
 
+        elif clean_path == "/api/sampqol_config":
+            kit_mod = get_hardware_kit_builder(self.server.root_dir)
+            if kit_mod and hasattr(kit_mod, "read_mpcqol_conf"):
+                try:
+                    resp = kit_mod.read_mpcqol_conf(self.server.root_dir)
+                    code = 200
+                except Exception as e:
+                    resp = {"success": False, "error": str(e)}
+                    code = 500
+            else:
+                resp = {"success": False, "error": "Módulo hardware_kit_builder no disponible."}
+                code = 500
+            self.send_response(code)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_cors_headers()
+            self.end_headers()
+            self.wfile.write(self._api_json_dumps(resp, ensure_ascii=False).encode("utf-8"))
+            return
+
         elif clean_path == "/api/po33_backup_audio":
             query = urllib.parse.parse_qs(parsed.query)
             file_name = query.get("file", [""])[0] or query.get("path", [""])[0]
@@ -1605,7 +1634,15 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                     for field in ('source_path', 'rel_path', 'relPath', 'sample_path'):
                         if pad.get(field):
                             resolve_library_path(self.server.root_dir, pad[field])
-                result = kit_mod.create_kit(kit_name, pads, target=target, source_root=self.server.root_dir, tempo=payload.get("tempo",120), po_options=payload.get("po_options"))
+                result = kit_mod.create_kit(
+                    kit_name,
+                    pads,
+                    target=target,
+                    source_root=self.server.root_dir,
+                    tempo=payload.get("tempo", 120),
+                    po_options=payload.get("po_options"),
+                    mpc_options=payload.get("mpc_options"),
+                )
 
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -1671,6 +1708,66 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 err_resp = {"success": False, "error": str(e)}
                 self.wfile.write(self._api_json_dumps(err_resp, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif clean_api == "/api/rack_scale_spread":
+            try:
+                body = self.rfile.read(length).decode("utf-8") if length > 0 else "{}"
+                payload = json.loads(body) if body.strip() else {}
+                rel_path = str(payload.get("rel_path") or payload.get("relPath") or "").strip()
+                if not rel_path:
+                    raise ValueError("Selecciona o carga primero una muestra en el pad activo.")
+                sample_full = resolve_library_path(self.server.root_dir, rel_path)
+                if not sample_full.is_file():
+                    raise FileNotFoundError(f"Muestra no encontrada: {rel_path}")
+                kit_mod = get_hardware_kit_builder(self.server.root_dir)
+                if not kit_mod or not hasattr(kit_mod, "build_rack_scale_bank"):
+                    raise RuntimeError("Función build_rack_scale_bank no disponible.")
+                result = kit_mod.build_rack_scale_bank(
+                    sample_path=sample_full,
+                    scale=str(payload.get("scale") or "minor"),
+                    target_root_note=str(payload.get("target_root_note") or "C2"),
+                    source_root_note=payload.get("source_root_note"),
+                    start_octave=int(payload.get("start_octave") or 0),
+                    bank_index=int(payload.get("bank_index") or 0),
+                    monophonic=bool(payload.get("monophonic", True)),
+                    auto_detect_pitch=bool(payload.get("auto_detect_pitch", True)),
+                    source_root=self.server.root_dir,
+                )
+                code = 200
+            except (ValueError, FileNotFoundError, TypeError, json.JSONDecodeError) as e:
+                result, code = {"success": False, "error": str(e)}, 400
+            except Exception as e:
+                result, code = {"success": False, "error": str(e)}, 500
+            self.send_response(code)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_cors_headers()
+            self.end_headers()
+            self.wfile.write(self._api_json_dumps(result, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif clean_api == "/api/sampqol_config":
+            try:
+                body = self.rfile.read(length).decode("utf-8") if length > 0 else "{}"
+                payload = json.loads(body) if body.strip() else {}
+                kit_mod = get_hardware_kit_builder(self.server.root_dir)
+                if not kit_mod or not hasattr(kit_mod, "update_mpcqol_conf"):
+                    raise RuntimeError("Gestor mpcqol.conf no disponible.")
+                result = kit_mod.update_mpcqol_conf(
+                    self.server.root_dir,
+                    updates=payload.get("settings") or {},
+                    preset=payload.get("preset"),
+                )
+                code = 200
+            except (ValueError, TypeError, json.JSONDecodeError) as e:
+                result, code = {"success": False, "error": str(e)}, 400
+            except Exception as e:
+                result, code = {"success": False, "error": str(e)}, 500
+            self.send_response(code)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_cors_headers()
+            self.end_headers()
+            self.wfile.write(self._api_json_dumps(result, ensure_ascii=False).encode("utf-8"))
             return
 
         elif clean_api == "/api/reveal_in_finder":
