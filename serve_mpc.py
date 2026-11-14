@@ -372,86 +372,96 @@ def run_reindex_thread(root_dir: str):
         TASK_STATE["success"] = False
         TASK_STATE["logs"].append(f"❌ Excepción durante ejecución: {str(e)}")
     finally:
-        TASK_STATE["running"] = False
         TASK_STATE["finished_at"] = time.time()
+        TASK_STATE["running"] = False
 
 def run_clean_metadata(root_dir: str):
-    logs = []
-    excluded_dirs = {
-        ".Spotlight-V100",
-        ".fseventsd",
-        ".Trashes",
-        ".TemporaryItems",
-        ".DocumentRevisions-V100",
-    }
-    try:
-        if sys.platform == "darwin":
-            subprocess.run(["dot_clean", "-m", root_dir], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+    logs, errors = [], []
+    excluded_dirs = {".Spotlight-V100", ".fseventsd", ".Trashes", ".TemporaryItems",
+                     ".DocumentRevisions-V100", ".git"}
+    if not Path(root_dir).is_dir():
+        return {"success": False, "error": "La biblioteca ya no está disponible."}
+    deleted_count = 0
+    if sys.platform == "darwin" and shutil.which("dot_clean"):
+        result = subprocess.run(["dot_clean", "-m", root_dir], stdin=subprocess.DEVNULL,
+                                capture_output=True, text=True, errors="replace", timeout=100)
+        if result.returncode == 0:
             logs.append("✔ dot_clean ejecutado en el volumen.")
-
-        deleted_count = 0
-        for dirpath, dirnames, filenames in os.walk(root_dir):
-            dirnames[:] = [d for d in dirnames if d not in excluded_dirs]
-            for f in filenames:
-                if f.startswith("._") or f == ".DS_Store":
-                    try:
-                        os.remove(os.path.join(dirpath, f))
-                        deleted_count += 1
-                    except Exception:
-                        pass
-        logs.append(f"✔ Purgados {deleted_count} archivos ocultos de metadatos AppleDouble (._* y .DS_Store).")
-        return {"success": True, "logs": logs, "deleted_count": deleted_count}
-    except Exception as e:
-        return {"success": False, "error": str(e)}
-
-def run_sync_dashboard():
-    candidates = [
-        os.path.expanduser("~/.gemini/antigravity/scratch/sync_master_dashboard.py"),
-        os.path.expanduser("~/Music/Audiotheque_Index/sync_master_dashboard.py"),
-    ]
-    for dashboard_script in candidates:
-        if os.path.isfile(dashboard_script):
-            try:
-                res = subprocess.run([sys.executable, dashboard_script], stdin=subprocess.DEVNULL, capture_output=True, text=True, check=True)
-                return {"success": True, "output": res.stdout}
-            except subprocess.CalledProcessError as e:
-                return {"success": False, "error": (e.stderr or e.stdout or str(e)).strip()}
-
-    # Respaldo directo en Python si no existe el script externo de Cerebro OS
-    source_candidates = [
-        Path.home() / "Music" / "Audiotheque_Index" / "master_ecosistema_discos.html",
-        Path("/Volumes/Realtek RTL9210B-CG Media/MASTER_ECOSISTEMA_DISCOS.html"),
-        Path("/Volumes/samsung PSSDT7/MASTER_ECOSISTEMA_DISCOS.html"),
-        Path("/Volumes/SanDisk SSD/MASTER_ECOSISTEMA_DISCOS.html"),
-        Path("/Volumes/MPCSMPL/BeatOS/docs/MASTER_ECOSISTEMA_DISCOS.html"),
-        Path("/Volumes/MPC-SAMPL3/BeatOS/docs/MASTER_ECOSISTEMA_DISCOS.html"),
-    ]
-    source_path = next((sc for sc in source_candidates if sc.is_file()), None)
-    if not source_path:
-        return {"success": False, "error": "Script sync_master_dashboard.py y plantilla MASTER_ECOSISTEMA_DISCOS.html no encontrados."}
-
-    destinations = [
-        Path("/Volumes/Realtek RTL9210B-CG Media/MASTER_ECOSISTEMA_DISCOS.html"),
-        Path("/Volumes/samsung PSSDT7/MASTER_ECOSISTEMA_DISCOS.html"),
-        Path("/Volumes/SanDisk SSD/MASTER_ECOSISTEMA_DISCOS.html"),
-        Path("/Volumes/MPCSMPL/BeatOS/docs/MASTER_ECOSISTEMA_DISCOS.html"),
-        Path("/Volumes/MPC-SAMPL3/BeatOS/docs/MASTER_ECOSISTEMA_DISCOS.html"),
-        Path.home() / "Music" / "Audiotheque_Index" / "master_ecosistema_discos.html",
-    ]
-    synced = []
-    for dest in destinations:
-        if dest.parent.is_dir():
-            try:
-                if dest.exists() and dest.resolve() == source_path.resolve():
+        else:
+            logs.append(f"dot_clean: exit {result.returncode}")
+            if result.stderr.strip():
+                logs.append(result.stderr.strip())
+    for dirpath, dirnames, filenames in os.walk(root_dir, onerror=errors.append):
+        dirnames[:] = [d for d in dirnames if d not in excluded_dirs]
+        for filename in filenames:
+            if filename.startswith("._") or filename == ".DS_Store":
+                try:
+                    (Path(dirpath) / filename).unlink()
+                    deleted_count += 1
+                except FileNotFoundError:
                     continue
-                shutil.copy2(str(source_path), str(dest))
-                synced.append(str(dest))
+                except OSError as exc:
+                    errors.append(exc)
+    logs.append(f"✔ Purgados {deleted_count} archivos ocultos de metadatos AppleDouble (._* y .DS_Store).")
+    logs.extend(str(error) for error in errors[:20])
+    result = {"success": not errors, "logs": logs, "deleted_count": deleted_count}
+    if errors:
+        result["error"] = "No se pudo limpiar toda la biblioteca."
+    return result
+
+
+def run_sync_dashboard(root_dir: str, port: int) -> dict:
+    """Refresh the live inventory and its local snapshot. Cerebro uses the same bridge."""
+    if not Path(root_dir).is_dir():
+        return {"success": False, "error": "La biblioteca ya no está disponible."}
+    inventory = dashboard_inventory(root_dir, refresh=True)
+    cerebro = detect_cerebro_os(root_dir, port, mounted_libraries=inventory["libraries"])
+    inventory["cerebro_installed"] = cerebro["installed"]
+    inventory["cerebro_synced"] = cerebro.get("bridge_synced", False)
+    write_state_json(config_dir(root_dir) / "ecosystem_inventory.json", inventory)
+    return {"success": True, "inventory": inventory, "message": "Inventario del ecosistema actualizado."}
+
+
+def mounted_volume_paths() -> list[Path]:
+    if sys.platform == "win32":
+        import ctypes
+        kernel = ctypes.windll.kernel32
+        mask = kernel.GetLogicalDrives()
+        return [Path(f"{chr(65 + index)}:/") for index in range(26)
+                if mask & (1 << index) and kernel.GetDriveTypeW(f"{chr(65 + index)}:\\") in (2, 3)
+                and f"{chr(65 + index)}:" != os.environ.get("SystemDrive", "C:")]
+    parents = [Path("/Volumes")] if sys.platform == "darwin" else [
+        Path("/media"), Path("/mnt"), Path("/run/media")]
+    if sys.platform != "darwin":
+        for parent in (Path("/media"), Path("/run/media")):
+            try:
+                parents.extend(child for child in parent.iterdir() if child.is_dir() and not child.is_symlink())
             except OSError:
                 pass
-    return {
-        "success": True,
-        "output": f"Sincronizado desde {source_path} hacia {len(synced)} destinos.",
-    }
+    roots = []
+    for parent in parents:
+        try:
+            roots.extend(child for child in sorted(parent.iterdir()) if child.is_dir() and child.is_mount()
+                         and not child.name.startswith(".") and not child.is_symlink())
+        except OSError:
+            pass
+    return roots
+
+
+def dashboard_inventory(root_dir: str, refresh: bool = False) -> dict:
+    root = Path(root_dir).resolve()
+    mounts = mounted_volume_paths()
+    libraries = discover_mounted_audio_libraries(str(root), mounts=mounts, refresh=refresh)
+    volumes = []
+    for volume in dict.fromkeys(path.resolve() for path in [root, *mounts]):
+        try:
+            space = shutil.disk_usage(volume)
+        except OSError:
+            continue
+        volumes.append({"name": volume.name or volume.anchor, "path": str(volume),
+                        "active": volume == root, "free_bytes": space.free, "total_bytes": space.total})
+    return {"root_dir": str(root), "volumes": volumes, "libraries": libraries}
+
 
 def _probe_local_port(port: int, timeout: float = 0.04) -> bool:
     try:
@@ -464,13 +474,13 @@ def _probe_local_port(port: int, timeout: float = 0.04) -> bool:
 _DISCOVERED_LIBS_CACHE = {"timestamp": 0.0, "libs": [], "root": ""}
 
 
-def discover_mounted_audio_libraries(active_root: str = "") -> list[dict]:
+def discover_mounted_audio_libraries(active_root: str = "", *, mounts=None, refresh=False) -> list[dict]:
     """
     Descubre dinámicamente bibliotecas SQLite de audio en volúmenes montados (/Volumes/*, /media/*, /mnt/*)
     sin depender de nombres de discos personales codificados a fuego.
     """
     now = time.time()
-    if _DISCOVERED_LIBS_CACHE["root"] == active_root and (now - _DISCOVERED_LIBS_CACHE["timestamp"]) < 15.0:
+    if not refresh and _DISCOVERED_LIBS_CACHE["root"] == active_root and (now - _DISCOVERED_LIBS_CACHE["timestamp"]) < 15.0:
         return list(_DISCOVERED_LIBS_CACHE["libs"])
 
     discovered: list[dict] = []
@@ -481,32 +491,31 @@ def discover_mounted_audio_libraries(active_root: str = "") -> list[dict]:
             real_db = str(db_file.resolve())
             if real_db in seen_dbs or not db_file.is_file():
                 return
-            conn = sqlite3.connect(db_file.as_uri() + "?mode=ro", uri=True)
-            cur = conn.cursor()
-            cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
-            all_tables = [r[0] for r in cur.fetchall() if not r[0].startswith("sqlite_")]
-            chosen_table = ""
-            sample_count = 0
-            for candidate_t in ("samples", "audio_assets", "tracks", "sound_banks", "sp404_hardware") + tuple(all_tables):
-                if candidate_t not in all_tables:
-                    continue
-                cur.execute(f"PRAGMA table_info({candidate_t})")
-                cols = {r[1] for r in cur.fetchall()}
-                if ("filename" in cols or "name" in cols) and any(k in cols for k in ("rel_path", "relative_path", "full_path", "path", "root_path")):
-                    cur.execute(f"SELECT COUNT(*) FROM {candidate_t}")
-                    cnt_row = cur.fetchone()
-                    cnt = int(cnt_row[0]) if cnt_row else 0
-                    if cnt > 0:
+            with contextlib.closing(sqlite3.connect(db_file.resolve().as_uri() + "?mode=ro", uri=True, timeout=1)) as conn:
+                cur = conn.cursor()
+                cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+                all_tables = [r[0] for r in cur.fetchall() if not r[0].startswith("sqlite_")]
+                chosen_table = ""
+                sample_count = 0
+                for candidate_t in ("samples", "audio_assets", "tracks", "sound_banks", "sp404_hardware") + tuple(all_tables):
+                    if candidate_t not in all_tables or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", candidate_t):
+                        continue
+                    cur.execute(f"PRAGMA table_info({candidate_t})")
+                    cols = {r[1] for r in cur.fetchall()}
+                    if any(key in cols for key in ("filename", "name", "title")) and any(k in cols for k in ("rel_path", "relative_path", "full_path", "path", "root_path")):
+                        cur.execute(f"SELECT COUNT(*) FROM {candidate_t}")
+                        cnt_row = cur.fetchone()
+                        cnt = int(cnt_row[0]) if cnt_row else 0
                         chosen_table = candidate_t
                         sample_count = cnt
                         break
-            conn.close()
             if not chosen_table:
                 return
             seen_dbs.add(real_db)
             discovered.append({
-                "id": re.sub(r"[^a-z0-9_]+", "_", mount_path.name.lower()).strip("_") or "library",
-                "name": mount_path.name,
+                "id": ("mpc" if is_active and chosen_table == "samples" and not discovered
+                       else "library_" + hashlib.sha256(os.fsencode(real_db)).hexdigest()[:12]),
+                "name": mount_path.name or mount_path.anchor,
                 "mount_path": str(mount_path.resolve()),
                 "db_path": real_db,
                 "table_name": chosen_table,
@@ -517,36 +526,22 @@ def discover_mounted_audio_libraries(active_root: str = "") -> list[dict]:
             pass
 
     if active_root:
-        act_p = Path(active_root)
+        act_p = Path(active_root).resolve()
         act_db = Path(database_path(active_root))
         if act_db.is_file():
             _inspect_candidate_db(act_db, act_p, is_active=True)
 
-    # Escanear puntos de montaje estándar multiplataforma (/Volumes en macOS, /media y /mnt en Linux)
-    mount_Numeric_roots = [Path("/Volumes"), Path("/media"), Path("/mnt")]
-    for m_root in mount_Numeric_roots:
-        if not m_root.is_dir():
-            continue
+    for volume in mounts if mounts is not None else mounted_volume_paths():
+        is_active = bool(active_root and volume.resolve() == Path(active_root).resolve())
+        _inspect_candidate_db(database_path(volume), volume, is_active)
         try:
-            children = sorted(m_root.iterdir())
+            for index_dir in sorted(volume.glob("_INDEX_*")):
+                if index_dir.is_dir() and not index_dir.is_symlink():
+                    for db_file in sorted(index_dir.glob("*.db")):
+                        if not db_file.is_symlink():
+                            _inspect_candidate_db(db_file, volume, is_active)
         except OSError:
             continue
-        for vol in children:
-            if not vol.is_dir() or vol.name.startswith("."):
-                continue
-            is_act = bool(active_root and vol.resolve() == Path(active_root).resolve())
-            # 1. Estándar BeatOS: <vol>/BeatOS/data/mpc_sample.db
-            b_db = vol / "BeatOS" / "data" / "mpc_sample.db"
-            if b_db.is_file():
-                _inspect_candidate_db(b_db, vol, is_active=is_act)
-            # 2. Índices de audioteca / producción: <vol>/_INDEX_*/*.db
-            try:
-                for idx_dir in vol.glob("_INDEX_*"):
-                    if idx_dir.is_dir():
-                        for db_f in idx_dir.glob("*.db"):
-                            _inspect_candidate_db(db_f, vol, is_active=is_act)
-            except OSError:
-                pass
     _DISCOVERED_LIBS_CACHE["timestamp"] = now
     _DISCOVERED_LIBS_CACHE["root"] = active_root
     _DISCOVERED_LIBS_CACHE["libs"] = list(discovered)
@@ -589,7 +584,7 @@ def read_ecosystem_theme(root_dir: str) -> str | None:
     return None
 
 
-def detect_cerebro_os(root_dir: str = "", port: int | None = None) -> dict:
+def detect_cerebro_os(root_dir: str = "", port: int | None = None, *, mounted_libraries=None) -> dict:
     """Detecta si Cerebro OS (~/.mlx-stack) está instalado en el sistema anfitrión y sincroniza el puente bidireccional."""
     if os.environ.get("BEATOS_FORCE_HIDE_CEREBRO") == "1":
         return {"installed": False, "venv_ready": False, "mlx_server_online": False, "dashboard_online": False, "capabilities": [], "mounted_libraries": []}
@@ -600,8 +595,9 @@ def detect_cerebro_os(root_dir: str = "", port: int | None = None) -> dict:
     venv_ready = venv_py.is_file() and os.access(venv_py, os.X_OK)
     mlx_online = _probe_local_port(8080) if installed else False
     dash_online = _probe_local_port(3050) if installed else False
-    mounted_libs = discover_mounted_audio_libraries(root_dir) if installed else []
+    mounted_libs = (mounted_libraries if mounted_libraries is not None else discover_mounted_audio_libraries(root_dir)) if installed else []
 
+    bridge_synced = False
     if installed and root_dir and port is not None:
         try:
             bridge_file = mlx_root / "beatos_bridge.json"
@@ -629,11 +625,13 @@ def detect_cerebro_os(root_dir: str = "", port: int | None = None) -> dict:
                 ],
             }
             write_state_json(bridge_file, bridge_payload)
+            bridge_synced = True
         except OSError:
             pass
 
     return {
         "installed": bool(installed),
+        "bridge_synced": bridge_synced,
         "venv_ready": bool(venv_ready),
         "mlx_server_online": bool(mlx_online),
         "dashboard_online": bool(dash_online),
@@ -1612,6 +1610,27 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             return False
         return True
 
+    def run_maintenance(self, operation):
+        with TASK_LOCK:
+            if TASK_STATE["running"]:
+                return {"success": False, "error": "Ya hay una tarea de mantenimiento en curso.", "busy": True}
+            TASK_STATE["running"] = True
+        try:
+            return operation()
+        except (OSError, subprocess.SubprocessError) as exc:
+            return {"success": False, "error": str(exc)}
+        finally:
+            with TASK_LOCK:
+                TASK_STATE["running"] = False
+
+    def send_api_json(self, data, status=200):
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_cors_headers()
+        self.end_headers()
+        self.wfile.write(self._api_json_dumps(data, ensure_ascii=False).encode("utf-8"))
+
     def do_OPTIONS(self):
         if not self.allow_local_request():
             return
@@ -1628,7 +1647,10 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
 
         if clean_path == "/beatos-online.js":
             port = self.server.server_address[1]
-            payload_js = f'window.__BEATOS_LOCAL_SERVER_ONLINE = "http://127.0.0.1:{port}";\n'.encode("utf-8")
+            payload_js = (
+                f'window.__BEATOS_LOCAL_SERVER_ONLINE = "http://127.0.0.1:{port}";\n'
+                f'window.beatosProbeKey = "{library_identity(self.server.root_dir)}";\n'
+            ).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/javascript; charset=utf-8")
             self.send_header("Content-Length", str(len(payload_js)))
@@ -1646,6 +1668,10 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
             data = get_system_status(self.server.root_dir, self.server.server_port)
             self.wfile.write(self._api_json_dumps(data, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif clean_path == "/api/ecosystem":
+            self.send_api_json({"success": True, "inventory": dashboard_inventory(self.server.root_dir, refresh=True)})
             return
 
         elif clean_path == "/api/cerebro_status":
@@ -2428,21 +2454,13 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             return
 
         elif clean_api == "/api/clean_metadata":
-            res = run_clean_metadata(self.server.root_dir)
-            self.send_response(200 if res.get("success") else 500)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.send_cors_headers()
-            self.end_headers()
-            self.wfile.write(self._api_json_dumps(res, ensure_ascii=False).encode("utf-8"))
+            res = self.run_maintenance(lambda: run_clean_metadata(self.server.root_dir))
+            self.send_api_json(res, 200 if res["success"] else 409 if res.get("busy") else 500)
             return
 
         elif clean_api == "/api/sync_dashboard":
-            res = run_sync_dashboard()
-            self.send_response(200 if res.get("success") else 500)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.send_cors_headers()
-            self.end_headers()
-            self.wfile.write(self._api_json_dumps(res, ensure_ascii=False).encode("utf-8"))
+            res = self.run_maintenance(lambda: run_sync_dashboard(self.server.root_dir, self.server.server_port))
+            self.send_api_json(res, 200 if res["success"] else 409 if res.get("busy") else 500)
             return
 
         elif clean_api == "/api/load_project":
@@ -2647,6 +2665,14 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
         if clean_path == CATALOG_REL:
             file_root = os.path.join(self.server.root_dir, 'BeatOS', 'data')
             clean_path = 'catalogo.html'
+        elif clean_path == "ecosystem" or (
+            clean_path == MASTER_DASHBOARD_REL and not (Path(self.server.root_dir) / MASTER_DASHBOARD_REL).is_file()
+        ):
+            file_root = os.path.join(os.path.dirname(__file__), "docs")
+            clean_path = "MASTER_ECOSISTEMA_DISCOS.html"
+        elif clean_path == "assets/beatos-maintenance.js":
+            file_root = os.path.join(os.path.dirname(__file__), "docs", "assets")
+            clean_path = "beatos-maintenance.js"
         elif clean_path == MASTER_DASHBOARD_REL or (
             clean_path == 'catalogo_universal.html'
             and os.path.isfile(os.path.join(self.server.root_dir, MASTER_DASHBOARD_REL))
@@ -2782,13 +2808,38 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
 
 def existing_library_root(port):
     try:
-        with urllib.request.urlopen(f'http://127.0.0.1:{port}/api/status', timeout=2) as response:
+        with urllib.request.urlopen(f'http://127.0.0.1:{port}/api/status', timeout=0.5) as response:
             state = json.loads(response.read(65536))
         return Path(state['root_dir']).resolve() if state.get('status') == 'online' else None
     except (OSError, ValueError, KeyError):
         return None
 
-def run_server(custom_path: str | None = None, port: int | None = None, auto_open: bool = True):
+def write_connection_hint(root: str, port: int) -> None:
+    """The file view uses this per-library port only as a navigation hint."""
+    path = Path(root) / "BeatOS/data/beatos-connection.js"
+    if not path.parent.is_dir():
+        return
+    try:
+        # A token derived from the root lets a stale hint reject a different library on the same port.
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent,
+                                         prefix=".beatos-connection.", delete=False) as stream:
+            pending = Path(stream.name)
+            try:
+                data = {"port": port, "key": library_identity(root)}
+                stream.write(f"window.beatosConnection = {json.dumps(data)};\n")
+                stream.close()
+                pending.replace(path)
+            finally:
+                pending.unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
+def library_identity(root: str) -> str:
+    return hashlib.sha256(os.fsencode(os.path.normcase(str(Path(root).resolve())))).hexdigest()
+
+
+def run_server(custom_path: str | None = None, port: int | None = None, auto_open: bool = True, dashboard: bool = False):
     def emit(message):
         print(translate_text(str(message), (os.environ.get("BEATOS_LANG") or "en")))
 
@@ -2817,8 +2868,14 @@ def run_server(custom_path: str | None = None, port: int | None = None, auto_ope
         elif os.path.isfile(os.path.join(script_dir, "catalogo_mpc_sample.html")):
             catalog_rel = "catalogo_mpc_sample.html"
 
-    if port != desired_port and existing_library_root(desired_port) == Path(target_root):
-        existing_url = f"http://127.0.0.1:{desired_port}/" + (catalog_rel if catalog_rel else "")
+    if dashboard:
+        catalog_rel = "ecosystem"
+
+    existing_port = next((candidate for candidate in range(desired_port, port)
+                          if existing_library_root(candidate) == Path(target_root)), None)
+    if existing_port is not None:
+        existing_url = f"http://127.0.0.1:{existing_port}/" + (catalog_rel or "")
+        write_connection_hint(target_root, existing_port)
         if auto_open:
             emit(f"✔ El servidor BeatOS ya está activo en segundo plano en {existing_url} — abriendo navegador...")
             try:
@@ -2851,6 +2908,7 @@ def run_server(custom_path: str | None = None, port: int | None = None, auto_ope
     server_address = ("127.0.0.1", port)
     httpd = HTTPServer(server_address, MPCAudioRequestHandler)
     httpd.root_dir = target_root
+    write_connection_hint(target_root, port)
 
     if auto_open:
         def open_browser():
@@ -2877,5 +2935,6 @@ if __name__ == "__main__":
     parser.add_argument("path", nargs="?", default=None, help="Directorio raíz de la tarjeta o base")
     parser.add_argument("--port", "-p", type=int, default=None, help="Puerto HTTP (def: 8888)")
     parser.add_argument("--no-browser", action="store_true", help="No abrir automáticamente el navegador")
+    parser.add_argument("--dashboard", action="store_true", help="Open the ecosystem dashboard")
     args = parser.parse_args()
-    run_server(args.path, port=args.port, auto_open=not args.no_browser)
+    run_server(args.path, port=args.port, auto_open=not args.no_browser, dashboard=args.dashboard)

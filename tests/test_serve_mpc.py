@@ -338,6 +338,66 @@ class ServerSecurityTests(unittest.TestCase):
             self.assertFalse(pad1['missing'])
             self.assertEqual(pad1['rel_path'], 'Expansions/DemoPack/Demo Kit_[ProjectData]/Kick.wav')
 
+    def test_dashboard_refresh_and_sync_discover_external_volumes_without_cerebro(self):
+        import json
+        import sqlite3
+        from unittest.mock import patch
+        with self.server() as (url, parent):
+            root = parent / "library"
+            external = parent / "Producer's USB ñ"
+            index = external / "_INDEX_AUDIO" / "arbitrary-name.db"
+            index.parent.mkdir(parents=True)
+            with contextlib.closing(sqlite3.connect(index)) as connection:
+                connection.execute("CREATE TABLE tracks (title TEXT, relative_path TEXT)")
+                connection.execute("INSERT INTO tracks VALUES (?, ?)", ("Break", "Break.wav"))
+                connection.commit()
+            before = index.read_bytes()
+            with patch.object(serve_mpc, "mounted_volume_paths", return_value=[external]), \
+                 patch.dict("os.environ", {"BEATOS_FORCE_HIDE_CEREBRO": "1"}):
+                for endpoint in ("/ecosystem", "/BeatOS/docs/MASTER_ECOSISTEMA_DISCOS.html"):
+                    status, html = self.request(url + endpoint)
+                    self.assertEqual(status, 200)
+                    self.assertIn(b"Master Ecosystem", html)
+                self.assertEqual(self.request(url + "/BeatOS/docs/assets/beatos-maintenance.js")[0], 200)
+                status, raw = self.request(url + "/api/ecosystem")
+                self.assertEqual(status, 200, raw)
+                inventory = json.loads(raw)["inventory"]
+                self.assertEqual(len(inventory["volumes"]), 2)
+                self.assertEqual(inventory["libraries"][0]["sample_count"], 1)
+                self.assertEqual(inventory["libraries"][0]["mount_path"], str(external.resolve()))
+                status, raw = self.request(url + "/api/sync_dashboard", data=b"", method="POST", headers={"Origin": url})
+                self.assertEqual(status, 200, raw)
+                snapshot = root / "BeatOS/config/ecosystem_inventory.json"
+                self.assertFalse(json.loads(snapshot.read_text())["cerebro_installed"])
+                self.assertEqual(self.request(url + "/BeatOS/config/ecosystem_inventory.json")[0], 403)
+                self.assertFalse((external / "MASTER_ECOSISTEMA_DISCOS.html").exists())
+                self.assertEqual(before, index.read_bytes())
+
+    def test_reindex_updates_catalog_and_reports_completion(self):
+        import json
+        import sqlite3
+        import time
+        with self.server() as (url, parent):
+            root = parent / "library"
+            with wave.open(str(root / "Kick prueba.wav"), "wb") as audio:
+                audio.setparams((1, 2, 44100, 0, "NONE", "not compressed"))
+                audio.writeframes(struct.pack("<h", 1000) * 1024)
+            status, raw = self.request(url + "/api/reindex", data=b"", method="POST", headers={"Origin": url})
+            self.assertEqual(status, 200, raw)
+            self.assertTrue(json.loads(raw)["success"])
+            deadline = time.monotonic() + 15
+            while True:
+                _, raw = self.request(url + "/api/task_status")
+                task = json.loads(raw)
+                if not task["running"]:
+                    break
+                self.assertLess(time.monotonic(), deadline)
+                time.sleep(0.04)
+            self.assertTrue(task["success"], task["logs"])
+            self.assertIn(b"Kick prueba.wav", self.request(url + "/")[1])
+            with contextlib.closing(sqlite3.connect(root / "BeatOS/data/mpc_sample.db")) as db:
+                self.assertEqual(db.execute("SELECT COUNT(*) FROM samples").fetchone()[0], 1)
+
     def test_cerebro_analyze_long_paths_and_create_expansion_syncs_catalog(self):
         import base64
         import json
