@@ -589,7 +589,7 @@ def read_ecosystem_theme(root_dir: str) -> str | None:
     return None
 
 
-def detect_cerebro_os(root_dir: str = "", port: int = 8888) -> dict:
+def detect_cerebro_os(root_dir: str = "", port: int | None = None) -> dict:
     """Detecta si Cerebro OS (~/.mlx-stack) está instalado en el sistema anfitrión y sincroniza el puente bidireccional."""
     if os.environ.get("BEATOS_FORCE_HIDE_CEREBRO") == "1":
         return {"installed": False, "venv_ready": False, "mlx_server_online": False, "dashboard_online": False, "capabilities": [], "mounted_libraries": []}
@@ -602,7 +602,7 @@ def detect_cerebro_os(root_dir: str = "", port: int = 8888) -> dict:
     dash_online = _probe_local_port(3050) if installed else False
     mounted_libs = discover_mounted_audio_libraries(root_dir) if installed else []
 
-    if installed and root_dir:
+    if installed and root_dir and port is not None:
         try:
             bridge_file = mlx_root / "beatos_bridge.json"
             bridge_payload = {
@@ -1028,7 +1028,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
 
     return {
         "success": True,
-        "cerebro_os": detect_cerebro_os(root_dir, port),
+        "cerebro_os": detect_cerebro_os(root_dir),
         "detected_style": style_info.get("style", "Hip-Hop / Electrónica"),
         "style_id": style_id,
         "recommended_bpm": inferred_bpm,
@@ -1489,7 +1489,7 @@ def get_system_status(root_dir: str, port: int = 8888):
         "disk_free_gb": round(disk_stat.free / (1024**3), 2) if disk_stat else 0,
         "disk_total_gb": round(disk_stat.total / (1024**3), 2) if disk_stat else 0,
         "task_state": TASK_STATE,
-        "cerebro_os": detect_cerebro_os(root_dir),
+        "cerebro_os": detect_cerebro_os(root_dir, port),
     }
 
 def find_card_root(start_dir: str) -> str:

@@ -117,13 +117,16 @@ window.addEventListener('load', () => {
       localeAttrs.every(x => x.node.getAttribute(x.attr) === x.en);
     setLanguage('es');
     setTimeout(() => {
-      const spanishOK = recording.textContent.trim() === '⏺ Grabar backup' &&
-        deviceGuide.textContent.includes('Enviar: WRITE + SOUND + PLAY') &&
-        backupInfoText().includes('Datos del módem NO verificados.') &&
-        document.documentElement.lang === 'es' &&
-        localeCookie() === 'es' &&
-        localeNodes.every(x => x.node.nodeValue.trim() === x.es) &&
-        localeAttrs.every(x => x.node.getAttribute(x.attr) === x.es);
+      const spanishDiagnostics = [
+        recording.textContent.trim() === '⏺ Grabar backup',
+        deviceGuide.textContent.includes('Enviar: WRITE + SOUND + PLAY'),
+        backupInfoText().includes('Datos del módem NO verificados.'),
+        document.documentElement.lang === 'es',
+        localeCookie() === 'es',
+        ...localeNodes.filter(x => x.node.nodeValue.trim() !== x.es).map(x => x.es),
+        ...localeAttrs.filter(x => x.node.getAttribute(x.attr) !== x.es).map(x => x.es)
+      ];
+      const spanishOK = spanishDiagnostics.every(check => check === true);
       setLanguage('en');
       setTimeout(() => {
         const englishOK = recording.textContent.trim() === '⏺ Record backup' &&
@@ -137,14 +140,15 @@ window.addEventListener('load', () => {
         const filenameOK = probe.textContent === 'MyCustom-Sample_90bpm.wav';
         const themeCard = document.getElementById('themeCard_astro1deep-obsidian');
         setEcosystemTheme('astro1deep-obsidian', false);
-        const styles = getComputedStyle(document.body);
+        const styles = getComputedStyle(document.documentElement);
         const themeOK = themeCard.getAttribute('aria-pressed') === 'true' &&
           document.documentElement.dataset.theme === 'astro1deep-obsidian' &&
           localStorage.getItem('ecosystem_theme') === 'astro1deep-obsidian' &&
-          styles.backgroundColor === 'rgb(8, 9, 10)' && styles.color === 'rgb(244, 245, 247)';
+          styles.getPropertyValue('--bg-dark').trim() === '#08090a' &&
+          styles.getPropertyValue('--text-primary').trim() === '#f4f5f7';
         reporter.textContent = initialEnglish && spanishOK && englishOK && filenameOK && themeOK
           ? 'BEATOS_BROWSER_ES_EN_PASS'
-          : 'FAIL:initial=' + initialEnglish + ',es=' + spanishOK + ',en=' + englishOK + ',filename=' + filenameOK + ',theme=' + themeOK;
+          : 'FAIL:initial=' + initialEnglish + ',es=' + spanishOK + ',en=' + englishOK + ',filename=' + filenameOK + ',theme=' + themeOK + ',es-diagnostic=' + spanishDiagnostics;
       }, 250);
     }, 250);
   } catch (error) {reporter.textContent = 'FAIL:' + error.message;}
