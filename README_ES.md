@@ -68,6 +68,7 @@ Utiliza la opción **1** para indexar y **2** para abrir el servidor local. En u
 | Modelos y limitaciones | [Compatibilidad](docs/COMPATIBILIDAD_HARDWARE.md) | [Compatibility](docs/en/COMPATIBILIDAD_HARDWARE.md) |
 | API, SQLite y CLI | [Referencia técnica](docs/REFERENCIA_TECNICA.md) | [Technical reference](docs/en/REFERENCIA_TECNICA.md) |
 | Temas específicos | [Wiki en español](docs/wiki/Home.md) | [English Wiki](docs/wiki/Home_EN.md) |
+| Marca y diseño | [Paleta y tema del ecosistema](docs/branding/ECOSYSTEM_PALETTE_ES.md) | [Palette & ecosystem theme](docs/branding/ECOSYSTEM_PALETTE.md) |
 
 ## Seguridad y pruebas
 
