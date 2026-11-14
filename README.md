@@ -77,6 +77,7 @@ Consult the [advanced per-device export and validation guide](docs/en/HARDWARE_E
 | Compatibility and limitations | [Device compatibility](docs/en/COMPATIBILIDAD_HARDWARE.md) | [Compatibilidad de hardware](docs/COMPATIBILIDAD_HARDWARE.md) |
 | Indexing, SQLite and HTTP API | [Technical reference](docs/en/REFERENCIA_TECNICA.md) | [Referencia técnica](docs/REFERENCIA_TECNICA.md) |
 | Topic-by-topic Wiki | [English wiki](docs/wiki/Home_EN.md) | [Wiki en español](docs/wiki/Home.md) |
+| Branding & design | [Palette & ecosystem theme](docs/branding/ECOSYSTEM_PALETTE.md) | [Paleta y tema](docs/branding/ECOSYSTEM_PALETTE_ES.md) |
 
 ## Reliability and safety
 
