@@ -578,11 +578,14 @@ class ServerSecurityTests(unittest.TestCase):
         self.assertEqual(hkb.detect_musical_style('Tango_Bandoneon_Vals')['id'], 'tango_vals')
         self.assertEqual(hkb.detect_musical_style('Drumless_Alchemist_Soul_Cut')['id'], 'drumless')
         self.assertEqual(hkb.detect_musical_style('Psych_Library_Score_KPM')['id'], 'psych_library')
+        self.assertEqual(hkb.detect_musical_style('Lowrider_Oldies_Doo_Wop_12_8')['id'], 'oldies')
+        self.assertEqual(hkb.detect_musical_style('Sweet_Soul_Oldies_50s')['id'], 'oldies')
         self.assertEqual(hkb.infer_kit_bpm('Bossa_Nova_Guitar_Loop'), 84.0)
         self.assertEqual(hkb.infer_kit_bpm('Cumbia_Son_Cubano_Montuno'), 88.0)
         self.assertEqual(hkb.infer_kit_bpm('Tango_Bandoneon_Vals'), 82.0)
         self.assertEqual(hkb.infer_kit_bpm('Drumless_Alchemist_Soul_Cut'), 78.0)
         self.assertEqual(hkb.infer_kit_bpm('Psych_Library_Score_KPM'), 86.0)
+        self.assertEqual(hkb.infer_kit_bpm('Lowrider_Oldies_Doo_Wop_12_8'), 84.0)
 
         sr = 44100
 
@@ -656,6 +659,21 @@ class ServerSecurityTests(unittest.TestCase):
             self.assertGreaterEqual(rhy_jazz['rhythm_analysis']['swing_pct'], 57.0)
             self.assertEqual(rhy_jazz['hiphop_adaptation']['target_bpm'], 88.0)
 
+            # 4b. Synthetic 12/8 Oldies Doo-Wop / Lowrider Sweet Soul Loop at 72 BPM -> adapt to Lo-Fi 84 BPM
+            oldies_12_8 = samples_dir / 'Lowrider_Oldies_Doo_Wop_12_8.wav'
+            _synth_pulse_wav(oldies_12_8, beat_sec=60.0 / 72.0, pattern=[1.0, 0.45, 0.72, 0.45], freq_hz=440.0, offbeat_pos=0.667)
+            rhy_oldies = hkb.analyze_rhythmic_pattern_and_hiphop_adaptation(oldies_12_8, style_hint='Oldies Lowrider 84')
+            self.assertEqual(rhy_oldies['rhythm_analysis']['time_signature'], '12/8')
+            self.assertEqual(rhy_oldies['rhythm_analysis']['timbre_profile'], 'vintage_oldies')
+            self.assertIn('12/8', rhy_oldies['rhythm_analysis']['clave_pattern'])
+            self.assertEqual(rhy_oldies['hiphop_adaptation']['recommended_chop_mode'], 'phrase_3_4_to_4_4')
+            self.assertEqual(rhy_oldies['hiphop_adaptation']['target_bpm'], 84.0)
+            self.assertIn('12/8', rhy_oldies['hiphop_adaptation']['meter_bridge_note'])
+            oldies_chop = hkb.autochop_sample_to_16_pads(oldies_12_8, output_root=root, max_slices=16, kit_name='Oldies_Chops')
+            self.assertGreaterEqual(oldies_chop['slices_count'], 8)
+            self.assertEqual(oldies_chop['applied_chop_mode'], 'phrase_3_4_to_4_4')
+            self.assertEqual(oldies_chop['pads'][0]['sound_type'], 'MELODIC_LOOP')
+
             # 5. Test live endpoints /api/cerebro_analyze and /api/cerebro_autochop
         with self.server() as (url, parent):
             srv_root = parent / 'library'
@@ -722,3 +740,22 @@ class ServerSecurityTests(unittest.TestCase):
             self.assertEqual(data_c2['recommended_bpm'], 90.0)
             self.assertEqual(data_c2['hiphop_adaptation']['target_bpm'], 90.0)
             self.assertTrue(all(p.get('slice_role') for p in data_c2['pads']))
+
+            # 7. Oldies 12/8 endpoint fallback & rack analysis check
+            status_o, raw_o = self.request(
+                url + '/api/cerebro_analyze',
+                method='POST',
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+                data=json.dumps({
+                    'kit_name': 'Lowrider_Oldies_Doo_Wop_12_8',
+                    'prompt': 'Oldies 12/8 Doo-Wop a Lo-Fi',
+                    'pads': [{'pad': 1, 'sample_name': 'Sweet_Soul_Oldies_50s', 'sound_type': 'MELODIC_LOOP'}],
+                }).encode('utf-8'),
+            )
+            self.assertEqual(status_o, 200, raw_o)
+            data_o = json.loads(raw_o.decode('utf-8'))
+            self.assertEqual(data_o['style_id'], 'oldies')
+            self.assertIsNotNone(data_o.get('rhythm_analysis'))
+            self.assertEqual(data_o['rhythm_analysis']['time_signature'], '12/8')
+            self.assertEqual(data_o['hiphop_adaptation']['target_bpm'], 84.0)
+            self.assertEqual(data_o['hiphop_adaptation']['recommended_chop_mode'], 'phrase_3_4_to_4_4')

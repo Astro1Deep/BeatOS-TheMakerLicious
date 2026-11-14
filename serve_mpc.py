@@ -845,12 +845,12 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
 
     inferred_bpm = kit_mod.infer_kit_bpm(combined_text, fallback=style_info.get("bpm", current_tempo)) if kit_mod else current_tempo
 
-    # Análisis de Patrón Rítmico, Compás (4/4, 3/4, 6/8, 5/4) y Adaptación Hip-Hop / Lo-Fi
+    # Análisis de Patrón Rítmico, Compás (4/4, 3/4, 6/8, 12/8, 5/4) y Adaptación Hip-Hop / Lo-Fi
     rhythm_analysis = None
     hiphop_adaptation = None
     adapt_mode = str(payload.get("adapt_mode") or "auto").strip().lower()
     crate_digging_styles = (
-        "bolero", "soul_vintage", "jazz_hop", "lofi", "boombap", "rnb_soul", "funk_jazz",
+        "bolero", "oldies", "soul_vintage", "jazz_hop", "lofi", "boombap", "rnb_soul", "funk_jazz",
         "drumless", "bossa_samba", "cumbia_son", "tango_vals", "psych_library",
     )
     is_crate_digging_style = style_id in crate_digging_styles
@@ -871,13 +871,17 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
         elif is_crate_digging_style:
             src_b = round(float(inferred_bpm or style_info.get("bpm") or 86.0), 1)
             mode_bpm_map = {"lofi_chill": 82.0, "boombap_classic": 90.0, "dilla_jazzhop": 86.0, "drumless_alchemist": 78.0}
-            default_tgt = 78.0 if style_id == "drumless" else (82.0 if style_id == "tango_vals" else (84.0 if style_id in ("bolero", "bossa_samba") else (86.0 if style_id in ("soul_vintage", "lofi", "psych_library") else 88.0)))
+            default_tgt = 78.0 if style_id == "drumless" else (82.0 if style_id == "tango_vals" else (84.0 if style_id in ("bolero", "bossa_samba", "oldies") else (86.0 if style_id in ("soul_vintage", "lofi", "psych_library") else 88.0)))
             tgt_b = round(float(mode_bpm_map.get(adapt_mode, default_tgt)), 1)
             eff_b = round(src_b / 2.0, 1) if src_b >= 132.0 else src_b
             half_applied = bool(src_b >= 132.0)
             low_comb = combined_text.lower()
-            ts_fb = "3/4" if any(k in low_comb for k in ("vals", "waltz", "3/4")) else ("6/8" if "6/8" in low_comb else ("5/4" if "5/4" in low_comb else "4/4"))
-            swing_fb = 58.0 if style_id in ("soul_vintage", "jazz_hop", "bossa_samba") else 54.0
+            ts_fb = (
+                "3/4" if any(k in low_comb for k in ("vals", "waltz", "3/4"))
+                else ("12/8" if (re.search(r"(?:^|[\W_])12[/_\-]8(?:$|[\W_])", low_comb) or ("4/4" not in low_comb and any(k in low_comb for k in ("doo wop", "doo-wop", "doowop", "lowrider", "oldies"))))
+                      else ("6/8" if "6/8" in low_comb else ("5/4" if "5/4" in low_comb else "4/4")))
+            )
+            swing_fb = 60.0 if style_id == "oldies" or ts_fb == "12/8" else (58.0 if style_id in ("soul_vintage", "jazz_hop", "bossa_samba") else 54.0)
             if hasattr(kit_mod, "_compute_hiphop_adaptation_profile") and hasattr(kit_mod, "_build_adaptation_profiles_and_sequencer"):
                 main_prof = kit_mod._compute_hiphop_adaptation_profile(adapt_mode, "Hip-Hop / Lo-Fi", eff_b, tgt_b, half_applied)
                 profiles, seq_guide = kit_mod._build_adaptation_profiles_and_sequencer(
@@ -895,6 +899,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
                 profiles, seq_guide = [], {}
             clave_map = {
                 "bolero": "Tresillo / Cinquillo Cubano (3:3:2)",
+                "oldies": "Arpegio Tresillo 12/8 (Doo-Wop / Lowrider Oldies)" if ts_fb == "12/8" else "Backbeat Shuffle / Motown 60s (2 y 4)",
                 "bossa_samba": "Clave Bossa / Samba (3-2 / Partido Alto)",
                 "cumbia_son": "Clave Son / Cumbia (3-2 & Contratiempo)",
                 "tango_vals": "Vals / Ternario (1-2-3)" if ts_fb == "3/4" else "Tango Marcato (4/4)",
@@ -907,25 +912,27 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
                 "time_signature": ts_fb,
                 "groove_pattern": (
                     "Bolero Clásico / Tresillo Melódico" if style_id == "bolero"
-                    else ("Soul Swing Vintage / Backbeat" if style_id == "soul_vintage" else ("Jazz Swing / Chord Phrasing" if style_id == "jazz_hop" else f"{style_info.get('style', 'Hip-Hop / Lo-Fi')}"))
+                    else ("Doo-Wop / Sweet Soul Ballad (12/8)" if (style_id == "oldies" and ts_fb == "12/8")
+                          else ("Lowrider Oldies / Backbeat Shuffle" if style_id == "oldies"
+                                else ("Soul Swing Vintage / Backbeat" if style_id == "soul_vintage" else ("Jazz Swing / Chord Phrasing" if style_id == "jazz_hop" else f"{style_info.get('style', 'Hip-Hop / Lo-Fi')}"))))
                 ),
                 "clave_pattern": clave_map.get(style_id, "Backbeat 2 y 4 (4/4)"),
                 "swing_pct": swing_fb,
                 "rubato_index": 0.22 if style_id in ("bolero", "drumless", "tango_vals") else 0.08,
                 "onset_count": 0,
                 "duration_sec": 0.0,
-                "timbre_profile": "warm_analog",
-                "timbre_label": "Orgánico / Referencia de Kit",
+                "timbre_profile": "vintage_oldies" if style_id == "oldies" else "warm_analog",
+                "timbre_label": "Cinta Vintage 50s/60s (Oldies)" if style_id == "oldies" else "Orgánico / Referencia de Kit",
             }
             hiphop_adaptation = {
-                "target_style": "Hip-Hop / Lo-Fi" if style_id in ("bolero", "lofi", "bossa_samba", "drumless") else "Boom Bap & Lo-Fi",
+                "target_style": "Hip-Hop / Lo-Fi" if style_id in ("bolero", "oldies", "lofi", "bossa_samba", "drumless") else "Boom Bap & Lo-Fi",
                 "adapt_mode": adapt_mode,
                 "target_bpm": main_prof["target_bpm"],
                 "stretch_ratio": main_prof["stretch_ratio"],
                 "repitch_semitones": main_prof["repitch_semitones"],
                 "repitch_fine_tune_cents": main_prof["repitch_fine_tune_cents"],
                 "half_time_applied": half_applied,
-                "recommended_chop_mode": "phrase_3_4_to_4_4" if ts_fb in ("3/4", "6/8") else "transients",
+                "recommended_chop_mode": "phrase_3_4_to_4_4" if ts_fb in ("3/4", "6/8", "12/8") else "transients",
                 "adaptation_profiles": profiles,
                 "sequencer_guide": seq_guide,
                 "meter_bridge_note": (
@@ -935,7 +942,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
             }
 
     if hiphop_adaptation and (
-        style_id in ("bolero", "soul_vintage", "jazz_hop", "drumless", "bossa_samba", "cumbia_son", "tango_vals", "psych_library")
+        style_id in ("bolero", "oldies", "soul_vintage", "jazz_hop", "drumless", "bossa_samba", "cumbia_son", "tango_vals", "psych_library")
         or adapt_mode in ("lofi_chill", "boombap_classic", "dilla_jazzhop", "drumless_alchemist")
     ):
         inferred_bpm = float(hiphop_adaptation["target_bpm"])
@@ -1053,7 +1060,7 @@ def build_cerebro_smart_kit(root_dir: str, payload: dict) -> dict:
     raw_words = [w.lower() for w in re.findall(r"[a-zA-Z0-9#]+", prompt) if len(w) >= 3 and w.lower() not in stop_words and not w.isdigit()]
 
     is_organic_sampling = style_id in (
-        "bolero", "soul_vintage", "jazz_hop", "lofi", "boombap",
+        "bolero", "oldies", "soul_vintage", "jazz_hop", "lofi", "boombap",
         "drumless", "bossa_samba", "cumbia_son", "tango_vals", "psych_library",
     ) or adapt_mode in ("lofi_chill", "boombap_classic", "dilla_jazzhop", "drumless_alchemist")
     if is_organic_sampling:
@@ -1097,6 +1104,7 @@ def build_cerebro_smart_kit(root_dir: str, payload: dict) -> dict:
 
     style_kw_map = {
         "bolero": ["bolero", "guitar", "requinto", "nylon", "acoustic", "bongo", "conga", "maraca", "latin", "ballad", "lofi", "dusty", "vinyl", "boom bap"],
+        "oldies": ["oldies", "doo-wop", "lowrider", "sweet soul", "motown", "50s", "60s", "vinyl", "warm", "rhodes", "vocal", "strings", "boom bap", "lofi"],
         "soul_vintage": ["soul", "motown", "rhodes", "wurlitzer", "organ", "gospel", "brass", "horn", "warm", "vintage", "boom bap", "lofi", "dusty"],
         "jazz_hop": ["jazz", "bossa", "upright", "ride", "brush", "piano", "rhodes", "sax", "horn", "lofi", "chillhop", "boom bap", "vinyl"],
         "lofi": ["lofi", "lo-fi", "chillhop", "dusty", "vinyl", "tape", "rhodes", "warm"],
