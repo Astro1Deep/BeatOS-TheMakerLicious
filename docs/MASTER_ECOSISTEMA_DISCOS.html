@@ -13,11 +13,11 @@
   h2 { margin: 2rem 0 .6rem; }
   p { color: #b8bec8; }
   a { color: #afc8e3; }
-  button, .action { box-sizing: border-box; display: inline-block; font: inherit; color: #f4f5f7;
+  button, select, .action { box-sizing: border-box; display: inline-block; font: inherit; color: #f4f5f7;
     background: #20232a; border: 1px solid #747d8c; padding: .5rem .85rem; border-radius: .45rem; cursor: pointer; }
   button:disabled { opacity: .65; cursor: wait; }
   :focus-visible { outline: 3px solid #afc8e3; outline-offset: 3px; }
-  .cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%, 18rem),1fr)); gap: .8rem; }
+  .cards { margin-top: .75rem; display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%, 18rem),1fr)); gap: .8rem; }
   article, dialog { background: #141519; border: 1px solid #555d6a; border-radius: .65rem; padding: 1rem; }
   article h3 { margin: 0; }
   article p, article li { overflow-wrap: anywhere; margin: .3rem 0; }
@@ -47,6 +47,14 @@ if (location.protocol !== 'file:') document.write('<base href="/BeatOS/docs/">')
   <a id="maintenance" class="action" href="../data/catalogo.html#tab-maintenance">Library maintenance</a>
 </div>
 <h2 id="volumeTitle">Mounted volumes</h2>
+<label for="pillar" id="pillarLabel">Show</label>
+<select id="pillar">
+  <option value="all">All volumes</option>
+  <option value="production">Production</option>
+  <option value="library">Audio libraries</option>
+  <option value="dj">DJing</option>
+  <option value="hardware">Hardware samplers</option>
+</select>
 <div id="volumes" class="cards"></div>
 <dialog id="activity" aria-labelledby="activityTitle">
   <h2 id="activityTitle"></h2>
@@ -64,6 +72,8 @@ const strings = {
     free: 'GB free', empty: 'No compatible SQLite index found', items: 'entries',
     launch: 'Start BeatOS/ABRIR_BEATOS.command on macOS, or select option 2 in installer.py, then check again.',
     complete: 'Completed', failed: 'Could not complete the request', working: 'Working…',
+    pillarLabel: 'Show', all: 'All volumes', production: 'Production', library: 'Audio libraries',
+    dj: 'DJing', hardware: 'Hardware samplers', noMatches: 'No matching mounted volumes.',
     count: 'Volumes detected', bridgeSkipped: 'Cerebro OS is not installed.',
     bridgeOK: 'Local Cerebro bridge updated.', bridgeFail: 'Cerebro is installed, but its bridge could not be written.'
   },
@@ -75,6 +85,8 @@ const strings = {
     free: 'GB libres', empty: 'Sin índice SQLite compatible', items: 'registros',
     launch: 'Inicia BeatOS/ABRIR_BEATOS.command en macOS o elige la opción 2 de installer.py y vuelve a comprobar.',
     complete: 'Completado', failed: 'No se pudo completar la solicitud', working: 'En curso…',
+    pillarLabel: 'Mostrar', all: 'Todos los volúmenes', production: 'Producción', library: 'Bibliotecas de audio',
+    dj: 'DJing', hardware: 'Samplers hardware', noMatches: 'No hay volúmenes montados que coincidan.',
     count: 'Volúmenes detectados', bridgeSkipped: 'Cerebro OS no está instalado.',
     bridgeOK: 'Puente local de Cerebro actualizado.', bridgeFail: 'Cerebro está instalado, pero no se pudo escribir su puente.'
   }
@@ -90,7 +102,8 @@ const t = key => strings[language][key];
 
 function draw() {
   document.documentElement.lang = language;
-  for (const key of ['title','description','catalog','refresh','sync','maintenance','volumeTitle','close']) byId(key).textContent = t(key);
+  for (const key of ['title','description','catalog','refresh','sync','maintenance','volumeTitle','close','pillarLabel']) byId(key).textContent = t(key);
+  for (const option of byId('pillar').options) option.textContent = t(option.value);
   byId('language').textContent = language === 'en' ? 'ES' : 'EN';
   const locale = '?lang=' + language;
   byId('catalog').href = fromFile ? '../data/catalogo.html' + locale : '/' + locale;
@@ -99,7 +112,12 @@ function draw() {
   const cards = byId('volumes');
   cards.replaceChildren();
   if (!inventory) return;
+  const selected = byId('pillar').value;
+  const role = {tracks: 'dj', sound_banks: 'production', ableton_projects: 'production',
+    audio_assets: 'library', libraries: 'library', samples: 'hardware', sp404_hardware: 'hardware'};
   for (const volume of inventory.volumes) {
+    const libraries = inventory.libraries.filter(library => library.mount_path === volume.path);
+    if (selected !== 'all' && !libraries.some(library => role[library.table_name] === selected)) continue;
     const card = document.createElement('article');
     const heading = document.createElement('h3');
     heading.textContent = volume.name + (volume.active ? ' · ' + t('active') : '');
@@ -109,7 +127,6 @@ function draw() {
     space.textContent = (volume.free_bytes / 1e9).toLocaleString(language, {maximumFractionDigits: 1}) + ' ' + t('free');
     card.append(heading, locationLine, space);
     const details = document.createElement('ul');
-    const libraries = inventory.libraries.filter(library => library.mount_path === volume.path);
     for (const library of libraries) {
       const detail = document.createElement('li');
       detail.textContent = library.table_name + ' · ' + library.sample_count.toLocaleString(language) + ' ' + t('items');
@@ -123,6 +140,7 @@ function draw() {
     }
     cards.append(card);
   }
+  if (!cards.children.length) cards.textContent = t('noMatches');
 }
 
 async function refresh(action = 'refresh', show = true) {
@@ -173,6 +191,7 @@ async function refresh(action = 'refresh', show = true) {
   }
 }
 
+byId('pillar').onchange = draw;
 byId('refresh').onclick = () => refresh();
 byId('sync').onclick = () => refresh('sync');
 byId('language').onclick = () => { language = language === 'en' ? 'es' : 'en'; draw(); };

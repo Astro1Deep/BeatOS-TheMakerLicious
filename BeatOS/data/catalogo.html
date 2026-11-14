@@ -6921,7 +6921,8 @@ async function executeLibraryAction(actionType) {
     reload.style.display = actionType === 'status' ? 'none' : 'inline-flex';
   } catch (error) {
     status.textContent = en ? 'Action could not be completed' : 'La acción no se completó';
-    output.textContent += '\n' + error.message;
+    output.textContent += '\n' + (en ? 'Action could not be completed at ' : 'La acción no se completó en ')
+      + location.origin + ': ' + error.message;
   } finally {
     maintenanceBusy = false;
   }
