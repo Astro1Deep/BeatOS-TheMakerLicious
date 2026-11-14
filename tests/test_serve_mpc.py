@@ -573,6 +573,16 @@ class ServerSecurityTests(unittest.TestCase):
 
         self.assertEqual(hkb.detect_musical_style('Cookin_Soul_BoomBap')['id'], 'boombap')
         self.assertEqual(hkb.detect_musical_style('Trap_Soul_Kit')['id'], 'rnb_soul')
+        self.assertEqual(hkb.detect_musical_style('Bossa_Nova_Guitar_Loop')['id'], 'bossa_samba')
+        self.assertEqual(hkb.detect_musical_style('Cumbia_Son_Cubano_Montuno')['id'], 'cumbia_son')
+        self.assertEqual(hkb.detect_musical_style('Tango_Bandoneon_Vals')['id'], 'tango_vals')
+        self.assertEqual(hkb.detect_musical_style('Drumless_Alchemist_Soul_Cut')['id'], 'drumless')
+        self.assertEqual(hkb.detect_musical_style('Psych_Library_Score_KPM')['id'], 'psych_library')
+        self.assertEqual(hkb.infer_kit_bpm('Bossa_Nova_Guitar_Loop'), 84.0)
+        self.assertEqual(hkb.infer_kit_bpm('Cumbia_Son_Cubano_Montuno'), 88.0)
+        self.assertEqual(hkb.infer_kit_bpm('Tango_Bandoneon_Vals'), 82.0)
+        self.assertEqual(hkb.infer_kit_bpm('Drumless_Alchemist_Soul_Cut'), 78.0)
+        self.assertEqual(hkb.infer_kit_bpm('Psych_Library_Score_KPM'), 86.0)
 
         sr = 44100
 
@@ -616,6 +626,20 @@ class ServerSecurityTests(unittest.TestCase):
             self.assertEqual(rhy_bol['hiphop_adaptation']['target_bpm'], 84.0)
             self.assertLess(rhy_bol['hiphop_adaptation']['repitch_semitones'], 0)
             self.assertIn('3/4', rhy_bol['hiphop_adaptation']['meter_bridge_note'])
+            self.assertIn('clave_pattern', rhy_bol['rhythm_analysis'])
+            self.assertIn('timbre_label', rhy_bol['rhythm_analysis'])
+            self.assertEqual(rhy_bol['hiphop_adaptation']['recommended_chop_mode'], 'phrase_3_4_to_4_4')
+            self.assertGreaterEqual(len(rhy_bol['hiphop_adaptation']['adaptation_profiles']), 3)
+            self.assertIn('kick_steps', rhy_bol['hiphop_adaptation']['sequencer_guide'])
+            self.assertTrue(rhy_bol['hiphop_adaptation']['harmonic_info'].get('original_note'))
+            self.assertTrue(rhy_bol['hiphop_adaptation']['harmonic_info'].get('transposed_note'))
+
+            # 2b. Generic filename 3/4 warm cut infers acoustic style automatically
+            generic_cut = samples_dir / 'Sample_Cut_01.wav'
+            _synth_pulse_wav(generic_cut, beat_sec=60.0 / 88.0, pattern=[1.0, 0.38, 0.38], freq_hz=261.63, offbeat_pos=0.0)
+            rhy_gen = hkb.analyze_rhythmic_pattern_and_hiphop_adaptation(generic_cut)
+            self.assertEqual(rhy_gen['rhythm_analysis']['time_signature'], '3/4')
+            self.assertNotEqual(rhy_gen['rhythm_analysis']['acoustic_style_id'], 'standard')
 
             # 3. Synthetic 6/8 Slow Soul Ballad at 68 BPM
             soul_68 = samples_dir / 'Vintage_Soul_Ballad_6_8.wav'
@@ -676,3 +700,25 @@ class ServerSecurityTests(unittest.TestCase):
             self.assertEqual(data_c['hiphop_adaptation']['target_bpm'], 84.0)
             self.assertTrue(all(p['mute_group'] == 6 for p in data_c['pads']))
             self.assertTrue(all(p['sound_type'] == 'MELODIC_LOOP' for p in data_c['pads']))
+            self.assertTrue(all(p.get('slice_role') for p in data_c['pads']))
+
+            # 6. Explicit phrase_3_4_to_4_4 chop_mode + boombap_classic adapt_mode
+            status_c2, raw_c2 = self.request(
+                url + '/api/cerebro_autochop',
+                method='POST',
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+                data=json.dumps({
+                    'rel_path': 'Samples/Requinto_Bolero_Melodia.wav',
+                    'max_slices': 12,
+                    'kit_name': 'Bolero_BoomBap_Bridge',
+                    'chop_mode': 'phrase_3_4_to_4_4',
+                    'adapt_mode': 'boombap_classic',
+                }).encode('utf-8'),
+            )
+            self.assertEqual(status_c2, 200, raw_c2)
+            data_c2 = json.loads(raw_c2.decode('utf-8'))
+            self.assertTrue(data_c2['success'])
+            self.assertEqual(data_c2['applied_chop_mode'], 'phrase_3_4_to_4_4')
+            self.assertEqual(data_c2['recommended_bpm'], 90.0)
+            self.assertEqual(data_c2['hiphop_adaptation']['target_bpm'], 90.0)
+            self.assertTrue(all(p.get('slice_role') for p in data_c2['pads']))

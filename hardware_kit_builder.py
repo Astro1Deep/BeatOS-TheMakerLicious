@@ -706,13 +706,58 @@ UNDERGROUND_GENRE_RULES: List[Dict[str, Any]] = [
         "keywords": ["cookin soul", "marco polo", "just blaze", "ocean boom bap", "boombap", "boom bap", "bodega", "deli drum", "east coast", "borough chops", "backyard jams", "dilla", "pete rock", "premo"],
     },
     {
+        "id": "drumless",
+        "style": "Drumless / Micro-Chop Loop (Alchemist Style)",
+        "bpm": 78.0,
+        "mute_profile": "jazz_funk",
+        "crate_digging_style": "drumless",
+        "target_adaptation": "drumless_alchemist",
+        "keywords": ["drumless", "alchemist", "griselda", "roc marciano", "micro chop", "microchop"],
+    },
+    {
         "id": "bolero",
         "style": "Bolero / Canción Melódica → Lo-Fi & Boom Bap",
         "bpm": 84.0,
         "mute_profile": "jazz_funk",
         "crate_digging_style": "bolero",
         "target_adaptation": "lofi_hiphop",
-        "keywords": ["bolero", "requinto", "vals criollo", "bolero vals", "balada", "romantica", "romántica", "guajira", "son cubano", "panchos", "manzanero", "gatica", "jaramillo", "trio romantico", "trío romántico"],
+        "keywords": ["bolero", "requinto", "bolero vals", "balada", "romantica", "romántica", "panchos", "manzanero", "gatica", "jaramillo", "trio romantico", "trío romántico"],
+    },
+    {
+        "id": "bossa_samba",
+        "style": "Bossa Nova / Samba-Jazz → Lo-Fi & Jazz-Hop",
+        "bpm": 84.0,
+        "mute_profile": "jazz_funk",
+        "crate_digging_style": "bossa",
+        "target_adaptation": "lofi_hiphop",
+        "keywords": ["bossa nova", "bossa", "samba jazz", "mpb", "partido alto", "ipanema", "jobim", "gilberto"],
+    },
+    {
+        "id": "cumbia_son",
+        "style": "Son Cubano / Cumbia / Guajira → Latin Boom Bap",
+        "bpm": 88.0,
+        "mute_profile": "jazz_funk",
+        "crate_digging_style": "cumbia_son",
+        "target_adaptation": "boombap_classic",
+        "keywords": ["son cubano", "guajira", "guaracha", "montuno", "tumbao", "cumbia", "chicha", "descarga", "clave", "tres cubano"],
+    },
+    {
+        "id": "tango_vals",
+        "style": "Tango / Vals Criollo / Milonga → Cinematic Boom Bap",
+        "bpm": 82.0,
+        "mute_profile": "jazz_funk",
+        "crate_digging_style": "tango",
+        "target_adaptation": "lofi_hiphop",
+        "keywords": ["tango", "milonga", "bandoneon", "bandoneón", "piazzolla", "vals criollo", "vals peruano"],
+    },
+    {
+        "id": "psych_library",
+        "style": "70s Library / Psych Rock / Cinematic → Abstract Boom Bap",
+        "bpm": 86.0,
+        "mute_profile": "real_drums",
+        "crate_digging_style": "psych_library",
+        "target_adaptation": "boombap_classic",
+        "keywords": ["library music", "psych", "psychedelic", "mellotron", "ostinato", "cinematic", "soundtrack", "italo library", "vintage synth"],
     },
     {
         "id": "soul_vintage",
@@ -737,7 +782,7 @@ UNDERGROUND_GENRE_RULES: List[Dict[str, Any]] = [
         "mute_profile": "jazz_funk",
         "crate_digging_style": "jazz",
         "target_adaptation": "jazz_hiphop",
-        "keywords": ["jazz hop", "jazzhop", "jazz lofi", "cool jazz", "bossa nova", "bossa", "latin jazz", "bebop", "hard bop", "jazz waltz", "upright bass", "contrabajo", "double bass", "blue note", "nujabes", "jazz"],
+        "keywords": ["jazz hop", "jazzhop", "jazz lofi", "cool jazz", "latin jazz", "bebop", "hard bop", "jazz waltz", "upright bass", "contrabajo", "double bass", "blue note", "nujabes", "jazz"],
     },
     {
         "id": "funk_jazz",
@@ -761,7 +806,7 @@ def detect_musical_style(
     bpm: Optional[float | List[str]] = None,
     sample_names: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
-    """Detecta el estilo musical (incluyendo Bolero, Soul, Jazz y géneros underground) y recomienda BPM y Choke/Mute."""
+    """Detecta el estilo musical (incluyendo Bolero, Soul, Jazz, Bossa, Tango, Cumbia/Son y géneros underground) y recomienda BPM y Choke/Mute."""
     extra = ""
     actual_bpm: Optional[float] = None
     if isinstance(bpm, (list, tuple)):
@@ -776,7 +821,17 @@ def detect_musical_style(
 
     # Casos prioritarios compuestos y adaptaciones de muestreo (Crate-Digging -> Hip-Hop / Lo-Fi)
     has_hiphop_target = any(k in low for k in ["lofi", "lo-fi", "hip hop", "hiphop", "hip-hop", "boom bap", "boombap", "chillhop"])
-    if any(k in low for k in ["bolero", "requinto", "vals criollo", "bolero vals", "guajira", "manzanero", "panchos", "gatica", "jaramillo"]):
+    if any(k in low for k in ["drumless", "alchemist", "griselda", "roc marciano", "micro chop", "microchop"]):
+        return {
+            "id": "drumless",
+            "style": "Drumless / Micro-Chop Loop (Alchemist Style)",
+            "label": "Drumless / Micro-Chop Loop (Alchemist Style)",
+            "bpm": float(actual_bpm or 78.0),
+            "mute_profile": "jazz_funk",
+            "crate_digging_style": "drumless",
+            "target_adaptation": "drumless_alchemist",
+        }
+    if any(k in low for k in ["bolero", "requinto", "bolero vals", "manzanero", "panchos", "gatica", "jaramillo"]):
         return {
             "id": "bolero",
             "style": "Bolero / Canción Melódica → Hip-Hop & Lo-Fi",
@@ -806,7 +861,7 @@ def detect_musical_style(
             "crate_digging_style": "boombap",
             "target_adaptation": "boombap",
         }
-    if any(k in low for k in ["jazz", "bossa"]) and has_hiphop_target and "cookin soul" not in low:
+    if "jazz" in low and ("bossa" in low or has_hiphop_target) and "cookin soul" not in low:
         return {
             "id": "jazz_hop",
             "style": "Jazz / Bossa → Hip-Hop & Lo-Fi",
@@ -815,6 +870,36 @@ def detect_musical_style(
             "mute_profile": "jazz_funk",
             "crate_digging_style": "jazz",
             "target_adaptation": "jazz_hiphop",
+        }
+    if any(k in low for k in ["bossa nova", "bossa", "samba jazz", "mpb", "partido alto", "ipanema", "jobim", "gilberto"]):
+        return {
+            "id": "bossa_samba",
+            "style": "Bossa Nova / Samba-Jazz → Lo-Fi & Jazz-Hop",
+            "label": "Bossa Nova / Samba-Jazz → Lo-Fi & Jazz-Hop",
+            "bpm": float(actual_bpm or 84.0),
+            "mute_profile": "jazz_funk",
+            "crate_digging_style": "bossa",
+            "target_adaptation": "lofi_hiphop",
+        }
+    if any(k in low for k in ["son cubano", "guajira", "guaracha", "montuno", "tumbao", "cumbia", "chicha", "descarga", "tres cubano"]):
+        return {
+            "id": "cumbia_son",
+            "style": "Son Cubano / Cumbia / Guajira → Latin Boom Bap",
+            "label": "Son Cubano / Cumbia / Guajira → Latin Boom Bap",
+            "bpm": float(actual_bpm or 88.0),
+            "mute_profile": "jazz_funk",
+            "crate_digging_style": "cumbia_son",
+            "target_adaptation": "boombap_classic",
+        }
+    if any(k in low for k in ["tango", "milonga", "bandoneon", "bandoneón", "piazzolla", "vals criollo", "vals peruano"]):
+        return {
+            "id": "tango_vals",
+            "style": "Tango / Vals Criollo / Milonga → Cinematic Boom Bap",
+            "label": "Tango / Vals Criollo / Milonga → Cinematic Boom Bap",
+            "bpm": float(actual_bpm or 82.0),
+            "mute_profile": "jazz_funk",
+            "crate_digging_style": "tango",
+            "target_adaptation": "lofi_hiphop",
         }
     if (
         any(k in low for k in ["soul", "motown", "stax", "rhodes", "wurlitzer", "wurli", "neo soul", "neosoul"])
@@ -918,20 +1003,30 @@ def infer_kit_bpm(path_or_name: str | Path, fallback: float = 120.0) -> float:
         return 112.0
     if any(k in low for k in ["ocean trap", "trap-kit", "decap", "808", "sub trap", "trap"]):
         return 92.0 if ("trap soul" in low or "trapsoul" in low) else 140.0
-    if any(k in low for k in ["bolero", "requinto", "vals criollo", "guajira"]):
+    if any(k in low for k in ["bolero", "requinto", "trío romántico", "trio romantico", "trio los panchos"]):
         return 84.0
+    if any(k in low for k in ["tango", "bandoneon", "bandoneón", "vals criollo", "vals", "waltz", "valse", "milonga", "3/4"]):
+        return 82.0
+    if any(k in low for k in ["drumless", "alchemist", "roc marciano", "griselda", "conductor williams", "abstract loop"]):
+        return 78.0
     if any(k in low for k in ["lofi faded", "very sick beats", "lofi", "lo-fi", "chillhop"]):
         return 90.0 if "marco polo" in low else 84.0
     if any(k in low for k in ["cookin soul", "marco polo", "just blaze", "ocean boom bap", "boombap", "boom bap", "bodega", "deli drum", "east coast", "borough chops", "backyard jams"]):
         return 90.0
+    if any(k in low for k in ["jazz hop", "jazzhop", "jazz lofi", "blue note", "cool jazz", "nujabes"]) or ("jazz" in low and "bossa" in low):
+        return 86.0
+    if any(k in low for k in ["bossa", "bossa nova", "samba", "mpb", "jobim", "tropicalia", "joao gilberto"]):
+        return 84.0
+    if any(k in low for k in ["cumbia", "son cubano", "guajira", "chicha", "descarga", "salsa vintage", "mambo", "boogaloo"]):
+        return 88.0
+    if any(k in low for k in ["library music", "kpm", "de wolfe", "psych", "giallo", "ennio", "morricone", "mellotron", "soundtrack", "score"]):
+        return 86.0
     if any(k in low for k in ["juls", "afrobeats", "afro"]):
         return 102.0
     if any(k in low for k in ["moombahton", "reggaeton", "reggaetón", "dembow", "dancehall", "latin", "island"]):
         return 100.0
     if any(k in low for k in ["rare vibrations", "r&b", "rnb", "r_b_", "soul", "vibes drum", "motown", "rhodes", "wurlitzer"]):
         return 86.0 if any(k in low for k in ["vintage", "motown", "ballad", "lofi"]) else 92.0
-    if any(k in low for k in ["jazz hop", "jazzhop", "jazz lofi", "bossa", "blue note", "cool jazz", "nujabes"]):
-        return 86.0
     if any(k in low for k in ["jazz", "funk", "disco", "live break", "chopped breaks", "break"]):
         return 88.0 if "jazz" in low and "funk" not in low else 110.0
     if any(k in low for k in ["deephouse", "deep house", "futurehouse", "future house", "house", "edm", "club", "tech"]):
@@ -3862,23 +3957,224 @@ def _extract_explicit_bpm_from_text(text: str) -> Optional[float]:
     return None
 
 
+def _compute_hiphop_adaptation_profile(
+    mode_id: str,
+    label: str,
+    eff_source_bpm: float,
+    target_bpm: float,
+    half_time_applied: bool = False,
+) -> Dict[str, Any]:
+    """Calcula stretch_ratio, semitonos y fine-tuning exactos para un perfil de adaptación Hip-Hop/Lo-Fi."""
+    stretch_ratio = max(0.55, min(1.85, float(target_bpm) / max(30.0, float(eff_source_bpm))))
+    raw_semi = 12.0 * math.log2(stretch_ratio)
+    clamped_semi = max(-7.0, min(7.0, raw_semi))
+    repitch_semitones = int(round(clamped_semi))
+    repitch_fine_cents = int(round((clamped_semi - repitch_semitones) * 100))
+    if repitch_fine_cents >= 50:
+        repitch_semitones += 1
+        repitch_fine_cents -= 100
+    elif repitch_fine_cents <= -50:
+        repitch_semitones -= 1
+        repitch_fine_cents += 100
+    return {
+        "id": mode_id,
+        "label": label,
+        "target_bpm": round(float(target_bpm), 1),
+        "stretch_ratio": round(stretch_ratio, 4),
+        "repitch_semitones": repitch_semitones,
+        "repitch_fine_tune_cents": repitch_fine_cents,
+        "half_time_applied": bool(half_time_applied),
+    }
+
+
+def _analyze_spectral_timbre(
+    samples: List[int],
+    sr: int,
+    norm_e: Optional[List[float]] = None,
+) -> Dict[str, Any]:
+    """Calcula perfil tímbrico en 3 bandas (Sub <180Hz, Calidez Media 180-2800Hz, Aire >2800Hz) y sustain."""
+    if not samples or sr <= 0:
+        return {
+            "sub_energy_ratio": 0.0,
+            "mid_warmth_ratio": 0.0,
+            "high_air_ratio": 0.0,
+            "sustain_index": 0.0,
+            "timbre_profile": "balanced_organic",
+            "timbre_label": "Orgánico Equilibrado",
+        }
+    seg = samples[: min(len(samples), sr * 6)]
+    a_sub = math.exp(-2.0 * math.pi * 180.0 / float(max(8000, sr)))
+    a_mid = math.exp(-2.0 * math.pi * 2800.0 / float(max(8000, sr)))
+    lp_sub = 0.0
+    lp_mid = 0.0
+    sub_e = 0.0
+    mid_e = 0.0
+    high_e = 0.0
+    for s in seg:
+        x = float(s) / 32768.0
+        lp_sub = (1.0 - a_sub) * x + a_sub * lp_sub
+        lp_mid = (1.0 - a_mid) * x + a_mid * lp_mid
+        mid_band = lp_mid - lp_sub
+        high_band = x - lp_mid
+        sub_e += lp_sub * lp_sub
+        mid_e += mid_band * mid_band
+        high_e += high_band * high_band
+    tot_e = max(1e-9, sub_e + mid_e + high_e)
+    sub_ratio = round(sub_e / tot_e, 3)
+    mid_ratio = round(mid_e / tot_e, 3)
+    high_ratio = round(high_e / tot_e, 3)
+
+    if norm_e:
+        sustain_idx = round(sum(1 for e in norm_e if e >= 0.22) / float(len(norm_e)), 3)
+    else:
+        sustain_idx = 0.25
+
+    if mid_ratio >= 0.55 and high_ratio <= 0.14:
+        prof = "warm_analog"
+        label = "Calidez Vinilo / Cuerdas & Rhodes"
+    elif high_ratio >= 0.25:
+        prof = "bright_percussive"
+        label = "Brillante / Percusivo & Aire"
+    elif sub_ratio >= 0.42:
+        prof = "sub_warm"
+        label = "Profundo / Sub-Warmth & Contrabajo"
+    else:
+        prof = "balanced_organic"
+        label = "Orgánico Equilibrado"
+
+    return {
+        "sub_energy_ratio": sub_ratio,
+        "mid_warmth_ratio": mid_ratio,
+        "high_air_ratio": high_ratio,
+        "sustain_index": sustain_idx,
+        "timbre_profile": prof,
+        "timbre_label": label,
+    }
+
+
+def _build_harmonic_transposition_info(
+    wav_p: Path,
+    repitch_semitones: int,
+) -> Dict[str, Any]:
+    """Detecta tonalidad original y calcula la nota resultante tras el repitch al tempo Hip-Hop/Lo-Fi."""
+    if not wav_p.is_file():
+        return {
+            "original_note": "",
+            "original_root": "",
+            "transposed_note": "",
+            "transposed_root": "",
+            "pitch_class": None,
+            "f0_hz": 0.0,
+            "cents_offset": 0,
+            "confidence": 0.0,
+        }
+    try:
+        pinfo = detect_sample_pitch_and_key(wav_p)
+    except Exception:
+        pinfo = {}
+    pc = pinfo.get("pitch_class")
+    orig_note = str(pinfo.get("note") or "")
+    orig_root = str(pinfo.get("note_root") or orig_note or "")
+    trans_root = ""
+    trans_note = ""
+    if pc is not None:
+        trans_pc = (int(pc) + int(repitch_semitones)) % 12
+        trans_root = _NOTE_NAMES_SHARP[trans_pc]
+        midi_orig = pinfo.get("midi_note")
+        if midi_orig is not None:
+            trans_midi = int(midi_orig) + int(repitch_semitones)
+            trans_oct = (trans_midi // 12) - 1
+            trans_note = f"{trans_root}{trans_oct}"
+        else:
+            trans_note = trans_root
+    return {
+        "original_note": orig_note or orig_root,
+        "original_root": orig_root,
+        "transposed_note": trans_note or trans_root,
+        "transposed_root": trans_root,
+        "pitch_class": pc,
+        "f0_hz": pinfo.get("f0_hz", 0.0),
+        "cents_offset": int(pinfo.get("cents_offset") or 0),
+        "confidence": pinfo.get("confidence", 0.0),
+    }
+
+
+def _build_adaptation_profiles_and_sequencer(
+    eff_source_bpm: float,
+    half_time_applied: bool,
+    effective_style_id: str,
+    time_sig: str,
+    swing_pct: float,
+    sub_ratio: float,
+    adapt_mode: str,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    """Genera 4 perfiles comparativos (Lo-Fi, Boom Bap, Dilla, Drumless) y la guía 1/16 de MPC."""
+    profile_defs = [
+        ("lofi_chill", "Lo-Fi / Chillhop (82 BPM)", 82.0),
+        ("boombap_classic", "Boom Bap 90s (90 BPM)", 90.0),
+        ("dilla_jazzhop", "Jazz-Hop / Dilla (86 BPM)", 86.0),
+        ("drumless_alchemist", "Drumless / Alchemist (78 BPM)", 78.0),
+    ]
+    profiles = [
+        _compute_hiphop_adaptation_profile(pid, plabel, eff_source_bpm, pbpm, half_time_applied)
+        for pid, plabel, pbpm in profile_defs
+    ]
+
+    if effective_style_id == "bolero":
+        kick_steps = [1, 4, 11]
+    elif effective_style_id in ("cumbia_son",):
+        kick_steps = [1, 4, 9, 12]
+    elif effective_style_id in ("drumless",) or adapt_mode == "drumless_alchemist":
+        kick_steps = [1, 10]
+    elif effective_style_id in ("jazz_hop", "bossa_samba") or adapt_mode == "dilla_jazzhop":
+        kick_steps = [1, 8, 11]
+    else:
+        kick_steps = [1, 3, 9, 11]
+
+    if effective_style_id == "drumless" or adapt_mode == "drumless_alchemist":
+        hat_steps = [1, 5, 9, 13]
+        tip = "Paso 1/16 MPC: dispara frases largas en pasos 1/9 con cortes M6 y batería mínima."
+    elif time_sig in ("3/4", "6/8"):
+        hat_steps = [1, 3, 5, 7, 9, 11, 13, 15]
+        tip = "Compás ternario puenteado a 4/4: dispara 4 chops por compás (pasos 1, 5, 9, 13) con swing en hats."
+    else:
+        hat_steps = [1, 3, 5, 7, 9, 11, 13, 15]
+        tip = "Paso 1/16 MPC: ajusta swing en charles y filtra graves en los chops para dejar espacio al sub."
+
+    seq_swing = round(max(50.0, min(67.0, max(54.0, swing_pct) if effective_style_id == "bolero" else swing_pct)), 1)
+    sequencer_guide = {
+        "grid": "1/16",
+        "swing_pct": seq_swing,
+        "kick_steps": kick_steps,
+        "snare_steps": [5, 13],
+        "hat_steps": hat_steps,
+        "chop_trigger_steps": [1, 5, 9, 13] if time_sig in ("3/4", "6/8") else [1, 4, 9, 13],
+        "highpass_hz_cut": 110 if sub_ratio >= 0.22 else 90,
+        "tip": tip,
+    }
+    return profiles, sequencer_guide
+
+
 def analyze_rhythmic_pattern_and_hiphop_adaptation(
     wav_path: str | Path,
     style_hint: str = "",
     target_bpm_hint: Optional[float] = None,
     preloaded_samples: Optional[List[int]] = None,
     preloaded_sr: int = 44100,
+    adapt_mode: str = "auto",
 ) -> Dict[str, Any]:
     """
-    Analiza el patrón rítmico, compás (4/4, 3/4 Bolero-Vals/Jazz Waltz, 6/8 Slow Soul),
-    tempo original, swing y rubato desde la envolvente PCM, y calcula la adaptación óptima
-    a Hip-Hop / Boom Bap / Lo-Fi (tempo objetivo, stretch_ratio, semitonos y guía de compás).
+    Analiza el patrón rítmico, compás (4/4, 3/4, 6/8, 5/4), clave latina/swing, timbre espectral
+    en 3 bandas, tonalidad original y calcula múltiples perfiles de adaptación a Hip-Hop / Lo-Fi.
     """
     wav_p = Path(wav_path)
     combined_hint = f"{wav_p.name} {style_hint}".strip()
     low_hint = combined_hint.lower()
     style_info = detect_musical_style(combined_hint)
     style_id = style_info.get("id", "standard")
+    norm_adapt_mode = str(adapt_mode or "auto").strip().lower()
+    if norm_adapt_mode not in ("auto", "lofi_chill", "boombap_classic", "dilla_jazzhop", "drumless_alchemist"):
+        norm_adapt_mode = "auto"
 
     # Extraer posible BPM objetivo pedido en el prompt (ej. "Bolero a Lo-Fi 84")
     resolved_target_bpm: Optional[float] = None
@@ -3927,38 +4223,61 @@ def analyze_rhythmic_pattern_and_hiphop_adaptation(
             energies.append(sum(abs(x) for x in chunk) / float(hop))
 
     max_e = max(energies) if energies else 0.0
+    norm_e = [e / max_e for e in energies] if max_e > 1e-6 else []
+    spectral = _analyze_spectral_timbre(samples, sr, norm_e=norm_e)
+
+    mode_bpm_map = {
+        "lofi_chill": (82.0, "Hip-Hop / Lo-Fi"),
+        "boombap_classic": (90.0, "Boom Bap 90s"),
+        "dilla_jazzhop": (86.0, "Jazz-Hop / Dilla"),
+        "drumless_alchemist": (78.0, "Drumless / Abstract Hip-Hop"),
+    }
+
     if len(energies) < 25 or max_e <= 1e-6:
         fallback_bpm = float(explicit_file_bpm or style_info.get("bpm") or 84.0)
-        eff_src = fallback_bpm / 2.0 if fallback_bpm >= 132.0 else fallback_bpm
-        tgt = float(resolved_target_bpm or (84.0 if style_id == "bolero" else 86.0))
-        ratio = max(0.5, min(2.0, tgt / max(30.0, eff_src)))
-        semi_f = max(-7.0, min(7.0, 12.0 * math.log2(ratio)))
-        semi_i = int(round(semi_f))
-        cents_i = int(round((semi_f - semi_i) * 100))
+        eff_src = round(fallback_bpm / 2.0, 1) if fallback_bpm >= 132.0 else fallback_bpm
+        half_applied = bool(fallback_bpm >= 132.0)
+        if norm_adapt_mode in mode_bpm_map:
+            tgt, target_style = mode_bpm_map[norm_adapt_mode]
+        else:
+            tgt = float(resolved_target_bpm or (84.0 if style_id in ("bolero", "bossa_samba") else (78.0 if style_id == "drumless" else 86.0)))
+            target_style = "Hip-Hop / Lo-Fi"
+        main_prof = _compute_hiphop_adaptation_profile(norm_adapt_mode, target_style, eff_src, tgt, half_applied)
+        harmonic_info = _build_harmonic_transposition_info(wav_p, main_prof["repitch_semitones"])
+        profiles, seq_guide = _build_adaptation_profiles_and_sequencer(
+            eff_src, half_applied, style_id, "4/4", 50.0, spectral["sub_energy_ratio"], norm_adapt_mode
+        )
         return {
             "rhythm_analysis": {
                 "source_bpm": round(fallback_bpm, 1),
                 "effective_source_bpm": round(eff_src, 1),
                 "time_signature": "4/4",
                 "groove_pattern": "Fraseo melódico / One-Shot",
+                "clave_pattern": "Fraseo Libre / One-Shot",
                 "swing_pct": 50.0,
                 "rubato_index": 0.0,
                 "onset_count": 0,
                 "duration_sec": duration_sec,
+                "acoustic_style_id": style_id,
+                **spectral,
             },
             "hiphop_adaptation": {
-                "target_style": "Hip-Hop / Lo-Fi",
-                "target_bpm": round(tgt, 1),
-                "stretch_ratio": round(ratio, 4),
-                "repitch_semitones": semi_i,
-                "repitch_fine_tune_cents": cents_i,
-                "half_time_applied": bool(fallback_bpm >= 132.0),
+                "target_style": target_style,
+                "adapt_mode": norm_adapt_mode,
+                "target_bpm": main_prof["target_bpm"],
+                "stretch_ratio": main_prof["stretch_ratio"],
+                "repitch_semitones": main_prof["repitch_semitones"],
+                "repitch_fine_tune_cents": main_prof["repitch_fine_tune_cents"],
+                "half_time_applied": half_applied,
+                "recommended_chop_mode": "transients",
+                "harmonic_info": harmonic_info,
+                "adaptation_profiles": profiles,
+                "sequencer_guide": seq_guide,
                 "meter_bridge_note": "Muestra corta o sostenida: dispara desde los pads en compás 4/4 y ajusta al tempo Lo-Fi.",
             },
         }
 
     # Flujo de ataques positivos normalizado
-    norm_e = [e / max_e for e in energies]
     flux: List[float] = [0.0]
     for i in range(1, len(norm_e)):
         diff = norm_e[i] - norm_e[i - 1]
@@ -3974,7 +4293,6 @@ def analyze_rhythmic_pattern_and_hiphop_adaptation(
         limit = n_flux - lag_hops
         for idx in range(limit):
             s += flux[idx] * flux[idx + lag_hops]
-        # Compensación suave de ventana para lags largos (3/4, 4/4)
         norm = flux_energy * (limit / float(n_flux))
         return s / max(1e-9, norm)
 
@@ -3992,18 +4310,14 @@ def analyze_rhythmic_pattern_and_hiphop_adaptation(
                 onset_hops.append(i)
 
     # Estimación de tempo por autocorrelación de la envolvente de flujo (58..172 BPM)
-    if style_id == "bolero":
-        preferred_center = 82.0
-        preferred_sigma = 24.0
-    elif style_id == "soul_vintage":
-        preferred_center = 84.0
-        preferred_sigma = 26.0
-    elif style_id == "jazz_hop":
-        preferred_center = 96.0
-        preferred_sigma = 30.0
+    if style_id in ("bolero", "tango_vals", "bossa_samba"):
+        preferred_center, preferred_sigma = 82.0, 24.0
+    elif style_id in ("soul_vintage", "drumless"):
+        preferred_center, preferred_sigma = 84.0, 26.0
+    elif style_id in ("jazz_hop", "cumbia_son", "psych_library"):
+        preferred_center, preferred_sigma = 92.0, 30.0
     else:
-        preferred_center = 96.0
-        preferred_sigma = 38.0
+        preferred_center, preferred_sigma = 96.0, 38.0
 
     best_bpm = preferred_center
     best_score = -1.0
@@ -4020,7 +4334,6 @@ def analyze_rhythmic_pattern_and_hiphop_adaptation(
             best_score = score
             best_bpm = float(cand_bpm)
 
-    # Refinamiento si hay BPM explícito en el nombre del archivo o si el audio es muy corto
     iois_sec = [(onset_hops[k] - onset_hops[k - 1]) * hop_sec for k in range(1, len(onset_hops))]
     if explicit_file_bpm is not None:
         source_bpm = float(explicit_file_bpm)
@@ -4052,7 +4365,7 @@ def analyze_rhythmic_pattern_and_hiphop_adaptation(
         vals = [_acf(base + d) for d in range(-radius, radius + 1) if (base + d) > 0]
         return max(vals) if vals else 0.0
 
-    # Correlación centrada por pulso (bcorr3 vs bcorr4) alineada a la fase real del beat
+    # Correlación centrada por pulso (3/4, 4/4, 5/4) alineada a la fase real del beat
     best_phase = 0
     best_phase_energy = -1.0
     n_est_beats = max(1, int(n_flux / beat_lag_f))
@@ -4087,48 +4400,60 @@ def analyze_rhythmic_pattern_and_hiphop_adaptation(
         denom = math.sqrt(el * er)
         return (num / denom) if denom > 1e-9 else 0.0
 
-    # Detección de compás (3/4, 6/8 vs 4/4) combinando energía de acento por pulso y subdivisión
     bcorr3 = _bcorr(3)
     bcorr4 = _bcorr(4)
+    bcorr5 = _bcorr(5)
     acf_tri = 0.5 * (
         _acf_peak(max(6.0, beat_lag_f / 3.0), radius=2)
         + _acf_peak(max(12.0, 2.0 * beat_lag_f / 3.0), radius=2)
     )
     acf_bin = _acf_peak(max(8.0, beat_lag_f / 2.0), radius=2)
 
-    if any(k in low_hint for k in ["3/4", "vals", "waltz"]):
+    if "5/4" in low_hint or "take five" in low_hint:
+        time_sig = "5/4"
+    elif any(k in low_hint for k in ["3/4", "vals", "waltz", "valse"]):
         time_sig = "3/4"
     elif "6/8" in low_hint:
         time_sig = "6/8"
     elif "4/4" in low_hint:
         time_sig = "4/4"
-    elif bcorr3 > 0.12 and bcorr3 > bcorr4 + 0.12:
-        if source_bpm <= 76.0 and (acf_tri >= acf_bin * 0.90 or style_id == "soul_vintage" or "ballad" in low_hint):
+    elif bcorr3 > 0.12 and bcorr3 > bcorr4 + 0.12 and bcorr3 >= bcorr5:
+        if style_id != "tango_vals" and source_bpm <= 76.0 and (acf_tri >= acf_bin * 0.90 or style_id == "soul_vintage" or "ballad" in low_hint):
             time_sig = "6/8"
         else:
             time_sig = "3/4"
+    elif bcorr5 > 0.22 and bcorr5 > bcorr4 + 0.14 and bcorr5 > bcorr3 + 0.10:
+        time_sig = "5/4"
     elif acf_tri > acf_bin * 1.15 and source_bpm <= 84.0 and (style_id in ("soul_vintage", "bolero") or "ballad" in low_hint):
         time_sig = "6/8"
     else:
         time_sig = "4/4"
 
-    # Cálculo de Swing % (relación subdivisión binaria 0.50 vs tresillo/shuffle 0.66)
+    # Cálculo de Swing % (subdivisión binaria 0.50 vs tresillo 0.66) + energía síncopa Tresillo (0.75)
     swing_hits = 0.0
     straight_hits = 0.0
+    tresillo_hits = 0.0
+    total_onset_flux = 0.0
     for idx in onset_hops:
         phase = ((idx - best_phase) % beat_lag_f) / beat_lag_f
         w = flux[idx]
+        total_onset_flux += w
         if 0.43 <= phase <= 0.55:
             straight_hits += w
         elif 0.57 <= phase <= 0.72:
             swing_hits += w
+        elif 0.72 < phase <= 0.84:
+            tresillo_hits += w
+
     if (swing_hits + straight_hits) > 1e-6:
         swing_frac = swing_hits / (swing_hits + straight_hits)
         swing_pct = round(50.0 + swing_frac * 16.7, 1)
     elif style_id in ("jazz_hop", "soul_vintage"):
         swing_pct = 57.5
+    elif style_id in ("bossa_samba",):
+        swing_pct = 55.0
     else:
-        swing_pct = 52.0 if style_id == "bolero" else 50.0
+        swing_pct = 52.0 if style_id in ("bolero", "cumbia_son") else 50.0
 
     # Índice de Rubato / Expresividad humana (variación de IOI respecto al pulso)
     rubato_index = 0.0
@@ -4138,22 +4463,68 @@ def analyze_rhythmic_pattern_and_hiphop_adaptation(
         avg_dev = sum(norm_devs) / float(len(norm_devs))
         rubato_index = round(min(1.0, max(0.0, avg_dev * 2.2)), 2)
 
+    # Clasificación acústica automática si el nombre de archivo es genérico ("standard")
+    effective_style_id = style_id
+    if effective_style_id == "standard":
+        if time_sig == "3/4":
+            effective_style_id = "tango_vals"
+        elif time_sig == "6/8":
+            effective_style_id = "soul_vintage"
+        elif rubato_index >= 0.28 and spectral["sustain_index"] >= 0.32 and len(onset_hops) < max(4, int(duration_sec * 1.6)):
+            effective_style_id = "drumless"
+        elif swing_pct >= 57.5 and spectral["high_air_ratio"] >= 0.16:
+            effective_style_id = "jazz_hop"
+        elif spectral["mid_warmth_ratio"] >= 0.55 and spectral["sustain_index"] >= 0.28:
+            effective_style_id = "soul_vintage" if swing_pct >= 54.5 else "bolero"
+
+    # Detección de Clave / Cadencia Rítmica dominante
+    if time_sig == "3/4":
+        clave_pattern = "Vals / Ternario (1-2-3)"
+    elif time_sig == "6/8":
+        clave_pattern = "Compuesto 6/8 (2 grupos de 3 corcheas)"
+    elif time_sig == "5/4":
+        clave_pattern = "Irregular 5/4 (3+2)"
+    elif effective_style_id == "bossa_samba":
+        clave_pattern = "Clave Bossa / Samba (3-2 / Partido Alto)"
+    elif effective_style_id == "cumbia_son":
+        clave_pattern = "Clave Son / Cumbia (3-2 & Contratiempo)"
+    elif effective_style_id == "bolero" or (
+        total_onset_flux > 1e-6 and tresillo_hits > straight_hits * 1.15 and tresillo_hits >= total_onset_flux * 0.15
+    ):
+        clave_pattern = "Tresillo / Cinquillo Cubano (3:3:2)"
+    elif effective_style_id == "jazz_hop" or (swing_pct >= 57.5 and spectral["high_air_ratio"] >= 0.12):
+        clave_pattern = "Jazz Ride / Triplet Swing"
+    elif effective_style_id == "drumless" or (rubato_index >= 0.28 and len(onset_hops) <= max(4, int(duration_sec * 1.8))):
+        clave_pattern = "Fraseo Libre / Drumless Rubato"
+    else:
+        clave_pattern = "Backbeat 2 y 4 (4/4)"
+
     # Descripción del patrón rítmico detectado
-    if style_id == "bolero":
+    if effective_style_id == "bolero":
         if time_sig == "3/4":
             groove_pattern = "Bolero-Vals / Vals Criollo (3/4)"
         elif swing_pct >= 57.0:
             groove_pattern = "Bolero con Tresillo / Cinquillo Cadencioso"
         else:
             groove_pattern = "Bolero Clásico (Requinto / Cinquillo 4/4)"
-    elif style_id == "soul_vintage":
+    elif effective_style_id == "tango_vals":
+        groove_pattern = "Vals Criollo / Jazz Waltz (3/4)" if time_sig == "3/4" else "Tango / Milonga Marcato (4/4)"
+    elif effective_style_id == "bossa_samba":
+        groove_pattern = "Bossa Nova / Clave Sincopada (4/4)"
+    elif effective_style_id == "cumbia_son":
+        groove_pattern = "Cumbia / Son Montuno (Contratiempo)"
+    elif effective_style_id == "drumless":
+        groove_pattern = "Drumless Soul / Abstract Phrase (Sin Percusión)"
+    elif effective_style_id == "psych_library":
+        groove_pattern = "Psych / Library Score Groove (Cinematográfico)"
+    elif effective_style_id == "soul_vintage":
         if time_sig == "6/8":
             groove_pattern = "Slow Soul Ballad / Gospel Feel (6/8)"
         elif swing_pct >= 57.0:
             groove_pattern = "Soul Groove con Swing Vintage"
         else:
             groove_pattern = "Soul Backbeat 2 y 4 (4/4)"
-    elif style_id == "jazz_hop":
+    elif effective_style_id == "jazz_hop":
         if time_sig == "3/4":
             groove_pattern = "Jazz Waltz (3/4)"
         elif "bossa" in low_hint:
@@ -4167,6 +4538,8 @@ def analyze_rhythmic_pattern_and_hiphop_adaptation(
             groove_pattern = "Patrón Ternario / Vals (3/4)"
         elif time_sig == "6/8":
             groove_pattern = "Compás Compuesto / Slow Ballad (6/8)"
+        elif time_sig == "5/4":
+            groove_pattern = "Compás Irregular (5/4)"
         elif swing_pct >= 57.0:
             groove_pattern = "Groove con Swing / Shuffle"
         else:
@@ -4180,54 +4553,89 @@ def analyze_rhythmic_pattern_and_hiphop_adaptation(
         half_time_applied = True
 
     want_boombap = any(k in low_hint for k in ["boom bap", "boombap", "hip hop", "hip-hop", "hiphop", "dilla", "premo", "east coast"])
-    want_lofi = any(k in low_hint for k in ["lofi", "lo-fi", "chillhop", "nujabes", "dusty"]) or style_id == "bolero"
+    want_lofi = any(k in low_hint for k in ["lofi", "lo-fi", "chillhop", "nujabes", "dusty"]) or effective_style_id in ("bolero", "bossa_samba")
 
-    if resolved_target_bpm is not None:
-        target_bpm = float(resolved_target_bpm)
-    elif style_id == "bolero":
-        target_bpm = 84.0 if (eff_source_bpm >= 74.0 or want_boombap) else 80.0
-    elif style_id == "soul_vintage":
-        target_bpm = 88.0 if want_boombap else 85.0
-    elif style_id == "jazz_hop":
-        target_bpm = 88.0 if want_boombap else 86.0
+    if norm_adapt_mode in mode_bpm_map:
+        target_bpm, target_style = mode_bpm_map[norm_adapt_mode]
     else:
-        target_bpm = 86.0 if want_lofi else (90.0 if want_boombap else round(max(78.0, min(94.0, eff_source_bpm)), 1))
+        if resolved_target_bpm is not None:
+            target_bpm = float(resolved_target_bpm)
+        elif effective_style_id in ("bolero", "bossa_samba"):
+            target_bpm = 84.0 if (eff_source_bpm >= 74.0 or want_boombap) else 80.0
+        elif effective_style_id == "drumless":
+            target_bpm = 78.0
+        elif effective_style_id == "tango_vals":
+            target_bpm = 82.0
+        elif effective_style_id in ("cumbia_son", "soul_vintage", "jazz_hop"):
+            if effective_style_id == "cumbia_son":
+                target_bpm = 88.0
+            elif effective_style_id == "soul_vintage":
+                target_bpm = 88.0 if want_boombap else 85.0
+            else:
+                target_bpm = 88.0 if want_boombap else 86.0
+        elif effective_style_id == "psych_library":
+            target_bpm = 86.0
+        else:
+            target_bpm = 86.0 if want_lofi else (90.0 if want_boombap else round(max(78.0, min(94.0, eff_source_bpm)), 1))
+        target_style = "Boom Bap / Hip-Hop" if (want_boombap and not want_lofi) else ("Hip-Hop / Lo-Fi" if want_lofi else "Boom Bap & Lo-Fi")
 
-    target_style = "Boom Bap / Hip-Hop" if (want_boombap and not want_lofi) else ("Hip-Hop / Lo-Fi" if want_lofi else "Boom Bap & Lo-Fi")
-    stretch_ratio = max(0.55, min(1.85, target_bpm / max(30.0, eff_source_bpm)))
-    raw_semi = 12.0 * math.log2(stretch_ratio)
-    clamped_semi = max(-7.0, min(7.0, raw_semi))
-    repitch_semitones = int(round(clamped_semi))
-    repitch_fine_cents = int(round((clamped_semi - repitch_semitones) * 100))
-    if repitch_fine_cents >= 50:
-        repitch_semitones += 1
-        repitch_fine_cents -= 100
-    elif repitch_fine_cents <= -50:
-        repitch_semitones -= 1
-        repitch_fine_cents += 100
+    main_profile = _compute_hiphop_adaptation_profile(
+        norm_adapt_mode, target_style, eff_source_bpm, target_bpm, half_time_applied
+    )
+    stretch_ratio = main_profile["stretch_ratio"]
+    repitch_semitones = main_profile["repitch_semitones"]
+    repitch_fine_cents = main_profile["repitch_fine_tune_cents"]
+
+    if time_sig in ("3/4", "6/8"):
+        recommended_chop_mode = "phrase_3_4_to_4_4"
+    elif rubato_index >= 0.25 or effective_style_id == "drumless":
+        recommended_chop_mode = "transients"
+    elif effective_style_id in ("bossa_samba", "psych_library") or len(onset_hops) < 6:
+        recommended_chop_mode = "bar_grid"
+    else:
+        recommended_chop_mode = "transients"
+
+    harmonic_info = _build_harmonic_transposition_info(wav_p, repitch_semitones)
+    adaptation_profiles, sequencer_guide = _build_adaptation_profiles_and_sequencer(
+        eff_source_bpm,
+        half_time_applied,
+        effective_style_id,
+        time_sig,
+        swing_pct,
+        spectral["sub_energy_ratio"],
+        norm_adapt_mode,
+    )
 
     # Guía práctica para encajar el compás y patrón en el beat Hip-Hop / Lo-Fi
     if time_sig == "3/4":
         meter_bridge_note = (
-            "Compás 3/4 detectado: usa Auto-Chop en los pads y repite 1 tiempo o corta frases de 3+1 golpes "
-            "para cuadrar 4 tiempos Boom Bap / Lo-Fi sin cortar la cadencia."
+            "Compás 3/4 detectado: usa Auto-Chop Puente 3/4→4/4 para cortar frases de 3+1 golpes "
+            "y cuadrar 4 tiempos Boom Bap / Lo-Fi sin romper la cadencia."
         )
     elif time_sig == "6/8":
         meter_bridge_note = (
             "Compás 6/8 (Soul/Balada lenta): programa los hi-hats Lo-Fi con swing de tresillos (~62–66%) "
-            "o trocea cada 3 corcheas para encajar el fraseo en 4/4."
+            "o usa Puente 3/4→4/4 cada 3 corcheas para encajar el fraseo."
         )
-    elif rubato_index >= 0.25:
+    elif time_sig == "5/4":
         meter_bridge_note = (
-            f"Fraseo expresivo/rubato ({rubato_index:.2f}): divide la muestra en 16 chops por transiente (M6) "
-            "y dispara cada acorde sobre la rejilla cuantizada de la MPC."
+            "Compás 5/4 detectado: divide la frase 3+2 tiempos en chops M6 para re-dispararla sobre rejilla 4/4."
         )
-    elif style_id == "bolero":
+    elif effective_style_id == "drumless" or (rubato_index >= 0.25):
         meter_bridge_note = (
-            "Bolero 4/4: el tresillo de guitarra/requinto encaja natural sobre bombos Boom Bap/Lo-Fi suaves "
+            f"Fraseo libre/Drumless (rubato {rubato_index:.2f}): trocea en 16 pads por transiente (M6) "
+            "y deja los acordes respirar sobre bombos suaves en pasos 1 y 10."
+        )
+    elif effective_style_id == "bolero":
+        meter_bridge_note = (
+            "Bolero 4/4: el tresillo/cinquillo de requinto encaja natural sobre bombos Boom Bap/Lo-Fi suaves "
             f"con swing {swing_pct:.0f}% (ajusta {repitch_semitones:+d} st o Time Stretch x{stretch_ratio:.3f})."
         )
-    elif style_id == "jazz_hop":
+    elif effective_style_id in ("bossa_samba", "cumbia_son"):
+        meter_bridge_note = (
+            f"{clave_pattern}: alinea los chops con el acento síncopado y filtra graves <{sequencer_guide['highpass_hz_cut']} Hz."
+        )
+    elif effective_style_id == "jazz_hop":
         meter_bridge_note = (
             f"Jazz {time_sig} con swing {swing_pct:.0f}%: aplica el mismo porcentaje de swing en el secuenciador "
             "y filtra graves <110 Hz en los chops para dejar espacio al sub/contrabajo Hip-Hop."
@@ -4244,18 +4652,26 @@ def analyze_rhythmic_pattern_and_hiphop_adaptation(
             "effective_source_bpm": round(eff_source_bpm, 1),
             "time_signature": time_sig,
             "groove_pattern": groove_pattern,
+            "clave_pattern": clave_pattern,
             "swing_pct": round(swing_pct, 1),
             "rubato_index": round(rubato_index, 2),
             "onset_count": len(onset_hops),
             "duration_sec": duration_sec,
+            "acoustic_style_id": effective_style_id,
+            **spectral,
         },
         "hiphop_adaptation": {
             "target_style": target_style,
+            "adapt_mode": norm_adapt_mode,
             "target_bpm": round(target_bpm, 1),
             "stretch_ratio": round(stretch_ratio, 4),
             "repitch_semitones": repitch_semitones,
             "repitch_fine_tune_cents": repitch_fine_cents,
             "half_time_applied": half_time_applied,
+            "recommended_chop_mode": recommended_chop_mode,
+            "harmonic_info": harmonic_info,
+            "adaptation_profiles": adaptation_profiles,
+            "sequencer_guide": sequencer_guide,
             "meter_bridge_note": meter_bridge_note,
         },
     }
@@ -4268,11 +4684,13 @@ def autochop_sample_to_16_pads(
     kit_name: Optional[str] = None,
     style_hint: str = "",
     target_bpm: Optional[float] = None,
+    chop_mode: str = "auto",
+    adapt_mode: str = "auto",
 ) -> Dict[str, Any]:
     """
-    Corta automáticamente un Loop, Bolero, Soul, Jazz o Breakbeat en hasta 16 pads por detección de
-    transientes + rejilla rítmica inteligente, con ajuste exacto a cruces por cero (Zero-Crossing Snap),
-    micro-fade de 2 ms y parámetros de adaptación a Hip-Hop / Lo-Fi.
+    Corta automáticamente un Loop, Bolero, Soul, Jazz o Breakbeat en hasta 16 pads mediante tres modos
+    (transientes, rejilla de compás o puente rítmico 3/4→4/4), con ajuste exacto a cruces por cero,
+    micro-fade de 2 ms, rol musical por slice y adaptación Hip-Hop / Lo-Fi.
     """
     src_p = Path(source_audio).resolve()
     root_p = Path(output_root).resolve()
@@ -4296,11 +4714,21 @@ def autochop_sample_to_16_pads(
         target_bpm_hint=target_bpm,
         preloaded_samples=samples,
         preloaded_sr=sr,
+        adapt_mode=adapt_mode,
     )
     rhythm = rhythm_info["rhythm_analysis"]
     adaptation = rhythm_info["hiphop_adaptation"]
     eff_bpm = float(rhythm.get("effective_source_bpm") or rhythm.get("source_bpm") or 84.0)
     style_info = detect_musical_style(f"{src_p.name} {style_hint}")
+
+    norm_chop_mode = str(chop_mode or "auto").strip().lower()
+    if norm_chop_mode not in ("auto", "phrase_3_4_to_4_4", "bar_grid", "transients"):
+        norm_chop_mode = "auto"
+    applied_chop_mode = (
+        str(adaptation.get("recommended_chop_mode") or "transients")
+        if norm_chop_mode == "auto"
+        else norm_chop_mode
+    )
 
     # 1. Calcular envolvente de flujo de energía (hop = 441 muestras = 10 ms)
     hop = 441
@@ -4317,28 +4745,74 @@ def autochop_sample_to_16_pads(
             flux.append((diff, i * hop))
 
     flux.sort(key=lambda t: t[0], reverse=True)
+    flux_by_frame = {f_pos: score for score, f_pos in flux}
+    beat_frames = int(round((60.0 / max(45.0, eff_bpm)) * sr))
+    nudge_win = max(1, int(0.035 * sr))
+
+    def _nudge_to_flux(target_f: int) -> int:
+        best_cand = target_f
+        best_sc = -1.0
+        for cand_pos, sc in flux_by_frame.items():
+            if abs(cand_pos - target_f) <= nudge_win and sc > best_sc:
+                best_sc = sc
+                best_cand = cand_pos
+        return best_cand
+
     onset_frames = [0]
+    if applied_chop_mode == "phrase_3_4_to_4_4" and beat_frames >= sr // 4:
+        # Puente ternario->4/4: 4 cortes por cada compás de 3 tiempos ([0.0, 1.0, 2.0, 2.5] beats)
+        bar_idx = 0
+        while len(onset_frames) < max_slices:
+            bar_base = bar_idx * 3.0
+            added_in_bar = False
+            for beat_off in (0.0, 1.0, 2.0, 2.5):
+                if len(onset_frames) >= max_slices:
+                    break
+                abs_beats = bar_base + beat_off
+                if abs_beats <= 0.05:
+                    continue
+                target_f = int(round(abs_beats * beat_frames))
+                if target_f >= total_frames - min_dist_frames:
+                    continue
+                cand = _nudge_to_flux(target_f)
+                if all(abs(cand - existing) >= min_dist_frames for existing in onset_frames):
+                    onset_frames.append(cand)
+                    added_in_bar = True
+            if (bar_base + 3.0) * beat_frames >= total_frames - min_dist_frames and not added_in_bar:
+                break
+            bar_idx += 1
+            if bar_idx > 32:
+                break
+    elif applied_chop_mode == "bar_grid" and beat_frames >= sr // 4:
+        # Rejilla musical regular por pulsos / corcheas con ajuste sutil al ataque cercano
+        use_half = (total_frames / float(beat_frames)) < (max_slices * 0.85)
+        grid_step = max(min_dist_frames, beat_frames // (2 if use_half else 1))
+        g = grid_step
+        while g < total_frames - min_dist_frames and len(onset_frames) < max_slices:
+            cand = _nudge_to_flux(g)
+            if all(abs(cand - existing) >= min_dist_frames for existing in onset_frames):
+                onset_frames.append(cand)
+            g += grid_step
+    else:
+        for _, f_pos in flux:
+            if len(onset_frames) >= max_slices:
+                break
+            if all(abs(f_pos - existing) >= min_dist_frames for existing in onset_frames):
+                onset_frames.append(f_pos)
+
+    # 1b. Completar cortes restantes con transientes fuertes y rejilla del compás si faltan
     for _, f_pos in flux:
         if len(onset_frames) >= max_slices:
             break
         if all(abs(f_pos - existing) >= min_dist_frames for existing in onset_frames):
             onset_frames.append(f_pos)
 
-    # 1b. Si faltan cortes, alinear primero con pulsos/subdivisiones del compás detectado
     if len(onset_frames) < max_slices and eff_bpm >= 45.0:
-        beat_frames = int(round((60.0 / eff_bpm) * sr))
         subdiv = 3 if rhythm.get("time_signature") in ("3/4", "6/8") else 2
         grid_step = max(min_dist_frames, beat_frames // subdiv)
-        nudge_win = max(1, int(0.035 * sr))
-        flux_by_frame = {f_pos: score for score, f_pos in flux}
         g = grid_step
         while g < total_frames - min_dist_frames and len(onset_frames) < max_slices:
-            best_cand = g
-            best_flux = -1.0
-            for cand_pos, sc in flux_by_frame.items():
-                if abs(cand_pos - g) <= nudge_win and sc > best_flux:
-                    best_flux = sc
-                    best_cand = cand_pos
+            best_cand = _nudge_to_flux(g)
             if all(abs(best_cand - existing) >= min_dist_frames for existing in onset_frames):
                 onset_frames.append(best_cand)
             g += grid_step
@@ -4380,8 +4854,9 @@ def autochop_sample_to_16_pads(
     # Determinar tipo de sonido y si conviene adaptar el tono de los slices al beat Hip-Hop / Lo-Fi
     low_src = f"{src_p.name} {style_hint}".lower()
     is_melodic = (
-        style_info.get("id") in ("bolero", "soul_vintage", "jazz_hop", "lofi", "rnb_soul")
-        or any(k in low_src for k in ["loop", "guitar", "requinto", "piano", "rhodes", "wurli", "sax", "horn", "strings", "vocal", "chord", "bolero", "soul", "jazz", "bossa", "melod"])
+        style_info.get("id") in ("bolero", "soul_vintage", "jazz_hop", "lofi", "rnb_soul", "drumless", "bossa_samba", "cumbia_son", "tango_vals", "psych_library")
+        or rhythm.get("acoustic_style_id") in ("bolero", "soul_vintage", "jazz_hop", "drumless", "tango_vals")
+        or any(k in low_src for k in ["loop", "guitar", "requinto", "piano", "rhodes", "wurli", "sax", "horn", "strings", "vocal", "chord", "bolero", "soul", "jazz", "bossa", "tango", "cumbia", "vals", "bandoneon", "melod"])
     )
     slice_sound_type = "MELODIC_LOOP" if is_melodic else "PERCUSSION"
     apply_tune = int(adaptation.get("repitch_semitones", 0)) if abs(int(adaptation.get("repitch_semitones", 0))) <= 5 else 0
@@ -4401,6 +4876,15 @@ def autochop_sample_to_16_pads(
                 slice_pcm[-(fi + 1)] = int(slice_pcm[-(fi + 1)] * scale)
 
         pad_num = idx + 1
+        dur_slice = round(len(slice_pcm) / float(sr), 3)
+        if applied_chop_mode == "phrase_3_4_to_4_4":
+            role_cycle = ("Downbeat (Tiempo 1)", "Chord / Phrase (Tiempo 2)", "Chord / Phrase (Tiempo 3)", "Pickup (2.5 → 4)")
+            slice_role = role_cycle[idx % 4]
+        elif applied_chop_mode == "bar_grid":
+            slice_role = "Downbeat" if (idx % 4 == 0) else ("Backbeat / Phrase" if (idx % 4 == 2) else "Syncopation")
+        else:
+            slice_role = "Downbeat" if idx == 0 else ("Chord / Phrase" if dur_slice >= 0.40 else ("Pickup" if idx % 4 == 3 else "Syncopation"))
+
         slice_name = f"{clean_stem}_Slice_{pad_num:02d}.wav"
         slice_path = chop_dir / slice_name
         raw_bytes = struct.pack(f"<{len(slice_pcm)}h", *slice_pcm)
@@ -4417,7 +4901,8 @@ def autochop_sample_to_16_pads(
             "rel_path": rel_slice,
             "filename": slice_name,
             "sound_type": slice_sound_type,
-            "duration_sec": round(len(slice_pcm) / float(sr), 3),
+            "slice_role": slice_role,
+            "duration_sec": dur_slice,
             "mute_group": 6,  # Grupo 6: Slicer / Chop monofónico (cada slice corta al anterior)
             "volume": smart_vol,
             "pan": 0.5,
@@ -4430,6 +4915,7 @@ def autochop_sample_to_16_pads(
         "kit_name": f"{clean_stem}_Chops",
         "source_sample": src_p.name,
         "slices_count": len(pads_out),
+        "applied_chop_mode": applied_chop_mode,
         "chop_folder": chop_dir.relative_to(root_p).as_posix(),
         "recommended_bpm": adaptation["target_bpm"],
         "recommended_mute_profile": "jazz_funk" if is_melodic else style_info.get("mute_profile", "real_drums"),
