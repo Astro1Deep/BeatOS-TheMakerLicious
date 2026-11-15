@@ -48,6 +48,7 @@ import threading
 import time
 import urllib.parse
 import urllib.request
+import unicodedata
 import webbrowser
 import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer as HTTPServer
@@ -68,6 +69,7 @@ mimetypes.add_type("application/json", ".json")
 
 # Estado global de tareas en segundo plano
 TASK_LOCK = threading.Lock()
+LIBRARY_NAMES_LOCK = threading.Lock()
 PO_BACKUP_LOCK = threading.Lock()
 PO_BACKUP_CACHE = {}
 
@@ -1633,6 +1635,56 @@ def resolve_library_path(root_dir: str, value: str) -> Path:
     return candidate
 
 
+def library_names_file(root) -> Path:
+    return config_dir(root) / "library_names.json"
+
+
+def read_library_names(root, *, strict=False) -> dict[str, str]:
+    try:
+        names = json.loads(library_names_file(root).read_text(encoding="utf-8"))
+        if not isinstance(names, dict) or not all(isinstance(value, str) for value in names.values()):
+            raise ValueError("El archivo de nombres de la biblioteca no es válido.")
+        return names
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError):
+        if strict:
+            raise
+        return {}
+
+
+def catalog_display_name(names: dict, root: str, path: str, native_name: str) -> str:
+    item = Path(path)
+    try:
+        relative = item.relative_to(Path(root).resolve()).as_posix() if item.is_absolute() else item.as_posix()
+    except ValueError:
+        return native_name
+    return names.get(relative, native_name)
+
+
+def save_library_name(root: str, payload: dict) -> dict:
+    if not isinstance(payload, dict) or not isinstance(payload.get("path"), str) or not payload["path"].strip():
+        raise ValueError("Se requiere una ruta de biblioteca.")
+    if not isinstance(payload.get("name"), str):
+        raise ValueError("Se requiere un nombre válido.")
+    name = unicodedata.normalize("NFC", payload["name"]).strip()
+    if len(name) > 120 or any(unicodedata.category(char) in {"Cc", "Cf", "Cs", "Zl", "Zp"} for char in name):
+        raise ValueError("Usa un nombre de hasta 120 caracteres sin saltos de línea.")
+    path = resolve_library_path(root, payload["path"])
+    if not ((path.is_file() and path.suffix.lower() in {".xpj", ".xpm"})
+            or (path.is_dir() and (path / "Expansion.xml").is_file())):
+        raise ValueError("Selecciona un proyecto, programa o expansión existente.")
+    relative = path.relative_to(Path(root).resolve()).as_posix()
+    with LIBRARY_NAMES_LOCK:
+        names = read_library_names(root, strict=True)
+        if name:
+            names[relative] = name
+        else:
+            names.pop(relative, None)
+        write_state_json(library_names_file(root), names)
+    return {"success": True, "path": relative, "name": name or None}
+
+
 class MPCAudioRequestHandler(BaseHTTPRequestHandler):
     server_version = "MPCAudioStreamer/3.8.0"
 
@@ -1768,6 +1820,11 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
             data = get_system_status(self.server.root_dir, self.server.server_port)
             self.wfile.write(self._api_json_dumps(data, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif clean_path == "/api/library_names":
+            root = self.server.root_dir
+            self.send_api_json({"success": True, "root_dir": root, "names": read_library_names(root)})
             return
 
         elif clean_path == "/api/ecosystem":
@@ -2577,6 +2634,19 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_api_json(res, 200 if res["success"] else 409 if res.get("busy") else 500)
             return
 
+        elif clean_api == "/api/library_names":
+            try:
+                if length > 16384:
+                    raise ValueError("Tamaño de petición no permitido")
+                result = save_library_name(self.server.root_dir, json.loads(self.rfile.read(length)))
+            except ValueError as error:
+                self.send_api_json({"success": False, "error": str(error)}, 400)
+            except OSError as error:
+                self.send_api_json({"success": False, "error": str(error)}, 500)
+            else:
+                self.send_api_json(result)
+            return
+
         elif clean_api == "/api/load_project":
             try:
                 content_length = int(self.headers.get("Content-Length", 0))
@@ -2593,6 +2663,10 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 kit_mod = get_hardware_kit_builder(self.server.root_dir)
                 if kit_mod and hasattr(kit_mod, "parse_xpj_project"):
                     proj_info = kit_mod.parse_xpj_project(src_path, source_root=self.server.root_dir, track_index=payload.get("track_index"))
+                    names = read_library_names(self.server.root_dir)
+                    proj_info["project_name"] = catalog_display_name(
+                        names, self.server.root_dir, src_path, proj_info["project_name"]
+                    )
                     resp = {"success": True, "project": proj_info}
                 else:
                     raise RuntimeError("Función parse_xpj_project no disponible.")
@@ -2621,6 +2695,10 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 if kit_mod and hasattr(kit_mod, "list_expansion_kits"):
                     exp_root = Path(self.server.root_dir) / "Expansions"
                     kits = kit_mod.list_expansion_kits(target_exp, expansions_root=exp_root, source_root=self.server.root_dir)
+                    names = read_library_names(self.server.root_dir)
+                    kits = [{**kit, "original_name": kit["name"],
+                             "name": catalog_display_name(names, self.server.root_dir, kit["rel_path"], kit["name"])}
+                            for kit in kits]
                     resp = {"success": True, "expansion_name": expansion_name or target_exp, "programs": kits, "total": len(kits)}
                 else:
                     raise RuntimeError("Función list_expansion_kits no disponible.")
@@ -2656,6 +2734,10 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 kit_mod = get_hardware_kit_builder(self.server.root_dir)
                 if kit_mod and hasattr(kit_mod, "parse_xpm_program"):
                     prog_info = kit_mod.parse_xpm_program(src_path, source_root=self.server.root_dir)
+                    names = read_library_names(self.server.root_dir)
+                    prog_info["program_name"] = catalog_display_name(
+                        names, self.server.root_dir, src_path, prog_info["program_name"]
+                    )
                     resp = {"success": True, "program": prog_info}
                 else:
                     raise RuntimeError("Función parse_xpm_program no disponible.")

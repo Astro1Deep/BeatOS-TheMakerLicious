@@ -10,6 +10,11 @@ from http.cookies import SimpleCookie
 import re
 
 EXACT_EN = {
+    "Se requiere una ruta de biblioteca.": "A library path is required.",
+    "Se requiere un nombre válido.": "A valid name is required.",
+    "Usa un nombre de hasta 120 caracteres sin saltos de línea.": "Use a name of up to 120 characters without line breaks.",
+    "Selecciona un proyecto, programa o expansión existente.": "Select an existing project, program or expansion.",
+    "El archivo de nombres de la biblioteca no es válido.": "The library names file is invalid.",
     "Los pads deben ser una lista de hasta 128 entradas.": "Pads must be a list of up to 128 entries.",
     "Asigna muestras al rack o escribe un estilo.": "Add rack samples or enter a style.",
     "La biblioteca no contiene muestras disponibles para ese estilo.": "No samples are available for that style.",

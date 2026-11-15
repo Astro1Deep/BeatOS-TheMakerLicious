@@ -398,6 +398,49 @@ class ServerSecurityTests(unittest.TestCase):
             with contextlib.closing(sqlite3.connect(root / "BeatOS/data/mpc_sample.db")) as db:
                 self.assertEqual(db.execute("SELECT COUNT(*) FROM samples").fetchone()[0], 1)
 
+    def test_catalog_names_persist_without_renaming_expansion_files(self):
+        import gzip
+        import json
+        with self.server() as (url, parent):
+            root = parent / "library"
+            expansion = root / "Expansions/Demo"
+            expansion.mkdir(parents=True)
+            manifest = expansion / "Expansion.xml"
+            project = expansion / "Original.xpj"
+            program = expansion / "Original.xpm"
+            manifest.write_text("<Expansion><title>Demo</title></Expansion>", encoding="utf-8")
+            project.write_bytes(gzip.compress(b'ACVS\n{"data":{"tracks":[]}}'))
+            program.write_text('<MPCVObject><Program type="Drum"><ProgramName>Original</ProgramName></Program></MPCVObject>',
+                               encoding="utf-8")
+            originals = {item: item.read_bytes() for item in (manifest, project, program)}
+            endpoint = url + "/api/library_names"
+            headers = {"Origin": url, "Content-Type": "application/json"}
+
+            def rename(path, title):
+                return self.request(endpoint, data=json.dumps({"path": str(path), "name": title}).encode(),
+                                    headers=headers)
+
+            self.assertEqual(rename(expansion, "Colección de prueba")[0], 200)
+            self.assertEqual(rename(project, "01 · Boom Bap 90")[0], 200)
+            self.assertEqual(rename(program, "02 · Snares")[0], 200)
+            self.assertEqual(rename("escape.txt", "Other")[0], 400)
+            self.assertEqual(rename(program, "Invalid\nTitle")[0], 400)
+            state = json.loads(self.request(endpoint)[1])["names"]
+            self.assertEqual(state["Expansions/Demo/Original.xpj"], "01 · Boom Bap 90")
+            self.assertEqual(state["Expansions/Demo/Original.xpm"], "02 · Snares")
+            self.assertEqual(state["Expansions/Demo"], "Colección de prueba")
+            _, raw = self.request(url + "/api/list_expansion_programs",
+                                  data=b'{"expansion_name":"Demo"}', headers=headers)
+            self.assertEqual(json.loads(raw)["programs"][0]["name"], "02 · Snares")
+            _, raw = self.request(url + "/api/load_project",
+                                  data=b'{"rel_path":"Expansions/Demo/Original.xpj"}', headers=headers)
+            self.assertEqual(json.loads(raw)["project"]["project_name"], "01 · Boom Bap 90")
+            self.assertEqual(rename(program, "")[0], 200)
+            self.assertNotIn("Expansions/Demo/Original.xpm", json.loads(self.request(endpoint)[1])["names"])
+            for item, original in originals.items():
+                self.assertEqual(item.read_bytes(), original)
+            self.assertEqual(self.request(url + "/BeatOS/config/library_names.json")[0], 403)
+
     def test_master_produce_keeps_pad_numbers_and_returns_internal_submixes(self):
         import json
         with self.server() as (url, parent):

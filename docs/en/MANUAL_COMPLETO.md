@@ -276,3 +276,7 @@ Automated repository tests cover parts of indexing, metadata, parsers, routes, s
 Known limitations include the Sample/AC50-derived XPJ template (no independent MPC One/Live profile); no native Maschine/SP/EP project generation; no modem-data decoding for PO backups; rack state that is not fully saved across sessions; UI volume/export validation differences; and partially translated runtime labels.
 
 **Version numbers are unrelated:** *BeatOS 3.8.0* is not *Akai MPC 3.8*. For device operations, consult the [hardware compatibility guide](COMPATIBILIDAD_HARDWARE.md). For API and file structures, consult the [technical reference](REFERENCIA_TECNICA.md). [Back to Spanish manual](../MANUAL_COMPLETO.md).
+
+## Catalog display names
+
+In **MPC Projects** or **MPC Expansions**, choose **Edit display name**. Inside an expansion, you can edit each program. BeatOS saves the name with the library and uses it for searching and sorting. Leave the field blank to restore the original. Hardware filenames and sample references are preserved.

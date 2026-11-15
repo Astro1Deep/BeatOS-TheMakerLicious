@@ -494,3 +494,7 @@ Al reportar un fallo incluye versión/commit, sistema operativo, raíz de biblio
 Las pruebas del repositorio cubren indexación, metadatos, parsers, rutas, servidor, mutes, exportadores, instalación y lógica del navegador según sus casos. La CI incluye Python y construcción del ZIP en Linux, además de instalación funcional en Windows. Su configuración no equivale a un resultado aprobado para cualquier revisión: consulta la ejecución del commit concreto.
 
 La referencia técnica incluye los comandos reproducibles. Este manual documenta también límites observados en el código, aunque una prueba automática no los elimine. Ninguna prueba de archivos sustituye una carga y escucha física por modelo/firmware. No se han actualizado firmwares ni sobrescrito proyectos de hardware al preparar esta revisión documental. La versión BeatOS 3.8.0 y la versión MPC 3.8 de Akai son numeraciones independientes.
+
+## Nombres visibles en el catálogo
+
+Desde **Proyectos MPC** o **Expansiones MPC**, elige **Editar nombre visible**. Dentro de una expansión puedes editar cada programa. El nombre se guarda en la biblioteca de BeatOS y se usa para buscar y ordenar. Deja el campo vacío para recuperar el original. Los nombres de archivo y las referencias del hardware se conservan.
