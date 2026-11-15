@@ -665,12 +665,16 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
     pads_in = payload.get("pads") or []
 
     pad_reports = []
-    text_tokens = [kit_name]
     sub_heavy_count = 0
     open_hat_count = 0
     closed_hat_count = 0
     candidate_loop_wav: Optional[Path] = None
-    candidate_loop_score = -1.0
+    candidate_loop_score = ()
+    reference_sample = None
+    reference_style = None
+    rhythm_hints = {}
+    melodic_roles = {"MELODIC_LOOP", "KEYS_SYNTH", "VOCAL"}
+    drum_roles = {"KICK", "SNARE", "TOM", "CLAP", "HIHAT", "CYMBAL", "PERCUSSION", "DRUM_LOOP"}
 
     for item in pads_in:
         if not isinstance(item, dict):
@@ -681,7 +685,8 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
         sname = str(item.get("sample_name") or item.get("sampleName") or "").strip()
         rel_path = str(item.get("rel_path") or item.get("relPath") or "").strip()
         stype = str(item.get("sound_type") or item.get("soundType") or "").strip().upper()
-        text_tokens.append(f"{sname} {rel_path}")
+        filename = Path(rel_path).name or sname
+        label_style = kit_mod.detect_musical_style(filename) if kit_mod else {"id": "standard"}
 
         if not stype or stype == "SAMPLE":
             stype = kit_mod.detect_sound_type(sname or rel_path) if kit_mod else "PERCUSSION"
@@ -736,7 +741,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
         if stype in ("BASS_808", "KICK") and low_ratio >= 0.62 and duration_sec >= 0.42:
             acoustic_role = "BASS_808" if ("808" in low_sname or "sub" in low_sname or duration_sec >= 0.65) else "SUB_KICK"
             sub_heavy_count += 1
-        elif stype == "HIHAT" or (zcr_hz >= 2600 and low_ratio < 0.15 and stype not in ("CYMBAL", "SNARE", "CLAP")):
+        elif stype == "HIHAT" or (zcr_hz >= 2600 and low_ratio < 0.15 and stype == "PERCUSSION" and not is_tom):
             if "open" in low_sname or "oh" in low_sname or duration_sec >= 0.24:
                 acoustic_role = "HIHAT_OPEN"
                 open_hat_count += 1
@@ -747,14 +752,21 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
         elif is_tom:
             acoustic_role = "TOM"
 
-        # Candidato principal de loop/frase melódica para análisis de compás, patrón rítmico y adaptación Hip-Hop/Lo-Fi
+        if stype in drum_roles and label_style["id"] != "standard":
+            style_key = label_style["id"]
+            hint = rhythm_hints.setdefault(style_key, {"label": label_style["style"], "pads": []})
+            hint["pads"].append(p_num)
+
         if resolved_wav is not None and duration_sec >= 0.85:
-            loop_prio = duration_sec + (3.0 if stype in ("MELODIC_LOOP", "KEYS_SYNTH", "VOCAL") else 0.0)
-            if any(k in low_sname or k in rel_path.lower() for k in ("bolero", "soul", "jazz", "bossa", "loop", "guitar", "rhodes", "piano", "sax", "break")):
-                loop_prio += 2.5
-            if loop_prio > candidate_loop_score:
-                candidate_loop_score = loop_prio
+            tagged_bpm = kit_mod._extract_explicit_bpm_from_text(filename) if kit_mod else None
+            score = (stype in melodic_roles, stype in {"MELODIC_LOOP", "KEYS_SYNTH"},
+                     label_style["id"] != "standard", bool(tagged_bpm), min(duration_sec, 24.0), -p_num)
+            if score > candidate_loop_score:
+                candidate_loop_score = score
                 candidate_loop_wav = resolved_wav
+                reference_sample = {"pad": p_num, "filename": filename, "sound_type": stype,
+                                    "tagged_bpm": tagged_bpm}
+                reference_style = label_style
 
         smart_vol = (
             kit_mod.compute_smart_pad_volume(stype, resolved_wav)
@@ -864,20 +876,19 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
                 except Exception:
                     pass
 
-    combined_text = " ".join(text_tokens)
-    style_info = (
-        kit_mod.detect_musical_style(combined_text, bpm=current_tempo if current_tempo != 120.0 else None)
-        if kit_mod and hasattr(kit_mod, "detect_musical_style")
-        else {"id": "standard", "style": "Hip-Hop / Electrónica", "bpm": current_tempo, "mute_profile": "punch_clean"}
-    )
-    style_id = style_info.get("id", "standard")
+    fallback_style = {"id": "standard", "style": "Hip-Hop / Electrónica",
+                      "bpm": current_tempo, "mute_profile": "punch_clean"}
+    kit_style = kit_mod.detect_musical_style(Path(kit_name).name) if kit_mod else fallback_style
+    style_info = reference_style if reference_style and reference_style["id"] != "standard" else kit_style
+    style_id = style_info["id"]
+    style_basis = ("sample_label" if style_info is reference_style else
+                   "kit_label" if style_id != "standard" else "undetermined")
 
-    # Si el análisis acústico detecta colas subgraves/808 densas, priorizar perfil club_clean
     recommended_profile = style_info.get("mute_profile", "punch_clean")
     if sub_heavy_count >= 2 and recommended_profile in ("real_drums", "punch_clean"):
         recommended_profile = "club_clean"
 
-    inferred_bpm = kit_mod.infer_kit_bpm(combined_text, fallback=style_info.get("bpm", current_tempo)) if kit_mod else current_tempo
+    inferred_bpm = (reference_sample or {}).get("tagged_bpm") or current_tempo
 
     # Análisis de Patrón Rítmico, Compás (4/4, 3/4, 6/8, 12/8, 5/4) y Adaptación Hip-Hop / Lo-Fi
     rhythm_analysis = None
@@ -887,14 +898,12 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
         "bolero", "oldies", "soul_vintage", "jazz_hop", "lofi", "boombap", "rnb_soul", "funk_jazz",
         "drumless", "bossa_samba", "cumbia_son", "tango_vals", "psych_library",
     )
-    is_crate_digging_style = style_id in crate_digging_styles
     if kit_mod and hasattr(kit_mod, "analyze_rhythmic_pattern_and_hiphop_adaptation"):
         if candidate_loop_wav is not None and candidate_loop_wav.is_file():
             try:
                 rhythm_bundle = kit_mod.analyze_rhythmic_pattern_and_hiphop_adaptation(
                     candidate_loop_wav,
-                    style_hint=combined_text,
-                    target_bpm_hint=current_tempo if current_tempo != 120.0 else None,
+                    style_hint=reference_sample["filename"],
                     adapt_mode=adapt_mode,
                 )
                 rhythm_analysis = rhythm_bundle.get("rhythm_analysis")
@@ -902,14 +911,14 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
             except Exception:
                 rhythm_analysis = None
                 hiphop_adaptation = None
-        elif is_crate_digging_style:
-            src_b = round(float(inferred_bpm or style_info.get("bpm") or 86.0), 1)
+        elif style_id in crate_digging_styles:
+            src_b = round(float(style_info.get("bpm") or inferred_bpm), 1)
             mode_bpm_map = {"lofi_chill": 82.0, "boombap_classic": 90.0, "dilla_jazzhop": 86.0, "drumless_alchemist": 78.0}
             default_tgt = 78.0 if style_id == "drumless" else (82.0 if style_id == "tango_vals" else (84.0 if style_id in ("bolero", "bossa_samba", "oldies") else (86.0 if style_id in ("soul_vintage", "lofi", "psych_library") else 88.0)))
             tgt_b = round(float(mode_bpm_map.get(adapt_mode, default_tgt)), 1)
             eff_b = round(src_b / 2.0, 1) if src_b >= 132.0 else src_b
             half_applied = bool(src_b >= 132.0)
-            low_comb = combined_text.lower()
+            low_comb = kit_name.lower()
             ts_fb = (
                 "3/4" if any(k in low_comb for k in ("vals", "waltz", "3/4"))
                 else ("12/8" if (re.search(r"(?:^|[\W_])12[/_\-]8(?:$|[\W_])", low_comb) or ("4/4" not in low_comb and any(k in low_comb for k in ("doo wop", "doo-wop", "doowop", "lowrider", "oldies"))))
@@ -941,6 +950,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
                 "drumless": "Fraseo Libre / Drumless Rubato",
             }
             rhythm_analysis = {
+                "basis": "kit_label",
                 "source_bpm": src_b,
                 "effective_source_bpm": eff_b,
                 "time_signature": ts_fb,
@@ -959,6 +969,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
                 "timbre_label": "Cinta Vintage 50s/60s (Oldies)" if style_id == "oldies" else "Orgánico / Referencia de Kit",
             }
             hiphop_adaptation = {
+                "basis": "kit_label",
                 "target_style": "Hip-Hop / Lo-Fi" if style_id in ("bolero", "oldies", "lofi", "bossa_samba", "drumless") else "Boom Bap & Lo-Fi",
                 "adapt_mode": adapt_mode,
                 "target_bpm": main_prof["target_bpm"],
@@ -975,8 +986,18 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
                 ),
             }
 
+    if rhythm_analysis and rhythm_analysis.get("basis") != "kit_label":
+        inferred_bpm = rhythm_analysis.get("source_bpm") or inferred_bpm
+        acoustic_style = rhythm_analysis.get("acoustic_style_id")
+        if style_basis == "undetermined" and acoustic_style in crate_digging_styles:
+            style_id = acoustic_style
+            style_basis = "acoustic"
+            style_info = {"style": rhythm_analysis.get("acoustic_style") or
+                          rhythm_analysis.get("groove_pattern") or fallback_style["style"]}
+
     if hiphop_adaptation and (
         style_id in ("bolero", "oldies", "soul_vintage", "jazz_hop", "drumless", "bossa_samba", "cumbia_son", "tango_vals", "psych_library")
+        or style_id in ("lofi", "boombap")
         or adapt_mode in ("lofi_chill", "boombap_classic", "dilla_jazzhop", "drumless_alchemist")
     ):
         inferred_bpm = float(hiphop_adaptation["target_bpm"])
@@ -1030,6 +1051,9 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
         "detected_style": style_info.get("style", "Hip-Hop / Electrónica"),
         "style_id": style_id,
         "recommended_bpm": inferred_bpm,
+        "rack_bpm": current_tempo,
+        "style_reference": reference_sample,
+        "drum_style_hints": sorted(rhythm_hints.values(), key=lambda hint: -len(hint["pads"])),
         "recommended_mute_profile": recommended_profile,
         "anchor_key": anchor_note_label,
         "sub_heavy_pads": sub_heavy_count,
@@ -1044,7 +1068,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
             "bpm": inferred_bpm,
             "mute_profile": recommended_profile,
             "anchor_key": anchor_note_label,
-            "confidence": 0.92 if style_id != "standard" else 0.78,
+            "basis": style_basis,
             "notes": " · ".join(notes_parts),
         },
         "pads": pad_reports,
@@ -1260,6 +1284,88 @@ def build_cerebro_smart_kit(root_dir: str, payload: dict) -> dict:
         "recommended_mute_profile": mute_profile,
         "hiphop_adaptation": hiphop_adaptation,
         "pads": pads_out,
+    }
+
+
+def master_produce_rack(root_dir: str, payload: dict) -> dict:
+    """Analyze and calibrate the rack in place. A prompt can populate an empty rack."""
+    pads = payload.get("pads", [])
+    if not isinstance(pads, list) or len(pads) > 128:
+        raise ValueError("Los pads deben ser una lista de hasta 128 entradas.")
+    generated = not pads
+    prompt = str(payload.get("prompt") or "").strip()
+    if generated and not prompt:
+        raise ValueError("Asigna muestras al rack o escribe un estilo.")
+    builder = get_hardware_kit_builder(root_dir)
+    if builder is None:
+        raise ValueError("Motor hardware_kit_builder no disponible en el servidor.")
+    kit = build_cerebro_smart_kit(root_dir, payload) if generated else {}
+    pads = kit.get("pads", pads)
+    if generated:
+        existing_pads = []
+        for pad in pads:
+            try:
+                if resolve_library_path(root_dir, pad["rel_path"]).is_file():
+                    existing_pads.append(pad)
+            except ValueError:
+                continue
+        pads = existing_pads
+        if payload.get("target_device") == "ep133":
+            pads = [pad for pad in pads if pad["pad"] <= 12]
+    if not pads:
+        raise ValueError("La biblioteca no contiene muestras disponibles para ese estilo.")
+    by_pad = {}
+    for pad in pads:
+        if not isinstance(pad, dict):
+            raise ValueError("Cada pad debe ser un objeto.")
+        number = int(pad.get("pad") or 0)
+        if not 1 <= number <= 128 or number in by_pad:
+            raise ValueError("Número de pad no válido o duplicado.")
+        path = pad.get("rel_path")
+        if not isinstance(path, str) or not path or not resolve_library_path(root_dir, path).is_file():
+            raise ValueError(f"Pad {number}: muestra ausente o fuera de la biblioteca")
+        by_pad[number] = pad
+
+    tempo = kit.get("recommended_bpm", float(payload.get("tempo") or 120))
+    if not math.isfinite(tempo) or not 30 <= tempo <= 300:
+        raise ValueError("Tempo fuera de rango (30–300 BPM)")
+    name = str(payload.get("kit_name") or kit.get("kit_name") or "Rack Kit")
+    analyzed_pads = [{**pad, "sample_name": pad.get("sample_name") or pad.get("filename")
+                      or Path(pad["rel_path"]).name} for pad in pads]
+    analysis = analyze_rack_with_cerebro(root_dir, {
+        **payload, "kit_name": name, "tempo": tempo, "pads": analyzed_pads,
+    })
+    gain = {"smart_pcm": "recommended_volume", "hierarchical_a": "hierarchical_volume",
+            "uniform_b": "uniform_volume"}.get(payload.get("gain_profile", "smart_pcm"))
+    bus_counts = dict.fromkeys(("main_0", "sub1_bass", "sub2_hats", "sub3_melodic", "sub4_fx"), 0)
+    calibrated = []
+    for report in analysis["pads"]:
+        original = by_pad[report["pad"]]
+        stype = report["sound_type"]
+        route = builder.mpc_routed_pads({report["pad"]: {**original, "sound_type": stype}}, "submix_split")
+        submix = int(route[report["pad"]]["submix"])
+        bus_name = tuple(bus_counts)[submix] if 0 <= submix <= 4 else "main_0" if submix == 9 else None
+        if bus_name:
+            bus_counts[bus_name] += 1
+        result = {**original, "sound_type": stype, "submix": submix,
+                  "volume": report[gain] if gain else original.get("volume", 0.707946),
+                  "mute_group": original.get("mute_group", report["recommended_mute_group"])}
+        if payload.get("auto_tune_808", True) and stype in {"BASS_808", "BASS"}:
+            if report.get("detected_note"):
+                result.update(tune=report["recommended_tune"], fine_tune=report["recommended_fine_tune"],
+                              root_note=report["recommended_root_note"])
+        result["volume"] = float(result["volume"])
+        if not math.isfinite(result["volume"]) or not 0 <= result["volume"] <= 1:
+            raise ValueError(f"Pad {report['pad']}: volume fuera de rango")
+        calibrated.append(result)
+    gains = [20.0 * math.log10(pad["volume"]) for pad in calibrated if pad["volume"] > 0]
+    return {
+        "success": True, "kit_name": name, "generated_from_prompt": generated, "analysis": analysis,
+        "recommended_bpm": analysis["recommended_bpm"],
+        "recommended_mute_profile": analysis["recommended_mute_profile"],
+        "calibration": {"pads": calibrated, "avg_gain_db": round(sum(gains) / len(gains), 1) if gains else None},
+        "submix_routing": {"bus_counts": bus_counts},
+        "master_summary": {"style_label": analysis["detected_style"], "anchor_key": analysis["anchor_key"]},
     }
 
 
@@ -2001,6 +2107,20 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_cors_headers()
             self.end_headers()
             self.wfile.write(self._api_json_dumps(response, ensure_ascii=False).encode('utf-8'))
+            return
+
+        elif clean_api == "/api/cerebro_master_produce":
+            try:
+                payload = json.loads(self.rfile.read(length))
+                if not isinstance(payload, dict):
+                    raise ValueError("Se requiere un objeto JSON.")
+                result = master_produce_rack(self.server.root_dir, payload)
+            except (ValueError, TypeError) as error:
+                self.send_api_json({"success": False, "error": str(error)}, 400)
+            except (OSError, sqlite3.Error) as error:
+                self.send_api_json({"success": False, "error": str(error)}, 500)
+            else:
+                self.send_api_json(result)
             return
 
         elif clean_api == "/api/cerebro_analyze":

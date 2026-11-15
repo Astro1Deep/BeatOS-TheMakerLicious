@@ -121,7 +121,7 @@ The server listens on the printed loopback address. It validates allowed hosts/o
 | `POST /api/clean_metadata` | Explicitly delete auxiliary AppleDouble/`.DS_Store`; may run `dot_clean` on macOS. |
 | `POST /api/reveal_in_finder` | Open an allowed file location with the platform's file manager. |
 | `POST /api/launch_ep_tool` | Open the manufacturer's web tool; not a device transfer. |
-| `POST /api/sync_dashboard` | Optional external Cerebro integration; unavailable on normal clean install. |
+| `POST /api/sync_dashboard` | Refreshes the mounted-drive inventory and the local Cerebro bridge when available. |
 | `POST /api/theme` | Store theme preferences. |
 | `POST /api/po33_backups?name=…` | Archive a raw WAV with `Content-Type: audio/wav`, up to 128 MiB. |
 

@@ -33,6 +33,45 @@ class MuteGroups(unittest.TestCase):
         self.assertEqual(result['pads'][1]['sample_file'], 'Kick.wav')
         self.assertEqual(result['tempo'],91)
 
+    def test_finger_drumming_exports_keep_pad_positions_and_route_families(self):
+        import wave
+        import xml.etree.ElementTree as ET
+        from hardware_kit_builder import calibrate_xpj, create_kit
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            pads = []
+            roles = ["KICK", "TOM", "HIHAT", "BASS_808", "VOCAL", "FX", "KEYS_SYNTH"]
+            positions = [1, 3, 5, 6, 9, 12, 18]
+            for position, role in zip(positions, roles):
+                name = f"{role}.wav"
+                with wave.open(str(root / name), "wb") as audio:
+                    audio.setparams((1, 2, 44100, 0, "NONE", "not compressed"))
+                    audio.writeframes(b"\x10\x01" * 882)
+                pads.append({"pad": position, "sound_type": role, "rel_path": name})
+            pads[-1]["submix"] = 8
+            result = create_kit("Live", pads, target="mpc", source_root=root, mpc_options={
+                "audio_route_mode": "submix_split", "multitrack_mode": "single_drum", "gain_profile": "manual",
+            })["targets"]["mpc"]
+            project = Path(result["project_path"])
+            expected_routes = [(0, 0), (0, 0), (1, 1), (1, 0), (1, 2), (1, 3), (1, 7)]
+            for recalibrate in (False, True):
+                if recalibrate:
+                    calibrate_xpj(project, backup=False, smart_acoustics=False)
+                tracks = json.loads(gzip.decompress(project.read_bytes()).split(b"\n", 5)[5])["data"]["tracks"]
+                self.assertEqual(len(tracks), 1)
+                insts = tracks[0]["program"]["drum"]["instruments"]
+                actual_positions = [n for n, inst in enumerate(insts, 1) if inst["layersv"][0]["active"]]
+                self.assertEqual(actual_positions, positions)
+                routes = [insts[n - 1]["mixable"]["audioRoute"] for n in positions]
+                self.assertEqual([(r["destination"], r["audioRouteSubIndex"]) for r in routes], expected_routes)
+            project_pads = parse_xpj_project(project, root)["pads"]
+            self.assertEqual([project_pads[n]["submix"] for n in positions], [0, 0, 2, 1, 3, 4, 8])
+            xml = ET.parse(result["program_path_root"])
+            instruments = {int(inst.attrib["number"]): inst for inst in xml.findall(".//Instrument")}
+            xml_routes = [(int(instruments[n].findtext("AudioRoute/AudioRoute")),
+                           int(instruments[n].findtext("AudioRoute/AudioRouteSubIndex"))) for n in positions]
+            self.assertEqual(xml_routes, expected_routes)
+
     def test_native_exports_defaults_and_explicit_free(self):
         import xml.etree.ElementTree as ET
         pads={1:{'sample_name':'Kick'},2:{'sample_name':'Hat'},3:{'sample_name':'Snare'},
@@ -340,7 +379,7 @@ class MuteGroups(unittest.TestCase):
             header = b"\n".join(raw.split(b"\n", 5)[:5]) + b"\n"
             proj_path.write_bytes(gzip.compress(header + json.dumps(obj).encode("utf-8")))
 
-            calibrate_xpj(proj_path, backup=False, smart_acoustics=False)
+            calibrate_xpj(proj_path, backup=False, smart_acoustics=False, reset_routes=True)
             obj2 = json.loads(gzip.decompress(proj_path.read_bytes()).split(b"\n", 5)[5].decode("utf-8"))
             insts2 = obj2["data"]["tracks"][0]["program"]["drum"]["instruments"]
             self.assertEqual(insts2[0]["mixable"]["audioRoute"]["destination"], 0)

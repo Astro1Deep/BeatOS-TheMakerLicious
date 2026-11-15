@@ -10,6 +10,12 @@ from http.cookies import SimpleCookie
 import re
 
 EXACT_EN = {
+    "Los pads deben ser una lista de hasta 128 entradas.": "Pads must be a list of up to 128 entries.",
+    "Asigna muestras al rack o escribe un estilo.": "Add rack samples or enter a style.",
+    "La biblioteca no contiene muestras disponibles para ese estilo.": "No samples are available for that style.",
+    "Cada pad debe ser un objeto.": "Each pad must be an object.",
+    "Número de pad no válido o duplicado.": "Invalid or duplicate pad number.",
+    "Se requiere un objeto JSON.": "A JSON object is required.",
     "Inventario del ecosistema actualizado.": "Ecosystem inventory refreshed.",
     "La biblioteca ya no está disponible.": "The library is no longer available.",
     "No se pudo limpiar toda la biblioteca.": "Could not clean the entire library.",
