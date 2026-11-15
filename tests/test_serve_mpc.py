@@ -398,6 +398,54 @@ class ServerSecurityTests(unittest.TestCase):
             with contextlib.closing(sqlite3.connect(root / "BeatOS/data/mpc_sample.db")) as db:
                 self.assertEqual(db.execute("SELECT COUNT(*) FROM samples").fetchone()[0], 1)
 
+    def test_master_produce_keeps_pad_numbers_and_returns_internal_submixes(self):
+        import json
+        with self.server() as (url, parent):
+            root = parent / "library"
+            for name in ("Kick.wav", "Hat.wav", "Vocal.wav"):
+                with wave.open(str(root / name), "wb") as audio:
+                    audio.setparams((1, 2, 44100, 0, "NONE", "not compressed"))
+                    audio.writeframes(struct.pack("<h", 500) * 4096)
+            payload = {"gain_profile": "manual", "pads": [
+                {"pad": 1, "rel_path": "Kick.wav", "sound_type": "KICK", "mute_group": 0, "volume": 0.7},
+                {"pad": 4, "rel_path": "Hat.wav", "sound_type": "HIHAT"},
+                {"pad": 16, "rel_path": "Vocal.wav", "sound_type": "VOCAL"},
+            ]}
+            endpoint = url + "/api/cerebro_master_produce"
+            headers = {"Origin": url, "Content-Type": "application/json"}
+            code, body = self.request(endpoint, data=json.dumps(payload).encode(), headers=headers)
+            self.assertEqual(code, 200, body)
+            result = json.loads(body)
+            pads = result["calibration"]["pads"]
+            self.assertEqual([(p["pad"], p["submix"]) for p in pads], [(1, 0), (4, 2), (16, 3)])
+            self.assertEqual((pads[0]["volume"], pads[0]["mute_group"]), (0.7, 0))
+            self.assertEqual(self.request(endpoint, data=b"{}", headers=headers)[0], 400)
+            self.assertFalse((root / "Custom_Kits").exists())
+
+    def test_primary_melody_beats_single_percussion_label_and_keeps_source_tempo(self):
+        import math
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            files = [(5, "Short Ocean Drill Hat.wav", "HIHAT"),
+                     (13, "Lo-Fi_Piano_Bmaj_90BPM001.wav", "KEYS_SYNTH")]
+            pads = []
+            for pad, name, sound_type in files:
+                with wave.open(str(root / name), "wb") as audio:
+                    audio.setparams((1, 2, 8000, 0, "NONE", "not compressed"))
+                    count = 16000 if pad == 13 else 640
+                    audio.writeframes(b"".join(struct.pack("<h", int(1000 * math.sin(frame / 10)))
+                                               for frame in range(count)))
+                pads.append({"pad": pad, "rel_path": name, "sound_type": sound_type})
+            data = serve_mpc.analyze_rack_with_cerebro(str(root), {"tempo": 120, "pads": pads})
+            self.assertEqual(data["style_id"], "lofi")
+            self.assertEqual(data["style"]["basis"], "sample_label")
+            self.assertNotIn("confidence", data["style"])
+            self.assertEqual(data["style_reference"]["pad"], 13)
+            self.assertEqual(data["style_reference"]["tagged_bpm"], 90)
+            self.assertEqual(data["rhythm_analysis"]["source_bpm"], 90)
+            self.assertEqual(data["rack_bpm"], 120)
+            self.assertEqual(data["drum_style_hints"], [{"label": "UK / NY Drill", "pads": [5]}])
+
     def test_cerebro_analyze_long_paths_and_create_expansion_syncs_catalog(self):
         import base64
         import json

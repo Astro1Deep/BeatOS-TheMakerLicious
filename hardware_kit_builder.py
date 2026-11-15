@@ -1299,6 +1299,8 @@ def parse_xpm_program(xpm_path: str | Path, source_root: Optional[str | Path] = 
             ar_sub = int(route_el.findtext("AudioRouteSubIndex", "0") or 0)
             if ar_type == 1:
                 submix = ar_sub + 1
+            elif ar_type == 2:
+                submix = 9
 
         sample_name = ""
         sample_file = ""
@@ -1926,6 +1928,35 @@ def _reset_xpj_instrument_slot(inst: Dict[str, Any]) -> None:
             lay["sliceInfo"]["LoopStart"] = 0
 
 
+def mpc_role_submix(sound_type: str) -> int:
+    """Route by instrument family without changing the pad or bank number."""
+    if sound_type in {"BASS_808", "BASS"}:
+        return 1
+    if sound_type in {"HIHAT", "CYMBAL", "PERCUSSION"}:
+        return 2
+    if sound_type in {"KEYS_SYNTH", "MELODIC_LOOP", "VOCAL", "INSTRUMENT"}:
+        return 3
+    return 4 if sound_type in {"FX", "AMBIENCE"} else 0
+
+
+def mpc_routed_pads(pads: dict, route_mode: str) -> dict:
+    routed = {}
+    for number, original in pads.items():
+        pad = dict(original)
+        if route_mode == "main":
+            pad["submix"] = 9
+        elif pad.get("submix") in (None, "", 0, "0"):
+            stype = str(pad.get("sound_type") or detect_sound_type(
+                pad.get("sample_name") or pad.get("sample_file") or Path(pad.get("source_path") or "").name
+            )).upper()
+            if route_mode == "submix_split":
+                pad["submix"] = mpc_role_submix(stype)
+            elif route_mode == "submix1":
+                pad["submix"] = 1
+        routed[number] = pad
+    return routed
+
+
 def export_mpc_project(
     kit_name: str,
     pads_data: dict,
@@ -1939,7 +1970,7 @@ def export_mpc_project(
     gain_profile = str(opts.get("gain_profile") or "smart_pcm").strip().lower()
     force_gain_profile = bool(opts.get("force_gain_profile", False))
     audio_route_mode = str(opts.get("audio_route_mode") or "track").strip().lower()
-    default_submix = 1 if audio_route_mode == "submix1" else (9 if audio_route_mode == "main" else 0)
+    pads_data = mpc_routed_pads(pads_data, audio_route_mode)
     multitrack_mode = str(opts.get("multitrack_mode") or "single").strip().lower()
     auto_tune_808 = bool(opts.get("auto_tune_808", False))
 
@@ -1979,9 +2010,6 @@ def export_mpc_project(
         stype = str(p_copy.get("sound_type") or detect_sound_type(s_stem or s_name)).upper()
         p_copy["sound_type"] = stype
 
-        if "submix" not in p_copy and default_submix != 0:
-            p_copy["submix"] = default_submix
-
         raw_vol = p_copy.get("volume")
         is_default_vol = raw_vol is None or abs(float(raw_vol) - 0.707946) < 1e-5
         if gain_profile != "manual" and (force_gain_profile or is_default_vol):
@@ -2005,7 +2033,7 @@ def export_mpc_project(
             except Exception:
                 pass
 
-        ext_pad = _extract_extended_pad_params(p_copy, default_submix=default_submix)
+        ext_pad = _extract_extended_pad_params(p_copy)
         sample_root = ext_pad["root_note"] if ext_pad["root_note"] > 0 else 60
         if s_name not in seen_files:
             seen_files.add(s_name)
@@ -2099,7 +2127,7 @@ def export_mpc_project(
                 pan = float(p_info.get("pan", 0.500000))
                 tune = max(-24, min(24, int(p_info.get("tune", 0))))
                 mute = pad_mute_group(p_info)
-                ext = _extract_extended_pad_params(p_info, default_submix=default_submix)
+                ext = _extract_extended_pad_params(p_info)
 
                 inst["coarseTune"] = tune
                 inst["fineTune"] = ext["fine_tune"]
@@ -2234,7 +2262,7 @@ def export_mpc_project(
             "masterTempo": float(tempo),
             "samples": [
                 {"version": 1, "name": s_stem, "path": s_file, "loadImpl": 0}
-                for s_stem, s_file, _ in linked_samples
+                for s_stem, s_file, _, _ in linked_samples
             ],
         }
     }
@@ -3372,7 +3400,8 @@ def create_kit(
             mpc_dir = output_base_dir / "Akai_MPC"
             mpc_dir.mkdir(parents=True, exist_ok=True)
             proj_path = export_mpc_project(clean_kit_name, pads_dict, mpc_dir, tempo=tempo, mpc_options=opts)
-            prog_path = export_mpc_program(clean_kit_name, pads_dict, mpc_dir, copy_samples=True)
+            program_pads = mpc_routed_pads(pads_dict, str(opts.get("audio_route_mode") or "track").strip().lower())
+            prog_path = export_mpc_program(clean_kit_name, program_pads, mpc_dir, copy_samples=True)
             mpc_info: Dict[str, Any] = {
                 "project_path": proj_path,
                 "program_path_root": prog_path,
@@ -3964,7 +3993,7 @@ def _extract_explicit_bpm_from_text(text: str) -> Optional[float]:
     if not text:
         return None
     s = str(text)
-    m = re.search(r"(?:^|[\s_\-/])(5\d|[6-9]\d|1[0-8]\d)\s*bpm\b", s, re.I)
+    m = re.search(r"(?:^|[\s_\-/])(5\d|[6-9]\d|1[0-8]\d)[ _-]*bpm(?=\b|\d+(?:[_. -]|$))", s, re.I)
     if m:
         val = float(m.group(1))
         if 55.0 <= val <= 190.0:
@@ -5063,6 +5092,7 @@ def calibrate_xpj(
     xpj_path: Union[str, Path],
     backup: bool = True,
     smart_acoustics: bool = True,
+    reset_routes: bool = False,
 ) -> int:
     """Calibra un archivo .xpj (GZIP JSON): Gain Staging en 4 etapas, análisis acústico PCM y AudioRoute SampQOL."""
     xpj_path = Path(xpj_path)
@@ -5104,7 +5134,7 @@ def calibrate_xpj(
                 if cur_out_vol is None or cur_out_vol > 0.794328:
                     out_mix["volume"] = 0.7079457640647888
         submixes = mixer_dict.get("submixes")
-        if isinstance(submixes, list):
+        if reset_routes and isinstance(submixes, list):
             for s_idx, sm in enumerate(submixes):
                 if not isinstance(sm, dict):
                     continue
@@ -5146,7 +5176,7 @@ def calibrate_xpj(
             mixable = inst.get("mixable")
             if isinstance(mixable, dict):
                 ar = mixable.get("audioRoute")
-                if isinstance(ar, dict):
+                if reset_routes and isinstance(ar, dict):
                     dest = ar.get("destination", 0)
                     sub_idx = ar.get("audioRouteSubIndex", 0)
                     if not (dest == 1 and sub_idx in custom_submix_indices):

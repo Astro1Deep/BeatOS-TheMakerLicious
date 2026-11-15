@@ -415,7 +415,7 @@ El instalador y la acción web no son exactamente la misma implementación: la w
 
 El estado del servidor informa de raíz, muestras de la base disponible, espacio de ese disco y tarea de reindexación. El indicador de «tarjeta MPCSMPL» comprueba una ruta macOS histórica concreta; que aparezca desconectada no invalida una biblioteca de otro nombre ni detecta automáticamente todos los aparatos USB.
 
-«Sincronizar Master Dashboard» intenta ejecutar un script externo de la instalación personal de Cerebro. No viene con el instalador autónomo; si no está, da error. No es necesario para catálogo, rack o exportación. Los supervisores históricos de `scripts/` tampoco se inician en un arranque normal.
+«Sincronizar Master Dashboard» actualiza el inventario local de discos y bases de datos. Cuando Cerebro OS está instalado, también actualiza su puente.
 
 ## 16. Temas, idiomas y apoyo
 
