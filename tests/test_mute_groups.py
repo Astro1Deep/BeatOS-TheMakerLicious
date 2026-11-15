@@ -64,6 +64,8 @@ class MuteGroups(unittest.TestCase):
                 self.assertEqual(actual_positions, positions)
                 routes = [insts[n - 1]["mixable"]["audioRoute"] for n in positions]
                 self.assertEqual([(r["destination"], r["audioRouteSubIndex"]) for r in routes], expected_routes)
+            project_pads = parse_xpj_project(project, root)["pads"]
+            self.assertEqual([project_pads[n]["submix"] for n in positions], [0, 0, 2, 1, 3, 4, 8])
             xml = ET.parse(result["program_path_root"])
             instruments = {int(inst.attrib["number"]): inst for inst in xml.findall(".//Instrument")}
             xml_routes = [(int(instruments[n].findtext("AudioRoute/AudioRoute")),

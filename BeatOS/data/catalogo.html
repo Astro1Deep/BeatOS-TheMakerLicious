@@ -7252,6 +7252,7 @@ function buildRackPadFromSource(pad) {
     pan: pad.pan,
     tune: pad.tune,
     muteGroup: pad.mute_group ?? 0,
+    submix: pad.submix ?? 0,
     playMode: pad.trigger_mode === 'NoteOn' ? 'NOTE_ON' : 'ONE_SHOT',
     reverse: !!pad.reverse,
     padColor: PAD_COLORS[pad.sound_type] || '#00f0ff'

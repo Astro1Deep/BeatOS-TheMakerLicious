@@ -1419,11 +1419,21 @@ def parse_xpj_project(xpj_path: str | Path, source_root: Optional[str | Path] = 
             name = found.name if found else Path(sample).name
             kind = detect_sound_type(name)
             mix = inst.get("mixable", {})
+            route = mix.get("audioRoute")
+            submix = 0
+            if isinstance(route, dict):
+                destination = route.get("destination")
+                bus_index = route.get("audioRouteSubIndex")
+                if destination == 1 and isinstance(bus_index, int) and 0 <= bus_index < 8:
+                    submix = bus_index + 1
+                elif destination == 2:
+                    submix = 9
             pads[idx] = {"pad_number": idx, "sample_name": layer.get("sampleName") or Path(name).stem,
                          "sample_file": name, "full_path": str(found) if found else sample,
                          "rel_path": relative, "volume": mix.get("volume", 0.707946),
                          "pan": mix.get("pan", 0.5), "tune": inst.get("coarseTune", 0),
-                         "mute_group": inst.get("whichMuteGroup", default_mute_group(kind)), "sound_type": kind, "missing": found is None, "layer_count": len(layers)}
+                         "mute_group": inst.get("whichMuteGroup", default_mute_group(kind)), "sound_type": kind,
+                         "submix": submix, "missing": found is None, "layer_count": len(layers)}
         break
     if not pads and not data.get("tracks"):
         # Legacy sample-pool projects have no instruments; retain stable pool order.
