@@ -52,6 +52,7 @@ import unicodedata
 import webbrowser
 import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer as HTTPServer
+from socketserver import TCPServer
 from pathlib import Path
 from beatos_paths import CATALOG_REL, MASTER_DASHBOARD_REL, config_dir, database_path, default_library_root
 from beatos_i18n import cli_failure, get_request_language, localize_api_payload, translate_text
@@ -1691,6 +1692,14 @@ def save_library_name(root: str, payload: dict) -> dict:
     return {"success": True, "path": relative, "name": name or None}
 
 
+class BeatOSHTTPServer(HTTPServer):
+    def server_bind(self):
+        # The local listener uses a numeric address. Avoid a reverse DNS lookup
+        # during startup, which can delay the loopback server on macOS.
+        TCPServer.server_bind(self)
+        self.server_name, self.server_port = self.server_address[:2]
+
+
 class MPCAudioRequestHandler(BaseHTTPRequestHandler):
     server_version = "MPCAudioStreamer/3.9.0"
 
@@ -3110,7 +3119,7 @@ def run_server(custom_path: str | None = None, port: int | None = None, auto_ope
     emit("  💡 Presiona Ctrl+C en esta terminal para detener el servidor.\n")
 
     server_address = ("127.0.0.1", port)
-    httpd = HTTPServer(server_address, MPCAudioRequestHandler)
+    httpd = BeatOSHTTPServer(server_address, MPCAudioRequestHandler)
     httpd.root_dir = target_root
     write_connection_hint(target_root, port)
 
