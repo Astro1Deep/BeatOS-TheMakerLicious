@@ -200,7 +200,7 @@ def local_site(html, preview_name=None):
         if "</body>" not in html:
             raise RuntimeError("Catalog missing body")
         catalog.write_text(html.replace("</body>", PROBE + "\n</body>", 1), encoding="utf-8")
-        server = serve_mpc.BeatOSHTTPServer(("127.0.0.1", 0), serve_mpc.MPCAudioRequestHandler)
+        server = serve_mpc.HTTPServer(("127.0.0.1", 0), serve_mpc.MPCAudioRequestHandler)
         server.root_dir = str(root)
         thread = Thread(target=server.serve_forever, daemon=True)
         thread.start()
