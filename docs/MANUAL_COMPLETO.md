@@ -2,7 +2,7 @@
 
 **Idioma:** Español · [English edition / Versión inglesa](en/MANUAL_COMPLETO.md) · [Índice bilingüe](en/README.md)
 
-**[universal beatmaker station] · Versión del sistema: 3.8.0 · Revisión del manual: 30 de octubre de 2026.**
+**[universal beatmaker station] · Versión del sistema: 3.9.0 · Revisión del manual: 30 de octubre de 2026.**
 
 BeatOS prepara bibliotecas y kits en el ordenador para varios samplers y entornos de producción. Este manual describe el comportamiento del código actual y los pasos para usar cada módulo. Los nombres históricos `mpc_sample`, `serve_mpc.py` y «Tarjeta MicroSD» no limitan el sistema a MPC ni obligan a usar una tarjeta.
 
@@ -493,7 +493,7 @@ Al reportar un fallo incluye versión/commit, sistema operativo, raíz de biblio
 
 Las pruebas del repositorio cubren indexación, metadatos, parsers, rutas, servidor, mutes, exportadores, instalación y lógica del navegador según sus casos. La CI incluye Python y construcción del ZIP en Linux, además de instalación funcional en Windows. Su configuración no equivale a un resultado aprobado para cualquier revisión: consulta la ejecución del commit concreto.
 
-La referencia técnica incluye los comandos reproducibles. Este manual documenta también límites observados en el código, aunque una prueba automática no los elimine. Ninguna prueba de archivos sustituye una carga y escucha física por modelo/firmware. No se han actualizado firmwares ni sobrescrito proyectos de hardware al preparar esta revisión documental. La versión BeatOS 3.8.0 y la versión MPC 3.8 de Akai son numeraciones independientes.
+La referencia técnica incluye los comandos reproducibles. Este manual documenta también límites observados en el código, aunque una prueba automática no los elimine. Ninguna prueba de archivos sustituye una carga y escucha física por modelo/firmware. No se han actualizado firmwares ni sobrescrito proyectos de hardware al preparar esta revisión documental. La versión BeatOS 3.9.0 y la versión MPC 3.8 de Akai son numeraciones independientes.
 
 ## Nombres visibles en el catálogo
 

@@ -5559,32 +5559,37 @@ if __name__ == "__main__":
         calibrate.add_argument("--no-backup", action="store_true", help="Omitir creación de copias .bak-calib")
 
         args = parser.parse_args()
-        if args.command == "create":
-            pads = json.loads(base64.b64decode(args.b64, validate=True))
-            if not args.root.is_dir():
-                parser.error("La biblioteca no existe")
-            result = create_kit(args.name, pads, target=args.target, source_root=args.root)
-            print(json.dumps(result, ensure_ascii=False))
-            sys.exit(0)
-        elif args.command == "chromatic":
-            result = create_chromatic_kit(
-                sample_path=args.sample,
-                kit_name=args.name,
-                scale=args.scale,
-                root_note=args.root_note,
-                start_octave=args.start_octave,
-                monophonic=not args.polyphonic,
-                target=args.target,
-                source_root=args.root,
-                output_base_dir=args.out,
-                tempo=args.tempo,
-            )
-            print(json.dumps(result, ensure_ascii=False, indent=2))
-            sys.exit(0)
-        elif args.command == "calibrate":
-            result = calibrate_library_projects(args.path, backup=not args.no_backup)
-            print(json.dumps(result, ensure_ascii=False, indent=2))
-            sys.exit(0)
+        from beatos_i18n import cli_failure, translate_text
+        language = "es" if os.environ.get("BEATOS_LANG") == "es" else "en"
+        try:
+            if args.command == "create":
+                pads = json.loads(base64.b64decode(args.b64, validate=True))
+                if not args.root.is_dir():
+                    parser.error(translate_text("La biblioteca no existe", language))
+                result = create_kit(args.name, pads, target=args.target, source_root=args.root)
+                print(json.dumps(result, ensure_ascii=False))
+                sys.exit(0)
+            elif args.command == "chromatic":
+                result = create_chromatic_kit(
+                    sample_path=args.sample,
+                    kit_name=args.name,
+                    scale=args.scale,
+                    root_note=args.root_note,
+                    start_octave=args.start_octave,
+                    monophonic=not args.polyphonic,
+                    target=args.target,
+                    source_root=args.root,
+                    output_base_dir=args.out,
+                    tempo=args.tempo,
+                )
+                print(json.dumps(result, ensure_ascii=False, indent=2))
+                sys.exit(0)
+            elif args.command == "calibrate":
+                result = calibrate_library_projects(args.path, backup=not args.no_backup)
+                print(json.dumps(result, ensure_ascii=False, indent=2))
+                sys.exit(0)
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            parser.exit(1, cli_failure("No se pudo completar la operación del kit.", error, language) + "\n")
     print("=================================================================")
     print("Universal Hardware Kit Builder & Multi-Sampler Bridge v3.5 cargado")
     print(f"Directorio de Backups PO-33 detectado: {DEFAULT_PO_DIR}")

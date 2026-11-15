@@ -23,7 +23,7 @@ BeatOS is a local, open-source sample-library browser and kit-preparation workst
 
 **Requirements:** Python 3.11+, a local sample-library folder, a desktop browser. FFmpeg is recommended and required for format conversion, resampling and some pitch operations. No commercial samples or private libraries are included.
 
-1. Download the **release asset** `BeatOS-3.8.0.zip` from [GitHub Releases](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases/latest), not GitHub's automatic *Source code* ZIP. Verify the published SHA-256.
+1. Download the **release asset** `BeatOS-3.9.0.zip` from [GitHub Releases](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases/latest), not GitHub's automatic *Source code* ZIP. Verify the published SHA-256.
 2. Extract into a new folder. Do not overwrite an existing sample library.
 3. Run the installer, select **1** to index your sample library, and **2** to open its local web interface.
 
@@ -90,4 +90,4 @@ Created by [Astro1Deep](https://github.com/Astro1Deep) · [GitHub repository](ht
 
 Configured GitHub repository topics: `akai-mpc`, `mpc`, `mpc-sample`, `sampqol`, `sp-404`, `sp404mk2`, `maschine`, `po-33`, `pocket-operator`, `ep-133`, `teenage-engineering`, `beatmaking`, `boombap`, `lofi-hiphop`, `drum-kits`, `sample-library`, `sampling`, `music-production`, `audio-tools`, `python`.
 
-**Version documented:** stable 3.8.0 (development on `main` includes Cerebro OS DSP rhythmic/spectral engine, SampQOL OS manager, legacy `.PGM` exporters & Official MPC Expansion builder). Check `VERSION`, the build manifest and release checksums for the actual installed artifact.
+**Version documented:** stable 3.9.0 (development on `main` includes Cerebro OS DSP rhythmic/spectral engine, SampQOL OS manager, legacy `.PGM` exporters & Official MPC Expansion builder). Check `VERSION`, the build manifest and release checksums for the actual installed artifact.

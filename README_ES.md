@@ -35,7 +35,7 @@ Utiliza la opción **1** para indexar y **2** para abrir el servidor local. En u
 
 **Idiomas:** por defecto, el primer inicio se muestra en inglés. Puedes seleccionar **ES** desde el encabezado web. La preferencia se conserva en el navegador; para terminal, utiliza `--lang es` o `BEATOS_LANG=es`. Ni los nombres de archivos, ni las rutas, ni los nombres de proyectos privados se traducen.
 
-> **Importante:** el código de `main` puede ser más reciente que el instalador estable 3.8.0. Para actualizar una instalación, instala una distribución nueva y regenera el catálogo de tu biblioteca tras conservar tus copias. [Estado de la auditoría](docs/AUDITORIA_INTEGRAL_BILINGUE_2026-10-30.md).
+> **Importante:** el código de `main` puede ser más reciente que el instalador estable 3.9.0. Para actualizar una instalación, instala una distribución nueva y regenera el catálogo de tu biblioteca tras conservar tus copias. [Estado de la auditoría](docs/AUDITORIA_INTEGRAL_BILINGUE_2026-10-30.md).
 
 ## Formatos y límites por hardware
 
@@ -75,4 +75,4 @@ El servidor se utiliza **en local**, sin autenticación de usuarios remotos: no 
 
 **Autoría:** [Astro1Deep](https://github.com/Astro1Deep) · [Repositorio](https://github.com/Astro1Deep/BeatOS-TheMakerLicious) · [Versiones estables](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases) · [Web oficial (ES)](https://astro1deep.github.io/BeatOS-TheMakerLicious/index-es.html) · [Kit de difusión, redes y desarrolladores](docs/KIT_DIFUSION_Y_COMUNIDAD.md).
 
-**Versión estable documentada:** 3.8.0 (la rama `main` incluye además el motor rítmico DSP Cerebro OS, gestor SampQOL OS, exportación binaria `.PGM` y creador de Expansiones MPC). Comprueba siempre el manifiesto y la suma SHA-256 de la descarga concreta.
+**Versión estable documentada:** 3.9.0 (la rama `main` incluye además el motor rítmico DSP Cerebro OS, gestor SampQOL OS, exportación binaria `.PGM` y creador de Expansiones MPC). Comprueba siempre el manifiesto y la suma SHA-256 de la descarga concreta.

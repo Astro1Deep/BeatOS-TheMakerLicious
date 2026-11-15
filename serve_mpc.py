@@ -51,10 +51,11 @@ import urllib.request
 import unicodedata
 import webbrowser
 import zipfile
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer as HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from socketserver import TCPServer
 from pathlib import Path
 from beatos_paths import CATALOG_REL, MASTER_DASHBOARD_REL, config_dir, database_path, default_library_root
-from beatos_i18n import get_request_language, localize_api_payload, translate_text
+from beatos_i18n import cli_failure, get_request_language, localize_api_payload, translate_text
 
 mimetypes.init()
 mimetypes.add_type("audio/wav", ".wav")
@@ -1691,8 +1692,16 @@ def save_library_name(root: str, payload: dict) -> dict:
     return {"success": True, "path": relative, "name": name or None}
 
 
+class HTTPServer(ThreadingHTTPServer):
+    def server_bind(self):
+        # The local listener uses a numeric address. Avoid a reverse DNS lookup
+        # during startup, which can delay the loopback server on macOS.
+        TCPServer.server_bind(self)
+        self.server_name, self.server_port = self.server_address[:2]
+
+
 class MPCAudioRequestHandler(BaseHTTPRequestHandler):
-    server_version = "MPCAudioStreamer/3.8.0"
+    server_version = "MPCAudioStreamer/3.9.0"
 
     def _api_json_dumps(self, payload, **kwargs):
         """Localize user-facing API messages by this request's ES/EN preference."""
@@ -3141,4 +3150,8 @@ if __name__ == "__main__":
     parser.add_argument("--no-browser", action="store_true", help="No abrir automáticamente el navegador")
     parser.add_argument("--dashboard", action="store_true", help="Open the ecosystem dashboard")
     args = parser.parse_args()
-    run_server(args.path, port=args.port, auto_open=not args.no_browser, dashboard=args.dashboard)
+    try:
+        run_server(args.path, port=args.port, auto_open=not args.no_browser, dashboard=args.dashboard)
+    except (OSError, ValueError, sqlite3.Error) as error:
+        language = "es" if os.environ.get("BEATOS_LANG") == "es" else "en"
+        parser.exit(1, cli_failure("No se pudo iniciar el servidor.", error, language) + "\n")

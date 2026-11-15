@@ -10,6 +10,24 @@ from http.cookies import SimpleCookie
 import re
 
 EXACT_EN = {
+    "Archivo de audio externo no válido.": "Invalid external audio file.",
+    "Falta el parámetro 'sample_path' o 'sample'": "Missing 'sample_path' or 'sample' parameter",
+    "La base de datos SQLite no está disponible.": "The SQLite database is unavailable.",
+    "La base de datos SQLite no existe todavía. Ejecuta una reindexación primero.": "The SQLite database does not exist yet. Reindex the library first.",
+    "La muestra externa no pertenece a una biblioteca montada autorizada.": "The external sample is outside the allowed mounted libraries.",
+    "Ruta de muestra externa requerida.": "An external sample path is required.",
+    "Selecciona o carga primero una muestra en el pad activo.": "Select or load a sample on the active pad first.",
+    "Selecciona una muestra o loop para dividir en pads.": "Select a sample or loop to slice across pads.",
+    "El límite de inspección es 128 MiB; el original sigue disponible para descargar": "Inspection is limited to 128 MiB. The original remains available to download.",
+    "No se pudo indexar la biblioteca.": "Could not index the library.",
+    "No se pudo iniciar el servidor.": "Could not start the server.",
+    "No se pudo completar la operación del kit.": "Could not complete the kit operation.",
+    "La biblioteca no existe": "The library does not exist",
+    "No hay permisos para acceder al archivo o carpeta.": "Permission denied for the file or folder.",
+    "Comprueba que el archivo o carpeta exista.": "Check that the file or folder exists.",
+    "La ruta debe ser una carpeta.": "The path must be a directory.",
+    "No se pudo acceder a la base de datos SQLite.": "Could not access the SQLite database.",
+    "Detalle técnico": "Technical detail",
     "Se requiere una ruta de biblioteca.": "A library path is required.",
     "Se requiere un nombre válido.": "A valid name is required.",
     "Usa un nombre de hasta 120 caracteres sin saltos de línea.": "Use a name of up to 120 characters without line breaks.",
@@ -101,6 +119,23 @@ EXACT_EN = {
     "Servidor no disponible": "Server unavailable",
     "Acción rechazada": "Action rejected",
 }
+EXACT_ES = {
+    "Backup outside the library": "Respaldo fuera de la biblioteca",
+    "Classify this legacy recording with its device model before protocol verification": "Asigna el modelo de dispositivo a esta grabación antigua antes de verificar el protocolo",
+    "Expected JSON request": "Se esperaba una petición JSON",
+    "Incomplete or unsupported WAV recording": "Grabación WAV incompleta o no compatible",
+    "Incomplete request": "Petición incompleta",
+    "Missing backup file": "Falta el archivo de respaldo",
+    "Missing backup path": "Falta la ruta del respaldo",
+    "Symlinked backups are not supported": "Los vínculos simbólicos a respaldos no son compatibles",
+    "Unsupported/incomplete WAV; do not prepare restoration": "WAV no compatible o incompleto. Revisa la grabación antes de preparar la restauración",
+    "Mute group must be between 0 and 32": "El grupo de mute debe estar entre 0 y 32",
+    "Conflicting project metadata; prior entry not replaced": "Los metadatos del proyecto no coinciden. Se conservó la entrada anterior",
+    "Original backup WAV not found or symlinked": "El WAV original del respaldo falta o es un vínculo simbólico",
+    "Project name must contain 1–160 characters": "El nombre del proyecto debe contener entre 1 y 160 caracteres",
+    "Unsupported Pocket Operator backup model": "Modelo de respaldo Pocket Operator no compatible",
+}
+_KNOWN_EN = set(EXACT_ES) | set(EXACT_EN.values())
 PREFIX_EN = {
     'Archivo de muestra no encontrado: ': 'Sample file not found: ',
     'Muestra no encontrada: ': 'Sample not found: ',
@@ -128,6 +163,9 @@ PREFIX_EN = {
     "✔ Catálogo en Raíz: ": "✔ Catalog at root: ",
     "✔ Catálogo en Carpeta SQLite: ": "✔ Catalog in SQLite folder: ",
     "✔ Base de Datos SQLite: ": "✔ SQLite database: ",
+    "✔ Catálogo BeatOS (Raíz): ": "✔ BeatOS catalog entry: ",
+    "✔ Catálogo Universal de Discos (Raíz): ": "✔ Drive catalog entry: ",
+    "✔ Catálogo Central BeatOS: ": "✔ Central BeatOS catalog: ",
     "  ✔ Expansión: ": "  ✔ Expansion: ",
     "  ✔ Proyecto: ": "  ✔ Project: ",
     "✔ Total muestras de audio: ": "✔ Total audio samples: ",
@@ -167,7 +205,11 @@ _DIAGNOSTIC_PATTERNS = tuple((re.compile(pattern), replacement) for pattern, rep
 
 
 def translate_text(value, lang="en"):
-    if lang != "en" or not isinstance(value, str):
+    if not isinstance(value, str):
+        return value
+    if lang == "es":
+        return EXACT_ES.get(value, value)
+    if lang != "en":
         return value
     # Preserve leading line breaks from console progress without losing translations.
     indentation = value[:len(value) - len(value.lstrip("\r\n"))]
@@ -202,19 +244,46 @@ def translate_text(value, lang="en"):
 
 def localize_api_payload(payload, lang="en"):
     """Return a new shallow JSON dictionary without editing global state or path fields."""
-    if lang != "en" or not isinstance(payload, dict):
+    if not isinstance(payload, dict):
         return payload
     result = dict(payload)
     for name in ("error", "message"):
         value = payload.get(name)
         if isinstance(value, str) and value:
-            result[name + "_es"] = value
             translated = translate_text(value, lang)
-            if translated == value and name == "error":
+            if lang == "en":
+                result[name + "_es"] = value
+            elif translated != value:
+                result[name + "_detail"] = value
+            if lang == "en" and translated == value and name == "error" and value not in _KNOWN_EN:
                 translated = "Operation failed; original technical detail available in error_es."
             result[name] = translated
     logs = payload.get("logs")
     if isinstance(logs, list):
-        result["logs_es"] = list(logs)
+        if lang == "en":
+            result["logs_es"] = list(logs)
         result["logs"] = [translate_text(line, lang) for line in logs]
     return result
+
+
+def cli_failure(operation, error, lang):
+    """Localize the actionable message and retain the native tool diagnostic."""
+    import sqlite3
+
+    explanation = {
+        PermissionError: "No hay permisos para acceder al archivo o carpeta.",
+        FileNotFoundError: "Comprueba que el archivo o carpeta exista.",
+        NotADirectoryError: "La ruta debe ser una carpeta.",
+    }.get(type(error))
+    if isinstance(error, sqlite3.Error):
+        explanation = "No se pudo acceder a la base de datos SQLite."
+    lines = [translate_text(operation, lang)]
+    detail = str(error)
+    translated = translate_text(detail, lang)
+    if explanation:
+        lines.append(translate_text(explanation, lang))
+    elif translated != detail:
+        lines.append(translated)
+    if detail:
+        lines.append(f"{translate_text('Detalle técnico', lang)}: {detail}")
+    return "\n".join(lines)

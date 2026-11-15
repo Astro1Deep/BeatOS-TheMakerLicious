@@ -14,7 +14,7 @@ import os
 import sys
 sys.dont_write_bytecode = True
 from beatos_paths import CATALOG_REL, database_path, data_dir as library_data_dir, write_catalog
-from beatos_i18n import translate_text
+from beatos_i18n import cli_failure, translate_text
 import sqlite3
 import json
 import csv
@@ -568,6 +568,13 @@ def main():
     root_path = os.path.abspath(args.path)
     if not Path(root_path).is_dir():
         parser.error(translate_text("La biblioteca indicada no existe o no es una carpeta", args.lang))
+    try:
+        index_library(args, root_path, emit)
+    except (OSError, sqlite3.Error) as error:
+        parser.exit(1, cli_failure("No se pudo indexar la biblioteca.", error, args.lang) + "\n")
+
+
+def index_library(args, root_path, emit):
     output_dir = os.path.abspath(args.output) if args.output else str(library_data_dir(root_path))
     os.makedirs(output_dir, exist_ok=True)
 

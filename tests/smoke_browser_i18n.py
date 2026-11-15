@@ -48,8 +48,7 @@ import serve_mpc
 
 PROBE = r"""
 <script>
-window.addEventListener('load', () => {
-  setTimeout(() => {
+window.addEventListener('load', async () => {
   const probe = document.createElement('span');
   probe.textContent = 'MyCustom-Sample_90bpm.wav';
   document.body.appendChild(probe);
@@ -107,8 +106,16 @@ window.addEventListener('load', () => {
   const reporter = document.createElement('output');
   reporter.id = 'i18n-browser-result';
   document.body.appendChild(reporter);
-  if (!recording || !deviceGuide || !backupInfoText() || localeNodes.some(x => !x.node) || localeAttrs.some(x => !x.node)) {reporter.textContent = 'FAIL:missing locale test nodes'; return;}
+  const waitForBackup = async (label) => {
+    const deadline = performance.now() + 3000;
+    while (!backupInfoText().includes(label)) {
+      if (performance.now() > deadline) throw new Error('Backup card did not show: ' + label);
+      await new Promise(resolve => setTimeout(resolve, 25));
+    }
+  };
+  if (!recording || !deviceGuide || localeNodes.some(x => !x.node) || localeAttrs.some(x => !x.node)) {reporter.textContent = 'FAIL:missing locale test nodes'; return;}
   try {
+    await waitForBackup('Modem payload NOT verified.');
     const initialEnglish = document.documentElement.lang === 'en' &&
       localeCookie() === 'en' &&
       bankText() === '(Bank A: pads 1–16)' &&
@@ -118,64 +125,61 @@ window.addEventListener('load', () => {
       localeNodes.every(x => x.node.nodeValue.trim() === x.en) &&
       localeAttrs.every(x => x.node.getAttribute(x.attr) === x.en);
     setLanguage('es');
-    setTimeout(() => {
-      const spanishDiagnostics = [
-        recording.textContent.trim() === '⏺ Grabar backup',
-        deviceGuide.textContent.includes('Enviar: WRITE + SOUND + PLAY'),
-        backupInfoText().includes('Datos del módem NO verificados.'),
-        document.documentElement.lang === 'es',
-        localeCookie() === 'es',
-        bankText() === '(Banco A: Pads 1 al 16)',
-        ...localeNodes.filter(x => x.node.nodeValue.trim() !== x.es).map(x => x.es),
-        ...localeAttrs.filter(x => x.node.getAttribute(x.attr) !== x.es).map(x => x.es)
-      ];
-      const spanishOK = spanishDiagnostics.every(check => check === true);
-      setLanguage('en');
-      setTimeout(() => {
-        const englishOK = recording.textContent.trim() === '⏺ Record backup' &&
-          deviceGuide.textContent.includes('Send: WRITE + SOUND + PLAY') &&
-          backupInfoText().includes('Modem payload NOT verified.') &&
-          document.documentElement.lang === 'en' &&
-          localeCookie() === 'en' &&
-          bankText() === '(Bank A: pads 1–16)' &&
-          localStorage.getItem('mpc_lang') === 'en' &&
-          localeNodes.every(x => x.node.nodeValue.trim() === x.en) &&
-          localeAttrs.every(x => x.node.getAttribute(x.attr) === x.en);
-        const filenameOK = probe.textContent === 'MyCustom-Sample_90bpm.wav';
-        const themeCard = document.getElementById('themeCard_astro1deep-obsidian');
-        setEcosystemTheme('astro1deep-obsidian', false);
-        const styles = getComputedStyle(document.documentElement);
-        const themeOK = themeCard.getAttribute('aria-pressed') === 'true' &&
-          document.documentElement.dataset.theme === 'astro1deep-obsidian' &&
-          localStorage.getItem('ecosystem_theme') === 'astro1deep-obsidian' &&
-          styles.getPropertyValue('--bg-dark').trim() === '#08090a' &&
-          styles.getPropertyValue('--text-primary').trim() === '#f4f5f7';
-        const check = async () => {
-          await executeLibraryAction('status');
-          const statusOK = document.getElementById('terminalModalOverlay').style.display === 'flex' &&
-            document.getElementById('terminalStatusTag').textContent === 'Completed' &&
-            document.getElementById('terminalOutput').textContent.includes(location.origin);
-          closeTerminalModal();
-          await executeLibraryAction('sync_dashboard');
-          const syncOK = document.getElementById('terminalModalOverlay').style.display === 'flex' &&
-            document.getElementById('terminalStatusTag').textContent === 'Completed' &&
-            document.getElementById('terminalOutput').textContent.includes('Ecosystem inventory refreshed.');
-          closeTerminalModal();
-          reporter.textContent = initialEnglish && spanishOK && englishOK && filenameOK && themeOK && statusOK && syncOK
-            ? 'BEATOS_BROWSER_ES_EN_PASS'
-            : 'FAIL:initial=' + initialEnglish + ',es=' + spanishOK + ',en=' + englishOK + ',filename=' + filenameOK + ',theme=' + themeOK + ',status=' + statusOK + ',sync=' + syncOK + ',es-diagnostic=' + spanishDiagnostics;
-        };
-        check().catch(error => { reporter.textContent = 'FAIL:' + error.message; });
-      }, 250);
-    }, 250);
+    await waitForBackup('Datos del módem NO verificados.');
+    const spanishDiagnostics = [
+    recording.textContent.trim() === '⏺ Grabar backup',
+    deviceGuide.textContent.includes('Enviar: WRITE + SOUND + PLAY'),
+    backupInfoText().includes('Datos del módem NO verificados.'),
+    document.documentElement.lang === 'es',
+    localeCookie() === 'es',
+    bankText() === '(Banco A: Pads 1 al 16)',
+    ...localeNodes.filter(x => x.node.nodeValue.trim() !== x.es).map(x => x.es),
+    ...localeAttrs.filter(x => x.node.getAttribute(x.attr) !== x.es).map(x => x.es)
+    ];
+    const spanishOK = spanishDiagnostics.every(check => check === true);
+    setLanguage('en');
+    await waitForBackup('Modem payload NOT verified.');
+    const englishOK = recording.textContent.trim() === '⏺ Record backup' &&
+      deviceGuide.textContent.includes('Send: WRITE + SOUND + PLAY') &&
+      backupInfoText().includes('Modem payload NOT verified.') &&
+      document.documentElement.lang === 'en' &&
+      localeCookie() === 'en' &&
+      bankText() === '(Bank A: pads 1–16)' &&
+      localStorage.getItem('mpc_lang') === 'en' &&
+      localeNodes.every(x => x.node.nodeValue.trim() === x.en) &&
+      localeAttrs.every(x => x.node.getAttribute(x.attr) === x.en);
+    const filenameOK = probe.textContent === 'MyCustom-Sample_90bpm.wav';
+    const themeCard = document.getElementById('themeCard_astro1deep-obsidian');
+    setEcosystemTheme('astro1deep-obsidian', false);
+    const styles = getComputedStyle(document.documentElement);
+    const themeOK = themeCard.getAttribute('aria-pressed') === 'true' &&
+      document.documentElement.dataset.theme === 'astro1deep-obsidian' &&
+      localStorage.getItem('ecosystem_theme') === 'astro1deep-obsidian' &&
+      styles.getPropertyValue('--bg-dark').trim() === '#08090a' &&
+      styles.getPropertyValue('--text-primary').trim() === '#f4f5f7';
+    const check = async () => {
+      await executeLibraryAction('status');
+      const statusOK = document.getElementById('terminalModalOverlay').style.display === 'flex' &&
+        document.getElementById('terminalStatusTag').textContent === 'Completed' &&
+        document.getElementById('terminalOutput').textContent.includes(location.origin);
+      closeTerminalModal();
+      await executeLibraryAction('sync_dashboard');
+      const syncOK = document.getElementById('terminalModalOverlay').style.display === 'flex' &&
+        document.getElementById('terminalStatusTag').textContent === 'Completed' &&
+        document.getElementById('terminalOutput').textContent.includes('Ecosystem inventory refreshed.');
+      closeTerminalModal();
+      reporter.textContent = initialEnglish && spanishOK && englishOK && filenameOK && themeOK && statusOK && syncOK
+        ? 'BEATOS_BROWSER_ES_EN_PASS'
+        : 'FAIL:initial=' + initialEnglish + ',es=' + spanishOK + ',en=' + englishOK + ',filename=' + filenameOK + ',theme=' + themeOK + ',status=' + statusOK + ',sync=' + syncOK + ',es-diagnostic=' + spanishDiagnostics;
+    };
+    await check();
   } catch (error) {reporter.textContent = 'FAIL:' + error.message;}
-  }, 500);
 });
 </script>
 """
 
 @contextmanager
-def local_site(html):
+def local_site(html, preview_name=None):
     # Exercise the actual BeatOS server and catalog route, not an isolated
     # SimpleHTTPRequestHandler test copy of the template.
     with TemporaryDirectory(prefix="beatos-i18n-smoke-") as folder:
@@ -191,6 +195,8 @@ def local_site(html):
             recording.setparams((2, 2, 48000, 0, "NONE", ""))
             recording.writeframes(struct.pack("<hh", 1400, -1400) * 48000)
         write_sidecar(sound, "PO-33", "Synthetic Browser Test", source=sound.name)
+        if preview_name:
+            shutil.copyfile(sound, root / preview_name)
         if "</body>" not in html:
             raise RuntimeError("Catalog missing body")
         catalog.write_text(html.replace("</body>", PROBE + "\n</body>", 1), encoding="utf-8")

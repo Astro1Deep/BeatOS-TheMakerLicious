@@ -2,6 +2,7 @@
 import contextlib
 import io
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -59,6 +60,32 @@ class IndexLocaleTests(unittest.TestCase):
                         self.run_index(Path(folder) / "missing", language)
                     self.assertEqual(error.exception.code, 2)
                     self.assertIn(expected, stderr.getvalue())
+
+    def test_cli_failures_are_actionable_and_retain_details(self):
+        scripts = Path(index_mpc_library.__file__).parent
+        with tempfile.TemporaryDirectory(prefix="BeatOS CLI á ") as folder:
+            root = Path(folder)
+            occupied = root / "Occupied file"
+            occupied.write_bytes(b"existing")
+            for language in ("es", "en"):
+                cases = [
+                    ("index_mpc_library.py", ["--path", folder, "--output", str(occupied)],
+                     "No se pudo indexar" if language == "es" else "Could not index"),
+                    ("hardware_kit_builder.py", ["chromatic", "--sample", str(root / "Missing.wav"), "--name", "Test"],
+                     "No se pudo completar la operación" if language == "es" else "Could not complete the kit"),
+                    ("serve_mpc.py", [str(root / "Missing library"), "--no-browser"],
+                     "No se pudo iniciar" if language == "es" else "Could not start"),
+                ]
+                for script, args, expected in cases:
+                    with self.subTest(script=script, language=language):
+                        result = subprocess.run([sys.executable, "-B", str(scripts / script), *args],
+                                                text=True, encoding="utf-8", capture_output=True, timeout=15,
+                                                env={**os.environ, "BEATOS_LANG": language, "PYTHONIOENCODING": "utf-8"})
+                        self.assertEqual(result.returncode, 1, result.stderr)
+                        self.assertIn(expected, result.stderr)
+                        self.assertIn("Detalle técnico" if language == "es" else "Technical detail", result.stderr)
+                        self.assertNotIn("Traceback", result.stderr)
+            self.assertEqual(occupied.read_bytes(), b"existing")
 
 if __name__ == "__main__":
     unittest.main()

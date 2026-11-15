@@ -19,14 +19,16 @@ import urllib.request
 import wave
 import zipfile
 
+LOOPBACK_HTTP = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
-def request(base, endpoint, payload=None, headers=None):
+
+def request(base, endpoint, payload=None, headers=None, *, timeout=15):
     data = json.dumps(payload).encode() if payload is not None else None
     request_headers = {'Origin': base, **(headers or {})}
     if data is not None:
         request_headers['Content-Type'] = 'application/json'
     req = urllib.request.Request(base + endpoint, data=data, headers=request_headers)
-    with urllib.request.urlopen(req, timeout=15) as response:
+    with LOOPBACK_HTTP.open(req, timeout=timeout) as response:
         return response.status, response.read()
 
 
@@ -88,7 +90,7 @@ def validate(archive, expected_sha256, require_windows=False):
                 deadline = time.monotonic() + 20
                 while True:
                     try:
-                        _, raw = request(base, '/api/status')
+                        _, raw = request(base, '/api/status', timeout=1)
                         status = json.loads(raw)
                         assert Path(status['root_dir']).resolve() == library.resolve(), status
                         assert status['sample_count'] == 2, status
@@ -132,7 +134,7 @@ def validate(archive, expected_sha256, require_windows=False):
                     original = buffer.getvalue()
                     req = urllib.request.Request(base + '/api/po33_backups?name=PO33_prueba.WAV', data=original,
                                                  headers={'Origin': base, 'Content-Type': 'audio/wav'})
-                    with urllib.request.urlopen(req, timeout=15) as response:
+                    with LOOPBACK_HTTP.open(req, timeout=15) as response:
                         backup = json.load(response)['backup']
                     assert backup['sha256'] == hashlib.sha256(original).hexdigest()
                     assert backup['audio_compatible'] and not backup['payload_verified']
