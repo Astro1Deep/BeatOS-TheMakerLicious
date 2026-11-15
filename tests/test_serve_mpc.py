@@ -16,6 +16,21 @@ import serve_mpc
 
 
 class ServerSecurityTests(unittest.TestCase):
+
+    def test_acoustic_features_use_audible_stereo_channel(self):
+        import math
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            with wave.open(str(root / 'stereo.wav'), 'wb') as audio:
+                audio.setparams((2, 2, 8000, 0, 'NONE', 'not compressed'))
+                audio.writeframes(b''.join(struct.pack('<hh', 0, int(12000 * math.sin(2 * math.pi * 100 * i / 8000)))
+                                           for i in range(8000)))
+            report = serve_mpc.analyze_rack_with_cerebro(str(root), {
+                'pads': [{'pad': 1, 'rel_path': 'stereo.wav', 'sound_type': 'PERCUSSION'}]
+            })['pads'][0]
+            self.assertGreater(report['zcr_hz'], 90)
+            self.assertGreater(report['low_energy_ratio'], 0.5)
+
     @contextlib.contextmanager
     def server(self):
         with tempfile.TemporaryDirectory() as tmp:
