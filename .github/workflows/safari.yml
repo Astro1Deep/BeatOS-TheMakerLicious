@@ -1,0 +1,32 @@
+name: Safari on macOS
+on:
+  pull_request:
+    paths:
+      - .github/workflows/safari.yml
+      - tests/smoke_safari.py
+      - tests/smoke_browser_i18n.py
+      - templates/catalogo.html
+      - serve_mpc.py
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  macos-safari:
+    runs-on: macos-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.11'
+      - name: Verify the public 3.9.0 installer on Apple Silicon
+        run: |
+          archive="$RUNNER_TEMP/BeatOS-3.9.0.zip"
+          curl --fail --silent --show-error --location "https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases/download/v3.9.0/BeatOS-3.9.0.zip" --output "$archive"
+          python -B tests/smoke_release_install.py --archive "$archive" --sha256 ed547dd1c850f4abe5e032d46d21c40efffebbd2c083fd2d41402aa4f2bbe943 --report "$RUNNER_TEMP/macos-stable-install-report.json"
+      - name: Enable Safari WebDriver in the runner
+        run: |
+          sudo /usr/bin/safaridriver --enable
+          python -m pip install selenium==4.39.0
+      - name: Exercise the catalog in native Safari
+        run: python -B tests/smoke_safari.py
