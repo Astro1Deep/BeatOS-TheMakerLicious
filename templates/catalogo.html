@@ -5963,7 +5963,7 @@ function applyCerebroAdaptationProfile(bpm, semi, cents, profileId = '') {
   for (let i = 0; i < RACK_PADS.length; i++) {
     const p = RACK_PADS[i];
     if (!p) continue;
-    const isMelodic = p.soundType === 'MELODIC_LOOP' || p.soundType === 'KEYS_SYNTH' || Number(p.durationSec || 0) >= 0.85 || Number(p.muteGroup) === 6;
+    const isMelodic = ['MELODIC_LOOP', 'KEYS_SYNTH', 'VOCAL'].includes(p.soundType);
     if (isMelodic) {
       p.tune = Number(semi || 0);
       p.fineTune = Number(cents || 0);
@@ -6022,8 +6022,11 @@ function runCerebroRackAnalysis(btn) {
         lastCerebroTuningAdjustments.map(t => 'PAD ' + t.pad + ' (' + escapeHtml(t.detected_note) + ' → ' + (t.recommended_tune >= 0 ? '+' : '') + t.recommended_tune + ' st' + (t.recommended_fine_tune ? ' ' + (t.recommended_fine_tune > 0 ? '+' : '') + t.recommended_fine_tune + 'c' : '') + ')').join(', ') +
         '</div>';
     }
-    const rhythmHtml = renderCerebroRhythmSummary(data.rhythm_analysis || null, data.hiphop_adaptation || null, recBpm);
     const en = currentLang === 'en';
+    const rhythmFromLabel = data.rhythm_analysis?.basis === 'kit_label';
+    const rhythmHtml = (rhythmFromLabel
+      ? '<div>' + (en ? 'Adaptation estimated from the kit label.' : 'Adaptación estimada a partir de la etiqueta del kit.') + '</div>'
+      : '') + renderCerebroRhythmSummary(rhythmFromLabel ? null : data.rhythm_analysis || null, data.hiphop_adaptation || null, recBpm);
     const source = data.style_reference;
     const sourceHtml = source ? '<div>' + (en ? 'Reference: pad ' : 'Referencia: pad ')
       + source.pad + ' · ' + escapeHtml(source.filename)

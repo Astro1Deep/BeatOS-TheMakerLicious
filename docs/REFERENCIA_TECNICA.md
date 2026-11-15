@@ -166,7 +166,7 @@ Las solicitudes POST ordinarias se limitan a 1 MiB; la importación de backup WA
 | `POST /api/clean_metadata` | Acción explícita. | Borra auxiliares AppleDouble/DS_Store; en macOS ejecuta dot_clean. |
 | `POST /api/reveal_in_finder` | `path` permitido y existente. | Abre Finder/Explorer/xdg-open según plataforma. |
 | `POST /api/launch_ep_tool` | Acción explícita. | Abre la URL oficial; no importa muestras ni actualiza firmware. |
-| `POST /api/sync_dashboard` | Actualiza el inventario de discos e índices y el puente local de Cerebro cuando está disponible. |
+| `POST /api/sync_dashboard` | Acción explícita. | Actualiza el inventario de discos e índices y el puente local de Cerebro cuando está disponible. |
 | `POST /api/theme` | `theme`. | Escribe preferencia local y archivo del ecosistema. |
 
 Cuerpo ilustrativo para una muestra existente en tu biblioteca:
