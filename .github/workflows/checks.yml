@@ -47,7 +47,8 @@ jobs:
         run: |
           archive="${{ runner.temp }}/BeatOS.zip"
           digest=$(sha256sum "$archive" | cut -d' ' -f1)
-          python -B tests/smoke_release_install.py --archive "$archive" --sha256 "$digest"
+          python -B tests/smoke_release_install.py --archive "$archive" --sha256 "$digest" --report "${{ runner.temp }}/linux-install-report.json"
+          cat "${{ runner.temp }}/linux-install-report.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload bilingual source build (not the stable release)
         uses: actions/upload-artifact@v4
         with:
@@ -75,7 +76,7 @@ jobs:
         include:
           - {engine: firefox, os: windows-latest}
           - {engine: webkit, os: macos-latest}
-          - {engine: chromium, os: ubuntu-latest}
+          - {engine: chromium, os: ubuntu-24.04}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -88,6 +89,14 @@ jobs:
         run: python -m playwright install ${{ matrix.engine }}
       - name: Verify pagination, search, keyboard playback and localization
         run: python -B tests/smoke_browser_catalog.py ${{ matrix.engine }}
+      - name: Verify the packaged installer on macOS
+        if: runner.os == 'macOS'
+        run: |
+          archive="${{ runner.temp }}/BeatOS.zip"
+          python -B build_release.py "$archive"
+          digest=$(shasum -a 256 "$archive" | cut -d' ' -f1)
+          python -B tests/smoke_release_install.py --archive "$archive" --sha256 "$digest" --report "${{ runner.temp }}/macos-install-report.json"
+          cat "${{ runner.temp }}/macos-install-report.json" >> "$GITHUB_STEP_SUMMARY"
   windows-release-install:
     runs-on: windows-latest
     timeout-minutes: 10
