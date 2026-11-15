@@ -717,7 +717,13 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict) -> dict:
                         if sw == 2 and read_n > 32 and n_ch >= 1:
                             total_short = len(raw) // 2
                             samples = struct.unpack(f"<{total_short}h", raw[: total_short * 2])
-                            mono = samples[::n_ch] if n_ch > 1 else samples
+                            # Select the most energetic channel: the left channel may be
+                            # silent and averaging can erase out-of-phase material.
+                            if n_ch > 1:
+                                channels = (samples[ch::n_ch] for ch in range(n_ch))
+                                mono = max(channels, key=lambda channel: sum(x * x for x in channel))
+                            else:
+                                mono = samples
                             if len(mono) > 16:
                                 peak = max(abs(x) for x in mono) or 1
                                 sum_sq = sum(float(x) * float(x) for x in mono)
