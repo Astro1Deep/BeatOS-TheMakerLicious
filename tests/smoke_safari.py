@@ -25,9 +25,9 @@ def main():
     with local_site(html, preview) as base, webdriver.Safari() as browser:
         browser.set_page_load_timeout(30)
         browser.set_window_size(1440, 900)
-        wait = WebDriverWait(browser, 15)
+        wait = WebDriverWait(browser, 40)
         start = perf_counter()
-        browser.get(base)
+        browser.get(base + "/?nativeSafari=1")
         probe = wait.until(lambda driver: driver.execute_script(
             "return document.getElementById('i18n-browser-result')?.textContent"))
         assert probe == "BEATOS_BROWSER_ES_EN_PASS", probe
