@@ -1,6 +1,6 @@
 # BeatOS — Installation and first run (English)
 
-**BeatOS 3.8.0 · The MakerLicious** · [Español](GUIA_INSTALACION.md) · [Complete user manual](docs/en/MANUAL_COMPLETO.md) · [Hardware compatibility](docs/en/COMPATIBILIDAD_HARDWARE.md).
+**BeatOS 3.9.0 · The MakerLicious** · [Español](GUIA_INSTALACION.md) · [Complete user manual](docs/en/MANUAL_COMPLETO.md) · [Hardware compatibility](docs/en/COMPATIBILIDAD_HARDWARE.md).
 
 BeatOS is a **computer-hosted sample library browser and 16-pad beatmaking workstation**. It exports device-specific audio and kit files; it does not flash or replace hardware firmware. You can start with loose WAV samples without owning an Akai MPC.
 
@@ -17,11 +17,11 @@ BeatOS is a **computer-hosted sample library browser and 16-pad beatmaking works
 
 ## Get the correct archive
 
-Go to the [latest BeatOS release](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases/latest) and download the **BeatOS-3.8.0.zip** asset and its SHA-256 checksum file. The asset has an organized installer layout. GitHub's generic **Source code** ZIP contains the development layout with a different script path. Do not replace an existing audio library with a downloaded archive.
+Go to the [latest BeatOS release](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases/latest) and download the **BeatOS-3.9.0.zip** asset and its SHA-256 checksum file. The asset has an organized installer layout. GitHub's generic **Source code** ZIP contains the development layout with a different script path. Do not replace an existing audio library with a downloaded archive.
 
 ### A. Official release ZIP
 
-1. Extract `BeatOS-3.8.0.zip` into a **new folder**.
+1. Extract `BeatOS-3.9.0.zip` into a **new folder**.
 2. Open a terminal in the folder containing the `BeatOS/` subfolder.
 3. Run:
    ```bash

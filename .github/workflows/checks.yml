@@ -43,6 +43,11 @@ jobs:
           node tests/test_target_bank_load.cjs
       - name: Build clean installer
         run: python build_release.py "${{ runner.temp }}/BeatOS.zip"
+      - name: Exercise the packaged installer on Linux
+        run: |
+          archive="${{ runner.temp }}/BeatOS.zip"
+          digest=$(sha256sum "$archive" | cut -d' ' -f1)
+          python -B tests/smoke_release_install.py --archive "$archive" --sha256 "$digest"
       - name: Upload bilingual source build (not the stable release)
         uses: actions/upload-artifact@v4
         with:
@@ -60,6 +65,29 @@ jobs:
           python-version: '3.11'
       - name: Test actual ES/EN browser interactions
         run: python -B tests/smoke_browser_i18n.py
+  browser-large-catalog:
+    name: Large catalog (${{ matrix.engine }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {engine: firefox, os: windows-latest}
+          - {engine: webkit, os: macos-latest}
+          - {engine: chromium, os: ubuntu-latest}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.11'
+      - run: python -m pip install playwright==1.58.0
+      - if: runner.os == 'Linux'
+        run: python -m playwright install --with-deps ${{ matrix.engine }}
+      - if: runner.os != 'Linux'
+        run: python -m playwright install ${{ matrix.engine }}
+      - name: Verify pagination, search, keyboard playback and localization
+        run: python -B tests/smoke_browser_catalog.py ${{ matrix.engine }}
   windows-release-install:
     runs-on: windows-latest
     timeout-minutes: 10

@@ -54,7 +54,7 @@ import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer as HTTPServer
 from pathlib import Path
 from beatos_paths import CATALOG_REL, MASTER_DASHBOARD_REL, config_dir, database_path, default_library_root
-from beatos_i18n import get_request_language, localize_api_payload, translate_text
+from beatos_i18n import cli_failure, get_request_language, localize_api_payload, translate_text
 
 mimetypes.init()
 mimetypes.add_type("audio/wav", ".wav")
@@ -1692,7 +1692,7 @@ def save_library_name(root: str, payload: dict) -> dict:
 
 
 class MPCAudioRequestHandler(BaseHTTPRequestHandler):
-    server_version = "MPCAudioStreamer/3.8.0"
+    server_version = "MPCAudioStreamer/3.9.0"
 
     def _api_json_dumps(self, payload, **kwargs):
         """Localize user-facing API messages by this request's ES/EN preference."""
@@ -3141,4 +3141,8 @@ if __name__ == "__main__":
     parser.add_argument("--no-browser", action="store_true", help="No abrir automáticamente el navegador")
     parser.add_argument("--dashboard", action="store_true", help="Open the ecosystem dashboard")
     args = parser.parse_args()
-    run_server(args.path, port=args.port, auto_open=not args.no_browser, dashboard=args.dashboard)
+    try:
+        run_server(args.path, port=args.port, auto_open=not args.no_browser, dashboard=args.dashboard)
+    except (OSError, ValueError, sqlite3.Error) as error:
+        language = "es" if os.environ.get("BEATOS_LANG") == "es" else "en"
+        parser.exit(1, cli_failure("No se pudo iniciar el servidor.", error, language) + "\n")

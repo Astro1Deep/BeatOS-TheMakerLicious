@@ -175,7 +175,7 @@ window.addEventListener('load', () => {
 """
 
 @contextmanager
-def local_site(html):
+def local_site(html, preview_name=None):
     # Exercise the actual BeatOS server and catalog route, not an isolated
     # SimpleHTTPRequestHandler test copy of the template.
     with TemporaryDirectory(prefix="beatos-i18n-smoke-") as folder:
@@ -191,6 +191,8 @@ def local_site(html):
             recording.setparams((2, 2, 48000, 0, "NONE", ""))
             recording.writeframes(struct.pack("<hh", 1400, -1400) * 48000)
         write_sidecar(sound, "PO-33", "Synthetic Browser Test", source=sound.name)
+        if preview_name:
+            shutil.copyfile(sound, root / preview_name)
         if "</body>" not in html:
             raise RuntimeError("Catalog missing body")
         catalog.write_text(html.replace("</body>", PROBE + "\n</body>", 1), encoding="utf-8")

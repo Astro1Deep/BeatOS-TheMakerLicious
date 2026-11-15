@@ -7,7 +7,7 @@ authors:
     name: Astro1Deep
 repository-code: "https://github.com/Astro1Deep/BeatOS-TheMakerLicious"
 url: "https://astro1deep.github.io/BeatOS-TheMakerLicious/"
-version: "3.8.0"
+version: "3.9.0"
 keywords:
   - akai-mpc
   - mpc-sample
