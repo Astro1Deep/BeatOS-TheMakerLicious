@@ -3,6 +3,7 @@ import json
 from time import perf_counter
 
 from selenium import webdriver
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
@@ -25,7 +26,7 @@ def main():
     with local_site(html, preview) as base, webdriver.Safari() as browser:
         browser.set_page_load_timeout(30)
         browser.set_window_size(1440, 900)
-        wait = WebDriverWait(browser, 40)
+        wait = WebDriverWait(browser, 40, ignored_exceptions=(StaleElementReferenceException,))
         start = perf_counter()
         browser.get(base + "/?nativeSafari=1")
         probe = wait.until(lambda driver: driver.execute_script(
@@ -40,11 +41,16 @@ def main():
         field = browser.find_element(By.ID, "searchInput")
         start = perf_counter()
         field.send_keys("Audición #única")
-        wait.until(lambda driver: preview in driver.find_element(By.ID, "tableBody").text)
+        play_selector = f"#tableBody .btn-play[data-name='{preview}']"
+        wait.until(lambda driver: driver.find_element(By.CSS_SELECTOR, play_selector).is_displayed())
         filter_ms = round((perf_counter() - start) * 1000)
-        [row] = browser.find_elements(By.CSS_SELECTOR, "#tableBody tr")
-        play = row.find_element(By.CSS_SELECTOR, ".btn-play")
-        play.send_keys(Keys.ENTER)
+        assert len(browser.find_elements(By.CSS_SELECTOR, "#tableBody tr")) == 1
+
+        def start_keyboard_preview(driver):
+            driver.find_element(By.CSS_SELECTOR, play_selector).send_keys(Keys.ENTER)
+            return True
+
+        wait.until(start_keyboard_preview)
         wait.until(lambda driver: driver.execute_script(
             "return document.getElementById('audioPlayer').currentTime > 0"))
         print(json.dumps({"browser": browser.capabilities["browserName"],
