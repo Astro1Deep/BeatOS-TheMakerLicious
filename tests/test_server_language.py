@@ -39,6 +39,19 @@ class APILanguageTests(unittest.TestCase):
         except urllib.error.HTTPError as err:
             return err.code, json.loads(err.read())
 
+    def test_raw_http_failures_use_the_request_language(self):
+        with self.server() as base:
+            for language, expected in (
+                ("en", "Path is outside the library"),
+                ("es", "Ruta fuera de la biblioteca"),
+            ):
+                request = urllib.request.Request(base + "/api/download_file?path=..%2Foutside.wav",
+                                                 headers={"X-BeatOS-Language": language})
+                with self.subTest(language=language), self.assertRaises(urllib.error.HTTPError) as error:
+                    urllib.request.urlopen(request, timeout=5)
+                self.assertEqual(error.exception.code, 403)
+                self.assertIn(expected, error.exception.read().decode("utf-8"))
+
     def test_theme_roundtrip_and_rejection_preserve_shared_selection(self):
         with tempfile.TemporaryDirectory() as folder, patch.object(Path, "home", return_value=Path(folder)), self.server() as url:
             headers = {"Content-Type": "application/json", "X-BeatOS-Language": "en"}

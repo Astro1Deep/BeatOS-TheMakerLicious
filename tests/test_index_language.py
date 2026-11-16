@@ -87,5 +87,20 @@ class IndexLocaleTests(unittest.TestCase):
                         self.assertNotIn("Traceback", result.stderr)
             self.assertEqual(occupied.read_bytes(), b"existing")
 
+    def test_invalid_template_diagnostic_uses_the_selected_language(self):
+        with tempfile.TemporaryDirectory() as folder, patch.object(
+            index_mpc_library, "index_library", side_effect=ValueError("La plantilla no declara SAMPLES")
+        ):
+            for language, expected in (
+                ("en", "The catalog template does not declare SAMPLES"),
+                ("es", "La plantilla no declara SAMPLES"),
+            ):
+                stderr = io.StringIO()
+                with self.subTest(language=language), contextlib.redirect_stderr(stderr):
+                    with self.assertRaises(SystemExit) as error:
+                        self.run_index(Path(folder), language)
+                    self.assertEqual(error.exception.code, 1)
+                    self.assertIn(expected, stderr.getvalue())
+
 if __name__ == "__main__":
     unittest.main()
