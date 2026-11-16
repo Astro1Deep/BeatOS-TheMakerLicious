@@ -106,10 +106,14 @@ window.addEventListener('load', async () => {
   const reporter = document.createElement('output');
   reporter.id = 'i18n-browser-result';
   document.body.appendChild(reporter);
+  const backupTimeout = new URLSearchParams(location.search).get('nativeSafari') === '1' ? 12000 : 3000;
   const waitForBackup = async (label) => {
-    const deadline = performance.now() + 3000;
+    const deadline = performance.now() + backupTimeout;
     while (!backupInfoText().includes(label)) {
-      if (performance.now() > deadline) throw new Error('Backup card did not show: ' + label);
+      if (performance.now() > deadline) {
+        const info = document.getElementById('po33BackupsList')?.textContent.trim().slice(0, 300);
+        throw new Error('Backup card did not show: ' + label + ' (actual: ' + info + ')');
+      }
       await new Promise(resolve => setTimeout(resolve, 25));
     }
   };
