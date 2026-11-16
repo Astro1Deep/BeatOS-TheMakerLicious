@@ -1703,6 +1703,11 @@ class HTTPServer(ThreadingHTTPServer):
 class MPCAudioRequestHandler(BaseHTTPRequestHandler):
     server_version = "MPCAudioStreamer/3.9.0"
 
+    def send_error(self, code, message=None, explain=None):
+        # The request line may be rejected before BaseHTTPRequestHandler has headers.
+        language = get_request_language(getattr(self, "headers", {}))
+        super().send_error(code, translate_text(message, language), explain)
+
     def _api_json_dumps(self, payload, **kwargs):
         """Localize user-facing API messages by this request's ES/EN preference."""
         localized = localize_api_payload(payload, get_request_language(self.headers))

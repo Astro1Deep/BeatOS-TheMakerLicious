@@ -10,6 +10,7 @@ from http.cookies import SimpleCookie
 import re
 
 EXACT_EN = {
+    "La plantilla no declara SAMPLES": "The catalog template does not declare SAMPLES",
     "Archivo de audio externo no válido.": "Invalid external audio file.",
     "Falta el parámetro 'sample_path' o 'sample'": "Missing 'sample_path' or 'sample' parameter",
     "La base de datos SQLite no está disponible.": "The SQLite database is unavailable.",
@@ -120,6 +121,9 @@ EXACT_EN = {
     "Acción rechazada": "Action rejected",
 }
 EXACT_ES = {
+    "Catalog recovery requires matching database and metadata; existing files were preserved": "Para recuperar el catálogo, la base de datos y los metadatos deben coincidir. Se conservaron los archivos existentes",
+    "Invalid SHA-256": "SHA-256 no válido",
+    "Backup changed since inspection; refresh the library before restoring": "El respaldo cambió después de inspeccionarlo. Actualiza la biblioteca antes de restaurarlo",
     "Backup outside the library": "Respaldo fuera de la biblioteca",
     "Classify this legacy recording with its device model before protocol verification": "Asigna el modelo de dispositivo a esta grabación antigua antes de verificar el protocolo",
     "Expected JSON request": "Se esperaba una petición JSON",

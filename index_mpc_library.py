@@ -570,7 +570,7 @@ def main():
         parser.error(translate_text("La biblioteca indicada no existe o no es una carpeta", args.lang))
     try:
         index_library(args, root_path, emit)
-    except (OSError, sqlite3.Error) as error:
+    except (OSError, sqlite3.Error, ValueError) as error:
         parser.exit(1, cli_failure("No se pudo indexar la biblioteca.", error, args.lang) + "\n")
 
 
