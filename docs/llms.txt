@@ -22,7 +22,9 @@ Important: BeatOS runs on the user's computer and does not install sampler firmw
 
 - Akai MPC Standalone & SampQOL OS v0.2.0: Drum XPM, Sample/AC50-derived XPJ (1-track or 4-track submix busses), Official MPC Expansion Builder (Expansion.xml + audio previews + .xpansion.zip), and `/mpcqol.conf` safe backup editor.
 - Legacy Akai MPC: Binary `.PGM` + 16-bit/44.1 kHz WAV exports for MPC 1000 / 2500 / 500 (JJOS) and MPC 2000 / 2000XL (DOS 8.3 safe names).
-- Cerebro OS DSP Acoustic Engine: 3-band PCM spectral timbre analysis, 4/4 / 3/4 / 6/8 / 5/4 meter and Latin Clave detection (Bolero, Soul, Jazz, Bossa, Cumbia, Waltz, Drumless, Psych, plus club genres), multi-profile Hip-Hop / Boom Bap / Lo-Fi repitch/stretch adaptation, 3/4->4/4 phrase Auto-Chop with zero-crossing snap, and 808 pitch/phase calibration.
+- Cerebro OS Master Studio (`/api/cerebro_master_produce`): Unified one-click orchestration combining 3-band PCM spectral analysis, LUFS/Crest headroom & 808 fine-tuning calibration, SampQOL submix routing (`Sub 1–3`), MPCTK chromatic scale bank B deployment, and hardware readiness diagnostics.
+- Cerebro OS DSP Acoustic Engine: 3-band PCM spectral timbre analysis, 4/4 / 3/4 / 6/8 / 12/8 / 5/4 meter and Latin Clave detection (Oldies 12/8 Doo-Wop & Lowrider Soul, Bolero, Soul, Jazz, Bossa, Cumbia, Waltz, Drumless, Psych, plus club genres), multi-profile Hip-Hop / Boom Bap / Lo-Fi repitch/stretch adaptation, 3/4 & 12/8 -> 4/4 phrase Auto-Chop with zero-crossing snap, and 808 pitch/phase calibration.
+- UI & Accessibility: 9 hardware/ecosystem themes including `Astro1Deep Obsidian`, complete ES/EN backend localization (`beatos_i18n.py`), `:focus-visible` keyboard navigation, and `prefers-reduced-motion` support.
 - MPCTK Chromatic Scale Generator: 16-pad chromatic/scale spreading across active rack bank.
 - NI Maschine: WAV audio plus JSON mapping, not native MXGRP.
 - Roland SP-404MKII: WAV 16-bit/48 kHz import files; Roland SP-404A/SX: 12-pad WAV 16-bit/44.1 kHz.

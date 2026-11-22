@@ -11,7 +11,7 @@ from unittest.mock import patch
 import sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 
-from po_backup_protocols import PROFILES, validate_model, write_sidecar, read_sidecar, verify_modem
+from po_backup_protocols import PROFILES, validate_model, write_sidecar, read_sidecar, update_sidecar_metadata, verify_modem
 
 def wav_bytes():
     b=io.BytesIO()
@@ -124,5 +124,57 @@ class POBackupProtocolTests(unittest.TestCase):
             self.assertEqual(other['model'],'PO-33')
             self.assertEqual(other['project'],'Legacy')
             self.assertEqual(len(scan_po33_backups(po33_backup_dirs(d))),2)
+
+    def test_update_sidecar_metadata_preserves_original_audio_and_adds_notes(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / 'Session.wav'
+            original = wav_bytes()
+            p.write_bytes(original)
+            write_sidecar(p, 'PO-33', 'Old Beat', source='Session.wav')
+            updated = update_sidecar_metadata(p, project='New Beat', notes='93 BPM live set')
+            self.assertEqual(updated['project'], 'New Beat')
+            self.assertEqual(updated['notes'], '93 BPM live set')
+            self.assertEqual(p.read_bytes(), original)
+            digest = hashlib.sha256(original).hexdigest()
+            sidecar = read_sidecar(p, digest)
+            self.assertEqual(sidecar['project'], 'New Beat')
+            self.assertEqual(sidecar['notes'], '93 BPM live set')
+
+    def test_po133_invokes_modem_verifier_and_decoder_rejects_silent_or_mono(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / 'po133.wav'
+            p.write_bytes(wav_bytes())
+            with patch('po_backup_protocols.subprocess.run') as run:
+                run.return_value.returncode = 0
+                run.return_value.stdout = json.dumps({
+                    'payload_verified': True, 'packet_count': 42, 'pattern_count': 16,
+                    'end_marker_valid': True, 'bpm': 110, 'sample_count': 12
+                })
+                run.return_value.stderr = ''
+                res = verify_modem(p, 'PO-133')
+                self.assertTrue(res['payload_verified'])
+                self.assertEqual(res['bpm'], 110)
+                self.assertEqual(res['sample_count'], 12)
+                self.assertFalse(res['device_restore_verified'])
+
+            try:
+                sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'vendor'))
+                import po33_decode
+            except ImportError:
+                self.skipTest('NumPy not installed in test interpreter')
+
+            silent = Path(d) / 'silent.wav'
+            with wave.open(str(silent), 'wb') as w:
+                w.setparams((2, 2, 44100, 0, 'NONE', ''))
+                w.writeframes(struct.pack('<hh', 0, 0) * 44100)
+            with self.assertRaisesRegex(ValueError, 'SILENT_RECORDING'):
+                po33_decode.demodulate(silent)
+
+            mono = Path(d) / 'mono.wav'
+            with wave.open(str(mono), 'wb') as w:
+                w.setparams((2, 2, 44100, 0, 'NONE', ''))
+                w.writeframes(b''.join(struct.pack('<hh', 4000 if i % 2 else -4000, 4000 if i % 2 else -4000) for i in range(44100)))
+            with self.assertRaisesRegex(ValueError, 'MONO_DUPLICATED'):
+                po33_decode.demodulate(mono)
 
 if __name__=='__main__': unittest.main()

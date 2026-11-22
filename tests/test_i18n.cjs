@@ -71,7 +71,20 @@ const phrases = [
   ['Conectando...','Connecting…'],
   ['/16 Sonidos):','/16 sounds):'],
   ['En la herramienta oficial pulsa','In the official tool, click'],
-  ['), abre la interfaz conectada iniciando:', '), open the connected interface by running:']
+  ['), abre la interfaz conectada iniciando:', '), open the connected interface by running:'],
+  ['🎛️ Gestor Melodee v0.4.0 (Melodee/settings)', '🎛️ Melodee v0.4.0 Manager (Melodee/settings)'],
+  ['🎛️ Gestor Live Melodee v0.4.0 (Melodee/settings)', '🎛️ Live Melodee v0.4.0 Manager (Melodee/settings)'],
+  ['💾 Guardar en Melodee/settings', '💾 Save to Melodee/settings'],
+  ['🎹 3 Bancos MMR (48 Pads: A/B/C)', '🎹 3 MMR Banks (48 Pads: A/B/C)'],
+  ['📚 Manual & Memoria Audio/MIR (Cerebro OS)', '📚 Audio/MIR Manual & Memory (Cerebro OS)'],
+  ['🔪 MMR 3 Bancos', '🔪 MMR 3 Banks'],
+  ['⚠️ Rubato/Formantes', '⚠️ Rubato/Formants'],
+  ['Consulta teoría musical, DSP, cortes o mezcla...', 'Query music theory, DSP, slicing or mix...'],
+  ['🧠 Consultar', '🧠 Ask'],
+  ['🔊 Ajustes Generales de Preescucha (BeatOS Rack)', '🔊 General Rack Preview Settings (BeatOS Rack)'],
+  ['🔇 Mute Choke (Defecto)', '🔇 Mute Choke (Default)'],
+  ['🎹 Poli', '🎹 Poly'],
+  ['💡 Arrastra un banco sobre otro para mover o intercambiar el bloque completo', '💡 Drag any bank over another to move or swap the full 16-pad block']
 ];
 for (const [spanish,english] of phrases) {
   const actual=vm.runInContext('beatosTranslateExact('+JSON.stringify(spanish)+')',ctx);
@@ -335,5 +348,11 @@ ctx.change('es');
 ctx.locale.refresh();
 assert.equal(protectedTitle.nodeValue,'Nombre','protected project title must survive ES restoration');
 ctx.document.createTreeWalker=originalTreeWalker;
+
+assert.ok(!html.includes('beatos-maintenance.js'), 'dead beatos-maintenance.js reference must be removed');
+const simStart = html.indexOf('function runCerebroSimilarSamples(');
+const simEnd = html.indexOf('function importExternalSampleToPad(', simStart);
+assert.ok(simStart > -1 && simEnd > simStart);
+assert.ok(!html.slice(simStart, simEnd).includes(".replace(/'/g"), 'Cerebro search handlers must use data-* instead of quote-escaped JS strings');
 
 console.log('BeatOS ES/EN: reversible texts, tooltips and messages; sample paths unchanged OK');

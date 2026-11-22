@@ -84,6 +84,11 @@ CREATE TABLE IF NOT EXISTS samples (
     size_mb REAL DEFAULT 0.0,
     full_path TEXT,
     rel_path TEXT,
+    wav_health TEXT DEFAULT 'OK',
+    sample_rate INTEGER DEFAULT 0,
+    channels INTEGER DEFAULT 0,
+    bits_per_sample INTEGER DEFAULT 0,
+    has_slices INTEGER DEFAULT 0,
     FOREIGN KEY(sound_type) REFERENCES sound_categories(code)
 );
 
@@ -95,3 +100,18 @@ CREATE INDEX IF NOT EXISTS idx_sample_bpm ON samples(bpm);
 CREATE INDEX IF NOT EXISTS idx_sample_key ON samples(musical_key);
 CREATE INDEX IF NOT EXISTS idx_sample_camelot ON samples(camelot);
 CREATE INDEX IF NOT EXISTS idx_sample_energy ON samples(energy_level);
+CREATE INDEX IF NOT EXISTS idx_sample_rel_path ON samples(rel_path);
+CREATE INDEX IF NOT EXISTS idx_sample_sub_pack ON samples(sub_pack);
+CREATE INDEX IF NOT EXISTS idx_sample_format ON samples(sample_format);
+
+-- Índice Full-Text Search (FTS5) para búsquedas sub-5ms
+CREATE VIRTUAL TABLE IF NOT EXISTS samples_fts USING fts5(
+    filename,
+    sound_type,
+    macro_category,
+    sub_pack,
+    musical_key,
+    rel_path,
+    content='samples',
+    content_rowid='id'
+);

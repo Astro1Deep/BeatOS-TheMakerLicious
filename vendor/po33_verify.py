@@ -8,6 +8,27 @@ from pathlib import Path
 import sys
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 
+def _classify_failure(detail):
+    text = str(detail or '')
+    if 'SILENT_RECORDING' in text:
+        return 'SILENT_RECORDING'
+    if 'MONO_DUPLICATED' in text:
+        return 'MONO_DUPLICATED'
+    if 'CHANNELS_SWAPPED' in text:
+        return 'CHANNELS_SWAPPED'
+    if 'Preamble lock failed' in text or 'Invalid PO-33 preamble' in text:
+        return 'PREAMBLE_NOT_FOUND'
+    if 'Checksum failed' in text:
+        return 'CRC_MISMATCH'
+    if 'Truncated' in text or 'Incomplete' in text:
+        return 'TRUNCATED_TRANSFER'
+    if 'too short' in text.lower():
+        return 'TOO_SHORT'
+    if 'Lost symbol-clock' in text:
+        return 'CLOCK_LOST'
+    return 'VERIFY_ERROR'
+
+
 def run(path):
     try:
         from po33_decode import demodulate, parse_packets, collect_objects
@@ -24,7 +45,10 @@ def run(path):
             'packet_count':len(packets),'pattern_count':len(patterns),
             'bpm':int(configs[1][129]),'sample_count':len(roots),
             'unresolved_trims':sum('unresolved' in entry for entry in entries),
-            'end_marker_valid':True}
+            'end_marker_valid':True,
+            'initial_symbol_rate':round(float(signal.get('initial_symbol_rate',0.0)),2),
+            'signal_start_sec':signal.get('signal_start_sec'),
+            'signal_duration_sec':signal.get('signal_duration_sec')}
 
 if __name__=='__main__':
     try:
@@ -39,6 +63,8 @@ if __name__=='__main__':
         print(json.dumps(result))
         raise SystemExit(0 if result.get('payload_verified') or result['status']=='DECODER_SELF_CHECK_PASS' else 2)
     except (OSError,ValueError,OverflowError) as exc:
+        detail = str(exc)[:300]
         print(json.dumps({'payload_verified':False,'status':'PROTOCOL_NOT_VERIFIED',
-                          'detail':str(exc)[:300]}))
+                          'failure_reason':_classify_failure(detail),
+                          'detail':detail}))
         raise SystemExit(2)

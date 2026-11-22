@@ -137,6 +137,117 @@ class APILanguageTests(unittest.TestCase):
         finally:
             serve_mpc.TASK_STATE["logs"] = logs_before
 
+    def test_all_backend_error_and_status_strings_translate_to_english(self):
+        from beatos_i18n import EXACT_EN, localize_api_payload, translate_text
+
+        sample_backend_strings = [
+            "La base de datos SQLite no existe todavía. Ejecuta una reindexación primero.",
+            "La base de datos SQLite no está disponible.",
+            "Ruta de muestra externa requerida.",
+            "Archivo de audio externo no válido.",
+            "La muestra externa no pertenece a una biblioteca montada autorizada.",
+            "Script sync_master_dashboard.py y plantilla MASTER_ECOSISTEMA_DISCOS.html no encontrados.",
+            "Selecciona una muestra o loop para dividir en pads.",
+            "Motor autochop no disponible.",
+            "Motor create_custom_expansion no disponible en el servidor.",
+            "Función create_chromatic_kit no disponible en hardware_kit_builder.",
+            "Falta el parámetro 'sample_path' o 'sample'",
+            "Selecciona o carga primero una muestra en el pad activo.",
+            "Función build_rack_scale_bank no disponible.",
+            "Gestor mpcqol.conf no disponible.",
+            "No se pudo abrir el archivo de descarga.",
+            "🚀 Reindexación iniciada en segundo plano con éxito.",
+            "Ya hay una reindexación en ejecución en segundo plano.",
+            "EP-133: el mapa de un kit admite 4 grupos de 12 sonidos (48 en total)",
+            "Presupuesto PO: entre 1 y 40 segundos",
+            "SP-404A/SX: cada banco tiene 12 pads; mueve los sonidos de las posiciones 13–16 antes de exportar",
+            "El título de la expansión es obligatorio.",
+            "Ruta de expansión fuera del directorio Expansions",
+            "Selecciona al menos un kit/proyecto con muestras válidas o carga muestras en el Rack de 16 pads.",
+            "La muestra es demasiado corta para dividirla en múltiples cortes.",
+            "Existe un enlace en el destino; no se ha sustituido",
+            "El límite de inspección es 128 MiB; el original sigue disponible para descargar",
+            "Pad duplicado",
+            "La plantilla no declara SAMPLES",
+            "Archivo de muestra no encontrado: Samples/kick.wav",
+            "Muestra no encontrada: Samples/808.wav",
+            "Muestra de audio no encontrada: Samples/snare.wav",
+            "Archivo no encontrado: Custom_Kits/test.zip",
+            "No se pudo decodificar broken.wav",
+            "Preset mpcqol.conf desconocido: turbo",
+            "Abierto en el explorador: /tmp/demo",
+            "Formato de nota inválido: 'Z9'. Ejemplos válidos: 'C2', 'F#1', 'Eb3'",
+            "Nombre de nota desconocido: 'H#'",
+            "Escala desconocida: 'hungarian'. Escalas disponibles: minor, major",
+            "El destino 'po33' admite pads 1 a 16; selecciona un destino específico para más bancos",
+            "Kit 'Boogie_Kit' generado exitosamente para destino 'mpc'.",
+            "No se pudo procesar pad 4: Tempo fuera de rango (30–300 BPM)",
+            "Valor inválido 99 para monitor (permitidos: [0, 1, 2])",
+            "Cancelación de fase subgrave detectada entre PAD 1 y PAD 3 (corr=-0.72).",
+            "Oposición de fase en transiente Snare+Clap entre PAD 2 y PAD 4 (corr=-0.65).",
+            "Expected JSON request",
+            "Incomplete request",
+            "Missing backup path",
+            "Symlinked backups are not supported",
+            "Backup outside the library",
+            "Unsupported/incomplete WAV; do not prepare restoration",
+            "Missing backup file",
+            "Classify this legacy recording with its device model before protocol verification",
+            "Incomplete or unsupported WAV recording",
+            "Mute group must be between 0 and 32",
+            "Catalog recovery requires matching database and metadata; existing files were preserved",
+            "Unsupported Pocket Operator backup model",
+            "Project name must contain 1–160 characters",
+            "Original backup WAV not found or symlinked",
+            "Conflicting project metadata; prior entry not replaced",
+        ]
+        generic_fallback = "Operation failed; original technical detail available in error_es."
+        for text in sample_backend_strings:
+            with self.subTest(text=text):
+                translated = translate_text(text, "en")
+                localized = localize_api_payload({"error": text, "message": text}, "en")
+                self.assertNotEqual(localized["error"], generic_fallback)
+                self.assertEqual(localized["error"], translated)
+                if text not in EXACT_EN or EXACT_EN[text] != text:
+                    self.assertNotEqual(translated, text)
+                    for marker in ("no encontrado", "no encontrada", "no disponible", "inválido", "desconocido", "fuera del", "Cancelación", "Oposición"):
+                        self.assertNotIn(marker.lower(), translated.lower())
+
+        phase_localized = localize_api_payload({
+            "phase_warnings": [
+                "Cancelación de fase subgrave detectada entre PAD 1 y PAD 2 (corr=-0.81)."
+            ]
+        }, "en")
+        self.assertIn("Sub-bass phase cancellation", phase_localized["phase_warnings"][0])
+        self.assertIn("Cancelación", phase_localized["phase_warnings_es"][0])
+
+    def test_induced_api_errors_translate_cleanly_in_english(self):
+        generic_fallback = "Operation failed; original technical detail available in error_es."
+        with self.server() as url:
+            cases = [
+                ("/api/cerebro_autochop", b"{}", "Select a sample"),
+                ("/api/rack_scale_spread", b"{}", "First select or load"),
+                ("/api/cerebro_import_external_sample", b"{}", "External sample path"),
+                ("/api/create_expansion", b'{"title":""}', "Expansion title is required"),
+                ("/api/cerebro_master_produce", b"{}", "Load samples into the rack"),
+            ]
+            for endpoint, body, expected_en in cases:
+                with self.subTest(endpoint=endpoint):
+                    status, en_payload = self.request(
+                        url + endpoint,
+                        data=body,
+                        headers={"Origin": url, "Content-Type": "application/json", "X-BeatOS-Language": "en"},
+                    )
+                    self.assertNotEqual(status, 200)
+                    self.assertNotEqual(en_payload.get("error"), generic_fallback)
+                    self.assertIn(expected_en, en_payload.get("error", ""))
+                    _, es_payload = self.request(
+                        url + endpoint,
+                        data=body,
+                        headers={"Origin": url, "Content-Type": "application/json", "X-BeatOS-Language": "es"},
+                    )
+                    self.assertNotEqual(es_payload.get("error"), en_payload.get("error"))
+
 
 if __name__ == "__main__":
     unittest.main()

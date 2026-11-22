@@ -1,0 +1,7 @@
+# BeatOS Runtime Requirements (full profile: all hardware, codec, PO-33 CRC and MIR modes)
+# Install into an isolated virtualenv (e.g. ~/.beatos/venv on macOS/Linux or %LOCALAPPDATA%\BeatOS\venv on Windows):
+numpy
+scipy
+librosa
+soundfile
+imageio-ffmpeg

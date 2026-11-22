@@ -10,6 +10,35 @@ from http.cookies import SimpleCookie
 import re
 
 EXACT_EN = {
+    "Inventario del ecosistema actualizado.": "Ecosystem inventory refreshed.",
+    "La biblioteca ya no está disponible.": "The library is no longer available.",
+    "No se pudo limpiar toda la biblioteca.": "Could not clean the entire library.",
+    "Ya hay una tarea de mantenimiento en curso.": "A maintenance task is already running.",
+    "Ya hay una reindexación en ejecución en segundo plano.": "A maintenance task is already running.",
+    "🚀 Reindexación iniciada en segundo plano con éxito.": "🚀 Reindexing started in the background.",
+    'La biblioteca indicada no existe o no es una carpeta': 'The selected library does not exist or is not a directory',
+    'Tema del ecosistema no válido.': 'Invalid ecosystem theme.',
+    'No se pudo guardar el tema del ecosistema.': 'Could not save the ecosystem theme.',
+    'Existe un enlace en el destino; no se ha sustituido': 'An existing link at the destination was preserved',
+    'EP-133: el mapa de un kit admite 4 grupos de 12 sonidos (48 en total)': 'EP-133: a kit map supports four groups of 12 sounds (48 total)',
+    'Presupuesto PO: entre 1 y 40 segundos': 'PO time budget must be between 1 and 40 seconds',
+    'Pad duplicado': 'Duplicate pad',
+    'SP-404A/SX: cada banco tiene 12 pads; mueve los sonidos de las posiciones 13–16 antes de exportar': 'SP-404A/SX: each bank has 12 pads; move any sounds from slots 13–16 before exporting',
+    'El título de la expansión es obligatorio.': 'Expansion title is required.',
+    'Ruta de expansión fuera del directorio Expansions': 'Expansion path is outside the Expansions directory',
+    'Selecciona al menos un kit/proyecto con muestras válidas o carga muestras en el Rack de 16 pads.': 'Select at least one kit/project with valid samples or load samples into the 16-pad rack.',
+    'La muestra es demasiado corta para dividirla en múltiples cortes.': 'The sample is too short to split into multiple slices.',
+    'Script sync_master_dashboard.py y plantilla MASTER_ECOSISTEMA_DISCOS.html no encontrados.': 'The sync_master_dashboard.py script and MASTER_ECOSISTEMA_DISCOS.html template were not found.',
+    'No se pudo abrir el archivo de descarga.': 'Could not open the file for download.',
+    'Motor autochop no disponible.': 'Auto-chop engine is unavailable.',
+    'Motor create_custom_expansion no disponible en el servidor.': 'The custom expansion builder is unavailable on the server.',
+    'Función create_chromatic_kit no disponible en hardware_kit_builder.': 'The hardware kit builder does not provide create_chromatic_kit.',
+    'Función build_rack_scale_bank no disponible.': 'The build_rack_scale_bank function is unavailable.',
+    'Gestor mpcqol.conf no disponible.': 'The mpcqol.conf manager is unavailable.',
+    'Gestor Melodee/settings no disponible.': 'The Melodee/settings manager is unavailable.',
+    "El parámetro 'settings' debe ser un objeto JSON": "The 'settings' parameter must be a JSON object",
+    "Se esperaba un objeto JSON": "Expected a JSON object",
+    "El parámetro 'preset' debe ser texto": "The 'preset' parameter must be a string",
     "Falta parámetro 'rel_path'": "Missing parameter 'rel_path'",
     "Falta parámetro 'path'": "Missing parameter 'path'",
     "Falta parámetro 'expansion_name'": "Missing parameter 'expansion_name'",
@@ -64,8 +93,57 @@ EXACT_EN = {
     "Programa ilegible": "Program cannot be read",
     "Servidor no disponible": "Server unavailable",
     "Acción rechazada": "Action rejected",
+    'Archivo de audio externo no válido.': 'Invalid external audio file.',
+    'Backup outside the library': 'Backup outside the library',
+    'Carga muestras en el rack o indica un estilo para que Cerebro OS orqueste la sesión.': 'Load samples into the rack or enter a style prompt so Cerebro OS can orchestrate the session.',
+    'Catalog recovery requires matching database and metadata; existing files were preserved': 'Catalog recovery requires matching database and metadata; existing files were preserved',
+    'Classify this legacy recording with its device model before protocol verification': 'Classify this legacy recording with its device model before protocol verification',
+    'Conflicting project metadata; prior entry not replaced': 'Conflicting project metadata; prior entry not replaced',
+    'El límite de inspección es 128 MiB; el original sigue disponible para descargar': 'Inspection limit is 128 MiB; the original file remains available for download',
+    'Expected JSON request': 'Expected JSON request',
+    "Falta el parámetro 'sample_path' o 'sample'": "Missing 'sample_path' or 'sample' parameter",
+    'File not found': 'File not found',
+    'Incomplete or unsupported WAV recording': 'Incomplete or unsupported WAV recording',
+    'Incomplete request': 'Incomplete request',
+    'Invalid format': 'Invalid format',
+    'La base de datos SQLite no está disponible.': 'The SQLite database is unavailable.',
+    'La base de datos SQLite no existe todavía. Ejecuta una reindexación primero.': 'The SQLite database does not exist yet. Run a reindex first.',
+    'La muestra externa no pertenece a una biblioteca montada autorizada.': 'The external sample does not belong to an authorized mounted library.',
+    'La plantilla no declara SAMPLES': 'The template does not declare SAMPLES',
+    'Missing backup file': 'Missing backup file',
+    'Missing backup path': 'Missing backup path',
+    'Mute group must be between 0 and 32': 'Mute group must be between 0 and 32',
+    'Original backup WAV not found or symlinked': 'Original backup WAV not found or symlinked',
+    'Project name must contain 1–160 characters': 'Project name must contain 1–160 characters',
+    'Ruta de muestra externa requerida.': 'External sample path is required.',
+    'Selecciona o carga primero una muestra en el pad activo.': 'First select or load a sample on the active pad.',
+    'Selecciona una muestra o loop para dividir en pads.': 'Select a sample or loop to slice across pads.',
+    'Symlinked backups are not supported': 'Symlinked backups are not supported',
+    'Unsupported Pocket Operator backup model': 'Unsupported Pocket Operator backup model',
+    'Unsupported/incomplete WAV; do not prepare restoration': 'Unsupported/incomplete WAV; do not prepare restoration',
+    'No hay carpeta externa configurada para copiar el backup': 'No external folder is configured to copy this backup',
+    'La carpeta externa configurada no está disponible o no tiene permisos de escritura': 'The configured external folder is unavailable or not writable',
+    'La carpeta externa no tiene permisos de escritura': 'The external folder does not have write permission',
+    'No hay carpeta externa configurada para guardar el backup': 'No external folder is configured to save this backup',
+    'Configura una carpeta externa válida antes de activar el almacenamiento externo': 'Configure a valid external folder before enabling external storage',
+    'Archivo WAV de respaldo no encontrado': 'Backup WAV file not found',
+    'Ruta de backup no encontrada': 'Backup path not found',
+    'Selector nativo disponible en macOS; escribe la ruta absoluta manualmente.': 'Native picker is available on macOS; enter the absolute path manually.',
+    'Tiempo de espera agotado en el selector de carpetas': 'Folder picker timed out',
+    'Ya hay una tarea en ejecución en segundo plano.': 'Another background task is already running.',
+    '✔ Instalación de soporte completada.': '✔ Support installation completed.',
+    '🎉 Indexación completada con éxito. Inicia BeatOS/ABRIR_BEATOS.command o el instalador de tu carpeta de código.': '🎉 Indexing completed successfully. Start BeatOS/ABRIR_BEATOS.command or the installer in your code folder.',
 }
 PREFIX_EN = {
+    'Archivo de muestra no encontrado: ': 'Sample file not found: ',
+    'Archivo no encontrado: ': 'File not found: ',
+    'Abierto en el explorador: ': 'Opened in file browser: ',
+    'Muestra no encontrada: ': 'Sample not found: ',
+    'Muestra de audio no encontrada: ': 'Audio sample not found: ',
+    'Nombre de nota desconocido: ': 'Unknown note name: ',
+    'No se pudo decodificar ': 'Could not decode ',
+    'Preset mpcqol.conf desconocido: ': 'Unknown mpcqol.conf preset: ',
+    'Preset Melodee desconocido: ': 'Unknown Melodee preset: ',
     "Ruta no encontrada: ": "Path not found: ",
     "Proyecto no encontrado: ": "Project not found: ",
     "La biblioteca no existe: ": "Library does not exist: ",
@@ -115,6 +193,20 @@ def get_request_language(headers):
     return "en"
 
 
+_DIAGNOSTIC_PATTERNS = tuple((re.compile(pattern), replacement) for pattern, replacement in (
+    (r"Formato de nota inválido: (.+)\. Ejemplos válidos: (.+)", r"Invalid note format: \1. Valid examples: \2"),
+    (r"Escala desconocida: (.+)\. Escalas disponibles: (.+)", r"Unknown scale: \1. Available scales: \2"),
+    (r"El destino '([^']+)' admite pads 1 a (\d+); selecciona un destino específico para más bancos",
+     r"Target '\1' supports pads 1–\2. Select a specific target to use more banks"),
+    (r"Valor inválido (.+) para (.+) \(permitidos: (.+)\)", r"Invalid value \1 for \2 (allowed: \3)"),
+    (r"Kit '([^']+)' generado exitosamente para destino '([^']+)'\.", r"Kit '\1' generated successfully for target '\2'."),
+    (r"Cancelación de fase subgrave detectada entre PAD (\d+) y PAD (\d+) \(corr=([^)]+)\)\.",
+     r"Sub-bass phase cancellation detected between PAD \1 and PAD \2 (corr=\3)."),
+    (r"Oposición de fase en transiente Snare\+Clap entre PAD (\d+) y PAD (\d+) \(corr=([^)]+)\)\.",
+     r"Transient phase opposition on Snare+Clap between PAD \1 and PAD \2 (corr=\3)."),
+))
+
+
 def translate_text(value, lang="en"):
     if lang != "en" or not isinstance(value, str):
         return value
@@ -137,6 +229,12 @@ def translate_text(value, lang="en"):
     pad_range = re.fullmatch(r"Pad (\d+): (volume|pan|tune|mute_group|tempo) fuera de rango", body)
     if pad_range:
         return indentation + f"Pad {pad_range.group(1)}: {pad_range.group(2)} out of range"
+    pad_error = re.fullmatch(r"No se pudo procesar pad (\d+): (.+)", body, re.DOTALL)
+    if pad_error:
+        return indentation + f"Could not process pad {pad_error[1]}: {translate_text(pad_error[2], lang)}"
+    for pattern, replacement in _DIAGNOSTIC_PATTERNS:
+        if match := pattern.fullmatch(body):
+            return indentation + match.expand(replacement)
     for prefix, english in _SORTED_PREFIXES:
         if body.startswith(prefix):
             return indentation + english + body[len(prefix):]
@@ -153,11 +251,15 @@ def localize_api_payload(payload, lang="en"):
         if isinstance(value, str) and value:
             result[name + "_es"] = value
             translated = translate_text(value, lang)
-            if translated == value and name == "error":
+            if translated == value and name == "error" and value.lstrip("\r\n") not in EXACT_EN:
                 translated = "Operation failed; original technical detail available in error_es."
             result[name] = translated
     logs = payload.get("logs")
     if isinstance(logs, list):
         result["logs_es"] = list(logs)
         result["logs"] = [translate_text(line, lang) for line in logs]
+    phase_warnings = payload.get("phase_warnings")
+    if isinstance(phase_warnings, list):
+        result["phase_warnings_es"] = list(phase_warnings)
+        result["phase_warnings"] = [translate_text(line, lang) for line in phase_warnings]
     return result

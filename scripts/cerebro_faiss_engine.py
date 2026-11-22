@@ -17,16 +17,32 @@ Uso:
 """
 
 import os
+import re
 import sys
 import time
 import json
 import sqlite3
 import argparse
+import threading
 from pathlib import Path
 
 # Configuración de Rutas del Stack MLX y Modelos Locales
-MLX_PYTHON = "/Users/ivan/.mlx-stack/venv/bin/python"
-MODEL_SNAPSHOT = "/Users/ivan/.mlx-stack/models/huggingface/hub/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
+MLX_PYTHON = os.environ.get("BEATOS_MLX_PYTHON", str(Path.home() / ".mlx-stack/venv/bin/python"))
+
+
+def _default_model_snapshot() -> str:
+    env_val = os.environ.get("BEATOS_MINILM_SNAPSHOT", "").strip()
+    if env_val:
+        return env_val
+    snap_root = Path.home() / ".mlx-stack/models/huggingface/hub/models--sentence-transformers--all-MiniLM-L6-v2/snapshots"
+    if snap_root.is_dir():
+        for child in sorted(snap_root.iterdir()):
+            if child.is_dir():
+                return str(child)
+    return str(snap_root / "latest")
+
+
+MODEL_SNAPSHOT = _default_model_snapshot()
 INDEX_CACHE_DIR = os.path.expanduser("~/.gemini/antigravity/scratch/faiss_cache")
 FAISS_INDEX_FILE = os.path.join(INDEX_CACHE_DIR, "cerebro_samples.index")
 METADATA_FILE = os.path.join(INDEX_CACHE_DIR, "cerebro_samples_meta.json")
@@ -75,155 +91,246 @@ class CircuitBreaker:
 
 
 circuit_breaker = CircuitBreaker()
+_CACHE_LOCK = threading.Lock()
+_FAISS_CACHE = {"model": None, "index": None, "metadata": None, "mtime": 0.0}
+MPC_SAMPLE_DB = os.environ.get("BEATOS_MPC_DB", "/Volumes/MPCSMPL/BeatOS/data/mpc_sample.db")
 
 
 def get_embedding_model():
-    """Carga el modelo SentenceTransformer desde la caché local sin descargas."""
+    """Carga el modelo SentenceTransformer en caché singleton sin descargas."""
+    with _CACHE_LOCK:
+        if _FAISS_CACHE["model"] is not None:
+            return _FAISS_CACHE["model"]
     try:
         from sentence_transformers import SentenceTransformer
-        if os.path.exists(MODEL_SNAPSHOT):
-            return SentenceTransformer(MODEL_SNAPSHOT)
-        return SentenceTransformer("all-MiniLM-L6-v2")
+        model = SentenceTransformer(MODEL_SNAPSHOT) if os.path.exists(MODEL_SNAPSHOT) else SentenceTransformer("all-MiniLM-L6-v2")
+        with _CACHE_LOCK:
+            _FAISS_CACHE["model"] = model
+        return model
     except Exception as e:
         print(f"{YELLOW}⚠️  No se pudo cargar SentenceTransformer directamente: {e}{RESET}")
         return None
 
 
+def _get_cached_faiss():
+    import faiss
+    mtime = os.path.getmtime(FAISS_INDEX_FILE)
+    with _CACHE_LOCK:
+        if _FAISS_CACHE["index"] is not None and _FAISS_CACHE["metadata"] is not None and _FAISS_CACHE["mtime"] == mtime:
+            return _FAISS_CACHE["index"], _FAISS_CACHE["metadata"]
+    idx = faiss.read_index(FAISS_INDEX_FILE)
+    with open(METADATA_FILE, "r", encoding="utf-8") as f:
+        meta = json.load(f)
+    with _CACHE_LOCK:
+        _FAISS_CACHE["index"] = idx
+        _FAISS_CACHE["metadata"] = meta
+        _FAISS_CACHE["mtime"] = mtime
+    return idx, meta
+
+
 def fallback_sqlite_search(query, top_k=5):
-    """Motor secundario de ultra-alta velocidad (Failover FTS / Like) sobre serato_dj.db."""
+    """Motor secundario de ultra-alta velocidad (Failover FTS5 / LIKE) sobre MPCSMPL, SanDisk y Samsung."""
     start_t = time.time()
-    db_path = "/Volumes/SanDisk SSD/_INDEX_SERATO_DJ/serato_dj.db"
-    
-    if not os.path.exists(db_path):
+    results = []
+    sources_checked = []
+    tokens = [t.strip() for t in re.split(r"[\s_\-/]+", str(query or "")) if len(t.strip()) > 1]
+
+    # 1) Tarjeta Akai MPC Sample (FTS5 si existe, fallback LIKE)
+    if os.path.exists(MPC_SAMPLE_DB):
+        sources_checked.append("MPCSMPL")
+        try:
+            conn = sqlite3.connect(MPC_SAMPLE_DB)
+            cur = conn.cursor()
+            has_fts = bool(cur.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='samples_fts'").fetchone())
+            rows = []
+            if has_fts and tokens:
+                fts_q = " AND ".join(f'"{t.replace(chr(34), "")}"*' for t in tokens[:8])
+                try:
+                    rows = cur.execute("""
+                        SELECT s.filename, s.sound_type, s.sub_pack, s.size_mb, s.rel_path, s.bpm, s.musical_key
+                        FROM samples_fts f JOIN samples s ON s.id = f.rowid
+                        WHERE samples_fts MATCH ?
+                        ORDER BY bm25(samples_fts)
+                        LIMIT ?
+                    """, (fts_q, top_k)).fetchall()
+                except sqlite3.OperationalError:
+                    rows = []
+            if not rows:
+                conds, params = [], []
+                for tok in tokens[:8]:
+                    conds.append("(filename LIKE ? OR sound_type LIKE ? OR sub_pack LIKE ? OR rel_path LIKE ?)")
+                    p = f"%{tok}%"
+                    params.extend([p, p, p, p])
+                where_sql = " AND ".join(conds) if conds else "1=1"
+                rows = cur.execute(
+                    f"SELECT filename, sound_type, sub_pack, size_mb, rel_path, bpm, musical_key FROM samples WHERE {where_sql} LIMIT ?",
+                    params + [top_k],
+                ).fetchall()
+            conn.close()
+            for r in rows:
+                results.append({
+                    "filename": r[0],
+                    "genre": r[1],
+                    "sub_genre": r[2],
+                    "size_mb": round(r[3] or 0.0, 2),
+                    "rel_path": r[4],
+                    "bpm": r[5],
+                    "musical_key": r[6],
+                    "score": 0.90,
+                    "disk": "MPCSMPL",
+                    "source": "MPCSMPL (SQLite FTS5/LIKE)",
+                })
+        except sqlite3.Error:
+            pass
+
+    # 2) SanDisk SSD (Serato DJ)
+    sandisk_db = "/Volumes/SanDisk SSD/_INDEX_SERATO_DJ/serato_dj.db"
+    if len(results) < top_k and os.path.exists(sandisk_db):
+        sources_checked.append("SanDisk SSD")
+        try:
+            conn = sqlite3.connect(sandisk_db)
+            cur = conn.cursor()
+            conds, params = [], []
+            for tok in tokens[:8]:
+                conds.append("(filename LIKE ? OR macro_genre LIKE ? OR sub_genre LIKE ?)")
+                p = f"%{tok}%"
+                params.extend([p, p, p])
+            where_sql = " AND ".join(conds) if conds else "1=1"
+            rows = cur.execute(
+                f"SELECT filename, macro_genre, sub_genre, size_mb, rel_path FROM tracks WHERE {where_sql} LIMIT ?",
+                params + [top_k - len(results)],
+            ).fetchall()
+            conn.close()
+            for r in rows:
+                results.append({
+                    "filename": r[0],
+                    "genre": r[1],
+                    "sub_genre": r[2],
+                    "size_mb": round(r[3] or 0.0, 1),
+                    "rel_path": r[4],
+                    "score": 0.85,
+                    "disk": "SanDisk SSD",
+                    "source": "SanDisk SSD (Fallback Text Engine)",
+                })
+        except sqlite3.Error:
+            pass
+
+    if not sources_checked:
         return {
             "engine": "Fallback-SQLite",
             "status": "FAIL",
-            "message": "Disco SanDisk no conectado para fallback",
+            "message": "Ninguna base SQLite de audio conectada para fallback",
             "results": [],
-            "latency_ms": round((time.time() - start_t) * 1000, 2)
+            "latency_ms": round((time.time() - start_t) * 1000, 2),
         }
-        
-    conn = sqlite3.connect(db_path)
-    cur = conn.cursor()
-    tokens = [t.strip() for t in query.split() if len(t.strip()) > 1]
-    
-    conditions = []
-    params = []
-    for tok in tokens:
-        conditions.append("(filename LIKE ? OR macro_genre LIKE ? OR sub_genre LIKE ?)")
-        p = f"%{tok}%"
-        params.extend([p, p, p])
-        
-    where_clause = " AND ".join(conditions) if conditions else "1=1"
-    sql = f"""
-    SELECT filename, macro_genre, sub_genre, size_mb, rel_path 
-    FROM tracks 
-    WHERE {where_clause} 
-    LIMIT {top_k}
-    """
-    
-    cur.execute(sql, params)
-    rows = cur.fetchall()
-    conn.close()
-    
-    results = [
-        {
-            "filename": r[0],
-            "genre": r[1],
-            "sub_genre": r[2],
-            "size_mb": round(r[3] or 0.0, 1),
-            "rel_path": r[4],
-            "score": 0.85,  # Score heurístico en fallback
-            "source": "SanDisk SSD (Fallback Text Engine)"
-        }
-        for r in rows
-    ]
-    
+
     return {
-        "engine": "Fallback-SQLite (BM25/Like)",
+        "engine": f"Fallback-SQLite FTS5/LIKE ({', '.join(sources_checked)})",
         "status": "OK",
-        "results": results,
-        "latency_ms": round((time.time() - start_t) * 1000, 2)
+        "results": results[:top_k],
+        "latency_ms": round((time.time() - start_t) * 1000, 2),
     }
 
 
 def search_faiss_vector(query, top_k=5):
-    """Motor primario vectorial: codifica query y recupera por distancia coseno con FAISS."""
+    """Motor primario vectorial: codifica query y recupera por distancia coseno con FAISS (caché en memoria)."""
     start_t = time.time()
-    
-    # Comprobar estado del Circuit Breaker
+
     if not circuit_breaker.can_attempt_primary():
-        print(f"{YELLOW}⚡ Circuit Breaker [OPEN]: Conmutando inmediatamente a Failover Engine...{RESET}")
         return fallback_sqlite_search(query, top_k=top_k)
-        
+
     try:
         import faiss
-        import numpy as np
-        
+
         if not os.path.exists(FAISS_INDEX_FILE) or not os.path.exists(METADATA_FILE):
-            print(f"{YELLOW}⚠️  Índice FAISS no encontrado. Ejecutando creación automática o fallback...{RESET}")
             circuit_breaker.record_failure()
             return fallback_sqlite_search(query, top_k=top_k)
-            
-        index = faiss.read_index(FAISS_INDEX_FILE)
-        with open(METADATA_FILE, "r", encoding="utf-8") as f:
-            metadata = json.load(f)
-            
+
+        index, metadata = _get_cached_faiss()
         model = get_embedding_model()
         if model is None:
             raise RuntimeError("Modelo de embeddings no disponible")
-            
-        # Generar embedding de consulta y normalizar L2 para Cosine Similarity
+
         q_vec = model.encode([query])
         faiss.normalize_L2(q_vec)
-        
+
         distances, indices = index.search(q_vec, min(top_k, index.ntotal))
-        
+
         results = []
         for dist, idx in zip(distances[0], indices[0]):
             if idx != -1 and idx < len(metadata):
                 item = dict(metadata[idx])
                 item["similarity_score"] = round(float(dist), 4)
                 results.append(item)
-                
+
         circuit_breaker.record_success()
         latency = round((time.time() - start_t) * 1000, 2)
-        
+
         return {
             "engine": "Primary-FAISS (Dense Semantic Vectors)",
             "status": "OK",
             "results": results,
-            "latency_ms": latency
+            "latency_ms": latency,
         }
-        
+
     except Exception as e:
         print(f"{RED}❌ Fallo en Motor Primario FAISS: {e}{RESET}")
         circuit_breaker.record_failure()
         return fallback_sqlite_search(query, top_k=top_k)
 
 
-def build_faiss_index_from_dbs(max_items=5000):
-    """Indexa metadatos de audio en vectores densos y guarda el índice FAISS."""
+def build_faiss_index_from_dbs(max_items=8000):
+    """Indexa metadatos de audio (MPCSMPL + SanDisk + Samsung) en vectores densos y guarda el índice FAISS."""
     print(f"\n{CYAN}{BOLD}🔨 CONSTRUYENDO ÍNDICE VECTORIAL FAISS (all-MiniLM-L6-v2){RESET}")
     start_t = time.time()
-    
+
     import faiss
-    import numpy as np
-    
+
     model = get_embedding_model()
     if model is None:
         print(f"{RED}Error: Se requiere sentence-transformers para indexar.{RESET}")
         return False
-        
+
     corpus_texts = []
     metadata = []
-    
+
+    # 0. Extraer muestras de Akai MPC Sample (MPCSMPL)
+    if os.path.exists(MPC_SAMPLE_DB):
+        conn = sqlite3.connect(MPC_SAMPLE_DB)
+        cur = conn.cursor()
+        mpc_limit = int(max_items * 0.6)
+        cur.execute(
+            "SELECT filename, sound_type, sample_format, macro_category, sub_pack, bpm, musical_key, rel_path, size_mb FROM samples LIMIT ?",
+            (mpc_limit,),
+        )
+        count_m = 0
+        for r in cur.fetchall():
+            fn, st, sfmt, macro, sub, bpm, mkey, rel, sz = r
+            desc = f"mpc sample {fn} {st} {sfmt or ''} pack {sub or ''} {macro or ''} {f'{bpm}bpm' if bpm else ''} {mkey or ''}"
+            corpus_texts.append(desc)
+            metadata.append({
+                "filename": fn,
+                "title": fn,
+                "artist": sub or "MPC Sample",
+                "genre": st,
+                "sub_genre": sub,
+                "bpm": bpm,
+                "musical_key": mkey,
+                "rel_path": rel,
+                "size_mb": sz,
+                "disk": "MPCSMPL",
+            })
+            count_m += 1
+        conn.close()
+        print(f"  🎛️  MPCSMPL: Cargadas {count_m:,} muestras para vectorización.")
+
     # 1. Extraer muestras de SanDisk SSD
     sandisk_db = "/Volumes/SanDisk SSD/_INDEX_SERATO_DJ/serato_dj.db"
     if os.path.exists(sandisk_db):
         conn = sqlite3.connect(sandisk_db)
         cur = conn.cursor()
-        cur.execute("SELECT filename, artist, title, macro_genre, sub_genre, rel_path, size_mb FROM tracks LIMIT ?", (max_items // 2,))
+        cur.execute("SELECT filename, artist, title, macro_genre, sub_genre, rel_path, size_mb FROM tracks LIMIT ?", (max_items // 4,))
+        count_sd = 0
         for r in cur.fetchall():
             fn, art, tit, macro, sub, rel, sz = r
             desc = f"{tit or fn} by {art or 'Unknown'} genre {macro} style {sub}"
@@ -236,35 +343,46 @@ def build_faiss_index_from_dbs(max_items=5000):
                 "sub_genre": sub,
                 "rel_path": rel,
                 "size_mb": sz,
-                "disk": "SanDisk SSD"
+                "disk": "SanDisk SSD",
             })
+            count_sd += 1
         conn.close()
-        print(f"  📁 SanDisk SSD: Cargadas {len(metadata):,} pistas para vectorización.")
-        
-    # 2. Extraer muestras de Samsung PSSDT7 (Producción)
+        print(f"  📁 SanDisk SSD: Cargadas {count_sd:,} pistas para vectorización.")
+
+    # 2. Extraer muestras de Samsung PSSDT7 (Producción: sound_banks + ableton_projects)
     samsung_db = "/Volumes/samsung PSSDT7/_INDEX_PRODUCCION/produccion.db"
     if os.path.exists(samsung_db):
-        conn = sqlite3.connect(samsung_db)
-        cur = conn.cursor()
-        cur.execute("SELECT filename, category, sub_category, rel_path, size_mb FROM production_files LIMIT ?", (max_items // 2,))
-        count_s = 0
-        for r in cur.fetchall():
-            fn, cat, sub, rel, sz = r
-            desc = f"sample {fn} category {cat} type {sub}"
-            corpus_texts.append(desc)
-            metadata.append({
-                "filename": fn,
-                "title": fn,
-                "artist": "Sample Pack",
-                "genre": cat,
-                "sub_genre": sub,
-                "rel_path": rel,
-                "size_mb": sz,
-                "disk": "samsung PSSDT7"
-            })
-            count_s += 1
-        conn.close()
-        print(f"  📁 Samsung PSSDT7: Cargadas {count_s:,} muestras de producción.")
+        try:
+            conn = sqlite3.connect(samsung_db)
+            cur = conn.cursor()
+            tables = {r[0] for r in cur.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+            count_s = 0
+            if "sound_banks" in tables:
+                cur.execute("SELECT name, style_tag, source_folder, root_path, size_mb FROM sound_banks LIMIT ?", (max_items // 6,))
+                for r in cur.fetchall():
+                    fn, st, src_f, rp, sz = r
+                    corpus_texts.append(f"sound bank {fn} style {st or ''} {src_f or ''}")
+                    metadata.append({
+                        "filename": fn, "title": fn, "artist": src_f or "Sound Bank",
+                        "genre": st or "Production", "sub_genre": src_f or "",
+                        "rel_path": rp or "", "size_mb": sz, "disk": "samsung PSSDT7",
+                    })
+                    count_s += 1
+            if "ableton_projects" in tables:
+                cur.execute("SELECT name, category, project_dir, size_mb FROM ableton_projects LIMIT ?", (max_items // 8,))
+                for r in cur.fetchall():
+                    fn, cat, pdir, sz = r
+                    corpus_texts.append(f"ableton project {fn} category {cat or ''}")
+                    metadata.append({
+                        "filename": fn, "title": fn, "artist": "Ableton Project",
+                        "genre": cat or "Ableton", "sub_genre": "ALS",
+                        "rel_path": pdir or "", "size_mb": sz, "disk": "samsung PSSDT7",
+                    })
+                    count_s += 1
+            conn.close()
+            print(f"  📁 Samsung PSSDT7: Cargadas {count_s:,} entradas de producción.")
+        except sqlite3.Error as _se:
+            print(f"  ⚠️ Samsung PSSDT7 omitido: {_se}")
         
     if not corpus_texts:
         print(f"{RED}No se encontraron datos en los discos para indexar.{RESET}")

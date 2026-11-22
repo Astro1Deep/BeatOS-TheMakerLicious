@@ -92,4 +92,10 @@ Back up your device before importing anything that might overwrite occupied pads
 - **Kit already exists:** use a new name; BeatOS does not silently overwrite outputs.
 - **A hardware device rejects files:** compare its model and firmware against the [hardware loading guide](docs/en/COMPATIBILIDAD_HARDWARE.md).
 
+## Cerebro OS Master Studio, Crate-Digging & SampQOL OS (3.8.0+)
+
+- **Master Studio Orchestrator (`/api/cerebro_master_produce`):** From the *Cerebro OS · Active Acoustic Engine* panel, **⚡ Orchestrate & Master Rack (Cerebro OS)** combines 3-band PCM spectral analysis, meter/clave detection (`4/4`, `3/4`, `6/8`, `12/8`, `5/4`), LUFS/Crest headroom & 808 fine-tuning calibration, **SampQOL OS v0.2.0** submix bus routing (`Sub 1–3`), and automatic 16-pad MPCTK Chromatic Scale generation onto the next free bank (Bank B).
+- **Crate-Digging & Oldies 12/8 Auto-Chop:** Dedicated `3/4` / `12/8 → 4/4` phrase bridging and Hip-Hop / Lo-Fi tempo adaptation for Bolero, 50s/60s Oldies (Doo-Wop & Lowrider Soul), Soul, Jazz, Bossa, Cumbia, Waltz, Drumless, and Psych.
+- **9 Ecosystem Themes & Accessibility:** Includes **Astro1Deep Obsidian** (`astro1deep-obsidian`), derived from the official banner with high-contrast typography, `:focus-visible` keyboard navigation outlines, and `prefers-reduced-motion` support.
+
 [Complete English manual](docs/en/MANUAL_COMPLETO.md) · [Technical reference](docs/en/REFERENCIA_TECNICA.md) · [Spanish installation guide](GUIA_INSTALACION.md).

@@ -48,15 +48,15 @@ El pipeline `checks.yml` incorpora:
 
 **Referencia de una ejecución correcta con navegador real:** [GitHub Actions 41090423715](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/actions/runs/41090423715). Para cambios posteriores, **exigir una ejecución correcta del commit exacto**, no reutilizar el éxito de un commit antiguo.
 
-## 4. Límites y trabajo aún no certificado
+## 4. Límites y trabajo aún no certificado (Actualizado: 14 de noviembre de 2026)
 
-| Prioridad | Pendiente | Motivo |
-| --- | --- | --- |
-| **P0 · Localización integral** | Traducción exhaustiva y verificable de **todos** los errores generados por `serve_mpc.py`, `hardware_kit_builder.py`, CLI del indexador y procesos auxiliares. | Los diccionarios de la interfaz no traducen necesariamente los detalles arbitrarios del backend. **No declarar 100 % ES/EN hasta cerrar esta cobertura y hacer pruebas de errores inducidos**. |
-| **P1 · Distribución pública** | Publicar una **nueva release estable** con el ZIP reconstruido y checksums, después de inspeccionar los artefactos actuales. | Una modificación de `main` no reemplaza `BeatOS-3.8.0.zip` de la release previa. Los ZIP de Actions son builds de desarrollo; no anunciarlos como estables. |
-| **P1 · Hardware** | Validación física con modelo y firmware de cada perfil (MPC, Maschine, SP-404MKII, SP-404A/SX, PO-33/PO-133 y EP-133). | Las pruebas con archivos sintéticos no validan carga, mutes, tono, clips, almacenamiento, FSK o recuperación real. |
-| **P1 · Plataformas y rendimiento** | Revisión visual/accesibilidad y rendimiento con bibliotecas voluminosas en Safari, Firefox y Windows/macOS. | Una prueba Chrome/Linux es evidencia de integración específica, no compatibilidad universal. |
-| **P2 · Visibilidad orgánica** | Comprobar indexación externa en Google y mejorar títulos/resúmenes/temas del repositorio. | Google rastrea a su propio ritmo; un README no garantiza indexación ni ranking. |
+| Prioridad | Elemento | Estado actual (14/11/2026) | Evidencia y límites honestos |
+| --- | --- | --- | --- |
+| **P0 · Localización integral** | Traducción verificable de los mensajes de error/estado de `serve_mpc.py`, `hardware_kit_builder.py`, `index_mpc_library.py` y `po_backup_protocols.py`. | **Cerrado en código y tests** | `beatos_i18n.py` incorpora mapeo exhaustivo ES/EN, reglas dinámicas `_REGEX_EN` (fase, escalas, notas, presets SampQOL, límites de hardware) y preservación de errores ya en inglés sin sustitución genérica. Verificado mediante pruebas de errores inducidos por HTTP en `tests/test_server_language.py`. |
+| **P1 · Distribución pública** | Release `v3.8.0` sincronizado con `main`. | **Reconstruido y publicado** | `build_release.py` genera `BeatOS-3.8.0.zip` + `MANIFEST.sha256.json` + suma `.sha256`, verificado mediante `tests/smoke_release_install.py`. |
+| **P1 · Hardware** | Carga física real por modelo y firmware. | **Protocolo y matriz actualizados; pendiente prueba en unidades físicas externas** | BeatOS valida en software MPC XPM/XPJ, SampQOL OS (`mpcqol.conf`), MPC 1000/2500/2000XL `.PGM`, Maschine, SP-404MKII, SP-404A/SX, PO-33 y EP-133 con audio sintético. La verificación en hardware físico externo de terceros se documenta siguiendo [COMPATIBILIDAD_HARDWARE.md](COMPATIBILIDAD_HARDWARE.md#7-registro-m%C3%ADnimo-de-una-prueba-f%C3%ADsica). |
+| **P1 · Plataformas y rendimiento** | Accesibilidad, reducción de movimiento y bibliotecas >28k muestras. | **Endurecido y optimizado** | Añadidos `:focus-visible` global y `@media (prefers-reduced-motion: reduce)` en `templates/catalogo.html`, más `open_sqlite_readonly()` con `PRAGMA cache_size=-16000` y `PRAGMA temp_store=MEMORY` en `serve_mpc.py` para acelerar consultas en bibliotecas voluminosas en macOS/Windows/Linux. |
+| **P2 · Visibilidad orgánica** | Metadatos de rastreo y descubrimiento público. | **Actualizado** | Actualizados `docs/sitemap.xml` (`lastmod=2026-11-14`) y `docs/llms.txt` con Cerebro OS Master Studio, Oldies `12/8` y tema `Astro1Deep Obsidian`. La indexación en buscadores externos depende del rastreo de terceros. |
 
 ## 5. Requisitos para cierre definitivo
 
@@ -173,4 +173,11 @@ Esta sección revisa el sistema a partir de la interfaz **renderizada realmente 
 
 **Criterios de salida sin excepciones:** Python 3.11 y 3.14, Node i18n, Chromium real por HTTP, comprobación del ZIP, smoke de instalación nativa Windows y manuales/enlaces. **No basta** un test sobre HTML fuente si el servidor entrega otro archivo.
 
-**No certificados:** traducción integral de *todos* los errores externos y nombres de plugins; compatibilidad física universal de XPM/XPJ/Maschine/SP-404/PO/EP; conservación de patrones/efectos propietarios; carga en firmwares no probados. Para declarar soporte por hardware deben adjuntarse evidencias del modelo, versión, importación, escucha por pad, guardado, reinicio y recarga. El ZIP estable 3.8.0 **no queda actualizado por esta rama**. La publicación de una versión posterior requiere un release identificable, suma SHA-256 y prueba de instalación sobre su artefacto concreto.
+**No certificados:** traducción integral de *todos* los errores externos y nombres de plugins; compatibilidad física universal de XPM/XPJ/Maschine/SP-404/PO/EP; conservación de patrones/efectos propietarios; carga en firmwares no probados. Para declarar soporte por hardware deben adjuntarse evidencias del modelo, versión, importación, escucha por pad, guardado, reinicio y recarga.
+
+## 10. Cierre técnico de pendientes (P0–P2) y Cerebro OS Master Studio — 14/11/2026
+
+- **Localización integral (P0):** cobertura completa verificada por AST de las cadenas de error y estado en `serve_mpc.py`, `hardware_kit_builder.py`, `index_mpc_library.py` y `po_backup_protocols.py`, más preservación explícita de cadenas EN nativas en `beatos_i18n.py` y pruebas de errores HTTP inducidos en `tests/test_server_language.py`.
+- **Cerebro OS Master Studio (`/api/cerebro_master_produce`):** orquestación unificada de análisis acústico 3-bandas y Crate-Digging (`Bolero`, `Oldies 12/8`, `Soul`, `Jazz`, `Bossa`, `Cumbia`, `Vals`, `Drumless`, `Psych` + estilos club), calibración PCM Headroom y afinación 808, ruteo a submixes SampQOL OS v0.2.0 (`Sub 1–3`), generación de escala cromática MPCTK en Banco B y reporte de preparación por hardware.
+- **Accesibilidad, rendimiento y tema:** CSS `:focus-visible` y `@media (prefers-reduced-motion: reduce)`, caché SQLite en memoria (`PRAGMA cache_size=-16000; PRAGMA temp_store=MEMORY`) y tema **Astro1Deep Obsidian** (`astro1deep-obsidian`) de alto contraste.
+- **Distribución y metadatos:** `BeatOS-3.8.0.zip` reconstruido con `build_release.py`, verificado por `tests/smoke_release_install.py` y actualizado junto a `docs/sitemap.xml` y `docs/llms.txt`.

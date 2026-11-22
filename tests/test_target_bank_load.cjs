@@ -23,7 +23,8 @@ const ctx = vm.createContext({
   PAD_COLORS: {},
   currentTargetPad: 1,
   currentRackBank: 0,
-  getTargetHardwareProfile: () => ({ maxBanks: 8, labelEn: 'MPC', labelEs: 'MPC' }),
+  getTargetHardwareProfile: () => ({ maxBanks: 8, maxPads: 128, labelEn: 'MPC', labelEs: 'MPC' }),
+  getActiveBankLetter: idx => String.fromCharCode(65 + idx),
   formatPadTag: p => 'A0' + p,
   stopPadVoices() {},
   renderRackGrid() {},
@@ -40,11 +41,11 @@ const ctx = vm.createContext({
 
 // Load the rack bank switching logic
 const switchLogic = html.slice(html.indexOf('function saveCurrentRackBank()'), html.indexOf('const PAD_KEY_MAP ='));
-vm.runInContext(switchLogic + '\nthis.saveCurrentRackBank = saveCurrentRackBank; this.switchRackBank = switchRackBank;', ctx);
+vm.runInContext(switchLogic + '\nthis.saveCurrentRackBank = saveCurrentRackBank; this.switchRackBank = switchRackBank; this.swapOrMoveRackBanks = swapOrMoveRackBanks; this.setImportedBanksRef = b => {};', ctx);
 
 // Load the imported source mounting logic
 const mountLogic = html.slice(html.indexOf('let importedSource ='), html.indexOf('async function loadProjectToRack('));
-vm.runInContext(mountLogic + '\nthis.setImportedSource = setImportedSource; this.mountSourceBank = mountSourceBank;', ctx);
+vm.runInContext(mountLogic + '\nthis.setImportedSource = setImportedSource; this.mountSourceBank = mountSourceBank; this.clearImportedSource = () => { importedSource = null; importedBanks = {}; sourceBank = 0; };', ctx);
 
 // 1. Load Kit 1 into Bank A (targetBank: 0)
 const kitA = {
@@ -121,5 +122,40 @@ ctx.switchRackBank(5);
 assert.equal(ctx.RACK_PADS[0].filename, 'Chop1.wav');
 ctx.switchRackBank(7);
 assert.equal(ctx.RACK_PADS[5].filename, 'Break.wav');
+
+// 7. Test bulk drag-and-drop bank moving and swapping via swapOrMoveRackBanks
+ctx.clearImportedSource();
+for (let b = 0; b < 8; b++) ctx.RACK_BANKS[b].fill(null);
+ctx.RACK_PADS.fill(null);
+ctx.currentRackBank = 0;
+ctx.RACK_PADS[0] = { filename: 'Kick_01.wav', relPath: 'A/Kick_01.wav', soundType: 'KICK', muteGroup: 1 };
+ctx.RACK_PADS[1] = { filename: 'Snare_01.wav', relPath: 'A/Snare_01.wav', soundType: 'SNARE', muteGroup: 3 };
+ctx.saveCurrentRackBank();
+
+// Move Bank A -> empty Bank C (idx 2)
+assert.equal(ctx.swapOrMoveRackBanks(0, 2), true);
+assert.equal(ctx.currentRackBank, 2);
+assert.equal(ctx.RACK_BANKS[0].filter(Boolean).length, 0);
+assert.equal(ctx.RACK_BANKS[2][0].filename, 'Kick_01.wav');
+assert.equal(ctx.RACK_BANKS[2][1].filename, 'Snare_01.wav');
+assert.equal(ctx.RACK_PADS[0].filename, 'Kick_01.wav');
+
+// Populate Bank B (idx 1) and swap Bank C (idx 2) <-> Bank B (idx 1)
+ctx.switchRackBank(1);
+ctx.RACK_PADS[4] = { filename: 'Hat_05.wav', relPath: 'B/Hat_05.wav', soundType: 'HIHAT', muteGroup: 2 };
+ctx.saveCurrentRackBank();
+assert.equal(ctx.swapOrMoveRackBanks(2, 1), true);
+assert.equal(ctx.RACK_BANKS[1][0].filename, 'Kick_01.wav');
+assert.equal(ctx.RACK_BANKS[1][1].filename, 'Snare_01.wav');
+assert.equal(ctx.RACK_BANKS[2][4].filename, 'Hat_05.wav');
+const swappedPayload = ctx.getActivePadsPayload();
+assert.equal(swappedPayload.some(p => p.pad === 17 && p.rel_path === 'A/Kick_01.wav'), true);
+assert.equal(swappedPayload.some(p => p.pad === 37 && p.rel_path === 'B/Hat_05.wav'), true);
+
+// 8. Swap on multi-bank imported kit before visiting destination bank (Bank F idx 5 <-> Bank D idx 3)
+ctx.setImportedSource(multiBankKit, '#Dr#uMeR#TrES-AsSEs.xpm', 'program', 'all');
+assert.equal(ctx.swapOrMoveRackBanks(5, 3), true);
+assert.equal(ctx.RACK_BANKS[3][0].filename, 'Chop1.wav');
+assert.equal(ctx.RACK_BANKS[5].filter(Boolean).length, 0);
 
 console.log('Multi-bank assignment: target bank loading, independent bank preservation and multi-bank export payload OK');

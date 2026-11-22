@@ -3,7 +3,7 @@
 **Languages:** [English](COMPATIBILIDAD_HARDWARE.md) · [Español](../COMPATIBILIDAD_HARDWARE.md)  
 [English manual](MANUAL_COMPLETO.md) · [Technical reference](REFERENCIA_TECNICA.md) · [Project home](../../README.md)
 
-**Review basis: 30 October 2026.** Distinguish: **(1) the files BeatOS writes; (2) what the manufacturer documents; (3) actual loading, playback and saving on the exact model and firmware.** Synthetic and structural software tests cannot certify all devices. No physical compatibility-test register is included in this review.
+**Review basis: 14 November 2026.** Distinguish: **(1) the files BeatOS writes; (2) what the manufacturer documents; (3) actual loading, playback and saving on the exact model and firmware.** Synthetic and structural software tests verify file layout and DSP generation; physical testing on third-party hardware should follow the checklist in Section 7. [Audit log P0–P2](../AUDITORIA_INTEGRAL_BILINGUE_2026-10-30.md).
 
 ## 1. Akai MPC Sample vs MPC One, Live, X and other models
 
@@ -24,6 +24,9 @@ BeatOS exports **the current 16 pads**, not the source song, full track arrangem
 | MPC One / One+ | Start with XPM+WAV; verify official procedures/version when trying Sample-derived XPJ. | Not every older engine/firmware can load the same XPJ. |
 | MPC Live / Live II / Live III | Keep XPM/program and Sample-derived XPJ distinct; validate installed engine. | “Live” covers multiple hardware generations and firmware states. |
 | MPC X / X SE, Key 37 / Key 61 | Check program-loading documentation for installed MPC software. | Missing original effects/sequences cannot be recreated by the exported samples. |
+| MPC 1000 / 2500 / 500 (JJOS) | Dedicated `mpc1000` exporter writes binary `.PGM` (4 banks A–D · 64 pads) + 16-bit/44.1 kHz PCM WAVs. | Transferring custom JJOS sequences or proprietary FX chains. |
+| MPC 2000 / 2000XL | Dedicated `mpc2000xl` exporter writes classic binary `.PGM` + DOS 8.3 safe 16-bit/44.1 kHz WAVs. | Long filenames exceeding 8.3 limits on legacy FAT storage. |
+| SampQOL OS v0.2.0 | BeatOS supports 4-track Submix (`Sub 1–3`) `.xpj` routing and a safe `.bak-beatos` backup editor for `/mpcqol.conf`. | Assuming `/autorun/mpcqol.so` is installed without verifying the SD card. |
 | MPC XL / Force and other models | Consult the exact device/software workflow before assuming compatibility. | No dedicated automatic schema selection or certification. |
 
 **Loading check:** preserve source projects, place the entire exported folder (including samples and ProjectData) on an appropriate medium, use the manufacturer's open/load process, inspect every pad, then save and reopen from the destination software. Do **not** use a successful import dialog as proof of sound/mute/pitch correctness.

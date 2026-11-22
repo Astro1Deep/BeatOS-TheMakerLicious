@@ -16,7 +16,7 @@ from contextlib import contextmanager
 
 
 # Installer prompts use the selected locale; no extra input is requested from existing users.
-_INSTALLER_EN = {"🎛️  AKAI MPC SAMPLE DATABASE & FINDER TOOLKIT - INSTALADOR UNIVERSAL": "🎛️  BEATOS — THE MAKERLICIOUS — Universal installer","    BeatOS 3.8.0 • Astro1Deep • Compatible con Akai MPC Standalone": "    BeatOS 3.8.0 • Astro1Deep • Hardware sampler kit workstation","1. 🚀 Indexar tarjeta Micro SD o carpeta de samples para MPC": "1. 🚀 Index a sample folder or MicroSD card","2. 🌐 Iniciar Servidor Web Local y Abrir Catálogo (Audio y herramientas locales)": "2. 🌐 Start local web server and open catalog","3. 🧹 Limpiar archivos fantasma (._* y .DS_Store) en tarjeta SD": "3. 🧹 Remove auxiliary AppleDouble / .DS_Store files","4. 🗄️  Inicializar base de datos SQLite en blanco desde schema.sql": "4. 🗄️  Initialize SQLite schema from schema.sql","5. 📚 Abrir Wiki Oficial y Guías de Uso": "5. 📚 Open documentation","6. 🚪 Salir": "6. 🚪 Exit","Elige una opción (1-6): ": "Choose an option (1-6): ","Ingresa la ruta de la tarjeta SD / samples (Enter para carpeta actual): ": "Enter SD card / sample-library path (Enter for default): ","\n¿Deseas abrir el catálogo en tu navegador ahora? (s/n): ": "\nOpen the catalog in your browser now? (y/n): ","Ingresa la ruta de la tarjeta SD (Enter para carpeta de instalación): ": "Enter sample library path (Enter for default): ","Ingresa la ruta a limpiar (Enter para carpeta actual): ": "Enter directory to clean (Enter for default): ","Limpiando archivos en: {path}...": "Removing auxiliary files in: {path}...","✔ Se eliminaron {count} archivos innecesarios de metadatos.": "✔ Removed {count} auxiliary metadata files.","✔ Base de datos SQLite creada con éxito en: {db_path}": "✔ SQLite schema initialized at: {db_path}","Abriendo Wiki: {wiki_url}": "Opening documentation: {wiki_url}","Saliendo.": "Exiting."}
+_INSTALLER_EN = {"🎛️  AKAI MPC SAMPLE DATABASE & FINDER TOOLKIT - INSTALADOR UNIVERSAL": "🎛️  BEATOS — THE MAKERLICIOUS — Universal installer","    BeatOS 3.8.0 • Astro1Deep • Compatible con Akai MPC Standalone": "    BeatOS 3.8.0 • Astro1Deep • Hardware sampler kit workstation","0. 🛠️  Diagnóstico e Instalación de Soporte, Códecs y Modos (FFmpeg + NumPy + MIR)": "0. 🛠️  Check & Install Support, Codecs and Modes (FFmpeg + NumPy + MIR)","1. 🚀 Indexar tarjeta Micro SD o carpeta de samples para MPC": "1. 🚀 Index a sample folder or MicroSD card","2. 🌐 Iniciar Servidor Web Local y Abrir Catálogo (Audio y herramientas locales)": "2. 🌐 Start local web server and open catalog","3. 🧹 Limpiar archivos fantasma (._* y .DS_Store) en tarjeta SD": "3. 🧹 Remove auxiliary AppleDouble / .DS_Store files","4. 🗄️  Inicializar base de datos SQLite en blanco desde schema.sql": "4. 🗄️  Initialize SQLite schema from schema.sql","5. 📚 Abrir Wiki Oficial y Guías de Uso": "5. 📚 Open documentation","6. 🚪 Salir": "6. 🚪 Exit","Elige una opción (1-6): ": "Choose an option (1-6): ","Ingresa la ruta de la tarjeta SD / samples (Enter para carpeta actual): ": "Enter SD card / sample-library path (Enter for default): ","\n¿Deseas abrir el catálogo en tu navegador ahora? (s/n): ": "\nOpen the catalog in your browser now? (y/n): ","Ingresa la ruta de la tarjeta SD (Enter para carpeta de instalación): ": "Enter sample library path (Enter for default): ","Ingresa la ruta a limpiar (Enter para carpeta actual): ": "Enter directory to clean (Enter for default): ","Limpiando archivos en: {path}...": "Removing auxiliary files in: {path}...","✔ Se eliminaron {count} archivos innecesarios de metadatos.": "✔ Removed {count} auxiliary metadata files.","✔ Base de datos SQLite creada con éxito en: {db_path}": "✔ SQLite schema initialized at: {db_path}","Abriendo Wiki: {wiki_url}": "Opening documentation: {wiki_url}","Saliendo.": "Exiting.","Elige perfil [1=Completo / 2=Esencial / 3=Solo Códecs / 4=Exportar Instaladores / Enter=Volver]: ": "Select action [1=Install Full / 2=Essential / 3=Codecs / 4=Export Target Installers / Enter=Back]: "}
 def get_language(argv=None, environ=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     environ = os.environ if environ is None else environ
@@ -45,19 +45,74 @@ def language_environment(language):
 
 def open_url_or_file(target):
     if sys.platform == "darwin":
-        subprocess.run(["open", target])
+        subprocess.run(["open", target], timeout=15, check=False)
     elif sys.platform == "win32":
         os.startfile(target)
     else:
-        subprocess.run(["xdg-open", target])
+        subprocess.run(["xdg-open", target], timeout=15, check=False)
+
+def _handle_support_cli(script_dir: str, lang: str) -> int | None:
+    args = list(sys.argv[1:])
+    if "--check-capabilities" in args:
+        import beatos_runtime
+        caps = beatos_runtime.inspect_capabilities(script_dir)
+        print(beatos_runtime.format_capabilities_report(caps, lang=lang))
+        return 0
+    if "--install-support" in args:
+        import beatos_runtime
+        idx = args.index("--install-support")
+        prof = args[idx + 1] if idx + 1 < len(args) and not args[idx + 1].startswith("-") else "full"
+        result = beatos_runtime.install_support_profile(
+            prof, code_dir=script_dir, log_cb=lambda msg: print(msg, flush=True)
+        )
+        print(beatos_runtime.format_capabilities_report(result["capabilities"], lang=lang))
+        return 0 if result.get("success") else 1
+    if "--generate-installers" in args:
+        import beatos_runtime
+        idx = args.index("--generate-installers")
+        dest = (
+            args[idx + 1]
+            if idx + 1 < len(args) and not args[idx + 1].startswith("-")
+            else os.path.join(script_dir, "instaladores")
+        )
+        pack = beatos_runtime.export_bootstrap_pack(dest, profile="full")
+        print(f"✔ Bootstrap kit ({pack['profile']}) -> {pack['folder']}")
+        for item in pack["files"]:
+            print(f"  - {item['filename']} ({item['size_bytes']} bytes)")
+        return 0
+    return None
+
+
+def _run_interactive_support_menu(script_dir: str, lang: str) -> None:
+    import beatos_runtime
+    caps = beatos_runtime.inspect_capabilities(script_dir)
+    print(beatos_runtime.format_capabilities_report(caps, lang=lang))
+    sub = input(locale_text(
+        "Elige perfil [1=Completo / 2=Esencial / 3=Solo Códecs / 4=Exportar Instaladores / Enter=Volver]: ",
+        lang,
+    )).strip()
+    if sub in ("1", "2", "3"):
+        prof_map = {"1": "full", "2": "essential", "3": "codecs"}
+        beatos_runtime.install_support_profile(
+            prof_map[sub], code_dir=script_dir, log_cb=lambda msg: print(msg, flush=True)
+        )
+    elif sub == "4":
+        dest = os.path.join(script_dir, "instaladores")
+        pack = beatos_runtime.export_bootstrap_pack(dest, profile="full")
+        print(f"✔ {pack['folder']}")
+
 
 def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    
+    cli_exit = _handle_support_cli(script_dir, get_language())
+    if cli_exit is not None:
+        raise SystemExit(cli_exit)
+
     print("=" * 70)
     print(locale_text("🎛️  AKAI MPC SAMPLE DATABASE & FINDER TOOLKIT - INSTALADOR UNIVERSAL"))
     print(locale_text("    BeatOS 3.8.0 • Astro1Deep • Compatible con Akai MPC Standalone"))
     print("=" * 70)
+    print(locale_text("0. 🛠️  Diagnóstico e Instalación de Soporte, Códecs y Modos (FFmpeg + NumPy + MIR)"))
     print(locale_text("1. 🚀 Indexar tarjeta Micro SD o carpeta de samples para MPC"))
     print(locale_text("2. 🌐 Iniciar Servidor Web Local y Abrir Catálogo (Audio y herramientas locales)"))
     print(locale_text("3. 🧹 Limpiar archivos fantasma (._* y .DS_Store) en tarjeta SD"))
@@ -68,7 +123,10 @@ def main():
     
     choice = input(locale_text("Elige una opción (1-6): ")).strip()
     
-    if choice == "1":
+    if choice == "0":
+        _run_interactive_support_menu(script_dir, get_language())
+
+    elif choice == "1":
         path = input(locale_text("Ingresa la ruta de la tarjeta SD / samples (Enter para carpeta actual): ")).strip()
         if not path:
             path = str(default_library_root(script_dir))
@@ -114,7 +172,7 @@ def main():
                     try:
                         os.remove(os.path.join(root, f))
                         count += 1
-                    except:
+                    except OSError:
                         pass
         print(locale_text("✔ Se eliminaron {count} archivos innecesarios de metadatos.").format(count=count))
         

@@ -12,13 +12,13 @@ for(const theme of context.themes){
  assert.deepEqual(rack,[{sample:'original.wav',muteGroup:0,tune:3}]);
  const data=fs.readFileSync(path.join(root,artist.src.replace(/^BeatOS\//,'')));assert.equal(data.subarray(1,4).toString(),'PNG');
 }
-assert.equal(context.themes.length,8);assert.equal(seen.size,5);
+assert.equal(context.themes.length,9);assert.equal(seen.size,5);
 context.apply('invalid-theme',false);assert.equal(artist.parentElement.dataset.art,'eye-mirror-compact');
 delete nodes.creatorArtistMark;assert.doesNotThrow(()=>context.apply('makerlicious-bone',false));
 assert.equal((html.match(/id="creatorArtistMark"/g)||[]).length,1);
 assert.match(html,/<h1>BeatOS<\/h1>\s*<p class="brand-edition">The MakerLicious<\/p>\s*<p class="brand-description">\[universal beatmaker station\]<\/p>/);
 assert.match(html,/alt="Cohete del sello digital"/);assert.ok(fs.existsSync(path.join(root,'docs/assets/branding/creator/label-rocket.png')));
-console.log('Creator identity: eight themes, five original eye variants, stable banner/backdrop/rack, safe theme fallback and legacy markup OK');
+console.log('Creator identity: nine themes, five original eye variants, stable banner/backdrop/rack, safe theme fallback and legacy markup OK');
 
 const head=html.slice(html.indexOf('<header class="beatos-brand"'),html.indexOf('</header>'));
 assert.ok(!head.includes('creator-signature'));assert.ok(!html.includes('creator-caption'));

@@ -51,7 +51,7 @@ const sameOriginCtx = vm.createContext({
   location: { protocol: 'http:', origin: 'http://127.0.0.1:8888', pathname: '/BeatOS/data/catalogo.html' },
   showToast: m => errors.push(m)
 });
-vm.runInContext(source + '\nthis.play = playPadVoice; this.stop = stopPadVoices;', sameOriginCtx);
+vm.runInContext(source + '\nthis.play = playPadVoice; this.stop = stopPadVoices; this.voices = padVoices; this.isRackPolyphonicPreviewEnabled = isRackPolyphonicPreviewEnabled; this.setRackPreviewPolyphonic = setRackPreviewPolyphonic;', sameOriginCtx);
 const prevLen = made.length;
 sameOriginCtx.play(1, {
   relPath: 'MPC-Sample/Projects/#Dr#uMeR#TrES-AsSEs_[ProjectData]/PAD010_BoomBap-Snare-MP Anatomy Snr1002.wav',
@@ -71,3 +71,26 @@ assert.equal(lastAudio.playbackRate, 1);
 assert.equal(lastAudio.volume, 0.580764);
 sameOriginCtx.stop();
 console.log('Same-origin HTTP pad audio: no crossOrigin mutation, encoded # path, safe playbackRate/volume OK');
+
+// Regression: rack quick-preview defaults to Mute Choke (cuts previous pads across groups/mute=0),
+// while polyphonic mode preserves simultaneous playback according to Mute Groups.
+assert.equal(sameOriginCtx.isRackPolyphonicPreviewEnabled(), false, 'default rack preview must be Mute Choke');
+const monoLenBefore = made.length;
+sameOriginCtx.play(1, pad('KICK', 0), 0, { forceMonoPreview: true });
+sameOriginCtx.play(2, pad('HIHAT', 0), 0, { forceMonoPreview: true });
+assert.equal(made[monoLenBefore].paused, true, 'forceMonoPreview chokes pad 1 even when muteGroup is 0');
+assert.equal(made[monoLenBefore + 1].paused, false);
+assert.equal(sameOriginCtx.voices.size, 1);
+
+sameOriginCtx.setRackPreviewPolyphonic(true, true);
+assert.equal(sameOriginCtx.isRackPolyphonicPreviewEnabled(), true);
+const polyLenBefore = made.length;
+sameOriginCtx.play(1, pad('KICK', 0), 0, { forceMonoPreview: false });
+sameOriginCtx.play(2, pad('HIHAT', 0), 0, { forceMonoPreview: false });
+assert.equal(made[polyLenBefore].paused, false, 'polyphonic preview allows simultaneous voices across different groups');
+assert.equal(made[polyLenBefore + 1].paused, false);
+assert.equal(sameOriginCtx.voices.size, 2);
+sameOriginCtx.setRackPreviewPolyphonic(false, true);
+assert.equal(sameOriginCtx.isRackPolyphonicPreviewEnabled(), false);
+sameOriginCtx.stop();
+console.log('Rack preview modes: default Mute Choke and General Polyphonic toggle OK');

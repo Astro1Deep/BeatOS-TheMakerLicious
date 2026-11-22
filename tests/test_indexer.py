@@ -290,3 +290,105 @@ class IndexerTests(unittest.TestCase):
             self.assertTrue((root / 'mpcqol.conf.bak-beatos').is_file())
             self.assertEqual(upd['raw_values']['zerosnap'], '1')
             self.assertEqual(upd['raw_values']['killeq'], '1')
+
+    def test_xml_xpj_unicode_json_path_and_riff_xpm_guard(self):
+        import gzip
+        from index_mpc_library import _is_real_xpm_file, _parse_xpj_project_file
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            dd = root / 'SynthProj_[ProjectData]'
+            dd.mkdir()
+            (dd / 'Synth C#\u00a0Hayden.wav').write_bytes(b'RIFF\x24\x00\x00\x00WAVEfmt ')
+            gz_xpj = root / 'SynthProj.xpj'
+            with gzip.open(gz_xpj, 'wt', encoding='utf-8') as gz:
+                gz.write('ACVS\n1.3.0.12\nSerialisableProjectData\njson\nLinux\n')
+                gz.write('{"data":{"masterTempo":95.0,"key":"C Major","samples":[{"path":"Synth C#\\u00a0Hayden.wav"}]}}')
+            tempo, key, refs, missing, err, wavs = _parse_xpj_project_file(gz_xpj, root, dd)
+            self.assertFalse(err)
+            self.assertEqual(missing, 0)
+            self.assertEqual(tempo, 95.0)
+            self.assertEqual(len(wavs), 1)
+
+            xml_dd = root / 'DesktopBeat_[ProjectData]'
+            xml_dd.mkdir()
+            (xml_dd / 'Kick.wav').write_bytes(b'RIFF\x24\x00\x00\x00WAVEfmt ')
+            xml_xpj = root / 'DesktopBeat.xpj'
+            xml_xpj.write_text(
+                '<?xml version="1.0" encoding="UTF-8"?>\n'
+                '<Project><BPM>132.5</BPM><FileList>'
+                '<File>.\\DesktopBeat_[ProjectData]\\Kick.wav</File>'
+                '</FileList></Project>',
+                encoding='utf-8',
+            )
+            tempo2, _, refs2, missing2, err2, wavs2 = _parse_xpj_project_file(xml_xpj, root, xml_dd)
+            self.assertFalse(err2)
+            self.assertEqual(tempo2, 132.5)
+            self.assertEqual(missing2, 0)
+            self.assertEqual(len(refs2), 1)
+            self.assertEqual(len(wavs2), 1)
+
+            fake_xpm = root / 'FakeAudio.xpm'
+            fake_xpm.write_bytes(b'RIFF\x10\x00\x00\x00WAVEfmt ')
+            real_xpm = root / 'RealKit.xpm'
+            real_xpm.write_text('<MPCVObject><Program type="Drum"/></MPCVObject>', encoding='utf-8')
+            self.assertFalse(_is_real_xpm_file(fake_xpm))
+            self.assertTrue(_is_real_xpm_file(real_xpm))
+
+    def test_reindex_leaves_delete_journal_mode_and_caches_energy(self):
+        script = Path(__file__).resolve().parents[1] / 'index_mpc_library.py'
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with wave.open(str(root / 'Kick_Energy_Test.wav'), 'wb') as audio:
+                audio.setparams((1, 2, 44100, 0, 'NONE', 'not compressed'))
+                audio.writeframes(b'\x00\x20' * 4410)
+            for _ in range(2):
+                subprocess.run([sys.executable, '-B', str(script), '--path', str(root)], check=True, capture_output=True, timeout=20)
+            data_dir = root / 'BeatOS/data'
+            self.assertFalse((data_dir / 'mpc_sample.db-wal').exists())
+            self.assertFalse((data_dir / 'mpc_sample.db-shm').exists())
+            with sqlite3.connect(data_dir / 'mpc_sample.db') as db:
+                mode = db.execute('PRAGMA journal_mode;').fetchone()[0].lower()
+                self.assertEqual(mode, 'delete')
+            energy_cache = json.loads((data_dir / 'energy_meta_cache.json').read_text(encoding='utf-8'))
+            self.assertEqual(len(energy_cache), 1)
+            self.assertIn(next(iter(energy_cache.values())), {'CHILL', 'GROOVE', 'BANGER', 'SILENT', 'UNMEASURED'})
+
+    def test_xpj_only_expansion_reports_nonzero_programs_and_samples(self):
+        import gzip
+        import xml.etree.ElementTree as ET
+        script = Path(__file__).resolve().parents[1] / 'index_mpc_library.py'
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            exp_dir = root / 'Expansions' / 'Demos_Pack'
+            demo_dir = exp_dir / 'Demos'
+            pdata_dir = demo_dir / 'Demo_Track_[ProjectData]'
+            pdata_dir.mkdir(parents=True)
+
+            xroot = ET.Element('expansion', version='2.0.0.1')
+            ET.SubElement(xroot, 'title').text = 'Demos Pack'
+            ET.SubElement(xroot, 'manufacturer').text = 'Akai'
+            ET.SubElement(xroot, 'type').text = 'drum'
+            ET.ElementTree(xroot).write(str(exp_dir / 'Expansion.xml'), encoding='utf-8', xml_declaration=True)
+
+            self._write_test_wav(pdata_dir / 'Kick.wav', 65.0)
+            self._write_test_wav(pdata_dir / 'Snare.wav', 180.0)
+            with gzip.open(str(demo_dir / 'Demo_Track.xpj'), 'wt', encoding='utf-8') as gz:
+                gz.write('ACVS\n1.3.0.12\nSerialisableProjectData\njson\nLinux\n')
+                gz.write(json.dumps({
+                    'data': {
+                        'masterTempo': 124.0,
+                        'key': 'C Minor',
+                        'samples': [{'path': 'Kick.wav'}, {'path': 'Snare.wav'}],
+                    }
+                }))
+
+            subprocess.run([sys.executable, '-B', str(script), '--path', str(root)],
+                           check=True, capture_output=True, timeout=20)
+            with sqlite3.connect(root / 'BeatOS/data/mpc_sample.db') as db:
+                row = db.execute(
+                    'SELECT programs_count, samples_count FROM expansions WHERE title = ?',
+                    ('Demos Pack',),
+                ).fetchone()
+            self.assertIsNotNone(row)
+            self.assertEqual(row[0], 1)
+            self.assertEqual(row[1], 2)

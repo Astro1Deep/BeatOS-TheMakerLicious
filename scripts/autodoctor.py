@@ -25,9 +25,19 @@ from pathlib import Path
 # Configuración de Rutas y Logging
 LOG_PATH = os.path.expanduser("~/.gemini/antigravity/scratch/autodoctor.log")
 PLIST_PATH = os.path.expanduser("~/Library/LaunchAgents/com.cerebro.autodoctor.plist")
-SYNC_DASHBOARD_SCRIPT = "/Users/ivan/.gemini/antigravity/scratch/sync_master_dashboard.py"
-SERVE_MPC_SCRIPT = "/Users/ivan/Documents/mpc-sample-database/serve_mpc.py"
-OPEN_WEBUI_SCRIPT = "/Users/ivan/.mlx-stack/start-webui.sh"
+BASE_REPO_DIR = Path(__file__).resolve().parent.parent
+SYNC_DASHBOARD_SCRIPT = os.environ.get(
+    "BEATOS_SYNC_DASHBOARD_SCRIPT",
+    str(Path.home() / ".gemini/antigravity/scratch/sync_master_dashboard.py"),
+)
+SERVE_MPC_SCRIPT = os.environ.get(
+    "BEATOS_SERVE_MPC_SCRIPT",
+    str(BASE_REPO_DIR / "serve_mpc.py"),
+)
+OPEN_WEBUI_SCRIPT = os.environ.get(
+    "BEATOS_OPEN_WEBUI_SCRIPT",
+    str(Path.home() / ".mlx-stack/start-webui.sh"),
+)
 
 logging.basicConfig(
     filename=LOG_PATH,
@@ -47,13 +57,32 @@ DIM = "\033[2m"
 RESET = "\033[0m"
 
 # Definición de Servicios Clave
+_MLX_PY = Path.home() / ".mlx-stack/venv/bin/python"
+_MLX_CONTROL = Path.home() / ".mlx-stack/mlx-control"
+_MLX_PROXY = Path.home() / ".mlx-stack/mlx_proxy.py"
+PYTHON_EXEC = str(_MLX_PY) if _MLX_PY.is_file() else sys.executable
+
 SERVICES = [
     {
         "name": "BeatOS / MPC Server",
         "port": 8888,
-        "url": "http://127.0.0.1:8888/",
-        "start_cmd": ["python3", SERVE_MPC_SCRIPT, "--no-browser"],
+        "url": "http://127.0.0.1:8888/api/status",
+        "start_cmd": [PYTHON_EXEC, SERVE_MPC_SCRIPT, "--no-browser"],
         "critical": True
+    },
+    {
+        "name": "Cerebro MLX Server",
+        "port": 8080,
+        "url": "http://127.0.0.1:8080/v1/models",
+        "start_cmd": ["bash", str(_MLX_CONTROL), "start"] if _MLX_CONTROL.is_file() else None,
+        "critical": False
+    },
+    {
+        "name": "Cerebro Gateway (Circuits)",
+        "port": 8081,
+        "url": "http://127.0.0.1:8081/circuits",
+        "start_cmd": [PYTHON_EXEC, str(_MLX_PROXY)] if _MLX_PROXY.is_file() else None,
+        "critical": False
     },
     {
         "name": "Open WebUI (Local LLM)",
@@ -77,8 +106,8 @@ DISKS = [
         "name": "Akai MPC Sample (MicroSD)",
         "mount": "/Volumes/MPCSMPL",
         "needs_dot_clean": True,
-        "reindex_script": None,
-        "db_path": None
+        "reindex_script": "/Volumes/MPCSMPL/BeatOS/index_mpc_library.py",
+        "db_path": "/Volumes/MPCSMPL/BeatOS/data/mpc_sample.db"
     },
     {
         "name": "SanDisk SSD (Serato DJ & VJ Loops)",
@@ -132,11 +161,11 @@ def check_http_service(url, timeout=1.5):
 def kill_process_on_port(port):
     """Mata cualquier proceso zombie ocupando un puerto específico para evitar conflictos."""
     try:
-        res = subprocess.run(["lsof", "-ti", f":{port}"], capture_output=True, text=True)
+        res = subprocess.run(["lsof", "-b", "-ti", f":{port}"], capture_output=True, text=True, timeout=10)
         pids = [p.strip() for p in res.stdout.strip().split("\n") if p.strip()]
         for pid in pids:
             log_event(f"  {YELLOW}Liberando socket en puerto {port} (PID: {pid})...{RESET}")
-            subprocess.run(["kill", "-9", pid], capture_output=True)
+            subprocess.run(["kill", "-9", pid], capture_output=True, timeout=10)
         return len(pids) > 0
     except Exception as e:
         log_event(f"  {RED}Error liberando puerto {port}: {e}{RESET}", "error")
@@ -213,31 +242,38 @@ def check_and_heal_disks(heal=False):
         if d.get("needs_dot_clean"):
             if heal:
                 log_event(f"    🧹 Saneando forks de recursos Mac (dot_clean -m)...")
-                subprocess.run(["dot_clean", "-m", mount], capture_output=True)
+                subprocess.run(["dot_clean", "-m", mount], capture_output=True, timeout=120)
                 log_event(f"    ✨ {GREEN}Forks ._* y .DS_Store saneados.{RESET}")
                 
-        # 2. Verificación de integridad SQLite
+        # 2. Verificación de integridad SQLite + salud WAV/FTS5
         db_path = d.get("db_path")
         if db_path and os.path.exists(db_path):
             try:
                 con = sqlite3.connect(db_path)
                 cur = con.cursor()
                 res = cur.execute("PRAGMA integrity_check;").fetchone()[0]
-                con.close()
                 if res == "ok":
-                    log_event(f"    🗄  SQLite ({os.path.basename(db_path)}): {GREEN}Integridad 100% OK{RESET}")
+                    extra = ""
+                    cols = {row[1] for row in cur.execute("PRAGMA table_info(samples)").fetchall()}
+                    if "wav_health" in cols:
+                        bad_wavs = cur.execute("SELECT COUNT(*) FROM samples WHERE wav_health NOT IN ('OK', 'NON_WAV')").fetchone()[0]
+                        tot_s = cur.execute("SELECT COUNT(*) FROM samples").fetchone()[0]
+                        extra = f" | {tot_s:,} samples" + (f" ({GREEN}0 WAVs dañados{RESET})" if bad_wavs == 0 else f" ({YELLOW}{bad_wavs} WAVs con avisos{RESET})")
+                    log_event(f"    🗄  SQLite ({os.path.basename(db_path)}): {GREEN}Integridad 100% OK{RESET}{extra}")
                 else:
                     log_event(f"    🚨 {RED}SQLite corrupto ({os.path.basename(db_path)}): {res}{RESET}", "error")
+                con.close()
             except Exception as e:
                 log_event(f"    🚨 {RED}Error abriendo base de datos {db_path}: {e}{RESET}", "error")
                 
         # 3. Verificación de presencia del Master Dashboard
         dash_file = os.path.join(mount, "MASTER_ECOSISTEMA_DISCOS.html")
-        if not os.path.exists(dash_file):
+        dash_beatos = os.path.join(mount, "BeatOS", "docs", "MASTER_ECOSISTEMA_DISCOS.html")
+        if not os.path.exists(dash_file) and not os.path.exists(dash_beatos):
             log_event(f"    ⚠️  {YELLOW}Falta Master Dashboard en {mount}{RESET}", "warning")
             if heal and os.path.exists(SYNC_DASHBOARD_SCRIPT):
                 log_event(f"    🔧 Replicando Master Dashboard con sync_master_dashboard.py...")
-                subprocess.run(["python3", SYNC_DASHBOARD_SCRIPT], capture_output=True)
+                subprocess.run(["python3", SYNC_DASHBOARD_SCRIPT], capture_output=True, timeout=60)
         else:
             log_event(f"    📑 Master Dashboard: {GREEN}Presente y sincronizado{RESET}")
             
@@ -307,15 +343,15 @@ def install_launchagent():
     with open(PLIST_PATH, "w", encoding="utf-8") as f:
         f.write(plist_content)
         
-    subprocess.run(["launchctl", "unload", PLIST_PATH], capture_output=True)
-    subprocess.run(["launchctl", "load", PLIST_PATH], capture_output=True)
+    subprocess.run(["launchctl", "unload", PLIST_PATH], capture_output=True, timeout=15)
+    subprocess.run(["launchctl", "load", PLIST_PATH], capture_output=True, timeout=15)
     log_event(f"✅ {GREEN}Servicio LaunchAgent instalado con éxito en:{RESET} {PLIST_PATH}")
     log_event(f"   AutoDoctor correrá automáticamente en segundo plano cada 120 segundos.")
 
 
 def uninstall_launchagent():
     if os.path.exists(PLIST_PATH):
-        subprocess.run(["launchctl", "unload", PLIST_PATH], capture_output=True)
+        subprocess.run(["launchctl", "unload", PLIST_PATH], capture_output=True, timeout=15)
         os.remove(PLIST_PATH)
         log_event(f"✅ {GREEN}Servicio LaunchAgent desinstalado con éxito.{RESET}")
     else:

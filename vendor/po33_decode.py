@@ -74,44 +74,108 @@ def read_audio(path):
     return audio, fs, width
 
 
-def demodulate(path, symbol_rate=None):
-    audio, fs, width = read_audio(path)
-    starts = np.flatnonzero(abs(audio[:fs*6, 0]) > 1000)
-    if not len(starts):
-        raise ValueError('No sufficiently strong signal in the first six seconds')
-    start = int(starts[0])
-    if symbol_rate is not None and not 7500 <= symbol_rate <= 8100:
-        raise ValueError('Symbol rate must be between 7500 and 8100 Hz')
-    period = fs/(symbol_rate or 7812.5)
-    if symbol_rate is None:
-        lag = round(4096*period)
-        span = int(np.ceil(3*fs/44100))
-        lags = np.arange(lag-span, lag+span+1)
-        reference = audio[start+2000:start+14000, 0]
-        scores = []
-        for lag in lags:
-            shifted = audio[start+2000+lag:start+14000+lag, 0]
-            if len(shifted) != len(reference) or not len(reference):
-                raise ValueError('Transfer is too short for clock calibration')
-            scores.append(np.dot(reference, shifted) / max(1e-9, np.linalg.norm(shifted)))
-        i = int(np.argmax(scores))
-        denominator = 2*(scores[i-1]-2*scores[i]+scores[i+1]) if 0 < i < len(lags)-1 else 0
-        fraction = (scores[i-1]-scores[i+1])/denominator if denominator else 0
-        period = (lags[i]+fraction)/4096
-    initial_rate = fs/period
-    times = start + np.arange(8300)*period
+def _find_preamble(left_ch, right_ch, start, period):
+    times = start + np.arange(8300) * period
+    if len(times) == 0 or times[-1] + period * 0.5 + 10 >= len(left_ch):
+        return None
     best = None
     # The exact ramp/sync disambiguates the several possible phase minima.
     for offset in np.linspace(-period, period, 81):
-        candidates = [quadrants(audio[:, ch], times+offset, period) for ch in (0, 1)]
+        candidates = [quadrants(left_ch, times + offset, period),
+                      quadrants(right_ch, times + offset, period)]
         if unpack_phases(candidates[0][0], candidates[1][0])[:4096] != PREAMBLE:
             continue
         cost = sum(c[1] for c in candidates)
         if best is None or cost < best[0]:
             best = cost, offset
+    return best
+
+
+def demodulate(path, symbol_rate=None):
+    audio, fs, width = read_audio(path)
+    core = audio[1000:-1000]
+    if not len(core):
+        raise ValueError('Transfer is too short for timing recovery')
+    peak_l = float(np.max(np.abs(core[:, 0])))
+    peak_r = float(np.max(np.abs(core[:, 1])))
+    peak = max(peak_l, peak_r)
+    if peak < 100.0:
+        raise ValueError('SILENT_RECORDING: No audible audio signal detected anywhere in the WAV (peak near 0)')
+    max_diff = float(np.max(np.abs(core[:, 0] - core[:, 1])))
+    if max_diff / max(1.0, peak) < 0.02:
+        raise ValueError('MONO_DUPLICATED: Left and right channels are identical; PO-33 backups require true independent stereo')
+
+    energy = np.maximum(np.abs(audio[:, 0]), np.abs(audio[:, 1]))
+    thresh = 1000.0 if peak >= 1200.0 else max(300.0, peak * 0.25)
+    starts = np.flatnonzero(energy > thresh)
+    if not len(starts):
+        raise ValueError('SILENT_RECORDING: No sufficiently strong signal detected in audio')
+    first_start = int(starts[0])
+    signal_end_idx = int(starts[-1])
+
+    candidate_starts = [first_start]
+    win = max(64, int(round(0.25 * fs)))
+    if len(energy) > win + 2000:
+        csum = np.r_[0.0, np.cumsum(energy)]
+        avg = (csum[win:] - csum[:-win]) / win
+        sustained = np.flatnonzero(avg > max(200.0, thresh * 0.35))
+        if len(sustained):
+            s_pos = int(sustained[0])
+            after = np.flatnonzero(energy[s_pos:] > thresh)
+            cand_s = s_pos + int(after[0]) if len(after) else s_pos
+            if abs(cand_s - first_start) > int(0.05 * fs):
+                candidate_starts.append(cand_s)
+
+    if symbol_rate is not None and not 7500 <= symbol_rate <= 8100:
+        raise ValueError('Symbol rate must be between 7500 and 8100 Hz')
+
+    best = None
+    start = first_start
+    period = fs / (symbol_rate or 7812.5)
+    initial_rate = fs / period
+    swapped_detected = False
+
+    for cand_start in candidate_starts:
+        cand_period = fs / (symbol_rate or 7812.5)
+        if symbol_rate is None:
+            lag = round(4096 * cand_period)
+            span = int(np.ceil(3 * fs / 44100))
+            lags = np.arange(lag - span, lag + span + 1)
+            reference = audio[cand_start + 2000:cand_start + 14000, 0]
+            if len(reference) != 12000:
+                continue
+            scores = []
+            too_short = False
+            for lag_val in lags:
+                shifted = audio[cand_start + 2000 + lag_val:cand_start + 14000 + lag_val, 0]
+                if len(shifted) != len(reference):
+                    too_short = True
+                    break
+                scores.append(np.dot(reference, shifted) / max(1e-9, np.linalg.norm(shifted)))
+            if too_short or not scores:
+                continue
+            i = int(np.argmax(scores))
+            denominator = 2 * (scores[i - 1] - 2 * scores[i] + scores[i + 1]) if 0 < i < len(lags) - 1 else 0
+            fraction = (scores[i - 1] - scores[i + 1]) / denominator if denominator else 0
+            cand_period = (lags[i] + fraction) / 4096
+        found = _find_preamble(audio[:, 0], audio[:, 1], cand_start, cand_period)
+        if found is not None:
+            best = found
+            start = cand_start
+            period = cand_period
+            initial_rate = fs / period
+            break
+        if _find_preamble(audio[:, 1], audio[:, 0], cand_start, cand_period) is not None:
+            swapped_detected = True
+
     if best is None:
+        if swapped_detected:
+            raise ValueError('CHANNELS_SWAPPED: Left and right channels appear swapped; swap stereo inputs or check TRS cable')
+        if len(audio) - first_start < 18000:
+            raise ValueError('Transfer is too short for clock calibration')
         raise ValueError('Preamble lock failed; check stereo channels and --symbol-rate')
-    position = start+best[1]
+
+    position = start + best[1]
     phases = [[], []]
     # Track both phase and clock rate; phase-only correction fails on Escalate.
     block = 512
@@ -132,7 +196,17 @@ def demodulate(path, symbol_rate=None):
     if not phases[0]:
         raise ValueError('No symbols recovered')
     data = unpack_phases(*(np.concatenate(ch) for ch in phases))
-    return data, {'sample_rate': fs, 'pcm_bits': width*8, 'initial_symbol_rate': initial_rate}
+    signal_start_sec = round(max(0.0, (start - 1000) / fs), 2)
+    signal_end_sec = round(max(signal_start_sec, (signal_end_idx - 1000) / fs), 2)
+    signal_duration_sec = round(max(0.0, signal_end_sec - signal_start_sec), 2)
+    return data, {
+        'sample_rate': fs,
+        'pcm_bits': width*8,
+        'initial_symbol_rate': initial_rate,
+        'signal_start_sec': signal_start_sec,
+        'signal_end_sec': signal_end_sec,
+        'signal_duration_sec': signal_duration_sec,
+    }
 
 
 def parse_packets(data):

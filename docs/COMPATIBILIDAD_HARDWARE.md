@@ -2,7 +2,7 @@
 
 **Idioma:** Español · [English hardware guide](en/COMPATIBILIDAD_HARDWARE.md)
 
-Revisión: **30 de octubre de 2026**. [Manual completo](MANUAL_COMPLETO.md) · [Inicio](../README.md) · [Referencia técnica](REFERENCIA_TECNICA.md).
+Revisión: **14 de noviembre de 2026**. [Manual completo](MANUAL_COMPLETO.md) · [Inicio](../README.md) · [Referencia técnica](REFERENCIA_TECNICA.md) · [Auditoría P0–P2](AUDITORIA_INTEGRAL_BILINGUE_2026-10-30.md).
 
 ## Cómo interpretar la compatibilidad
 
@@ -45,7 +45,10 @@ Akai describe el XPM Drum como un programa de muestras asignadas a pads que se c
 | **One G2 / Key 37 G2 u otras revisiones posteriores** | Comprobar sus notas oficiales y hacer una prueba con un kit pequeño. | Extender automáticamente la compatibilidad documentada para otra revisión de hardware. |
 | **MPC Studio / Studio MKII** | Abrir los archivos en MPC Software en el ordenador; el controlador maneja ese software. | Que Studio sea un sampler standalone con una tarjeta donde cargar el proyecto. |
 | **Renaissance y otros controladores** | La compatibilidad depende del software y controlador instalados en el ordenador; no existe un exportador BeatOS por controlador. | Que su aparición en comentarios históricos del repositorio garantice soporte actual de drivers. |
-| **MPC60, 2000/2000XL, 1000/2500, 500, 4000/5000 y formatos heredados** | No hay exportador específico para estas generaciones. Usar sólo un flujo de audio/formato comprobado para el modelo. | Que XPM/XPJ modernos sean archivos nativos de estas máquinas o que el tema visual «Vintage» los convierta. |
+| **MPC 1000 / 2500 / 500 (JJOS)** | Exportador `mpc1000` dedicado: archivo binario `.PGM` (4 bancos A–D · 64 pads) + WAV PCM 16-bit/44.1 kHz. | Que reproduzca secuencias `.MID`/`.SEQ` o efectos propietarios de JJOS. |
+| **MPC 2000 / 2000XL** | Exportador `mpc2000xl` dedicado: `.PGM` binario clásico (64 pads) + WAV PCM 16-bit/44.1 kHz con nombres seguros DOS 8.3. | Superar nombres largos de más de 8 caracteres en unidades FAT heredadas. |
+| **SampQOL OS v0.2.0 (MPC Sample / AC50)** | BeatOS incluye arquitectura multi-pista 4 submixes (`Sub 1–3`) en `.xpj` y editor seguro con copia `.bak-beatos` para `/mpcqol.conf`. | Asumir presencia de `/autorun/mpcqol.so` sin comprobarla en la tarjeta SD. |
+| **MPC60, 4000/5000 y otros formatos heredados** | No hay exportador específico para estas generaciones. Usar sólo un flujo de audio WAV comprobado para el modelo. | Que XPM/XPJ modernos sean archivos nativos de estas máquinas o que el tema visual «Vintage» los convierta. |
 
 La nota 3.8 enumera modelos concretos, incluidos One, Live, X, Key, XL y Force; no afirma que cada entrega BeatOS esté validada en ellos. Consulta también las [notas oficiales vigentes](https://www.akaipro.com/mpc-release-notes/) para revisiones posteriores. MPC Studio MKII se documenta como controlador de MPC Software en su [FAQ oficial](https://support.akaipro.com/en/support/solutions/articles/69000799777-akai-pro-mpc-studio-mkii-frequently-asked-questions).
 

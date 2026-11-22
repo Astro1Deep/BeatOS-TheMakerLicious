@@ -759,3 +759,646 @@ class ServerSecurityTests(unittest.TestCase):
             self.assertEqual(data_o['rhythm_analysis']['time_signature'], '12/8')
             self.assertEqual(data_o['hiphop_adaptation']['target_bpm'], 84.0)
             self.assertEqual(data_o['hiphop_adaptation']['recommended_chop_mode'], 'phrase_3_4_to_4_4')
+
+            # 8. Melodee v0.4.0 GET/POST /api/melodee_config
+            (srv_root / 'autorun').mkdir(exist_ok=True)
+            (srv_root / 'autorun' / 'mpcqol.so').write_bytes(b'QOL')
+            (srv_root / 'Melodee').mkdir(exist_ok=True)
+            (srv_root / 'Melodee' / 'settings').write_text('start=/media/sd/Melodee/Projects/Demo.mldp\nfeatures=1\n', encoding='utf-8')
+            status_m_get, raw_m_get = self.request(url + '/api/melodee_config', headers={'Origin': url})
+            self.assertEqual(status_m_get, 200, raw_m_get)
+            data_m_get = json.loads(raw_m_get.decode('utf-8'))
+            self.assertTrue(data_m_get['success'])
+            self.assertEqual(data_m_get['active_boot'], 'sampqol')
+            self.assertTrue(data_m_get['sampqol_detected'])
+            self.assertFalse(data_m_get['melodee_detected'])
+            self.assertEqual(data_m_get['start_project'], '/media/sd/Melodee/Projects/Demo.mldp')
+
+            status_m_post, raw_m_post = self.request(
+                url + '/api/melodee_config',
+                method='POST',
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+                data=json.dumps({'settings': {'audio_rate': 48000, 'stems_best': 0, 'slice_play': 2}}).encode('utf-8'),
+            )
+            self.assertEqual(status_m_post, 200, raw_m_post)
+            data_m_post = json.loads(raw_m_post.decode('utf-8'))
+            self.assertEqual(data_m_post['raw_values']['audio_rate'], 48000)
+            self.assertEqual(data_m_post['raw_values']['stems_best'], 0)
+            self.assertEqual(data_m_post['raw_values']['slice_play'], 2)
+            self.assertTrue((srv_root / 'Melodee' / 'settings.bak-beatos').is_file())
+            self.assertIn('start=/media/sd/Melodee/Projects/Demo.mldp', (srv_root / 'Melodee' / 'settings').read_text(encoding='utf-8'))
+
+            st_act, rw_act = self.request(
+                url + '/api/melodee_config',
+                method='POST',
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+                data=json.dumps({'action': 'init_melodee_tree', 'start_project': '/media/sd/Melodee/Projects/New.mldp'}).encode('utf-8'),
+            )
+            self.assertEqual(st_act, 200, rw_act)
+            st_sp, rw_sp = self.request(
+                url + '/api/melodee_config',
+                method='POST',
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+                data=json.dumps({'start_project': '/media/sd/Melodee/Projects/New.mldp'}).encode('utf-8'),
+            )
+            self.assertEqual(st_sp, 200, rw_sp)
+            self.assertEqual(json.loads(rw_sp.decode('utf-8'))['start_project'], '/media/sd/Melodee/Projects/New.mldp')
+
+            status_m_bad, raw_m_bad = self.request(
+                url + '/api/melodee_config',
+                method='POST',
+                headers={'Origin': url, 'Content-Type': 'application/json', 'X-BeatOS-Language': 'en'},
+                data=json.dumps({'preset': 'unknown_preset'}).encode('utf-8'),
+            )
+            self.assertEqual(status_m_bad, 400, raw_m_bad)
+            data_m_bad = json.loads(raw_m_bad.decode('utf-8'))
+            self.assertIn('Unknown Melodee preset', data_m_bad['error'])
+
+            for bad_payload, expected_err in (
+                ([], 'Expected a JSON object'),
+                ({'settings': 'bad'}, "The 'settings' parameter must be a JSON object"),
+                ({'settings': {'features': True}}, 'Invalid value'),
+            ):
+                st_b, rw_b = self.request(
+                    url + '/api/melodee_config',
+                    method='POST',
+                    headers={'Origin': url, 'Content-Type': 'application/json', 'X-BeatOS-Language': 'en'},
+                    data=json.dumps(bad_payload).encode('utf-8'),
+                )
+                self.assertEqual(st_b, 400, rw_b)
+                self.assertIn(expected_err, json.loads(rw_b.decode('utf-8'))['error'])
+
+            # 9. Jerarquía de análisis rack: batería seca no devuelve C falso, loop melódico manda y 808 confirma
+            import math
+            sr_t = 22050
+            h_dir = srv_root / 'Hierarchical_Test'
+            h_dir.mkdir(exist_ok=True)
+
+            def _mk_wav(fp: Path, vals):
+                with wave.open(str(fp), 'wb') as wf:
+                    wf.setnchannels(1)
+                    wf.setsampwidth(2)
+                    wf.setframerate(sr_t)
+                    cl = [max(-32767, min(32767, int(v))) for v in vals]
+                    wf.writeframes(struct.pack(f'<{len(cl)}h', *cl))
+
+            _mk_wav(
+                h_dir / 'Kick_Dry_Punch.wav',
+                [15000.0 * math.exp(-i / 650.0) * math.sin(2.0 * math.pi * (145.0 * math.exp(-i / 500.0) + 45.0) * i / sr_t) for i in range(int(sr_t * 0.14))],
+            )
+            _mk_wav(
+                h_dir / 'Melodic_Phrase.wav',
+                [
+                    15000.0 * math.exp(-((i / float(sr_t)) % (60.0 / 90.0)) * 5.0)
+                    * (math.sin(2.0 * math.pi * 220.0 * i / sr_t) + math.sin(2.0 * math.pi * 261.63 * i / sr_t) + math.sin(2.0 * math.pi * 329.63 * i / sr_t)) / 3.0
+                    for i in range(int(sr_t * 3.0))
+                ],
+            )
+            _mk_wav(
+                h_dir / 'Bass_808_A.wav',
+                [17000.0 * math.exp(-i / 14000.0) * math.sin(2.0 * math.pi * 55.0 * i / sr_t) for i in range(int(sr_t * 0.8))],
+            )
+
+            st_dry, rw_dry = self.request(
+                url + '/api/cerebro_analyze',
+                method='POST',
+                timeout=30,
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+                data=json.dumps({
+                    'kit_name': 'BoomBap Dry Drum Kit',
+                    'tempo': 120.0,
+                    'pads': [{'pad': 1, 'sample_name': 'Kick_Dry_Punch', 'rel_path': 'Hierarchical_Test/Kick_Dry_Punch.wav'}],
+                }).encode('utf-8'),
+            )
+            self.assertEqual(st_dry, 200, rw_dry)
+            d_dry = json.loads(rw_dry.decode('utf-8'))
+            self.assertIn(d_dry['anchor_key'], ('Percusión / Atonal', 'Percussion'))
+            self.assertEqual(d_dry['key_source'], 'atonal_drums')
+            self.assertEqual(d_dry['recommended_bpm'], 90.0)
+
+            st_mel, rw_mel = self.request(
+                url + '/api/cerebro_analyze',
+                method='POST',
+                timeout=30,
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+                data=json.dumps({
+                    'kit_name': 'Mixed Melodic Kit',
+                    'tempo': 120.0,
+                    'pads': [
+                        {'pad': 1, 'sample_name': 'Kick_Dry_Punch', 'rel_path': 'Hierarchical_Test/Kick_Dry_Punch.wav'},
+                        {'pad': 2, 'sample_name': 'Bass_808_A', 'rel_path': 'Hierarchical_Test/Bass_808_A.wav'},
+                        {'pad': 3, 'sample_name': 'Melodic_Phrase', 'rel_path': 'Hierarchical_Test/Melodic_Phrase.wav'},
+                    ],
+                }).encode('utf-8'),
+            )
+            self.assertEqual(st_mel, 200, rw_mel)
+            d_mel = json.loads(rw_mel.decode('utf-8'))
+            self.assertEqual(d_mel['key_source'], 'melodic_loop')
+            self.assertEqual(d_mel['anchor_key'], 'A Min')
+            self.assertTrue(d_mel['confirmed_by_drums'])
+            self.assertLessEqual(abs(float(d_mel['recommended_bpm']) - 90.0), 2.0)
+
+            # 10. POST /api/update_expansion: editar título, descripción y portada defectuosa en vivo
+            import base64
+            exp_u = srv_root / 'Expansions' / 'Broken_Cover_Pack'
+            exp_u.mkdir(parents=True, exist_ok=True)
+            (exp_u / 'Artwork.png').write_bytes(b'\x89PNG\r\n\x1a\n' + b'\x00' * 62)
+            (exp_u / 'Expansion.xml').write_text(
+                '<?xml version="1.0" encoding="utf-8"?><expansion version="2.0.0.1"><title>Broken Pack</title><manufacturer>Old</manufacturer><img>Artwork.png</img></expansion>',
+                encoding='utf-8',
+            )
+            st_upd, rw_upd = self.request(
+                url + '/api/update_expansion',
+                method='POST',
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+                data=json.dumps({
+                    'expansion_path': 'Expansions/Broken_Cover_Pack',
+                    'title': 'Fixed Bolero Pack',
+                    'manufacturer': 'Astro1Deep',
+                    'description': 'Nueva portada',
+                    'regenerate_cover': True,
+                }).encode('utf-8'),
+            )
+            self.assertEqual(st_upd, 200, rw_upd)
+            d_upd = json.loads(rw_upd.decode('utf-8'))
+            self.assertTrue(d_upd['success'])
+            self.assertEqual(d_upd['title'], 'Fixed Bolero Pack')
+            self.assertGreater((exp_u / 'Artwork.png').stat().st_size, 2000)
+
+            st_bad_img, _ = self.request(
+                url + '/api/update_expansion',
+                method='POST',
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+                data=json.dumps({
+                    'expansion_path': 'Expansions/Broken_Cover_Pack',
+                    'title': 'Still Valid',
+                    'cover_data_url': 'data:image/png;base64,' + base64.b64encode(b'BAD_IMAGE').decode('ascii'),
+                }).encode('utf-8'),
+            )
+            self.assertEqual(st_bad_img, 400)
+
+    def test_cerebro_harmonic_clashes_acoustic_similarity_and_mlx_copilot_resilience(self):
+        import io
+        import json
+        import math
+        import os
+        import sqlite3
+        import unittest.mock as mock
+        import urllib.request
+
+        with self.server() as (url, parent):
+            srv_root = parent / 'library'
+            samples_dir = srv_root / 'Samples'
+            samples_dir.mkdir(parents=True, exist_ok=True)
+            db_dir = srv_root / 'BeatOS' / 'data'
+            db_dir.mkdir(parents=True, exist_ok=True)
+            sr = 22050
+
+            def _tone_wav(path: Path, freq_hz: float, dur_s: float = 0.6):
+                n = int(sr * dur_s)
+                pcm = [int(22000 * math.exp(-i / (sr * 0.25)) * math.sin(2.0 * math.pi * freq_hz * i / sr)) for i in range(n)]
+                with wave.open(str(path), 'wb') as wf:
+                    wf.setnchannels(1)
+                    wf.setsampwidth(2)
+                    wf.setframerate(sr)
+                    wf.writeframes(struct.pack(f'<{len(pcm)}h', *pcm))
+
+            # Loop en C Min (Cm chord / phrase >= 2s) + 808 chocante en F#2 (~92.5 Hz)
+            loop_cm = samples_dir / 'Bolero_Guitar_Cm_84BPM.wav'
+            n_loop = int(sr * 2.2)
+            loop_pcm = [
+                int(16000 * (0.5 * math.sin(2.0 * math.pi * 261.63 * i / sr) + 0.35 * math.sin(2.0 * math.pi * 311.13 * i / sr) + 0.3 * math.sin(2.0 * math.pi * 392.0 * i / sr)))
+                for i in range(n_loop)
+            ]
+            with wave.open(str(loop_cm), 'wb') as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)
+                wf.setframerate(sr)
+                wf.writeframes(struct.pack(f'<{len(loop_pcm)}h', *loop_pcm))
+
+            bass_fs = samples_dir / '808_Sub_F#.wav'
+            _tone_wav(bass_fs, 92.50, dur_s=0.9)
+
+            old_dis = os.environ.get('BEATOS_DISABLE_MLX_LLM')
+            os.environ['BEATOS_DISABLE_MLX_LLM'] = '1'
+            try:
+                st_a, rw_a = self.request(
+                    url + '/api/cerebro_analyze',
+                    method='POST',
+                    headers={'Origin': url, 'Content-Type': 'application/json'},
+                    data=json.dumps({
+                        'kit_name': 'Bolero_Harmonic_Test',
+                        'pads': [
+                            {'pad': 1, 'sample_name': 'Bolero_Guitar_Cm_84BPM', 'rel_path': 'Samples/Bolero_Guitar_Cm_84BPM.wav', 'sound_type': 'MELODIC_LOOP'},
+                            {'pad': 2, 'sample_name': '808_Sub_F#', 'rel_path': 'Samples/808_Sub_F#.wav', 'sound_type': 'BASS_808'},
+                        ],
+                    }).encode('utf-8'),
+                )
+            finally:
+                if old_dis is None:
+                    os.environ.pop('BEATOS_DISABLE_MLX_LLM', None)
+                else:
+                    os.environ['BEATOS_DISABLE_MLX_LLM'] = old_dis
+
+            self.assertEqual(st_a, 200, rw_a)
+            d_a = json.loads(rw_a.decode('utf-8'))
+            self.assertEqual(d_a['anchor_camelot'], '5A')
+            self.assertTrue(len(d_a.get('harmonic_clashes', [])) >= 1)
+            self.assertFalse(d_a['mlx_copilot']['used_llm'])
+            self.assertIn('chop_plan', d_a['mlx_copilot']['plan'])
+
+            # Test similitud acústica PCM real sobre kicks de idéntico tamaño en bytes
+            kick_sub_a = samples_dir / 'Kick_Target_Sub.wav'
+            kick_sub_b = samples_dir / 'Kick_Twin_Sub.wav'
+            kick_click_c = samples_dir / 'Kick_Click_3kHz.wav'
+            _tone_wav(kick_sub_a, 55.0, dur_s=0.4)
+            _tone_wav(kick_sub_b, 58.0, dur_s=0.4)
+            _tone_wav(kick_click_c, 3400.0, dur_s=0.4)
+
+            conn = sqlite3.connect(str(db_dir / 'mpc_sample.db'))
+            conn.execute('''CREATE TABLE IF NOT EXISTS samples (
+                filename TEXT, rel_path TEXT, sound_type TEXT, sample_format TEXT,
+                sub_pack TEXT, bpm REAL, musical_key TEXT, energy_level TEXT, size_mb REAL
+            )''')
+            rows = [
+                ('Kick_Target_Sub.wav', 'Samples/Kick_Target_Sub.wav', 'KICK', 'ONE_SHOT', 'Test', 0.0, '', 'SUB', 0.02),
+                ('Kick_Twin_Sub.wav', 'Samples/Kick_Twin_Sub.wav', 'KICK', 'ONE_SHOT', 'Test', 0.0, '', 'SUB', 0.02),
+                ('Kick_Click_3kHz.wav', 'Samples/Kick_Click_3kHz.wav', 'KICK', 'ONE_SHOT', 'Test', 0.0, '', 'SUB', 0.02),
+            ]
+            conn.executemany('INSERT INTO samples VALUES (?,?,?,?,?,?,?,?,?)', rows)
+            conn.commit()
+            conn.close()
+
+            st_sim, rw_sim = self.request(
+                url + '/api/cerebro_similar_samples',
+                method='POST',
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+                data=json.dumps({'rel_path': 'Samples/Kick_Target_Sub.wav', 'sound_type': 'KICK', 'limit': 4}).encode('utf-8'),
+            )
+            self.assertEqual(st_sim, 200, rw_sim)
+            d_sim = json.loads(rw_sim.decode('utf-8'))
+            self.assertTrue(d_sim.get('acoustic_fingerprinting'))
+            self.assertEqual(d_sim['results'][0]['filename'], 'Kick_Twin_Sub.wav')
+            self.assertGreater(d_sim['results'][0]['similarity'], d_sim['results'][1]['similarity'])
+
+            # Test MLX Copilot parsing con servidor MLX mockeado y sin fuga ante JSON inválido
+            import serve_mpc as sm
+
+            class _FakeResp:
+                def __init__(self, body_bytes):
+                    self._buf = io.BytesIO(body_bytes)
+                def read(self):
+                    return self._buf.read()
+                def __enter__(self):
+                    return self
+                def __exit__(self, *a):
+                    return False
+
+            def _fake_urlopen(req, timeout=2.0):
+                u = req.full_url if hasattr(req, 'full_url') else str(req)
+                if u.endswith('/v1/models'):
+                    return _FakeResp(json.dumps({'data': [{'id': 'lukey03/Qwen3.5-9B-abliterated-MLX-4bit'}]}).encode('utf-8'))
+                return _FakeResp(json.dumps({
+                    'choices': [{'message': {'content': '{"chop_plan":"Corta en negras M6","mix_plan":"HPF 110Hz","sequencer_tip":"Swing 58%","creative_flip":"Usa 3/4 puente"}'}}]
+                }).encode('utf-8'))
+
+            with mock.patch.object(sm, '_probe_local_port', return_value=True), \
+                 mock.patch.object(urllib.request, 'urlopen', side_effect=_fake_urlopen):
+                cop = sm.query_cerebro_mlx_advisor(d_a, allow_llm=True)
+                self.assertTrue(cop['used_llm'])
+                self.assertIn('Qwen3.5', cop['model'])
+                self.assertEqual(cop['plan']['chop_plan'], 'Corta en negras M6')
+
+            with mock.patch.object(sm, '_probe_local_port', return_value=True), \
+                 mock.patch.object(urllib.request, 'urlopen', return_value=_FakeResp(b'NOT_JSON')):
+                cop_fb = sm.query_cerebro_mlx_advisor(d_a, allow_llm=True)
+                self.assertFalse(cop_fb['used_llm'])
+                self.assertTrue(bool(cop_fb['plan']['chop_plan']))
+
+            # Test reglas de audio/MIR: formant_risk (>±4.5 st) y contexto enriquecido MLX
+            captured_bodies = []
+
+            def _capture_urlopen(req, timeout=2.0):
+                u = req.full_url if hasattr(req, 'full_url') else str(req)
+                if u.endswith('/v1/models'):
+                    return _FakeResp(json.dumps({'data': [{'id': 'lukey03/Qwen3.5-9B-abliterated-MLX-4bit'}]}).encode('utf-8'))
+                captured_bodies.append(json.loads(req.data.decode('utf-8')))
+                return _FakeResp(json.dumps({
+                    'choices': [{'message': {'content': '{"chop_plan":"Cruces +-5ms","mix_plan":"HPF 110Hz -0.8dBFS","sequencer_tip":"Swing 56%","creative_flip":"Warp 0 st por formantes"}'}}]
+                }).encode('utf-8'))
+
+            tele_formant = {
+                'detected_style': 'Bolero Vintage',
+                'recommended_bpm': 84.0,
+                'anchor_key': 'Am (8A)',
+                'harmonic_clashes': [{'sample_name': 'Bass_G', 'semitone_fix': -2}],
+                'mix_advice': [],
+                'pad_count': 16,
+                'rhythm_analysis': {
+                    'time_signature': '3/4',
+                    'source_bpm': 115.0,
+                    'swing_pct': 56,
+                    'is_rubato': False,
+                    'is_drumless': True,
+                    'sub_energy_ratio': 0.08,
+                    'mid_warmth_ratio': 0.62,
+                    'high_air_ratio': 0.14,
+                },
+                'hiphop_adaptation': {
+                    'target_bpm': 84.0,
+                    'repitch_semitones': -5.4,
+                    'recommended_chop_mode': 'phrase_3_4_to_4_4',
+                    'sequencer_guide': {'highpass_hz_cut': 110, 'chop_trigger_steps': [1, 5, 9, 13]},
+                },
+            }
+            cop_det_formant = sm.query_cerebro_mlx_advisor(tele_formant, allow_llm=False)
+            self.assertFalse(cop_det_formant['used_llm'])
+            self.assertIn('Warp', cop_det_formant['plan']['creative_flip'])
+            self.assertIn('formant', cop_det_formant['plan']['creative_flip'].lower())
+            self.assertIn('220', cop_det_formant['plan']['mix_plan'])
+
+            with mock.patch.object(sm, '_probe_local_port', return_value=True), \
+                 mock.patch.object(urllib.request, 'urlopen', side_effect=_capture_urlopen):
+                cop_mlx = sm.query_cerebro_mlx_advisor(tele_formant, allow_llm=True)
+                self.assertTrue(cop_mlx['used_llm'])
+                self.assertTrue(len(captured_bodies) == 1)
+                sys_msg = captured_bodies[0]['messages'][0]['content']
+                usr_ctx = json.loads(captured_bodies[0]['messages'][1]['content'])
+                self.assertTrue(usr_ctx['formant_risk'])
+                self.assertEqual(usr_ctx['clash_fix_st'], -2)
+                self.assertIn('formant_risk', sys_msg)
+                self.assertIn('-0.80 dBFS', sys_msg)
+
+    def test_cerebro_audio_knowledge_808_and_headroom_audit(self):
+        import json
+        import math
+        import struct
+        import wave
+
+        with self.server() as (url, parent):
+            srv_root = parent / 'library'
+            samples_dir = srv_root / 'Samples'
+            samples_dir.mkdir(parents=True, exist_ok=True)
+            sr = 44100
+
+            # Loop anclado explícitamente en F Maj con pico casi en 0 dBFS (-0.1 dBFS -> dispara headroom_audit warning)
+            loop_wav = samples_dir / 'Soul_Keys_F_Maj.wav'
+            amp_hot = int(32767.0 * (10.0 ** (-0.1 / 20.0)))
+            pcm_loop = [int(amp_hot * math.sin(2.0 * math.pi * 349.228 * (i / sr))) for i in range(int(sr * 2.2))]
+            with wave.open(str(loop_wav), 'wb') as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)
+                wf.setframerate(sr)
+                wf.writeframes(struct.pack(f'<{len(pcm_loop)}h', *pcm_loop))
+
+            # 808 en B1 real (~61.74 Hz) -> frente a ancla F (pc=5) B (pc=11) dista exactamente ±6 st (NO +5 st)
+            bass_wav = samples_dir / 'Bass_808_Test.wav'
+            pcm_bass = [int(18000.0 * math.sin(2.0 * math.pi * 61.7354 * (i / sr))) for i in range(int(sr * 1.1))]
+            with wave.open(str(bass_wav), 'wb') as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)
+                wf.setframerate(sr)
+                wf.writeframes(struct.pack(f'<{len(pcm_bass)}h', *pcm_bass))
+
+            status_a, raw_a = self.request(
+                url + '/api/cerebro_analyze',
+                method='POST',
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+                data=json.dumps({
+                    'kit_name': 'Headroom_And_808_Audit',
+                    'use_llm': False,
+                    'pads': [
+                        {'pad': 1, 'sample_name': 'Soul_Keys_F_Maj', 'rel_path': 'Samples/Soul_Keys_F_Maj.wav', 'sound_type': 'MELODIC_LOOP'},
+                        {'pad': 13, 'sample_name': 'Bass_808_Test', 'rel_path': 'Samples/Bass_808_Test.wav', 'sound_type': 'BASS_808'},
+                    ],
+                }).encode('utf-8'),
+            )
+            self.assertEqual(status_a, 200, raw_a)
+            res_a = json.loads(raw_a.decode('utf-8'))
+            self.assertEqual(res_a['headroom_audit']['status'], 'warning')
+            self.assertGreaterEqual(len(res_a['headroom_audit']['clipping_pads']), 1)
+            self.assertGreaterEqual(len(res_a['tuning_adjustments']), 1)
+            adj808 = res_a['tuning_adjustments'][0]
+            self.assertEqual(adj808['detected_note'], 'B1')
+            self.assertEqual(abs(adj808['recommended_tune']), 6)
+            self.assertIsInstance(res_a.get('audio_knowledge_hits'), list)
+            self.assertIn('rag_rules_used', res_a['mlx_copilot'])
+
+            # Endpoint /api/cerebro_audio_knowledge (GET y POST)
+            st_k_get, raw_k_get = self.request(
+                url + '/api/cerebro_audio_knowledge?topic=anticlipping&semantic=0',
+                headers={'Origin': url},
+            )
+            self.assertEqual(st_k_get, 200, raw_k_get)
+            d_k_get = json.loads(raw_k_get.decode('utf-8'))
+            self.assertTrue(d_k_get['success'])
+            self.assertEqual(d_k_get['matched_cards'][0]['id'], 'anticlipping')
+
+            st_k_post, raw_k_post = self.request(
+                url + '/api/cerebro_audio_knowledge',
+                method='POST',
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+                data=json.dumps({'query': 'formantes warp repitch 3/4', 'semantic': False, 'context': res_a}).encode('utf-8'),
+            )
+            self.assertEqual(st_k_post, 200, raw_k_post)
+            d_k_post = json.loads(raw_k_post.decode('utf-8'))
+            self.assertTrue(d_k_post['success'])
+            self.assertGreaterEqual(len(d_k_post['cards']), 6)
+
+    def test_po_backup_external_library_management_and_full_dsp_inspection(self):
+        import io
+        import json
+        import math
+        import shutil
+        import struct
+        import wave
+        import urllib.parse
+        from hardware_kit_builder import inspect_po33_backup
+
+        def make_stereo_wav(frames_list, fs=44100):
+            buf = io.BytesIO()
+            with wave.open(buf, 'wb') as w:
+                w.setparams((2, 2, fs, 0, 'NONE', ''))
+                raw = b''.join(struct.pack('<hh', l, r) for l, r in frames_list)
+                w.writeframes(raw)
+            return buf.getvalue()
+
+        with self.server() as (url, parent):
+            # 1. DSP inspection complete beyond 4s: silent, dual-mono, and delayed stereo signal (>7s)
+            silent_wav = parent / 'silent.wav'
+            silent_wav.write_bytes(make_stereo_wav([(0, 0)] * 44100 * 6))
+            s_info = inspect_po33_backup(silent_wav)
+            self.assertTrue(s_info['is_silent'])
+            self.assertFalse(s_info['signal_usable'])
+            self.assertEqual(s_info['status'], 'WARNING_SILENT_RECORDING')
+
+            mono_frames = [(int(9000 * math.sin(2 * math.pi * 1000 * i / 44100)),
+                            int(9000 * math.sin(2 * math.pi * 1000 * i / 44100))) for i in range(44100 * 2)]
+            mono_wav = parent / 'dualmono.wav'
+            mono_wav.write_bytes(make_stereo_wav(mono_frames))
+            m_info = inspect_po33_backup(mono_wav)
+            self.assertTrue(m_info['is_dual_mono'])
+            self.assertFalse(m_info['signal_usable'])
+            self.assertEqual(m_info['status'], 'WARNING_MONO_DUPLICATED')
+
+            delayed_frames = [(0, 0)] * (44100 * 7) + [
+                (int(11000 * math.sin(2 * math.pi * 440 * i / 44100)),
+                 int(11000 * math.cos(2 * math.pi * 660 * i / 44100))) for i in range(44100 * 2)
+            ]
+            delayed_wav = parent / 'delayed_stereo.wav'
+            delayed_wav.write_bytes(make_stereo_wav(delayed_frames))
+            d_info = inspect_po33_backup(delayed_wav)
+            self.assertFalse(d_info['is_silent'])
+            self.assertFalse(d_info['is_dual_mono'])
+            self.assertTrue(d_info['signal_usable'])
+            self.assertGreaterEqual(d_info['signal_start_sec'], 6.9)
+            self.assertGreater(d_info['peak_dbfs'], -20.0)
+
+            # 2. Configure external library folder + verify config endpoint & private file HTTP 403
+            st_cfg, raw_cfg = self.request(url + '/api/po_backup_config', headers={'Origin': url})
+            self.assertEqual(st_cfg, 200)
+            self.assertEqual(json.loads(raw_cfg)['config']['storage_mode'], 'default')
+
+            ext_dir = parent / 'external_po_lib'
+            st_save, raw_save = self.request(
+                url + '/api/po_backup_config',
+                method='POST',
+                headers={'Content-Type': 'application/json', 'Origin': url},
+                data=json.dumps({
+                    'storage_mode': 'external',
+                    'external_dir': str(ext_dir),
+                    'create_if_missing': True,
+                    'include_default_in_scan': True,
+                    'include_legacy_dirs': False,
+                }).encode('utf-8'),
+            )
+            self.assertEqual(st_save, 200, raw_save)
+            saved_cfg = json.loads(raw_save)['config']
+            self.assertEqual(saved_cfg['storage_mode'], 'external')
+            self.assertTrue(saved_cfg['external_available'])
+            self.assertEqual(self.request(url + '/BeatOS/config/po_backup_config.json')[0], 403)
+
+            # 3. Upload directly to external storage, edit metadata/notes, copy to default, then delete default copy
+            good_wav_bytes = make_stereo_wav([(1600, -1600), (-1600, 1600)] * 22050)
+            st_up, raw_up = self.request(
+                url + '/api/po33_backups?name=Ext_Take.wav&model=PO-33&project=External%20Beat&storage=external',
+                data=good_wav_bytes,
+                headers={'Content-Type': 'audio/wav', 'Origin': url},
+            )
+            self.assertEqual(st_up, 200, raw_up)
+            ext_backup = json.loads(raw_up)['backup']
+            self.assertEqual(ext_backup['storage_location'], 'external')
+            self.assertTrue(Path(ext_backup['path']).is_relative_to(ext_dir.resolve()))
+
+            st_upd, raw_upd = self.request(
+                url + '/api/po_backup_update',
+                method='POST',
+                headers={'Content-Type': 'application/json', 'Origin': url},
+                data=json.dumps({'file': ext_backup['path'], 'project': 'Live_PO33_Set', 'notes': '93 BPM stereo'}).encode('utf-8'),
+            )
+            self.assertEqual(st_upd, 200, raw_upd)
+            upd_b = json.loads(raw_upd)['backup']
+            self.assertEqual(upd_b['project'], 'Live_PO33_Set')
+            self.assertEqual(upd_b['notes'], '93 BPM stereo')
+            self.assertEqual(Path(ext_backup['path']).read_bytes(), good_wav_bytes)
+
+            st_cp, raw_cp = self.request(
+                url + '/api/po_backup_copy',
+                method='POST',
+                headers={'Content-Type': 'application/json', 'Origin': url},
+                data=json.dumps({'file': ext_backup['path'], 'destination': 'default'}).encode('utf-8'),
+            )
+            self.assertEqual(st_cp, 200, raw_cp)
+            cp_b = json.loads(raw_cp)['backup']
+            self.assertEqual(cp_b['storage_location'], 'default')
+            self.assertTrue(Path(cp_b['path']).is_relative_to((parent / 'library/BeatOS/data/po33_backups').resolve()))
+            self.assertEqual(Path(cp_b['path']).read_bytes(), good_wav_bytes)
+
+            inv = json.loads(self.request(url + '/api/po33_backups')[1])['backups']
+            self.assertEqual(len(inv), 2)
+            self.assertEqual({b['storage_location'] for b in inv}, {'external', 'default'})
+
+            st_del, _ = self.request(
+                url + '/api/po_backup_delete',
+                method='POST',
+                headers={'Content-Type': 'application/json', 'Origin': url},
+                data=json.dumps({'file': cp_b['path']}).encode('utf-8'),
+            )
+            self.assertEqual(st_del, 200)
+            self.assertFalse(Path(cp_b['path']).exists())
+            self.assertFalse(Path(cp_b['path']).with_suffix('.po.json').exists())
+
+            # 4. Safe fallback if external volume is disconnected before a default-mode recording upload
+            shutil.rmtree(ext_dir)
+            st_fb, raw_fb = self.request(
+                url + '/api/po33_backups?name=Fallback.wav&model=PO-33&project=Fallback%20Take',
+                data=good_wav_bytes,
+                headers={'Content-Type': 'audio/wav', 'Origin': url},
+            )
+            self.assertEqual(st_fb, 200, raw_fb)
+            fb_b = json.loads(raw_fb)['backup']
+            self.assertTrue(fb_b['storage_fallback'])
+            self.assertEqual(fb_b['storage_location'], 'default')
+            self.assertTrue(Path(fb_b['path']).exists())
+
+    def test_po_backup_include_default_false_excludes_default_dir(self):
+        from hardware_kit_builder import po33_backup_dirs, save_po_backup_config
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / 'lib'
+            ext = Path(tmp) / 'ext_po'
+            root.mkdir()
+            ext.mkdir()
+            save_po_backup_config(
+                root,
+                {
+                    'storage_mode': 'external',
+                    'external_dir': str(ext),
+                    'include_default_in_scan': False,
+                    'include_legacy_dirs': False,
+                },
+            )
+            dirs = [p.resolve() for p in po33_backup_dirs(root)]
+            self.assertIn(ext.resolve(), dirs)
+            self.assertNotIn((root / 'BeatOS/data/po33_backups').resolve(), dirs)
+
+    def test_404_does_not_leak_host_path_and_preload_asset_path_works(self):
+        with self.server() as (url, root):
+            status_404, raw_404 = self.request(url + '/missing_ptax_probe.txt')
+            self.assertEqual(status_404, 404)
+            text_404 = raw_404.decode('utf-8', errors='replace')
+            self.assertNotIn('Buscado en:', text_404)
+            self.assertNotIn(str(root), text_404)
+
+            status_asset, raw_asset = self.request(url + '/BeatOS/data/BeatOS/docs/assets/po33-capture-worklet.js')
+            self.assertEqual(status_asset, 200)
+            self.assertIn(b'AudioWorkletProcessor', raw_asset)
+
+    def test_task_state_snapshot_is_isolated_under_lock(self):
+        snap = serve_mpc._snapshot_task_state()
+        snap['logs'].append('mutated-only-in-copy')
+        self.assertNotIn('mutated-only-in-copy', serve_mpc.TASK_STATE['logs'])
+
+    def test_import_external_sample_rejects_symlink_and_disambiguates_collision(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            root = base / 'card'
+            ext_mount = base / 'ext_disk'
+            (root / 'Custom_Kits').mkdir(parents=True)
+            (ext_mount / 'dir_a').mkdir(parents=True)
+            (ext_mount / 'dir_b').mkdir(parents=True)
+            wav_a = ext_mount / 'dir_a' / 'Kick_01.wav'
+            wav_b = ext_mount / 'dir_b' / 'Kick_01.wav'
+            wav_a.write_bytes(b'RIFF\x10\x00\x00\x00WAVEfmt aaaa')
+            wav_b.write_bytes(b'RIFF\x10\x00\x00\x00WAVEfmt bbbb')
+            link = ext_mount / 'sym_kick.wav'
+            link.symlink_to(wav_a)
+            libs = [{'mount_path': str(ext_mount), 'is_active_root': False}]
+            with patch.object(serve_mpc, 'discover_mounted_audio_libraries', return_value=libs):
+                with self.assertRaises(ValueError):
+                    serve_mpc.import_external_sample_to_library(str(root), {'external_full_path': str(link)})
+                res_a = serve_mpc.import_external_sample_to_library(str(root), {'external_full_path': str(wav_a)})
+                res_b = serve_mpc.import_external_sample_to_library(str(root), {'external_full_path': str(wav_b)})
+            self.assertEqual(res_a['filename'], 'Kick_01.wav')
+            self.assertNotEqual(res_b['filename'], 'Kick_01.wav')
+            self.assertTrue(res_b['filename'].startswith('Kick_01_') and res_b['filename'].endswith('.wav'))

@@ -15,6 +15,38 @@ sent.length = 0;
 const mono = new Processor();mono.process([[new Float32Array([0.2])]]);
 assert.match(sent[0].error,/dos canales/);assert.equal(sent.some(item=>item.pcm),false);
 
+// Multi-channel interface + live meter telemetry + monitor-only mode
+sent.length = 0;
+const monitorProc = new Processor();
+monitorProc.port.onmessage({ data: { cmd: 'config', monitorOnly: true, enableMeter: true, chL: 2, chR: 3 } });
+monitorProc.process([[
+  new Float32Array(2048),
+  new Float32Array(2048),
+  new Float32Array(2048).fill(0.5),
+  new Float32Array(2048).fill(-0.25)
+]]);
+assert.equal(sent.some(item => item.pcm), false, 'monitorOnly must not emit PCM chunks');
+const meterMsg = sent.find(item => item.meter);
+assert.ok(meterMsg, 'live meter telemetry emitted');
+assert.equal(meterMsg.meter.channelCount, 4);
+assert.ok(Math.abs(meterMsg.meter.peakL - 0.5) < 0.01);
+assert.ok(Math.abs(meterMsg.meter.peakR - 0.25) < 0.01);
+assert.ok(meterMsg.meter.stereoRatio > 0.5);
+
+sent.length = 0;
+const ch34Proc = new Processor();
+ch34Proc.port.onmessage({ data: { cmd: 'config', monitorOnly: false, enableMeter: true, chL: 2, chR: 3 } });
+ch34Proc.process([[
+  new Float32Array([0.0, 0.0]),
+  new Float32Array([0.0, 0.0]),
+  new Float32Array([0.5, -0.5]),
+  new Float32Array([-0.25, 0.25])
+]]);
+ch34Proc.port.onmessage({ data: 'stop' });
+const pcmChunk = sent.find(item => item.pcm);
+assert.ok(pcmChunk);
+assert.deepEqual([...new Int16Array(pcmChunk.pcm)], [16384, -8192, -16384, 8192]);
+
 const elements = new Map(), audio = {pause(){this.paused=true;}};
 const el = id => { if(!elements.has(id)) elements.set(id, {textContent:'',innerHTML:'',value:'',style:{},children:[],append(...nodes){this.children.push(...nodes)},replaceChildren(){this.children=[]},hidden:true,disabled:false,scrollIntoView(){}}); return elements.get(id); };
 elements.set('po33RestoreAudio',audio);
@@ -62,6 +94,8 @@ vm.runInContext(html.slice(html.indexOf('const PO_BACKUP_BUTTONS'),html.indexOf(
   const before=audio.src;
   context.restore({...backup,model:'PO-35',path:'/different-model.wav'});assert.equal(audio.src,before);context.restore({...backup,audio_compatible:false,path:'/bad.wav'});assert.equal(audio.src,before);
   context.restore({...backup,capture_interrupted:true,path:'/partial.wav'});assert.equal(audio.src,before);
+  context.restore({...backup,is_silent:true,path:'/silent.wav'});assert.equal(audio.src,before);
+  context.restore({...backup,is_dual_mono:true,path:'/dualmono.wav'});assert.equal(audio.src,before);
   let failUpload;
   context.fetch=()=>new Promise((_,reject)=>{failUpload=reject});
   el('po33RecordingName').value='Take';
