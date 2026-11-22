@@ -2665,8 +2665,8 @@ def detect_kit_style_weighted(
     for pr in pads:
         if not isinstance(pr, dict):
             continue
-        sname = str(pr.get("sample_name") or "").strip()
         rel_p = str(pr.get("rel_path") or "").strip()
+        sname = str(pr.get("sample_name") or "").strip() or (Path(rel_p).stem if rel_p else "")
         # Evitar doble peso del nombre de expansión en cada pad: usar solo nombre de muestra + carpeta inmediata
         parent_hint = Path(rel_p).parent.name if rel_p else ""
         if parent_hint.endswith("_[ProjectData]") or parent_hint == kit_name:

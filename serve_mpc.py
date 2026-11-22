@@ -2624,7 +2624,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
         if rhythm_analysis is None and is_crate_digging_style:
             src_b = round(float(inferred_bpm or style_info.get("bpm") or 86.0), 1)
             mode_bpm_map = {"lofi_chill": 82.0, "boombap_classic": 90.0, "dilla_jazzhop": 86.0, "drumless_alchemist": 78.0}
-            default_tgt = 78.0 if style_id == "drumless" else (82.0 if style_id == "tango_vals" else (84.0 if style_id in ("bolero", "bossa_samba", "oldies") else (86.0 if style_id in ("soul_vintage", "lofi", "psych_library") else 88.0)))
+            default_tgt = 78.0 if style_id == "drumless" else (82.0 if style_id == "tango_vals" else (84.0 if style_id in ("bolero", "bossa_samba", "oldies") else (86.0 if style_id in ("soul_vintage", "lofi", "psych_library") else (90.0 if style_id == "boombap" else 88.0))))
             tgt_b = round(float(mode_bpm_map.get(adapt_mode, default_tgt)), 1)
             eff_b = round(src_b / 2.0, 1) if src_b >= 132.0 else src_b
             half_applied = bool(src_b >= 132.0)
@@ -4832,30 +4832,20 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 content_length = int(self.headers.get("Content-Length", 0))
                 body = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else "{}"
                 payload = json.loads(body) if body.strip() else {}
+                if not isinstance(payload, dict):
+                    raise ValueError("Se requiere un objeto JSON.")
                 pads_in = payload.get("pads") or []
                 prompt_in = str(payload.get("prompt") or payload.get("style") or "").strip()
                 if not pads_in and not prompt_in:
                     raise ValueError("Carga muestras en el rack o indica un estilo para que Cerebro OS orqueste la sesión.")
-                if pads_in:
-                    result = analyze_rack_with_cerebro(
-                        self.server.root_dir,
-                        payload,
-                        port=getattr(self.server, "server_port", None),
-                    )
-                else:
-                    result = build_cerebro_smart_kit(self.server.root_dir, payload)
+                result = master_produce_rack(self.server.root_dir, payload)
                 result["master_orchestrated"] = True
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.send_cors_headers()
-                self.end_headers()
-                self.wfile.write(self._api_json_dumps(result, ensure_ascii=False).encode("utf-8"))
-            except Exception as e:
-                self.send_response(400)
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.send_cors_headers()
-                self.end_headers()
-                self.wfile.write(self._api_json_dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+                result.setdefault("pads", result["calibration"]["pads"])
+                self.send_api_json(result, 200)
+            except (ValueError, TypeError) as e:
+                self.send_api_json({"success": False, "error": str(e)}, 400)
+            except (OSError, sqlite3.Error) as e:
+                self.send_api_json({"success": False, "error": str(e)}, 500)
             return
 
         elif clean_api == "/api/cerebro_autochop":
