@@ -31,6 +31,8 @@ class IndexerTests(unittest.TestCase):
             build_release.build_release(archive)
             prefix = f'BeatOS-{build_release.VERSION}/'
             with zipfile.ZipFile(archive) as bundle:
+                self.assertIn(prefix + 'BeatOS/docs/MASTER_ECOSISTEMA_DISCOS.html', bundle.namelist())
+                self.assertIn(prefix + 'BeatOS/docs/assets/beatos-maintenance.js', bundle.namelist())
                 source = bundle.read(prefix + 'BeatOS/templates/catalogo.html').decode('utf-8')
                 installed = bundle.read(prefix + CATALOG_REL).decode('utf-8')
             self.assertEqual(installed, render_catalog(source, [], {}),

@@ -93,7 +93,7 @@ class CircuitBreaker:
 circuit_breaker = CircuitBreaker()
 _CACHE_LOCK = threading.Lock()
 _FAISS_CACHE = {"model": None, "index": None, "metadata": None, "mtime": 0.0}
-MPC_SAMPLE_DB = os.environ.get("BEATOS_MPC_DB", "/Volumes/MPCSMPL/BeatOS/data/mpc_sample.db")
+MPC_SAMPLE_DB = os.environ.get("BEATOS_MPC_DB", "")
 
 
 def get_embedding_model():

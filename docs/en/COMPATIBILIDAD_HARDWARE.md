@@ -31,6 +31,10 @@ BeatOS exports **the current 16 pads**, not the source song, full track arrangem
 
 **Loading check:** preserve source projects, place the entire exported folder (including samples and ProjectData) on an appropriate medium, use the manufacturer's open/load process, inspect every pad, then save and reopen from the destination software. Do **not** use a successful import dialog as proof of sound/mute/pitch correctness.
 
+### Live finger drumming and separate mixer buses
+
+Choose **1 drum program · Finger drumming** and **Submixes by family · Keep pad positions**. BeatOS writes the same pad and bank positions in the XPJ and XPM and routes bass to Sub 1, hats and percussion to Sub 2, melodic sounds and vocals to Sub 3, and FX to Sub 4. Kicks, snares and toms use the program's track. Explicit pad assignments are retained. Mixing with effects or sidechain depends on the device, firmware and plug-in. The four-track layout uses separate programs and is intended for playing or editing each family separately.
+
 ## 2. Native Instruments Maschine
 
 BeatOS outputs `NI_Maschine/<kit>/Samples/Group_A/` WAVs at 44.1 kHz and `Groups/<kit>_Maschine_Map.json`, which lists slot and suggested parameters. **It does not generate a native `.mxgrp`**, pattern, scene, plugin chain or Maschine project.

@@ -50,12 +50,14 @@ import threading
 import time
 import urllib.parse
 import urllib.request
+import unicodedata
 import webbrowser
 import zipfile
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer as HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from socketserver import TCPServer
 from pathlib import Path
 from beatos_paths import CATALOG_REL, MASTER_DASHBOARD_REL, config_dir, database_path, default_library_root
-from beatos_i18n import get_request_language, localize_api_payload, translate_text
+from beatos_i18n import cli_failure, get_request_language, localize_api_payload, translate_text
 
 mimetypes.init()
 mimetypes.add_type("audio/wav", ".wav")
@@ -71,6 +73,7 @@ mimetypes.add_type("application/json", ".json")
 # Estado global de tareas en segundo plano y cachés protegidas por mutex
 TASK_LOCK = threading.Lock()
 _BUILDER_LOCK = threading.Lock()
+LIBRARY_NAMES_LOCK = threading.Lock()
 _LIBS_CACHE_LOCK = threading.Lock()
 _BRIDGE_SYNC_LOCK = threading.Lock()
 _BRIDGE_SYNC_STATE = {"ts": 0.0, "sig": None}
@@ -117,8 +120,6 @@ def open_sqlite_readonly(db_path: str | Path) -> sqlite3.Connection:
             conn.execute(pragma)
     pool[p_str] = (conn, mtime_ns)
     return conn
-
-
 PO_BACKUP_LOCK = threading.Lock()
 PO_BACKUP_CACHE = {}
 
@@ -528,8 +529,6 @@ def _bounded_io_call(fn, timeout: float = 0.4, default=None):
     th.start()
     th.join(timeout)
     return box[0]
-
-
 def mounted_volume_paths() -> list[Path]:
     if sys.platform == "win32":
         import ctypes
@@ -2262,12 +2261,16 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
         filtered_pads_in = [x for x in pads_in if isinstance(x, dict)]
 
     pad_reports = []
-    text_tokens = [kit_name]
     sub_heavy_count = 0
     open_hat_count = 0
     closed_hat_count = 0
     candidate_loop_wav: Optional[Path] = None
-    candidate_loop_score = -1.0
+    candidate_loop_score = ()
+    reference_sample = None
+    reference_style = None
+    rhythm_hints = {}
+    melodic_roles = {"MELODIC_LOOP", "KEYS_SYNTH", "VOCAL"}
+    drum_roles = {"KICK", "SNARE", "TOM", "CLAP", "HIHAT", "CYMBAL", "PERCUSSION", "DRUM_LOOP"}
 
     for item in filtered_pads_in:
         p_num = int(item.get("pad") or item.get("pad_number") or 0)
@@ -2276,7 +2279,8 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
         sname = str(item.get("sample_name") or item.get("sampleName") or "").strip()
         rel_path = str(item.get("rel_path") or item.get("relPath") or "").strip()
         stype = str(item.get("sound_type") or item.get("soundType") or "").strip().upper()
-        text_tokens.append(f"{sname} {rel_path}")
+        filename = Path(rel_path).name or sname
+        label_style = kit_mod.detect_musical_style(filename) if kit_mod else {"id": "standard"}
 
         if not stype or stype == "SAMPLE":
             stype = kit_mod.detect_sound_type(sname or rel_path) if kit_mod else "PERCUSSION"
@@ -2295,26 +2299,29 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
                     if kit_mod and hasattr(kit_mod, "analyze_sample_acoustics"):
                         ac = kit_mod.analyze_sample_acoustics(wav_path) or {}
                     if wav_path.suffix.lower() == ".wav":
-                        # ZCR rápido únicamente si no vino ya en ac
-                        if ac.get("zcr_hz") is not None:
-                            zcr_hz = float(ac.get("zcr_hz") or 0.0)
-                        else:
-                            try:
-                                with wave.open(str(wav_path), "rb") as wf:
-                                    n_ch = max(1, wf.getnchannels())
-                                    sw = wf.getsampwidth()
-                                    fr = wf.getframerate() or 44100
-                                    read_n = min(wf.getnframes(), int(fr * 0.4), 17640)
-                                    raw = wf.readframes(read_n)
-                                    if sw == 2 and read_n > 32:
-                                        total_s = len(raw) // 2
-                                        samps = struct.unpack(f"<{total_s}h", raw[: total_s * 2])
-                                        m_slice = samps[::n_ch] if n_ch > 1 else samps
-                                        if len(m_slice) > 16:
-                                            zc = sum(1 for i in range(1, len(m_slice)) if (m_slice[i - 1] >= 0) != (m_slice[i] >= 0))
-                                            zcr_hz = round((zc * fr) / (2.0 * len(m_slice)), 1)
-                            except Exception:
-                                pass
+                        try:
+                            with wave.open(str(wav_path), "rb") as wf:
+                                n_ch = max(1, wf.getnchannels())
+                                sw = wf.getsampwidth()
+                                fr = wf.getframerate() or 44100
+                                n_frames = wf.getnframes()
+                                if not ac.get("duration_sec"):
+                                    duration_sec = round(n_frames / float(fr), 3) if fr else 0.0
+                                read_n = min(n_frames, int(fr * 1.5), 66150)
+                                raw = wf.readframes(read_n)
+                                if sw == 2 and read_n > 32:
+                                    total_s = len(raw) // 2
+                                    samps = struct.unpack(f"<{total_s}h", raw[: total_s * 2])
+                                    if n_ch > 1:
+                                        channels = (samps[ch::n_ch] for ch in range(n_ch))
+                                        mono = max(channels, key=lambda channel: sum(x * x for x in channel))
+                                    else:
+                                        mono = samps
+                                    if len(mono) > 16:
+                                        zc = sum(1 for i in range(1, len(mono)) if (mono[i - 1] >= 0) != (mono[i] >= 0))
+                                        zcr_hz = round((zc * fr) / (2.0 * len(mono)), 1)
+                        except Exception:
+                            pass
             except Exception:
                 pass
 
@@ -2333,7 +2340,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
         if stype in ("BASS_808", "KICK") and low_ratio >= 0.62 and duration_sec >= 0.42:
             acoustic_role = "BASS_808" if ("808" in low_sname or "sub" in low_sname or duration_sec >= 0.65) else "SUB_KICK"
             sub_heavy_count += 1
-        elif stype == "HIHAT" or (zcr_hz >= 2600 and low_ratio < 0.15 and stype not in ("CYMBAL", "SNARE", "CLAP")):
+        elif stype == "HIHAT" or (zcr_hz >= 2600 and low_ratio < 0.15 and stype == "PERCUSSION" and not is_tom):
             if "open" in low_sname or "oh" in low_sname or duration_sec >= 0.24:
                 acoustic_role = "HIHAT_OPEN"
                 open_hat_count += 1
@@ -2344,14 +2351,21 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
         elif is_tom:
             acoustic_role = "TOM"
 
-        # Candidato principal de loop/frase melódica para análisis de compás, patrón rítmico y adaptación Hip-Hop/Lo-Fi
+        if stype in drum_roles and label_style["id"] != "standard":
+            style_key = label_style["id"]
+            hint = rhythm_hints.setdefault(style_key, {"label": label_style["style"], "pads": []})
+            hint["pads"].append(p_num)
+
         if resolved_wav is not None and duration_sec >= 0.85:
-            loop_prio = duration_sec + (3.0 if stype in ("MELODIC_LOOP", "KEYS_SYNTH", "VOCAL") else 0.0)
-            if any(k in low_sname or k in rel_path.lower() for k in ("bolero", "soul", "jazz", "bossa", "loop", "guitar", "rhodes", "piano", "sax", "break")):
-                loop_prio += 2.5
-            if loop_prio > candidate_loop_score:
-                candidate_loop_score = loop_prio
+            tagged_bpm = kit_mod._extract_explicit_bpm_from_text(filename) if kit_mod else None
+            score = (stype in melodic_roles, stype in {"MELODIC_LOOP", "KEYS_SYNTH"},
+                     label_style["id"] != "standard", bool(tagged_bpm), min(duration_sec, 24.0), -p_num)
+            if score > candidate_loop_score:
+                candidate_loop_score = score
                 candidate_loop_wav = resolved_wav
+                reference_sample = {"pad": p_num, "filename": filename, "sound_type": stype,
+                                    "tagged_bpm": tagged_bpm}
+                reference_style = label_style
 
         if kit_mod and hasattr(kit_mod, "compute_profiled_pad_volume"):
             studio_vol_info = kit_mod.compute_profiled_pad_volume(stype, resolved_wav, mix_mode="studio_mastering")
@@ -2525,6 +2539,11 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
                     pass
 
     combined_text = " ".join(text_tokens)
+    fallback_style = {"id": "standard", "style": "Hip-Hop / Electrónica",
+                      "bpm": current_tempo, "mute_profile": "punch_clean"}
+    kit_style = kit_mod.detect_musical_style(Path(kit_name).name) if kit_mod else fallback_style
+    style_basis = ("sample_label" if reference_style and reference_style["id"] != "standard" else
+                   "kit_label" if kit_style["id"] != "standard" else "undetermined")
     bpm_source = "genre_inference"
     if kit_mod and rack_wavs and hasattr(kit_mod, "analyze_kit_key_and_bpm"):
         kit_meta = kit_mod.analyze_kit_key_and_bpm(
@@ -2540,17 +2559,22 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
             key_source = str(kit_meta.get("key_source") or key_source)
             confirmed_by_drums = bool(kit_meta.get("confirmed_by_drums", confirmed_by_drums))
     else:
-        inferred_bpm = kit_mod.infer_kit_bpm(kit_name or combined_text, fallback=current_tempo) if kit_mod else current_tempo
+        inferred_bpm = (reference_sample or {}).get("tagged_bpm") or (
+            kit_mod.infer_kit_bpm(kit_name or combined_text, fallback=current_tempo) if kit_mod else current_tempo
+        )
 
     # Análisis de Patrón Rítmico del sample melódico/loop principal ANTES de puntuar el estilo
-    # (usando el nombre propio del sample principal + nombre del kit, sin contaminar con hi-hats de otros packs)
     rhythm_analysis = None
     hiphop_adaptation = None
     adapt_mode = str(payload.get("adapt_mode") or "auto").strip().lower()
+    crate_digging_styles = (
+        "bolero", "oldies", "soul_vintage", "jazz_hop", "lofi", "boombap", "rnb_soul", "funk_jazz",
+        "drumless", "bossa_samba", "cumbia_son", "tango_vals", "psych_library",
+    )
     if kit_mod and hasattr(kit_mod, "analyze_rhythmic_pattern_and_hiphop_adaptation"):
         if candidate_loop_wav is not None and candidate_loop_wav.is_file():
             try:
-                loop_style_hint = f"{kit_name} {candidate_loop_wav.stem}".strip()
+                loop_style_hint = reference_sample["filename"] if reference_sample else f"{kit_name} {candidate_loop_wav.stem}".strip()
                 rhythm_bundle = kit_mod.analyze_rhythmic_pattern_and_hiphop_adaptation(
                     candidate_loop_wav,
                     style_hint=loop_style_hint,
@@ -2581,9 +2605,8 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
     elif kit_mod and hasattr(kit_mod, "detect_musical_style"):
         style_info = kit_mod.detect_musical_style(combined_text, bpm=current_tempo if current_tempo != 120.0 else None)
     else:
-        style_info = {"id": "standard", "style": "Hip-Hop / Electrónica", "bpm": current_tempo, "mute_profile": "punch_clean"}
+        style_info = dict(fallback_style)
     style_id = style_info.get("id", "standard")
-    style_confidence = float(style_info.get("confidence") or (0.88 if style_id != "standard" else 0.72))
     secondary_styles = style_info.get("secondary_styles") or []
     style_evidence = str(style_info.get("style_evidence") or "")
 
@@ -2594,10 +2617,6 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
     elif sub_heavy_count == 0 and style_id in ("lofi", "jazz_hop", "boombap", "drumless", "bolero", "oldies", "soul_vintage") and recommended_profile == "club_clean":
         recommended_profile = "jazz_funk" if style_id != "boombap" else "real_drums"
 
-    crate_digging_styles = (
-        "bolero", "oldies", "soul_vintage", "jazz_hop", "lofi", "boombap", "rnb_soul", "funk_jazz",
-        "drumless", "bossa_samba", "cumbia_son", "tango_vals", "psych_library",
-    )
     is_crate_digging_style = style_id in crate_digging_styles
     if kit_mod and hasattr(kit_mod, "analyze_rhythmic_pattern_and_hiphop_adaptation"):
         if rhythm_analysis is None and is_crate_digging_style:
@@ -2607,7 +2626,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
             tgt_b = round(float(mode_bpm_map.get(adapt_mode, default_tgt)), 1)
             eff_b = round(src_b / 2.0, 1) if src_b >= 132.0 else src_b
             half_applied = bool(src_b >= 132.0)
-            low_comb = combined_text.lower()
+            low_comb = kit_name.lower()
             ts_fb = (
                 "3/4" if any(k in low_comb for k in ("vals", "waltz", "3/4"))
                 else ("12/8" if (re.search(r"(?:^|[\W_])12[/_\-]8(?:$|[\W_])", low_comb) or ("4/4" not in low_comb and any(k in low_comb for k in ("doo wop", "doo-wop", "doowop", "lowrider", "oldies"))))
@@ -2639,6 +2658,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
                 "drumless": "Fraseo Libre / Drumless Rubato",
             }
             rhythm_analysis = {
+                "basis": "kit_label",
                 "source_bpm": src_b,
                 "effective_source_bpm": eff_b,
                 "time_signature": ts_fb,
@@ -2657,6 +2677,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
                 "timbre_label": "Cinta Vintage 50s/60s (Oldies)" if style_id == "oldies" else "Orgánico / Referencia de Kit",
             }
             hiphop_adaptation = {
+                "basis": "kit_label",
                 "target_style": "Hip-Hop / Lo-Fi" if style_id in ("bolero", "oldies", "lofi", "bossa_samba", "drumless") else "Boom Bap & Lo-Fi",
                 "adapt_mode": adapt_mode,
                 "target_bpm": main_prof["target_bpm"],
@@ -2673,8 +2694,18 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
                 ),
             }
 
+    if rhythm_analysis and rhythm_analysis.get("basis") != "kit_label":
+        inferred_bpm = rhythm_analysis.get("source_bpm") or inferred_bpm
+        acoustic_style = rhythm_analysis.get("acoustic_style_id")
+        if style_basis == "undetermined" and acoustic_style in crate_digging_styles:
+            style_id = acoustic_style
+            style_basis = "acoustic"
+            style_info = {"style": rhythm_analysis.get("acoustic_style") or
+                          rhythm_analysis.get("groove_pattern") or fallback_style["style"]}
+
     if hiphop_adaptation and (
         style_id in ("bolero", "oldies", "soul_vintage", "jazz_hop", "drumless", "bossa_samba", "cumbia_son", "tango_vals", "psych_library")
+        or style_id in ("lofi", "boombap")
         or adapt_mode in ("lofi_chill", "boombap_classic", "dilla_jazzhop", "drumless_alchemist")
     ):
         inferred_bpm = float(hiphop_adaptation["target_bpm"])
@@ -2857,6 +2888,9 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
         "style_id": style_id,
         "recommended_bpm": inferred_bpm,
         "bpm_source": bpm_source,
+        "rack_bpm": current_tempo,
+        "style_reference": reference_sample,
+        "drum_style_hints": sorted(rhythm_hints.values(), key=lambda hint: -len(hint["pads"])),
         "recommended_mute_profile": recommended_profile,
         "anchor_key": anchor_note_label,
         "anchor_camelot": anchor_camelot,
@@ -2883,7 +2917,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
             "mute_profile": recommended_profile,
             "anchor_key": anchor_note_label,
             "camelot": anchor_camelot,
-            "confidence": style_confidence,
+            "basis": style_basis,
             "secondary_styles": secondary_styles,
             "evidence": style_evidence,
             "notes": " · ".join(notes_parts),
@@ -3171,6 +3205,88 @@ def build_cerebro_smart_kit(root_dir: str, payload: dict) -> dict:
         "hiphop_adaptation": hiphop_adaptation,
         "mlx_copilot": query_cerebro_mlx_advisor(smart_telemetry, allow_llm=payload.get("use_llm", True) is not False),
         "pads": pads_out,
+    }
+
+
+def master_produce_rack(root_dir: str, payload: dict) -> dict:
+    """Analyze and calibrate the rack in place. A prompt can populate an empty rack."""
+    pads = payload.get("pads", [])
+    if not isinstance(pads, list) or len(pads) > 128:
+        raise ValueError("Los pads deben ser una lista de hasta 128 entradas.")
+    generated = not pads
+    prompt = str(payload.get("prompt") or "").strip()
+    if generated and not prompt:
+        raise ValueError("Asigna muestras al rack o escribe un estilo.")
+    builder = get_hardware_kit_builder(root_dir)
+    if builder is None:
+        raise ValueError("Motor hardware_kit_builder no disponible en el servidor.")
+    kit = build_cerebro_smart_kit(root_dir, payload) if generated else {}
+    pads = kit.get("pads", pads)
+    if generated:
+        existing_pads = []
+        for pad in pads:
+            try:
+                if resolve_library_path(root_dir, pad["rel_path"]).is_file():
+                    existing_pads.append(pad)
+            except ValueError:
+                continue
+        pads = existing_pads
+        if payload.get("target_device") == "ep133":
+            pads = [pad for pad in pads if pad["pad"] <= 12]
+    if not pads:
+        raise ValueError("La biblioteca no contiene muestras disponibles para ese estilo.")
+    by_pad = {}
+    for pad in pads:
+        if not isinstance(pad, dict):
+            raise ValueError("Cada pad debe ser un objeto.")
+        number = int(pad.get("pad") or 0)
+        if not 1 <= number <= 128 or number in by_pad:
+            raise ValueError("Número de pad no válido o duplicado.")
+        path = pad.get("rel_path")
+        if not isinstance(path, str) or not path or not resolve_library_path(root_dir, path).is_file():
+            raise ValueError(f"Pad {number}: muestra ausente o fuera de la biblioteca")
+        by_pad[number] = pad
+
+    tempo = kit.get("recommended_bpm", float(payload.get("tempo") or 120))
+    if not math.isfinite(tempo) or not 30 <= tempo <= 300:
+        raise ValueError("Tempo fuera de rango (30–300 BPM)")
+    name = str(payload.get("kit_name") or kit.get("kit_name") or "Rack Kit")
+    analyzed_pads = [{**pad, "sample_name": pad.get("sample_name") or pad.get("filename")
+                      or Path(pad["rel_path"]).name} for pad in pads]
+    analysis = analyze_rack_with_cerebro(root_dir, {
+        **payload, "kit_name": name, "tempo": tempo, "pads": analyzed_pads,
+    })
+    gain = {"smart_pcm": "recommended_volume", "hierarchical_a": "hierarchical_volume",
+            "uniform_b": "uniform_volume"}.get(payload.get("gain_profile", "smart_pcm"))
+    bus_counts = dict.fromkeys(("main_0", "sub1_bass", "sub2_hats", "sub3_melodic", "sub4_fx"), 0)
+    calibrated = []
+    for report in analysis["pads"]:
+        original = by_pad[report["pad"]]
+        stype = report["sound_type"]
+        route = builder.mpc_routed_pads({report["pad"]: {**original, "sound_type": stype}}, "submix_split")
+        submix = int(route[report["pad"]]["submix"])
+        bus_name = tuple(bus_counts)[submix] if 0 <= submix <= 4 else "main_0" if submix == 9 else None
+        if bus_name:
+            bus_counts[bus_name] += 1
+        result = {**original, "sound_type": stype, "submix": submix,
+                  "volume": report[gain] if gain else original.get("volume", 0.707946),
+                  "mute_group": original.get("mute_group", report["recommended_mute_group"])}
+        if payload.get("auto_tune_808", True) and stype in {"BASS_808", "BASS"}:
+            if report.get("detected_note"):
+                result.update(tune=report["recommended_tune"], fine_tune=report["recommended_fine_tune"],
+                              root_note=report["recommended_root_note"])
+        result["volume"] = float(result["volume"])
+        if not math.isfinite(result["volume"]) or not 0 <= result["volume"] <= 1:
+            raise ValueError(f"Pad {report['pad']}: volume fuera de rango")
+        calibrated.append(result)
+    gains = [20.0 * math.log10(pad["volume"]) for pad in calibrated if pad["volume"] > 0]
+    return {
+        "success": True, "kit_name": name, "generated_from_prompt": generated, "analysis": analysis,
+        "recommended_bpm": analysis["recommended_bpm"],
+        "recommended_mute_profile": analysis["recommended_mute_profile"],
+        "calibration": {"pads": calibrated, "avg_gain_db": round(sum(gains) / len(gains), 1) if gains else None},
+        "submix_routing": {"bus_counts": bus_counts},
+        "master_summary": {"style_label": analysis["detected_style"], "anchor_key": analysis["anchor_key"]},
     }
 
 
@@ -3534,8 +3650,71 @@ def resolve_library_path(root_dir: str, value: str) -> Path:
     return candidate
 
 
+def library_names_file(root) -> Path:
+    return config_dir(root) / "library_names.json"
+
+
+def read_library_names(root, *, strict=False) -> dict[str, str]:
+    try:
+        names = json.loads(library_names_file(root).read_text(encoding="utf-8"))
+        if not isinstance(names, dict) or not all(isinstance(value, str) for value in names.values()):
+            raise ValueError("El archivo de nombres de la biblioteca no es válido.")
+        return names
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError):
+        if strict:
+            raise
+        return {}
+
+
+def catalog_display_name(names: dict, root: str, path: str, native_name: str) -> str:
+    item = Path(path)
+    try:
+        relative = item.relative_to(Path(root).resolve()).as_posix() if item.is_absolute() else item.as_posix()
+    except ValueError:
+        return native_name
+    return names.get(relative, native_name)
+
+
+def save_library_name(root: str, payload: dict) -> dict:
+    if not isinstance(payload, dict) or not isinstance(payload.get("path"), str) or not payload["path"].strip():
+        raise ValueError("Se requiere una ruta de biblioteca.")
+    if not isinstance(payload.get("name"), str):
+        raise ValueError("Se requiere un nombre válido.")
+    name = unicodedata.normalize("NFC", payload["name"]).strip()
+    if len(name) > 120 or any(unicodedata.category(char) in {"Cc", "Cf", "Cs", "Zl", "Zp"} for char in name):
+        raise ValueError("Usa un nombre de hasta 120 caracteres sin saltos de línea.")
+    path = resolve_library_path(root, payload["path"])
+    if not ((path.is_file() and path.suffix.lower() in {".xpj", ".xpm"})
+            or (path.is_dir() and (path / "Expansion.xml").is_file())):
+        raise ValueError("Selecciona un proyecto, programa o expansión existente.")
+    relative = path.relative_to(Path(root).resolve()).as_posix()
+    with LIBRARY_NAMES_LOCK:
+        names = read_library_names(root, strict=True)
+        if name:
+            names[relative] = name
+        else:
+            names.pop(relative, None)
+        write_state_json(library_names_file(root), names)
+    return {"success": True, "path": relative, "name": name or None}
+
+
+class HTTPServer(ThreadingHTTPServer):
+    def server_bind(self):
+        # The local listener uses a numeric address. Avoid a reverse DNS lookup
+        # during startup, which can delay the loopback server on macOS.
+        TCPServer.server_bind(self)
+        self.server_name, self.server_port = self.server_address[:2]
+
+
 class MPCAudioRequestHandler(BaseHTTPRequestHandler):
-    server_version = "MPCAudioStreamer/3.8.0"
+    server_version = "MPCAudioStreamer/3.9.1"
+
+    def send_error(self, code, message=None, explain=None):
+        # The request line may be rejected before BaseHTTPRequestHandler has headers.
+        language = get_request_language(getattr(self, "headers", {}))
+        super().send_error(code, translate_text(message, language), explain)
 
     def _api_json_dumps(self, payload, **kwargs):
         """Localize user-facing API messages by this request's ES/EN preference."""
@@ -3746,6 +3925,11 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
             data = get_system_status(self.server.root_dir, self.server.server_port)
             self.wfile.write(self._api_json_dumps(data, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif clean_path == "/api/library_names":
+            root = self.server.root_dir
+            self.send_api_json({"success": True, "root_dir": root, "names": read_library_names(root)})
             return
 
         elif clean_path == "/api/ecosystem":
@@ -5224,6 +5408,19 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
             self.send_api_json(res, 200 if res["success"] else 409 if res.get("busy") else 500)
             return
 
+        elif clean_api == "/api/library_names":
+            try:
+                if length > 16384:
+                    raise ValueError("Tamaño de petición no permitido")
+                result = save_library_name(self.server.root_dir, json.loads(self.rfile.read(length)))
+            except ValueError as error:
+                self.send_api_json({"success": False, "error": str(error)}, 400)
+            except OSError as error:
+                self.send_api_json({"success": False, "error": str(error)}, 500)
+            else:
+                self.send_api_json(result)
+            return
+
         elif clean_api == "/api/load_project":
             try:
                 body = self.rfile.read(length).decode("utf-8") if length > 0 else "{}"
@@ -5239,6 +5436,10 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 kit_mod = get_hardware_kit_builder(self.server.root_dir)
                 if kit_mod and hasattr(kit_mod, "parse_xpj_project"):
                     proj_info = kit_mod.parse_xpj_project(src_path, source_root=self.server.root_dir, track_index=payload.get("track_index"))
+                    names = read_library_names(self.server.root_dir)
+                    proj_info["project_name"] = catalog_display_name(
+                        names, self.server.root_dir, src_path, proj_info["project_name"]
+                    )
                     resp = {"success": True, "project": proj_info}
                 else:
                     raise RuntimeError("Función parse_xpj_project no disponible.")
@@ -5267,6 +5468,10 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 if kit_mod and hasattr(kit_mod, "list_expansion_kits"):
                     exp_root = Path(self.server.root_dir) / "Expansions"
                     kits = kit_mod.list_expansion_kits(target_exp, expansions_root=exp_root, source_root=self.server.root_dir)
+                    names = read_library_names(self.server.root_dir)
+                    kits = [{**kit, "original_name": kit["name"],
+                             "name": catalog_display_name(names, self.server.root_dir, kit["rel_path"], kit["name"])}
+                            for kit in kits]
                     resp = {"success": True, "expansion_name": expansion_name or target_exp, "programs": kits, "total": len(kits)}
                 else:
                     raise RuntimeError("Función list_expansion_kits no disponible.")
@@ -5302,6 +5507,10 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 kit_mod = get_hardware_kit_builder(self.server.root_dir)
                 if kit_mod and hasattr(kit_mod, "parse_xpm_program"):
                     prog_info = kit_mod.parse_xpm_program(src_path, source_root=self.server.root_dir)
+                    names = read_library_names(self.server.root_dir)
+                    prog_info["program_name"] = catalog_display_name(
+                        names, self.server.root_dir, src_path, prog_info["program_name"]
+                    )
                     resp = {"success": True, "program": prog_info}
                 else:
                     raise RuntimeError("Función parse_xpm_program no disponible.")
@@ -5430,6 +5639,9 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
         ):
             file_root = os.path.join(os.path.dirname(__file__), "docs")
             clean_path = "MASTER_ECOSISTEMA_DISCOS.html"
+        elif clean_path == "assets/beatos-maintenance.js":
+            file_root = os.path.join(os.path.dirname(__file__), "docs", "assets")
+            clean_path = "beatos-maintenance.js"
         elif clean_path == MASTER_DASHBOARD_REL or (
             clean_path == 'catalogo_universal.html'
             and os.path.isfile(os.path.join(self.server.root_dir, MASTER_DASHBOARD_REL))
@@ -5724,4 +5936,8 @@ if __name__ == "__main__":
     parser.add_argument("--no-browser", action="store_true", help="No abrir automáticamente el navegador")
     parser.add_argument("--dashboard", action="store_true", help="Open the ecosystem dashboard")
     args = parser.parse_args()
-    run_server(args.path, port=args.port, auto_open=not args.no_browser, dashboard=args.dashboard)
+    try:
+        run_server(args.path, port=args.port, auto_open=not args.no_browser, dashboard=args.dashboard)
+    except (OSError, ValueError, sqlite3.Error) as error:
+        language = "es" if os.environ.get("BEATOS_LANG") == "es" else "en"
+        parser.exit(1, cli_failure("No se pudo iniciar el servidor.", error, language) + "\n")

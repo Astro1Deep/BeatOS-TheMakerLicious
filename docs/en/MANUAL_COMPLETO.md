@@ -1,7 +1,7 @@
-# BeatOS 3.8.0 — Complete user manual (English)
+# BeatOS 3.9.0 — Complete user manual (English)
 
 **The MakerLicious · Universal beatmaker station**  
-Version documented: **3.8.0** · Documentation review: **30 October 2026**.
+Version documented: **3.9.0** · Documentation review: **30 October 2026**.
 
 **Language:** [Español — manual original](../MANUAL_COMPLETO.md) · **English — this manual**  
 [Installation](../../GUIA_INSTALACION_EN.md) · [Hardware compatibility](COMPATIBILIDAD_HARDWARE.md) · [Technical reference and HTTP API](REFERENCIA_TECNICA.md) · [BeatOS repository](../../README.md)
@@ -47,7 +47,7 @@ There are two differently structured distributions:
 
 | Distribution | Command from the extracted/cloned root |
 | --- | --- |
-| Downloaded release **BeatOS-3.8.0.zip** | `python3 BeatOS/installer.py` |
+| Downloaded release **BeatOS-3.9.0.zip** | `python3 BeatOS/installer.py` |
 | Git clone / GitHub “Source code” | `python3 installer.py` |
 
 On Windows, use `py` instead of `python3` if that is how Python is installed. From the release ZIP, the other scripts are inside `BeatOS/`; from a clone, they are at the repository root.
@@ -275,4 +275,8 @@ Automated repository tests cover parts of indexing, metadata, parsers, routes, s
 
 Known limitations include the Sample/AC50-derived XPJ template (no independent MPC One/Live profile); no native Maschine/SP/EP project generation; no modem-data decoding for PO backups; rack state that is not fully saved across sessions; UI volume/export validation differences; and partially translated runtime labels.
 
-**Version numbers are unrelated:** *BeatOS 3.8.0* is not *Akai MPC 3.8*. For device operations, consult the [hardware compatibility guide](COMPATIBILIDAD_HARDWARE.md). For API and file structures, consult the [technical reference](REFERENCIA_TECNICA.md). [Back to Spanish manual](../MANUAL_COMPLETO.md).
+**Version numbers are unrelated:** *BeatOS 3.9.0* is not *Akai MPC 3.8*. For device operations, consult the [hardware compatibility guide](COMPATIBILIDAD_HARDWARE.md). For API and file structures, consult the [technical reference](REFERENCIA_TECNICA.md). [Back to Spanish manual](../MANUAL_COMPLETO.md).
+
+## Catalog display names
+
+In **MPC Projects** or **MPC Expansions**, choose **Edit display name**. Inside an expansion, you can edit each program. BeatOS saves the name with the library and uses it for searching and sorting. Leave the field blank to restore the original. Hardware filenames and sample references are preserved.

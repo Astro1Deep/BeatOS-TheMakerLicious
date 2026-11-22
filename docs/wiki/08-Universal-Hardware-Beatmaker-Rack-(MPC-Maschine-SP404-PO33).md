@@ -73,7 +73,7 @@ Ilustraciones técnicas cenitales en dibujo de ingeniería (estilo manual Teenag
 | **05** | **Teenage Engineering EP-133 K.O. II** | [![EP-133 K.O. II Blueprint](../assets/branding/blueprint_te_05_ep133.jpg)](../assets/branding/blueprint_te_05_ep133.jpg) | [Tinta Negra](../assets/branding/blueprint_transparent_ink_ep133.png) · [Tiza Blanca](../assets/branding/blueprint_transparent_chalk_ep133.png) |
 
 ### Banners Maestros del Ecosistema (Dark PCB & Bone White)
-- **Banner Panorámico Widescreen Dark (4128 × 1024)**: [![Master Banner Dark](../assets/branding/user_gemini_master_banner_dark.jpg)](../assets/branding/user_gemini_master_banner_dark.jpg)
+- **Banner Panorámico Widescreen Dark (4128 × 1024)**: [![Master Banner Dark](../assets/branding/master_widescreen_dark.jpg)](../assets/branding/master_widescreen_dark.jpg)
 - **Banner Panorámico 16:9 Drafting Bone White**: [![Master Banner 16:9](../assets/branding/beatos_makerlicious_blueprint_banner_16x9.jpg)](../assets/branding/beatos_makerlicious_blueprint_banner_16x9.jpg)
 - **Overlays Panorámicos Transparentes**: [Tinta Negra](../assets/branding/blueprint_transparent_ink_master_banner.png) · [Tiza Blanca](../assets/branding/blueprint_transparent_chalk_master_banner.png)
 

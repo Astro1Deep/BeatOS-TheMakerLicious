@@ -6,6 +6,7 @@ import threading
 import unittest
 import urllib.error
 import urllib.request
+from unittest.mock import patch
 from http.server import HTTPServer
 from pathlib import Path
 import sys
@@ -38,9 +39,65 @@ class APILanguageTests(unittest.TestCase):
         except urllib.error.HTTPError as err:
             return err.code, json.loads(err.read())
 
+    def test_raw_http_failures_use_the_request_language(self):
+        with self.server() as base:
+            for language, expected in (
+                ("en", "Path is outside the library"),
+                ("es", "Ruta fuera de la biblioteca"),
+            ):
+                request = urllib.request.Request(base + "/api/download_file?path=..%2Foutside.wav",
+                                                 headers={"X-BeatOS-Language": language})
+                with self.subTest(language=language), self.assertRaises(urllib.error.HTTPError) as error:
+                    urllib.request.urlopen(request, timeout=5)
+                self.assertEqual(error.exception.code, 403)
+                self.assertIn(expected, error.exception.read().decode("utf-8"))
+
+    def test_theme_roundtrip_and_rejection_preserve_shared_selection(self):
+        with tempfile.TemporaryDirectory() as folder, patch.object(Path, "home", return_value=Path(folder)), self.server() as url:
+            headers = {"Content-Type": "application/json", "X-BeatOS-Language": "en"}
+            self.assertIsNone(self.request(url + "/api/theme")[1]["theme"])
+            status, data = self.request(url + "/api/theme", b'{"theme":"astro1deep-obsidian"}', headers)
+            self.assertEqual((status, data["theme"]), (200, "astro1deep-obsidian"))
+            status, data = self.request(url + "/api/theme", b'{"theme":[]}', headers)
+            self.assertEqual((status, data["error"]), (400, "Invalid ecosystem theme."))
+            self.assertEqual(self.request(url + "/api/theme")[1]["theme"], "astro1deep-obsidian")
+
+    def test_bridge_advertises_bound_port_from_active_library(self):
+        with tempfile.TemporaryDirectory() as folder, patch.object(Path, "home", return_value=Path(folder)):
+            stack = Path(folder) / ".mlx-stack"
+            stack.mkdir()
+            (stack / "cerebro").touch()
+            with patch.object(serve_mpc, "_probe_local_port", return_value=False):
+                with patch.object(serve_mpc, "discover_mounted_audio_libraries", return_value=[]):
+                    self.assertTrue(serve_mpc.detect_cerebro_os(folder, port=8891)["installed"])
+            bridge = json.loads((stack / "beatos_bridge.json").read_text())
+            self.assertEqual(bridge["api_base"], "http://127.0.0.1:8891")
+            self.assertEqual(bridge["root_dir"], folder)
+
+    def test_reading_other_card_status_preserves_the_synced_cerebro_library(self):
+        with tempfile.TemporaryDirectory() as folder, patch.object(Path, "home", return_value=Path(folder)):
+            home = Path(folder)
+            stack = home / ".mlx-stack"
+            stack.mkdir()
+            (stack / "cerebro").touch()
+            first, second = home / "First", home / "Second"
+            first.mkdir()
+            second.mkdir()
+            with patch.object(serve_mpc, "_probe_local_port", return_value=False), \
+                 patch.object(serve_mpc, "mounted_volume_paths", return_value=[]):
+                self.assertTrue(serve_mpc.run_sync_dashboard(str(first), 8888)["inventory"]["cerebro_synced"])
+                status = serve_mpc.get_system_status(str(second), 8889)
+            bridge = json.loads((stack / "beatos_bridge.json").read_text())
+            self.assertEqual(bridge["root_dir"], str(first.resolve()))
+            self.assertEqual(bridge["api_base"], "http://127.0.0.1:8888")
+            self.assertEqual((status["root_dir"], status["port"]), (str(second), 8889))
+
     def test_hardware_errors_are_translated_without_modifying_pad_number(self):
         from beatos_i18n import translate_text
         cases = {
+            "No se pudo procesar pad 3: Audio vacío": "Could not process pad 3: Audio is empty",
+            "Escala desconocida: 'Caña'. Escalas disponibles: Mayor": "Unknown scale: 'Caña'. Available scales: Mayor",
+            "Muestra de audio no encontrada: /Volumes/Canción.wav": "Audio sample not found: /Volumes/Canción.wav",
             "Tempo fuera de rango (30–300 BPM)": "Tempo out of range (30–300 BPM)",
             "Pad 5: muestra ausente o fuera de la biblioteca": "Pad 5: sample missing or outside the library",
             "Pad 7: tune fuera de rango": "Pad 7: tune out of range",

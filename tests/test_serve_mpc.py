@@ -17,6 +17,21 @@ import serve_mpc
 
 
 class ServerSecurityTests(unittest.TestCase):
+
+    def test_acoustic_features_use_audible_stereo_channel(self):
+        import math
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            with wave.open(str(root / 'stereo.wav'), 'wb') as audio:
+                audio.setparams((2, 2, 8000, 0, 'NONE', 'not compressed'))
+                audio.writeframes(b''.join(struct.pack('<hh', 0, int(12000 * math.sin(2 * math.pi * 100 * i / 8000)))
+                                           for i in range(8000)))
+            report = serve_mpc.analyze_rack_with_cerebro(str(root), {
+                'pads': [{'pad': 1, 'rel_path': 'stereo.wav', 'sound_type': 'PERCUSSION'}]
+            })['pads'][0]
+            self.assertGreater(report['zcr_hz'], 90)
+            self.assertGreater(report['low_energy_ratio'], 0.5)
+
     @contextlib.contextmanager
     def server(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -338,6 +353,157 @@ class ServerSecurityTests(unittest.TestCase):
             pad1 = json.loads(body)['program']['pads']['1']
             self.assertFalse(pad1['missing'])
             self.assertEqual(pad1['rel_path'], 'Expansions/DemoPack/Demo Kit_[ProjectData]/Kick.wav')
+
+    def test_dashboard_refresh_and_sync_discover_external_volumes_without_cerebro(self):
+        import json
+        import sqlite3
+        from unittest.mock import patch
+        with self.server() as (url, parent):
+            root = parent / "library"
+            external = parent / "Producer's USB ñ"
+            index = external / "_INDEX_AUDIO" / "arbitrary-name.db"
+            index.parent.mkdir(parents=True)
+            with contextlib.closing(sqlite3.connect(index)) as connection:
+                connection.execute("CREATE TABLE tracks (title TEXT, relative_path TEXT)")
+                connection.execute("INSERT INTO tracks VALUES (?, ?)", ("Break", "Break.wav"))
+                connection.commit()
+            before = index.read_bytes()
+            with patch.object(serve_mpc, "mounted_volume_paths", return_value=[external]), \
+                 patch.dict("os.environ", {"BEATOS_FORCE_HIDE_CEREBRO": "1"}):
+                for endpoint in ("/ecosystem", "/BeatOS/docs/MASTER_ECOSISTEMA_DISCOS.html"):
+                    status, html = self.request(url + endpoint)
+                    self.assertEqual(status, 200)
+                    self.assertIn(b"Master Ecosystem", html)
+                self.assertEqual(self.request(url + "/BeatOS/docs/assets/beatos-maintenance.js")[0], 200)
+                status, raw = self.request(url + "/api/ecosystem")
+                self.assertEqual(status, 200, raw)
+                inventory = json.loads(raw)["inventory"]
+                self.assertEqual(len(inventory["volumes"]), 2)
+                self.assertEqual(inventory["libraries"][0]["sample_count"], 1)
+                self.assertEqual(inventory["libraries"][0]["mount_path"], str(external.resolve()))
+                status, raw = self.request(url + "/api/sync_dashboard", data=b"", method="POST", headers={"Origin": url})
+                self.assertEqual(status, 200, raw)
+                snapshot = root / "BeatOS/config/ecosystem_inventory.json"
+                self.assertFalse(json.loads(snapshot.read_text())["cerebro_installed"])
+                self.assertEqual(self.request(url + "/BeatOS/config/ecosystem_inventory.json")[0], 403)
+                self.assertFalse((external / "MASTER_ECOSISTEMA_DISCOS.html").exists())
+                self.assertEqual(before, index.read_bytes())
+
+    def test_reindex_updates_catalog_and_reports_completion(self):
+        import json
+        import sqlite3
+        import time
+        with self.server() as (url, parent):
+            root = parent / "library"
+            with wave.open(str(root / "Kick prueba.wav"), "wb") as audio:
+                audio.setparams((1, 2, 44100, 0, "NONE", "not compressed"))
+                audio.writeframes(struct.pack("<h", 1000) * 1024)
+            status, raw = self.request(url + "/api/reindex", data=b"", method="POST", headers={"Origin": url})
+            self.assertEqual(status, 200, raw)
+            self.assertTrue(json.loads(raw)["success"])
+            deadline = time.monotonic() + 15
+            while True:
+                _, raw = self.request(url + "/api/task_status")
+                task = json.loads(raw)
+                if not task["running"]:
+                    break
+                self.assertLess(time.monotonic(), deadline)
+                time.sleep(0.04)
+            self.assertTrue(task["success"], task["logs"])
+            self.assertIn(b"Kick prueba.wav", self.request(url + "/")[1])
+            with contextlib.closing(sqlite3.connect(root / "BeatOS/data/mpc_sample.db")) as db:
+                self.assertEqual(db.execute("SELECT COUNT(*) FROM samples").fetchone()[0], 1)
+
+    def test_catalog_names_persist_without_renaming_expansion_files(self):
+        import gzip
+        import json
+        with self.server() as (url, parent):
+            root = parent / "library"
+            expansion = root / "Expansions/Demo"
+            expansion.mkdir(parents=True)
+            manifest = expansion / "Expansion.xml"
+            project = expansion / "Original.xpj"
+            program = expansion / "Original.xpm"
+            manifest.write_text("<Expansion><title>Demo</title></Expansion>", encoding="utf-8")
+            project.write_bytes(gzip.compress(b'ACVS\n{"data":{"tracks":[]}}'))
+            program.write_text('<MPCVObject><Program type="Drum"><ProgramName>Original</ProgramName></Program></MPCVObject>',
+                               encoding="utf-8")
+            originals = {item: item.read_bytes() for item in (manifest, project, program)}
+            endpoint = url + "/api/library_names"
+            headers = {"Origin": url, "Content-Type": "application/json"}
+
+            def rename(path, title):
+                return self.request(endpoint, data=json.dumps({"path": str(path), "name": title}).encode(),
+                                    headers=headers)
+
+            self.assertEqual(rename(expansion, "Colección de prueba")[0], 200)
+            self.assertEqual(rename(project, "01 · Boom Bap 90")[0], 200)
+            self.assertEqual(rename(program, "02 · Snares")[0], 200)
+            self.assertEqual(rename("escape.txt", "Other")[0], 400)
+            self.assertEqual(rename(program, "Invalid\nTitle")[0], 400)
+            state = json.loads(self.request(endpoint)[1])["names"]
+            self.assertEqual(state["Expansions/Demo/Original.xpj"], "01 · Boom Bap 90")
+            self.assertEqual(state["Expansions/Demo/Original.xpm"], "02 · Snares")
+            self.assertEqual(state["Expansions/Demo"], "Colección de prueba")
+            _, raw = self.request(url + "/api/list_expansion_programs",
+                                  data=b'{"expansion_name":"Demo"}', headers=headers)
+            self.assertEqual(json.loads(raw)["programs"][0]["name"], "02 · Snares")
+            _, raw = self.request(url + "/api/load_project",
+                                  data=b'{"rel_path":"Expansions/Demo/Original.xpj"}', headers=headers)
+            self.assertEqual(json.loads(raw)["project"]["project_name"], "01 · Boom Bap 90")
+            self.assertEqual(rename(program, "")[0], 200)
+            self.assertNotIn("Expansions/Demo/Original.xpm", json.loads(self.request(endpoint)[1])["names"])
+            for item, original in originals.items():
+                self.assertEqual(item.read_bytes(), original)
+            self.assertEqual(self.request(url + "/BeatOS/config/library_names.json")[0], 403)
+
+    def test_master_produce_keeps_pad_numbers_and_returns_internal_submixes(self):
+        import json
+        with self.server() as (url, parent):
+            root = parent / "library"
+            for name in ("Kick.wav", "Hat.wav", "Vocal.wav"):
+                with wave.open(str(root / name), "wb") as audio:
+                    audio.setparams((1, 2, 44100, 0, "NONE", "not compressed"))
+                    audio.writeframes(struct.pack("<h", 500) * 4096)
+            payload = {"gain_profile": "manual", "pads": [
+                {"pad": 1, "rel_path": "Kick.wav", "sound_type": "KICK", "mute_group": 0, "volume": 0.7},
+                {"pad": 4, "rel_path": "Hat.wav", "sound_type": "HIHAT"},
+                {"pad": 16, "rel_path": "Vocal.wav", "sound_type": "VOCAL"},
+            ]}
+            endpoint = url + "/api/cerebro_master_produce"
+            headers = {"Origin": url, "Content-Type": "application/json"}
+            code, body = self.request(endpoint, data=json.dumps(payload).encode(), headers=headers)
+            self.assertEqual(code, 200, body)
+            result = json.loads(body)
+            pads = result["calibration"]["pads"]
+            self.assertEqual([(p["pad"], p["submix"]) for p in pads], [(1, 0), (4, 2), (16, 3)])
+            self.assertEqual((pads[0]["volume"], pads[0]["mute_group"]), (0.7, 0))
+            self.assertEqual(self.request(endpoint, data=b"{}", headers=headers)[0], 400)
+            self.assertFalse((root / "Custom_Kits").exists())
+
+    def test_primary_melody_beats_single_percussion_label_and_keeps_source_tempo(self):
+        import math
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            files = [(5, "Short Ocean Drill Hat.wav", "HIHAT"),
+                     (13, "Lo-Fi_Piano_Bmaj_90BPM001.wav", "KEYS_SYNTH")]
+            pads = []
+            for pad, name, sound_type in files:
+                with wave.open(str(root / name), "wb") as audio:
+                    audio.setparams((1, 2, 8000, 0, "NONE", "not compressed"))
+                    count = 16000 if pad == 13 else 640
+                    audio.writeframes(b"".join(struct.pack("<h", int(1000 * math.sin(frame / 10)))
+                                               for frame in range(count)))
+                pads.append({"pad": pad, "rel_path": name, "sound_type": sound_type})
+            data = serve_mpc.analyze_rack_with_cerebro(str(root), {"tempo": 120, "pads": pads})
+            self.assertEqual(data["style_id"], "lofi")
+            self.assertEqual(data["style"]["basis"], "sample_label")
+            self.assertNotIn("confidence", data["style"])
+            self.assertEqual(data["style_reference"]["pad"], 13)
+            self.assertEqual(data["style_reference"]["tagged_bpm"], 90)
+            self.assertEqual(data["rhythm_analysis"]["source_bpm"], 90)
+            self.assertEqual(data["rack_bpm"], 120)
+            self.assertEqual(data["drum_style_hints"], [{"label": "UK / NY Drill", "pads": [5]}])
 
     def test_cerebro_analyze_long_paths_and_create_expansion_syncs_catalog(self):
         import base64

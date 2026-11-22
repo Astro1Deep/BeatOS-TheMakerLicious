@@ -14,6 +14,10 @@ Esta guía separa tres evidencias: **archivo generado** (lo que implementa BeatO
 
 Un WAV, un programa, un proyecto y un backup tienen funciones distintas. Compartir una extensión no prueba que dos motores interpreten el mismo contenido. Tampoco el nombre de una carpeta ni una ilustración de un aparato garantiza compatibilidad.
 
+### Finger drumming en directo con buses separados
+
+Elige **1 programa Drum · Finger drumming** y **Submixes por familia sin mover pads**. BeatOS conserva las posiciones de pads y bancos en XPJ y XPM. El bajo va a Sub 1, hats y percusión a Sub 2, melodía y voces a Sub 3 y FX a Sub 4. Bombos, cajas y toms salen por la pista del programa. Se conservan los buses manuales por pad. Los efectos y el sidechain dependen del equipo, el firmware y el plugin. Las cuatro pistas utilizan programas separados para tocar o editar cada familia por separado.
+
 ## 1. MPC Sample frente a MPC One y MPC Live
 
 **No se deben tratar como proyectos idénticos e intercambiables sin conversión o requisitos de versión.** Akai documenta en MPC 3.8 dos operaciones: cargar proyectos de MPC Sample en MPC desktop/standalone y exportar una pista Drum como archivo MPC Sample. La segunda se hace en desktop con `File > Export > As MPC Sample File`; en standalone, desde una pista Drum, `Mode Menu > Save > Save Drum Track As MPC Sample File`. La misma nota advierte que los proyectos standalone de 3.4–3.8 no son retrocompatibles con desktop 2.15. Eso no acredita la compatibilidad de cada archivo producido por BeatOS. [Notas oficiales de MPC 3.8, páginas 1–2](https://cdn.inmusicbrands.com/Software/AM20P3C8FWUPGZL12/MPC%203.8%20Release%20Notes.pdf).

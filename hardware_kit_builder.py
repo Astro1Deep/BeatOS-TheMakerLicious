@@ -885,14 +885,15 @@ def analyze_sample_acoustics(wav_path: str | Path) -> Dict[str, Any]:
     rms_active_dbfs = round(20.0 * math.log10(max(1e-9, rms_active) / 32767.0), 2)
     crest_factor_db = round(max(0.0, peak_dbfs - rms_active_dbfs), 2)
 
-    # Filtro paso bajo IIR de 1er orden (~180 Hz) sin DC para medir energía subgrave
-    mean_l = sum(left) / n_mono
+    # Filtro paso bajo IIR de 1er orden (~180 Hz) sin DC sobre el canal más enérgico para medir subgrave
+    dominant_ch = right if (right and sum(x * x for x in right) > sum(x * x for x in left)) else left
+    mean_d = sum(dominant_ch) / n_mono
     alpha = min(0.95, (2.0 * math.pi * 180.0) / (float(fr) + 2.0 * math.pi * 180.0))
     lp = 0.0
     lp_sq = 0.0
     ac_sq = 0.0
-    for x in left:
-        xc = x - mean_l
+    for x in dominant_ch:
+        xc = x - mean_d
         ac_sq += xc * xc
         lp = lp + alpha * (xc - lp)
         lp_sq += lp * lp
@@ -900,6 +901,7 @@ def analyze_sample_acoustics(wav_path: str | Path) -> Dict[str, Any]:
 
     stereo_correlation = 1.0
     if right:
+        mean_l = sum(left) / n_mono
         mean_r = sum(right) / n_mono
         num = 0.0
         den_l = 0.0
@@ -3211,6 +3213,8 @@ def parse_xpm_program(xpm_path: str | Path, source_root: Optional[str | Path] = 
             ar_sub = int(route_el.findtext("AudioRouteSubIndex", "0") or 0)
             if ar_type == 1:
                 submix = ar_sub + 1
+            elif ar_type == 2:
+                submix = 9
 
         sample_name = ""
         sample_file = ""
@@ -3332,11 +3336,21 @@ def parse_xpj_project(xpj_path: str | Path, source_root: Optional[str | Path] = 
             name = found.name if found else Path(sample).name
             kind = detect_sound_type(name)
             mix = inst.get("mixable", {})
+            route = mix.get("audioRoute")
+            submix = 0
+            if isinstance(route, dict):
+                destination = route.get("destination")
+                bus_index = route.get("audioRouteSubIndex")
+                if destination == 1 and isinstance(bus_index, int) and 0 <= bus_index < 8:
+                    submix = bus_index + 1
+                elif destination == 2:
+                    submix = 9
             pads[idx] = {"pad_number": idx, "sample_name": layer.get("sampleName") or Path(name).stem,
                          "sample_file": name, "full_path": str(found) if found else sample,
                          "rel_path": relative, "volume": mix.get("volume", 0.707946),
                          "pan": mix.get("pan", 0.5), "tune": inst.get("coarseTune", 0),
-                         "mute_group": inst.get("whichMuteGroup", default_mute_group(kind)), "sound_type": kind, "missing": found is None, "layer_count": len(layers)}
+                         "mute_group": inst.get("whichMuteGroup", default_mute_group(kind)), "sound_type": kind,
+                         "submix": submix, "missing": found is None, "layer_count": len(layers)}
         break
     if not pads and not data.get("tracks"):
         # Legacy sample-pool projects have no instruments; retain stable pool order.
@@ -3902,6 +3916,35 @@ def _effective_mpc_project_name(kit_name: str, mpc_options: Optional[dict] = Non
     return str(kit_name)
 
 
+def mpc_role_submix(sound_type: str) -> int:
+    """Route by instrument family without changing the pad or bank number."""
+    if sound_type in {"BASS_808", "BASS"}:
+        return 1
+    if sound_type in {"HIHAT", "CYMBAL", "PERCUSSION"}:
+        return 2
+    if sound_type in {"KEYS_SYNTH", "MELODIC_LOOP", "VOCAL", "INSTRUMENT"}:
+        return 3
+    return 4 if sound_type in {"FX", "AMBIENCE"} else 0
+
+
+def mpc_routed_pads(pads: dict, route_mode: str) -> dict:
+    routed = {}
+    for number, original in pads.items():
+        pad = dict(original)
+        if route_mode == "main":
+            pad["submix"] = 9
+        elif pad.get("submix") in (None, "", 0, "0"):
+            stype = str(pad.get("sound_type") or detect_sound_type(
+                pad.get("sample_name") or pad.get("sample_file") or Path(pad.get("source_path") or "").name
+            )).upper()
+            if route_mode == "submix_split":
+                pad["submix"] = mpc_role_submix(stype)
+            elif route_mode == "submix1":
+                pad["submix"] = 1
+        routed[number] = pad
+    return routed
+
+
 def export_mpc_project(
     kit_name: str,
     pads_data: dict,
@@ -3964,7 +4007,6 @@ def export_mpc_project(
         pad_default_submix = _resolve_pad_submix_for_route_mode(stype, audio_route_mode)
         if ("submix" not in p_copy or p_copy.get("submix") in (None, "")) and pad_default_submix != 0:
             p_copy["submix"] = pad_default_submix
-
         raw_vol = p_copy.get("volume")
         vol_locked = bool(p_copy.get("volume_locked"))
         is_default_vol = (not vol_locked) and (raw_vol is None or (math.isfinite(float(raw_vol)) and abs(float(raw_vol) - 0.707946) < 1e-5))
@@ -5964,7 +6006,8 @@ def create_kit(
             mpc_dir = output_base_dir / "Akai_MPC"
             mpc_dir.mkdir(parents=True, exist_ok=True)
             proj_path = export_mpc_project(clean_kit_name, pads_dict, mpc_dir, tempo=tempo, mpc_options=opts)
-            prog_path = export_mpc_program(clean_kit_name, pads_dict, mpc_dir, copy_samples=True)
+            program_pads = mpc_routed_pads(pads_dict, str(opts.get("audio_route_mode") or "track").strip().lower())
+            prog_path = export_mpc_program(clean_kit_name, program_pads, mpc_dir, copy_samples=True)
             mpc_info: Dict[str, Any] = {
                 "project_path": proj_path,
                 "program_path_root": prog_path,
@@ -7332,7 +7375,7 @@ def _extract_explicit_bpm_from_text(text: str) -> Optional[float]:
     if not text:
         return None
     s = str(text)
-    m = re.search(r"(?:^|[\s_\-/])(5\d|[6-9]\d|1[0-8]\d)\s*bpm(?![a-z])", s, re.I)
+    m = re.search(r"(?:^|[\s_\-/])(5\d|[6-9]\d|1[0-8]\d)[ _-]*bpm(?=\b|\d+(?:[_. -]|$))", s, re.I)
     if m:
         val = float(m.group(1))
         if 55.0 <= val <= 190.0:
@@ -9003,6 +9046,7 @@ def calibrate_xpj(
     xpj_path: Union[str, Path],
     backup: bool = True,
     smart_acoustics: bool = True,
+    reset_routes: bool = False,
 ) -> int:
     """Calibra un archivo .xpj (GZIP JSON): Gain Staging en 4 etapas, análisis acústico PCM y AudioRoute SampQOL."""
     xpj_path = Path(xpj_path)
@@ -9044,7 +9088,7 @@ def calibrate_xpj(
                 if cur_out_vol is None or cur_out_vol > 0.794328:
                     out_mix["volume"] = 0.7079457640647888
         submixes = mixer_dict.get("submixes")
-        if isinstance(submixes, list):
+        if reset_routes and isinstance(submixes, list):
             for s_idx, sm in enumerate(submixes):
                 if not isinstance(sm, dict):
                     continue
@@ -9086,7 +9130,7 @@ def calibrate_xpj(
             mixable = inst.get("mixable")
             if isinstance(mixable, dict):
                 ar = mixable.get("audioRoute")
-                if isinstance(ar, dict):
+                if reset_routes and isinstance(ar, dict):
                     dest = ar.get("destination", 0)
                     sub_idx = ar.get("audioRouteSubIndex", 0)
                     if not (dest == 1 and sub_idx in custom_submix_indices):
@@ -10245,32 +10289,37 @@ if __name__ == "__main__":
         calibrate.add_argument("--no-backup", action="store_true", help="Omitir creación de copias .bak-calib")
 
         args = parser.parse_args()
-        if args.command == "create":
-            pads = json.loads(base64.b64decode(args.b64, validate=True))
-            if not args.root.is_dir():
-                parser.error("La biblioteca no existe")
-            result = create_kit(args.name, pads, target=args.target, source_root=args.root)
-            print(json.dumps(result, ensure_ascii=False))
-            sys.exit(0)
-        elif args.command == "chromatic":
-            result = create_chromatic_kit(
-                sample_path=args.sample,
-                kit_name=args.name,
-                scale=args.scale,
-                root_note=args.root_note,
-                start_octave=args.start_octave,
-                monophonic=not args.polyphonic,
-                target=args.target,
-                source_root=args.root,
-                output_base_dir=args.out,
-                tempo=args.tempo,
-            )
-            print(json.dumps(result, ensure_ascii=False, indent=2))
-            sys.exit(0)
-        elif args.command == "calibrate":
-            result = calibrate_library_projects(args.path, backup=not args.no_backup)
-            print(json.dumps(result, ensure_ascii=False, indent=2))
-            sys.exit(0)
+        from beatos_i18n import cli_failure, translate_text
+        language = "es" if os.environ.get("BEATOS_LANG") == "es" else "en"
+        try:
+            if args.command == "create":
+                pads = json.loads(base64.b64decode(args.b64, validate=True))
+                if not args.root.is_dir():
+                    parser.error(translate_text("La biblioteca no existe", language))
+                result = create_kit(args.name, pads, target=args.target, source_root=args.root)
+                print(json.dumps(result, ensure_ascii=False))
+                sys.exit(0)
+            elif args.command == "chromatic":
+                result = create_chromatic_kit(
+                    sample_path=args.sample,
+                    kit_name=args.name,
+                    scale=args.scale,
+                    root_note=args.root_note,
+                    start_octave=args.start_octave,
+                    monophonic=not args.polyphonic,
+                    target=args.target,
+                    source_root=args.root,
+                    output_base_dir=args.out,
+                    tempo=args.tempo,
+                )
+                print(json.dumps(result, ensure_ascii=False, indent=2))
+                sys.exit(0)
+            elif args.command == "calibrate":
+                result = calibrate_library_projects(args.path, backup=not args.no_backup)
+                print(json.dumps(result, ensure_ascii=False, indent=2))
+                sys.exit(0)
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            parser.exit(1, cli_failure("No se pudo completar la operación del kit.", error, language) + "\n")
     print("=================================================================")
     print("Universal Hardware Kit Builder & Multi-Sampler Bridge v3.5 cargado")
     print(f"Directorio de Backups PO-33 detectado: {DEFAULT_PO_DIR}")

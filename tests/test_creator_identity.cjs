@@ -27,3 +27,26 @@ assert.ok(footer.indexOf('id="creatorArtistMark"') > footer.indexOf('id="audioPl
 assert.ok(footer.indexOf('id="audioPlayer"') > footer.indexOf('creator/label-rocket.png'));assert.ok(!footer.includes('Diseño y desarrollo'));
 assert.match(html,/mix-blend-mode:screen/);assert.match(html,/mix-blend-mode:multiply/);
 console.log('Player branding: rocket before audio, eye after audio, no header credits or caption typography OK');
+
+const obsidian = context.themes.find(theme => theme.id === 'astro1deep-obsidian');
+assert.ok(obsidian.banner.endsWith('/creator/astro1deep-banner.png'));
+assert.ok(fs.existsSync(path.join(root, obsidian.banner.replace(/^BeatOS\//, ''))));
+assert.match(html, /<button[^>]*id="themeCard_astro1deep-obsidian"\s+aria-pressed="false"/);
+const palette = html.match(/:root\[data-theme="astro1deep-obsidian"\] \{([^}]+)\}/)[1];
+const colors = Object.fromEntries([...palette.matchAll(/(--[\w-]+): #(\w{6});/g)].map(([, token, hex]) => [token, hex]));
+function luminance(hex) {
+  const rgb = hex.match(/../g).map(value => parseInt(value, 16) / 255);
+  return rgb.map(value => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4)
+    .reduce((result, value, index) => result + value * [.2126, .7152, .0722][index], 0);
+}
+function contrast(left, right) {
+  const [high, low] = [luminance(colors[left]), luminance(colors[right])].sort((a, b) => b - a);
+  return (high + .05) / (low + .05);
+}
+for (const surface of ['--bg-dark', '--bg-card', '--bg-hover', '--modal-bg']) {
+  for (const text of ['--text-primary', '--text-muted', '--mpc-cyan', '--mpc-gold', '--mpc-green', '--mpc-red']) {
+    assert.ok(contrast(text, surface) >= 4.5, text + ' on ' + surface);
+  }
+}
+assert.ok(contrast('--theme-accent', '--bg-dark') >= 4.5);
+console.log('Obsidian: banner asset, keyboard control and palette contrast OK');

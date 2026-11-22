@@ -15,11 +15,11 @@ from beatos_paths import entry_html, ENTRY_NAMES, CATALOG_REL
 FILES = ('serve_mpc.py', 'hardware_kit_builder.py', 'po_backup_protocols.py', 'vendor/po33_decode.py', 'vendor/po33_verify.py', 'vendor/PO33_DECODER_LICENSE.txt', 'index_mpc_library.py', 'beatos_paths.py', 'beatos_i18n.py', 'beatos_runtime.py',
          'installer.py', 'install.sh', 'requirements-beatos.txt', 'schema.sql', 'LICENSE', 'LICENSE.md',
          'README.md', 'README_ES.md', 'language_config.json', 'GUIA_INSTALACION.md', 'GUIA_INSTALACION_EN.md', 'build_release.py',
-         'templates/catalogo.html', 'docs/assets/po33-capture-worklet.js', 'templates/template_drum.xpm',
+         'templates/catalogo.html', 'docs/assets/po33-capture-worklet.js', 'docs/assets/beatos-maintenance.js', 'docs/MASTER_ECOSISTEMA_DISCOS.html', 'templates/template_drum.xpm',
          'templates/template_project.xpj', 'tests/test_hardware_kit_builder.py',
          'tests/test_po_backup_protocols.py', 'tests/test_serve_mpc.py', 'tests/test_indexer.py', 'tests/test_metadata.py', 'tests/test_installer.py', 'tests/test_mute_groups.py',
-         'tests/test_pad_audio.cjs', 'tests/test_library_ui.cjs', 'tests/test_creator_identity.cjs', 'tests/test_po33_backups.cjs', 'tests/test_i18n.cjs', 'tests/test_installer_language.py', 'tests/test_documentation_links.py', 'tests/smoke_browser_i18n.py', 'ABRIR_BEATOS.command', 'ABRIR_BEATOS.bat', 'tests/test_hub_workflows.py', 'tests/test_server_language.py', 'tests/test_index_language.py', 'tests/test_target_bank_load.cjs', 'tests/test_runtime_bootstrap.py', 'scripts/cerebro_faiss_engine.py', 'docs/assets/hardware/sources.json')
-VERSION = '3.9.1'
+         'tests/test_pad_audio.cjs', 'tests/test_library_ui.cjs', 'tests/test_creator_identity.cjs', 'tests/test_po33_backups.cjs', 'tests/test_i18n.cjs', 'tests/test_installer_language.py', 'tests/test_index_language.py', 'tests/test_server_language.py', 'tests/test_target_bank_load.cjs', 'tests/test_documentation_links.py', 'tests/smoke_browser_i18n.py', 'ABRIR_BEATOS.command', 'ABRIR_BEATOS.bat', 'tests/test_hub_workflows.py', 'tests/test_runtime_bootstrap.py', 'scripts/cerebro_faiss_engine.py', 'docs/assets/hardware/sources.json')
+VERSION = Path(__file__).with_name('VERSION').read_text(encoding='utf-8').strip()
 
 
 def blank_templates(payload):

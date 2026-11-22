@@ -20,13 +20,11 @@ Esta referencia describe la implementación incluida, no una API pública versio
 | `schema.sql` | Tablas e índices; el esquema no acredita compatibilidad física con los aparatos nombrados en comentarios históricos. |
 | `build_release.py` | Paquete limpio con lista de código, documentación/recursos, plantillas vaciadas y manifiesto de integridad. |
 | `audit_all_expansions.py` | Auditoría de expansiones orientada al entorno histórico del autor; no forma parte del flujo de instalación autónomo. |
-| `scripts/` | Herramientas de mantenimiento/supervisión históricas; no se distribuyen ni se ejecutan por abrir el catálogo. |
 
 ### Utilidades históricas fuera del instalador
 
 `audit_all_expansions.py` expone `run_expansion_audit(root_dir, output_report)` para recorrer XPM bajo `Expansions/`, usar el parser y resumir referencias resueltas/ausentes. Su raíz predeterminada es `/Volumes/MPCSMPL`; no presupone que haya exactamente nueve paquetes ni prueba integridad acústica de todas las capas. No se ejecuta ni se empaqueta con el núcleo instalado.
 
-Los archivos `scripts/autodoctor.py` y `scripts/cerebro_faiss_engine.py` pertenecen al entorno histórico de supervisión/integración. No son botones adicionales del catálogo ni requisitos de búsqueda: el explorador actual filtra los registros de la página. No se ejecutaron para preparar este manual y no se describen como diagnósticos inocuos de lectura.
 
 ## 2. Comandos y valores predeterminados
 
@@ -168,7 +166,7 @@ Las solicitudes POST ordinarias se limitan a 1 MiB; la importación de backup WA
 | `POST /api/clean_metadata` | Acción explícita. | Borra auxiliares AppleDouble/DS_Store; en macOS ejecuta dot_clean. |
 | `POST /api/reveal_in_finder` | `path` permitido y existente. | Abre Finder/Explorer/xdg-open según plataforma. |
 | `POST /api/launch_ep_tool` | Acción explícita. | Abre la URL oficial; no importa muestras ni actualiza firmware. |
-| `POST /api/sync_dashboard` | Script externo de Cerebro instalado. | Ejecuta esa integración local; no está en el núcleo distribuido. |
+| `POST /api/sync_dashboard` | Acción explícita. | Actualiza el inventario de discos e índices y el puente local de Cerebro cuando está disponible. |
 | `POST /api/theme` | `theme`. | Escribe preferencia local y archivo del ecosistema. |
 
 Cuerpo ilustrativo para una muestra existente en tu biblioteca:
@@ -197,7 +195,7 @@ El archivo PO se guarda mediante temporal y sustitución controlada, con bloqueo
 
 Los recursos de la aplicación y la lectura de medios tienen reglas diferentes: la API bloquea rutas fuera de raíz, privadas, ocultas y determinadas ubicaciones internas; los assets se sirven mediante rutas previstas. El endpoint de backups permite además sus directorios concretos. No interpretes el servidor como aislamiento frente a otros procesos locales con acceso a tu cuenta.
 
-La sincronización de tema escribe `~/.gemini/antigravity/scratch/ecosystem_theme.json` y `BeatOS/config/theme_config.json`. La sincronización de dashboard busca `~/.gemini/antigravity/scratch/sync_master_dashboard.py`. Son dependencias del entorno personal, no archivos que todo usuario deba crear para usar BeatOS. La integración de tema registra nombres de otros sistemas, pero no acredita que estén ejecutándose.
+Las preferencias de tema y el inventario se guardan localmente. Cuando está disponible, la sincronización también actualiza el puente de Cerebro OS.
 
 ## 8. Empaquetado y comprobaciones
 
