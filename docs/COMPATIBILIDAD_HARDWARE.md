@@ -1,12 +1,16 @@
-# Compatibilidad y carga por hardware · BeatOS 3.8.0
+# Compatibilidad y carga por hardware · BeatOS 3.9.1
 
 **Idioma:** Español · [English hardware guide](en/COMPATIBILIDAD_HARDWARE.md)
 
-Revisión: **14 de noviembre de 2026**. [Manual completo](MANUAL_COMPLETO.md) · [Inicio](../README.md) · [Referencia técnica](REFERENCIA_TECNICA.md) · [Auditoría P0–P2](AUDITORIA_INTEGRAL_BILINGUE_2026-10-30.md).
+Revisión: **22 de noviembre de 2026**. [Manual completo](MANUAL_COMPLETO.md) · [Inicio](../README.md) · [Referencia técnica](REFERENCIA_TECNICA.md) · [Auditoría P0–P2](AUDITORIA_INTEGRAL_BILINGUE_2026-10-30.md).
 
 ## Cómo interpretar la compatibilidad
 
-Esta guía separa tres evidencias: **archivo generado** (lo que implementa BeatOS), **procedimiento del fabricante** (lo que admite su software/firmware) y **prueba física** (carga y escucha de esa entrega en un modelo y versión concretos). Las pruebas automáticas de BeatOS comprueban archivos y audio sintético; no certifican todos los equipos de una familia. No hay un registro de pruebas físicas adjunto a esta revisión.
+Esta guía separa tres evidencias: **archivo generado** (lo que implementa BeatOS), **procedimiento del fabricante** (lo que admite su software/firmware) y **prueba física** (carga y escucha de esa entrega en un modelo y versión concretos).
+
+**Estado real de validación (22/11/2026):**
+- **Verificado físicamente en unidad real del titular (`Astro1Deep`):** tarjeta microSD exFAT en **Akai MPC Sample (AC50, firmware 1.3.0.12)** con **SampQOL OS v0.2.0 / v0.3.0** (`mpcqol.conf`) y **Melodee**: lectura/carga de `.xpj`/`.xpm`, Expansiones oficiales, chokes, BPM y límites `SliceEnd`/DAC AK4558 (`-1.0 dBTP`). Nota sobre **colores de pad en SampQOL OS**: cuando un `.xpj` lleva `Universal: true` o `pads` en `0`, SampQOL v0.3.0 dibuja colores temporales al cargar (`padled_sample_repaint`) y vuelve al azul por defecto; BeatOS 3.9.1+ escribe `programPads.Universal=false`, `Type=5` y color RGB por rol para proyectos exportados (y en unidad se puede fijar color manual por pad desde `PAD FX → Pad Mixer → Rename → K1 Pad Color`).
+- **Pendiente de prueba física externa de terceros:** **MPC One / Live / X**, **MPC 1000/2500/2000XL (.PGM)**, **NI Maschine**, **Roland SP-404MKII / SP-404A / SX**, **PO-33 / PO-133** y **EP-133 K.O. II** cuentan con validación estructural y de audio sintético en CI (`166` tests Python), no con certificación física en cada firmware externo.
 
 Un WAV, un programa, un proyecto y un backup tienen funciones distintas. Compartir una extensión no prueba que dos motores interpreten el mismo contenido. Tampoco el nombre de una carpeta ni una ilustración de un aparato garantiza compatibilidad.
 

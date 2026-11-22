@@ -1,9 +1,9 @@
-# BeatOS 3.8.0 — Hardware compatibility and loading guide (EN)
+# BeatOS 3.9.1 — Hardware compatibility and loading guide (EN)
 
 **Languages:** [English](COMPATIBILIDAD_HARDWARE.md) · [Español](../COMPATIBILIDAD_HARDWARE.md)  
 [English manual](MANUAL_COMPLETO.md) · [Technical reference](REFERENCIA_TECNICA.md) · [Project home](../../README.md)
 
-**Review basis: 14 November 2026.** Distinguish: **(1) the files BeatOS writes; (2) what the manufacturer documents; (3) actual loading, playback and saving on the exact model and firmware.** Synthetic and structural software tests verify file layout and DSP generation; physical testing on third-party hardware should follow the checklist in Section 7. [Audit log P0–P2](../AUDITORIA_INTEGRAL_BILINGUE_2026-10-30.md).
+**Review basis: 22 November 2026.** Distinguish: **(1) the files BeatOS writes; (2) what the manufacturer documents; (3) actual loading, playback and saving on the exact model and firmware.** Synthetic and structural software tests (`166` Python tests + `6` Node suites) verify file layout and DSP generation. On real hardware, the maintainer's **Akai MPC Sample (AC50, fw 1.3.0.12)** with **SampQOL OS v0.2.0 / v0.3.0** and **Melodee** has been physically exercised on `.xpj`/`.xpm`, Expansions, chokes, tempo lock and pad colors (`programPads.Universal=false`, `Type=5`); third-party models (**MPC One/Live/X**, **MPC 1000/2000XL `.PGM`**, **NI Maschine**, **Roland SP-404MKII/A/SX**, **PO-33/PO-133**, **EP-133 K.O. II**) remain synthetically verified and require physical sign-off per Section 7. [Audit log P0–P2](../AUDITORIA_INTEGRAL_BILINGUE_2026-10-30.md).
 
 ## 1. Akai MPC Sample vs MPC One, Live, X and other models
 

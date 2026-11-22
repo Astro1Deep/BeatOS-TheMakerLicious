@@ -1,6 +1,6 @@
 # BeatOS — Installation and first run (English)
 
-**BeatOS 3.8.0 · The MakerLicious** · [Español](GUIA_INSTALACION.md) · [Complete user manual](docs/en/MANUAL_COMPLETO.md) · [Hardware compatibility](docs/en/COMPATIBILIDAD_HARDWARE.md).
+**BeatOS 3.9.1 · The MakerLicious** · [Español](GUIA_INSTALACION.md) · [Complete user manual](docs/en/MANUAL_COMPLETO.md) · [Hardware compatibility](docs/en/COMPATIBILIDAD_HARDWARE.md).
 
 BeatOS is a **computer-hosted sample library browser and 16-pad beatmaking workstation**. It exports device-specific audio and kit files; it does not flash or replace hardware firmware. You can start with loose WAV samples without owning an Akai MPC.
 
@@ -17,11 +17,11 @@ BeatOS is a **computer-hosted sample library browser and 16-pad beatmaking works
 
 ## Get the correct archive
 
-Go to the [latest BeatOS release](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases/latest) and download the **BeatOS-3.8.0.zip** asset and its SHA-256 checksum file. The asset has an organized installer layout. GitHub's generic **Source code** ZIP contains the development layout with a different script path. Do not replace an existing audio library with a downloaded archive.
+Go to the [latest BeatOS release](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases/latest) and download the **BeatOS-3.9.1.zip** asset and its SHA-256 checksum file. The asset has an organized installer layout. GitHub's generic **Source code** ZIP contains the development layout with a different script path. Do not replace an existing audio library with a downloaded archive.
 
 ### A. Official release ZIP
 
-1. Extract `BeatOS-3.8.0.zip` into a **new folder**.
+1. Extract `BeatOS-3.9.1.zip` into a **new folder**.
 2. Open a terminal in the folder containing the `BeatOS/` subfolder.
 3. Run:
    ```bash
@@ -92,10 +92,10 @@ Back up your device before importing anything that might overwrite occupied pads
 - **Kit already exists:** use a new name; BeatOS does not silently overwrite outputs.
 - **A hardware device rejects files:** compare its model and firmware against the [hardware loading guide](docs/en/COMPATIBILIDAD_HARDWARE.md).
 
-## Cerebro OS Master Studio, Crate-Digging & SampQOL OS (3.8.0+)
+## Cerebro OS Master Studio, Crate-Digging & SampQOL OS (3.9.1+)
 
-- **Master Studio Orchestrator (`/api/cerebro_master_produce`):** From the *Cerebro OS · Active Acoustic Engine* panel, **⚡ Orchestrate & Master Rack (Cerebro OS)** combines 3-band PCM spectral analysis, meter/clave detection (`4/4`, `3/4`, `6/8`, `12/8`, `5/4`), LUFS/Crest headroom & 808 fine-tuning calibration, **SampQOL OS v0.2.0** submix bus routing (`Sub 1–3`), and automatic 16-pad MPCTK Chromatic Scale generation onto the next free bank (Bank B).
-- **Crate-Digging & Oldies 12/8 Auto-Chop:** Dedicated `3/4` / `12/8 → 4/4` phrase bridging and Hip-Hop / Lo-Fi tempo adaptation for Bolero, 50s/60s Oldies (Doo-Wop & Lowrider Soul), Soul, Jazz, Bossa, Cumbia, Waltz, Drumless, and Psych.
+- **Master Studio Orchestrator (`/api/cerebro_master_produce`):** From the *Cerebro OS · Active Acoustic Engine* panel, **⚡ Orchestrate & Master Rack (Cerebro OS)** combines 3-band PCM spectral analysis, meter/clave detection (`4/4`, `3/4`, `6/8`, `12/8`, `5/4`), **Studio vs Live PA** reversible profiles (`-1.0 dBTP` AK4558 ceiling), multi-bank A–H coherence, Ducking/Sidechain Advisor, Euclidean Bjorklund + `swingUnit` MIDI patterns (`/api/cerebro_pattern_generate`), **SampQOL OS v0.2.0 / v0.3.0** & **Melodee** manager, per-pad role colors & locked tempo in `.xpj`, and automatic 16-pad MPCTK Chromatic Scale generation onto the next free bank (Bank B).
+- **Crate-Digging, Hybrid Search & Oldies 12/8 Auto-Chop:** Dedicated `3/4` / `12/8 → 4/4` phrase bridging and Hip-Hop / Lo-Fi tempo adaptation for Bolero, 50s/60s Oldies (Doo-Wop & Lowrider Soul), Soul, Jazz, Bossa, Cumbia, Waltz, Drumless, and Psych, backed by cached SQLite RO + FAISS semantic fallback.
 - **9 Ecosystem Themes & Accessibility:** Includes **Astro1Deep Obsidian** (`astro1deep-obsidian`), derived from the official banner with high-contrast typography, `:focus-visible` keyboard navigation outlines, and `prefers-reduced-motion` support.
 
 [Complete English manual](docs/en/MANUAL_COMPLETO.md) · [Technical reference](docs/en/REFERENCIA_TECNICA.md) · [Spanish installation guide](GUIA_INSTALACION.md).

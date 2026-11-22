@@ -80,6 +80,45 @@ _CEREBRO_MEMORY_DIR = None
 _MLX_MODEL_CACHE_LOCK = threading.Lock()
 _MLX_MODEL_CACHE: dict[str, Any] = {"ts": 0.0, "base": "", "model": ""}
 _RACK_MIX_PROFILES_LOCK = threading.Lock()
+_SQLITE_TLS = threading.local()
+_SEARCH_CACHE_LOCK = threading.Lock()
+_SEARCH_CACHE: OrderedDict[tuple[str, int, str, str, int], dict[str, Any]] = OrderedDict()
+_SEARCH_CACHE_MAX_ITEMS = 128
+
+
+def open_sqlite_readonly(db_path: str | Path) -> sqlite3.Connection:
+    """Devuelve conexión SQLite RO thread-local con mmap + caché en RAM, invalidada al cambiar mtime."""
+    p = Path(db_path).resolve()
+    p_str = str(p)
+    try:
+        mtime_ns = p.stat().st_mtime_ns
+    except OSError:
+        mtime_ns = 0
+    pool = getattr(_SQLITE_TLS, "ro_conns", None)
+    if pool is None:
+        pool = {}
+        _SQLITE_TLS.ro_conns = pool
+    cached = pool.get(p_str)
+    if cached is not None:
+        conn, cached_mtime = cached
+        if cached_mtime == mtime_ns:
+            try:
+                conn.execute("SELECT 1")
+                return conn
+            except sqlite3.Error:
+                pass
+        with contextlib.suppress(Exception):
+            conn.close()
+        pool.pop(p_str, None)
+
+    conn = sqlite3.connect(p.as_uri() + "?mode=ro", uri=True, timeout=1.5)
+    for pragma in ("PRAGMA mmap_size = 67108864", "PRAGMA cache_size = -16000", "PRAGMA temp_store = MEMORY"):
+        with contextlib.suppress(sqlite3.Error):
+            conn.execute(pragma)
+    pool[p_str] = (conn, mtime_ns)
+    return conn
+
+
 PO_BACKUP_LOCK = threading.Lock()
 PO_BACKUP_CACHE = {}
 
@@ -3723,12 +3762,31 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 limit = 40
             t0 = time.time()
             db_file = database_path(self.server.root_dir)
+            db_mtime_ns = 0
+            try:
+                if db_file.is_file():
+                    db_mtime_ns = db_file.stat().st_mtime_ns
+            except OSError:
+                db_mtime_ns = 0
+            cache_key = (str(db_file), db_mtime_ns, q_raw, mode, limit)
+            if q_raw:
+                with _SEARCH_CACHE_LOCK:
+                    cached_payload = _SEARCH_CACHE.get(cache_key)
+                    if cached_payload is not None:
+                        _SEARCH_CACHE.move_to_end(cache_key)
+                        hit = dict(cached_payload)
+                        hit["cache_hit"] = True
+                        hit["latency_ms"] = round((time.time() - t0) * 1000, 2)
+                        self.send_api_json(hit, 200)
+                        return
+
             results = []
             engine_used = "sqlite_fts5"
+            faiss_warning = ""
             if db_file.is_file() and q_raw:
                 tokens = [t for t in re.split(r"[\s_\-/]+", q_raw) if len(t) >= 2][:10]
                 try:
-                    con = sqlite3.connect(str(db_file))
+                    con = open_sqlite_readonly(db_file)
                     cur = con.cursor()
                     has_fts = bool(cur.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='samples_fts'").fetchone())
                     rows = []
@@ -3756,7 +3814,6 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                             f"SELECT id, filename, sound_type, sample_format, macro_category, sub_pack, bpm, musical_key, camelot, energy_level, size_mb, rel_path FROM samples WHERE {' AND '.join(conds)} LIMIT ?",
                             params + [limit],
                         ).fetchall()
-                    con.close()
                     for r in rows:
                         results.append({
                             "id": r[0], "filename": r[1], "sound_type": r[2], "sample_format": r[3],
@@ -3766,16 +3823,21 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                 except sqlite3.Error as e:
                     self.send_api_json({"success": False, "error": str(e), "results": []}, 500)
                     return
-            if mode == "hybrid" and q_raw and len(results) < limit:
+            should_use_faiss = bool(
+                q_raw
+                and mode != "exact"
+                and (mode == "hybrid" or (len(results) == 0 and len(q_raw.split()) >= 2))
+            )
+            if should_use_faiss and len(results) < limit:
                 try:
                     scripts_dir = str(Path(__file__).resolve().parent / "scripts")
                     if scripts_dir not in sys.path:
                         sys.path.insert(0, scripts_dir)
                     import cerebro_faiss_engine as _cfe
                     vec_res = _cfe.search_faiss_vector(q_raw, top_k=min(20, limit))
-                    seen_rel = {r["rel_path"] for r in results}
+                    seen_rel = {r.get("rel_path") for r in results}
                     for vr in vec_res.get("results", []):
-                        rp = vr.get("rel_path")
+                        rp = vr.get("rel_path") or vr.get("full_path") or ""
                         if rp and rp not in seen_rel:
                             seen_rel.add(rp)
                             results.append({
@@ -3785,16 +3847,26 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                                 "similarity_score": vr.get("similarity_score"), "disk": vr.get("disk"),
                             })
                     engine_used = f"{engine_used}+faiss"
-                except Exception:
-                    pass
-            self.send_api_json({
+                except Exception as exc:
+                    faiss_warning = f"FAISS fallback omitido: {exc}"
+            payload_out: dict[str, Any] = {
                 "success": True,
                 "query": q_raw,
                 "engine": engine_used,
                 "count": len(results[:limit]),
+                "cache_hit": False,
                 "latency_ms": round((time.time() - t0) * 1000, 2),
                 "results": results[:limit],
-            }, 200)
+            }
+            if faiss_warning:
+                payload_out["faiss_warning"] = faiss_warning
+            if q_raw:
+                with _SEARCH_CACHE_LOCK:
+                    _SEARCH_CACHE[cache_key] = dict(payload_out)
+                    _SEARCH_CACHE.move_to_end(cache_key)
+                    while len(_SEARCH_CACHE) > _SEARCH_CACHE_MAX_ITEMS:
+                        _SEARCH_CACHE.popitem(last=False)
+            self.send_api_json(payload_out, 200)
             return
 
         elif clean_path == "/api/health_audit":
@@ -4537,6 +4609,32 @@ class MPCAudioRequestHandler(BaseHTTPRequestHandler):
                     telemetry=payload.get("context") if isinstance(payload.get("context"), dict) else None,
                     limit=max(1, min(6, int(payload.get("limit") or 4))),
                     use_semantic_rrf=bool(payload.get("semantic", True)),
+                )
+                self.send_api_json(res, 200)
+            except Exception as e:
+                self.send_api_json({"success": False, "error": str(e)}, 400)
+            return
+
+        elif clean_api == "/api/cerebro_pattern_generate":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else "{}"
+                payload = json.loads(body) if body.strip() else {}
+                if not isinstance(payload, dict):
+                    raise ValueError("Se esperaba un objeto JSON")
+                kit_mod = get_hardware_kit_builder(self.server.root_dir)
+                if not kit_mod or not hasattr(kit_mod, "generate_euclidean_mpc_pattern"):
+                    raise RuntimeError("Motor hardware_kit_builder no disponible en el servidor.")
+                res = kit_mod.generate_euclidean_mpc_pattern(
+                    style=str(payload.get("style") or "boombap"),
+                    bpm=float(payload["bpm"]) if payload.get("bpm") is not None else None,
+                    bars=int(payload.get("bars") or 2),
+                    swing=float(payload["swing"]) if payload.get("swing") is not None else None,
+                    swing_unit=int(payload["swing_unit"]) if payload.get("swing_unit") is not None else None,
+                    humanize_ms=float(payload["humanize_ms"]) if payload.get("humanize_ms") is not None else None,
+                    limb_spread=float(payload.get("limb_spread") if payload.get("limb_spread") is not None else 0.25),
+                    conformity=float(payload.get("conformity") if payload.get("conformity") is not None else 0.80),
+                    seed=int(payload.get("seed") if payload.get("seed") is not None else 1337),
                 )
                 self.send_api_json(res, 200)
             except Exception as e:

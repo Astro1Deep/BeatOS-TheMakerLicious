@@ -10,7 +10,7 @@
 
 ## Instalación limpia
 
-Edición 3.8.0. Biblioteca de samples y rack de 16 pads para preparar kits destinados a MPC, Maschine, SP-404MK2, SP-404A/SX, PO-33/PO-133 y EP-133 K.O. II. Se ejecuta en el ordenador y no instala firmware en los aparatos. No necesitas una MPC para trabajar desde samples sueltos.
+Edición 3.9.1. Biblioteca de samples y rack de 16 pads (8 bancos · 128 pads) para preparar kits destinados a MPC, Maschine, SP-404MK2, SP-404A/SX, PO-33/PO-133 y EP-133 K.O. II. Se ejecuta en el ordenador y no instala firmware en los aparatos. No necesitas una MPC para trabajar desde samples sueltos.
 
 Requiere Python 3.11 o superior. No incluye samples comerciales, proyectos personales, bases de datos de Iván, claves ni configuraciones privadas. La biblioteca inicial está vacía.
 
@@ -58,8 +58,8 @@ En la tarjeta o ZIP organizado, la raíz sólo necesita los accesos catalogo_uni
 
 Para una biblioteca situada en otra carpeta, ejecuta el instalador desde tu carpeta de código e indica esa biblioteca. El servidor sirve los recursos gráficos de la instalación; usa su URL local para disponer de toda la interfaz. Las opciones de limpieza no se ejecutan automáticamente. Las carpetas ocultas y AppleDouble que crea macOS no son archivos generados por BeatOS.
 
-## Cerebro OS Master Studio, Crate-Digging y SampQOL OS (3.8.0+)
+## Cerebro OS Master Studio, Crate-Digging y SampQOL OS (3.9.1+)
 
-- **Orquestación Master Studio (`/api/cerebro_master_produce`)**: Desde el panel *Cerebro OS · Motor Acústico Activo*, **⚡ Orquestar & Masterizar Rack (Cerebro OS)** analiza el espectro PCM (3 bandas), compás (`4/4`, `3/4`, `6/8`, `12/8`, `5/4`), clave latina/swing y tonalidad; calibra el headroom LUFS/Crest y la afinación de 808s (`tune` + `fine_tune`), asigna buses Submix (`Sub 1–3`) para **SampQOL OS v0.2.0** (`mpcqol.conf`) y despliega una escala cromática de 16 pads (MPCTK) en el Banco B si está disponible.
-- **Auto-Chop Musical & Oldies 12/8**: Soporta detección y puentes rítmicos `3/4` / `12/8 → 4/4` para Bolero, Oldies 50s/60s (Doo-Wop & Lowrider Soul), Soul, Jazz, Bossa, Cumbia, Vals, Drumless y Psych.
+- **Orquestación Master Studio (`/api/cerebro_master_produce`)**: Desde el panel *Cerebro OS · Motor Acústico Activo*, **⚡ Orquestar & Masterizar Rack (Cerebro OS)** analiza el espectro PCM (3 bandas), compás (`4/4`, `3/4`, `6/8`, `12/8`, `5/4`), clave latina/swing y tonalidad; calibra el headroom LUFS/Crest (perfiles **Studio/Pre-Master** vs **Directo PA** con techo **`-1.0 dBTP` AK4558**) y la afinación de 808s (`tune` + `fine_tune`), asigna buses Submix (`Sub 1–3`) y colores de pad por rol en `.xpj`/`.xpm`, genera patrones Euclidianos Bjorklund (`/api/cerebro_pattern_generate`) y despliega una escala cromática de 16 pads (MPCTK) en el Banco B si está disponible.
+- **Auto-Chop Musical, Búsqueda Híbrida FTS5+FAISS y Oldies 12/8**: Soporta detección y puentes rítmicos `3/4` / `12/8 → 4/4` para Bolero, Oldies 50s/60s (Doo-Wop & Lowrider Soul), Soul, Jazz, Bossa, Cumbia, Vals, Drumless y Psych, con caché SQLite RO y fallback vectorial FAISS.
 - **9 Temas Visuales del Ecosistema**: Incluye **Astro1Deep Obsidian** (`astro1deep-obsidian`), inspirado en el banner monolítico oficial con contraste WCAG optimizado, además de soporte de teclado `:focus-visible` y `prefers-reduced-motion`.

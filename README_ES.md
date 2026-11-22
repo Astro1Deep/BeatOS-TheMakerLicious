@@ -35,7 +35,7 @@ Utiliza la opción **1** para indexar y **2** para abrir el servidor local. En u
 
 **Idiomas:** por defecto, el primer inicio se muestra en inglés. Puedes seleccionar **ES** desde el encabezado web. La preferencia se conserva en el navegador; para terminal, utiliza `--lang es` o `BEATOS_LANG=es`. Ni los nombres de archivos, ni las rutas, ni los nombres de proyectos privados se traducen.
 
-> **Importante:** el código de `main` puede ser más reciente que el instalador estable 3.8.0. Para actualizar una instalación, instala una distribución nueva y regenera el catálogo de tu biblioteca tras conservar tus copias. [Estado de la auditoría](docs/AUDITORIA_INTEGRAL_BILINGUE_2026-10-30.md).
+> **Importante:** la distribución estable **3.9.1** sincroniza `main` con todas las mejoras de localización, rendimiento y Cerebro OS. Para actualizar una instalación, instala la nueva versión y regenera el catálogo de tu biblioteca tras conservar tus copias. [Estado de la auditoría](docs/AUDITORIA_INTEGRAL_BILINGUE_2026-10-30.md).
 
 ## Formatos y límites por hardware
 
@@ -51,9 +51,9 @@ Utiliza la opción **1** para indexar y **2** para abrir el servidor local. En u
 
 ## Capacidades clave para beatmakers y samplers hardware
 
-- **Akai MPC Standalone & SampQOL OS v0.2.0:** Lectura y edición `.xpm`/`.xpj`, constructor de Expansiones oficiales MPC (`Expansion.xml` + previews + `.xpansion.zip`), gestor seguro de `/mpcqol.conf` con copias de respaldo y ruteo Multi-Track de 4 buses submix.
+- **Akai MPC Standalone, SampQOL OS v0.2.0 / v0.3.0 y Melodee:** Lectura y edición `.xpm`/`.xpj` (con colores de pad por rol acústico, bloqueo de BPM real y preservación lossless de floats), constructor de Expansiones oficiales MPC (`Expansion.xml` + previews + `.xpansion.zip`), gestor seguro de `/mpcqol.conf` y `Melodee/settings` con copias `.bak-beatos`, y ruteo Multi-Track de 4 buses submix.
 - **MPC clásicas (Legacy `.PGM`):** Exportación binaria compatible con **MPC 1000 / 2500 / 500 (JJOS)** y **MPC 2000 / 2000XL** en PCM 16-bit/44.1 kHz.
-- **Motor DSP Cerebro OS para Crate-Digging:** Análisis espectral PCM en 3 bandas (`Sub / Calidez Media / Aire`), detección de compás (`4/4`, `3/4`, `6/8`, `5/4`), clave latina y swing (`Bolero`, `Soul`, `Jazz`, `Bossa/Samba`, `Cumbia/Son`, `Tango/Vals`, `Drumless`, `Psych` y géneros club), adaptación multi-perfil a Hip-Hop / Boom Bap / Lo-Fi, Auto-Chop inteligente con puente `3/4→4/4` y ajuste tonal de 808.
+- **Cerebro OS Master Studio, Crate-Digging y Motor MIDI Algorítmico:** Análisis espectral PCM en 3 bandas, compases `4/4`, `3/4`, `6/8`, `12/8` (`Oldies 50s/60s`), `5/4`, perfiles reversibles **Studio ↔ Directo PA** (`-1.0 dBTP` AK4558), coherencia Multi-Banco A–H, Advisor de Compresión/Ducking (Color Comp / Mother Ducker / Sidechain), generador Euclidiano Bjorklund + `swingUnit` (`/api/cerebro_pattern_generate`), búsqueda híbrida FTS5 + FAISS y Auto-Chop puente `3/4→4/4`.
 - **Generador Cromático MPCTK y Rack de 8 Bancos (128 Pads):** Despliega muestras en 16 notas de escala, preescucha con simulación real de Mute Groups y exporta hacia tu hardware.
 
 **Generar un archivo no equivale a verificar su carga.** Consulta las guías para comprobar nombres, parámetros PCM, referencias, límites de memoria, mapeo de pads y reproducción en hardware real.
@@ -75,4 +75,4 @@ El servidor se utiliza **en local**, sin autenticación de usuarios remotos: no 
 
 **Autoría:** [Astro1Deep](https://github.com/Astro1Deep) · [Repositorio](https://github.com/Astro1Deep/BeatOS-TheMakerLicious) · [Versiones estables](https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases) · [Web oficial (ES)](https://astro1deep.github.io/BeatOS-TheMakerLicious/index-es.html) · [Kit de difusión, redes y desarrolladores](docs/KIT_DIFUSION_Y_COMUNIDAD.md).
 
-**Versión estable documentada:** 3.8.0 (la rama `main` incluye además el motor rítmico DSP Cerebro OS, gestor SampQOL OS, exportación binaria `.PGM` y creador de Expansiones MPC). Comprueba siempre el manifiesto y la suma SHA-256 de la descarga concreta.
+**Versión estable documentada:** 3.9.1 (incluye localización integral ES/EN en backend, perfiles Studio/Directo PA, coherencia Multi-Banco A–H, Ducking Advisor, colores de pads y bloqueo BPM en `.xpj`, caché FTS5+FAISS, generador Euclidiano MIDI, gestor Melodee/SampQOL OS v0.3.0, exportación `.PGM` y Expansiones MPC). Comprueba siempre el manifiesto y la suma SHA-256 de la descarga concreta.

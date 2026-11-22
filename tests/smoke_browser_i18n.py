@@ -177,7 +177,12 @@ def local_site(html):
             thread.join(timeout=3)
 
 def main():
-    browser = next((shutil.which(x) for x in ("google-chrome", "chromium", "chromium-browser") if shutil.which(x)), None)
+    candidates = ("google-chrome", "chromium", "chromium-browser")
+    browser = next((shutil.which(x) for x in candidates if shutil.which(x)), None)
+    if not browser and sys.platform == "darwin":
+        mac_chrome = Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+        if mac_chrome.is_file():
+            browser = str(mac_chrome)
     if not browser:
         raise SystemExit("Chrome/Chromium missing: real-browser verification cannot be marked passed")
     template = (ROOT / "templates" / "catalogo.html").read_text(encoding="utf-8")
@@ -195,6 +200,8 @@ def main():
                 "--user-data-dir=" + profile, "--virtual-time-budget=4500",
                 "--dump-dom", base + endpoint
             ]
+            if sys.platform == "darwin":
+                command.insert(2, "--use-mock-keychain")
             result = subprocess.run(command, capture_output=True, text=True, timeout=50)
             if result.returncode or browser_probe_result(result.stdout) != "BEATOS_BROWSER_ES_EN_PASS":
                 detail = result.stdout[-1500:] + "\n" + result.stderr[-900:]

@@ -779,6 +779,44 @@ class TestHardwareKitBuilder(unittest.TestCase):
         self.assertTrue(all(p["peak_dbfs"] <= -0.75 for p in chop_48["pads"]))
         self.assertGreaterEqual(min(p["duration_sec"] for p in chop_48["pads"]), 0.45)
 
+    def test_15_xpj_tempo_flags_pad_role_colors_and_euclidean_pattern(self):
+        import gzip
+        import json
+        from hardware_kit_builder import generate_euclidean_mpc_pattern
+
+        pads = {
+            1: {"sample_name": "Punch_Kick", "sample_path": self.sample_files[0], "sound_type": "KICK"},
+            2: {"sample_name": "Crisp_Snare", "sample_path": self.sample_files[1], "sound_type": "SNARE"},
+            3: {"sample_name": "Sub_808", "sample_path": self.sample_files[2], "sound_type": "BASS_808"},
+        }
+        xpj_path = Path(export_mpc_project("ColorTempoKit", pads, self.test_dir, tempo=94.5, key="A Minor"))
+        raw = gzip.open(str(xpj_path), "rb").read()
+        lines = raw.split(b"\n", 5)
+        self.assertEqual([x.decode() for x in lines[:5]], ["ACVS", "1.3.0.12", "SerialisableProjectData", "json", "Linux"])
+        data = json.loads(lines[5])["data"]
+        self.assertEqual(data["masterTempo"], 94.5)
+        self.assertTrue(data["masterTempoEnabled"])
+        self.assertEqual(data["currentSequence"], 0)
+        for seq in data["sequences"]:
+            sv = seq["value"]
+            self.assertEqual(sv["bpm"], 94.5)
+            self.assertTrue(sv["tempoEnable"])
+        pp = data["tracks"][0]["program"]["programPads"]
+        self.assertFalse(pp["Universal"]["value0"])
+        self.assertEqual(pp["Type"]["value0"], 5)
+        self.assertNotEqual(pp["pads"]["value0"], 0)
+        self.assertNotEqual(pp["pads"]["value1"], 0)
+        self.assertNotEqual(pp["pads"]["value0"], pp["pads"]["value1"])
+        self.assertEqual(pp["pads"]["value15"], 0)
+
+        pat_bb = generate_euclidean_mpc_pattern("boombap", bpm=92.0, bars=2)
+        self.assertTrue(pat_bb["success"])
+        self.assertEqual(pat_bb["swing_unit"], 1)
+        self.assertEqual(pat_bb["tracks"][0]["euclidean"], "E(4,16)")
+        pat_old = generate_euclidean_mpc_pattern("oldies", bpm=74.0, bars=1)
+        self.assertEqual(pat_old["swing_unit"], 2)
+        self.assertEqual(pat_old["meter"], "12/8")
+
 
 if __name__ == "__main__":
     unittest.main()

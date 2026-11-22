@@ -468,10 +468,12 @@ def _normalize_xpj(
                 cur_eff = cur_seq0 if cur_seq0 > 0 else cur_m
                 if abs(cur_eff - inferred_bpm) >= 1.0 or abs(cur_m - inferred_bpm) >= 1.0:
                     data["masterTempo"] = float(inferred_bpm)
+                    data["masterTempoEnabled"] = True
                     for s in seqs:
                         sv = s.get("value")
                         if isinstance(sv, dict):
                             sv["bpm"] = float(inferred_bpm)
+                            sv["tempoEnable"] = True
                     changed = True
                     res["bpm_fixed"] = 1
 

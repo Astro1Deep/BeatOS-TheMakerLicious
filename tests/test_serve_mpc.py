@@ -1,5 +1,6 @@
 import contextlib
 import io
+import json
 import struct
 import tempfile
 import threading
@@ -1402,3 +1403,56 @@ class ServerSecurityTests(unittest.TestCase):
             self.assertEqual(res_a['filename'], 'Kick_01.wav')
             self.assertNotEqual(res_b['filename'], 'Kick_01.wav')
             self.assertTrue(res_b['filename'].startswith('Kick_01_') and res_b['filename'].endswith('.wav'))
+
+    def test_pattern_generate_and_search_cache_plus_faiss_fallback(self):
+        import sqlite3
+        from unittest.mock import patch
+
+        with self.server() as (url, parent):
+            root = parent / 'library'
+            db_dir = root / 'BeatOS' / 'data'
+            db_dir.mkdir(parents=True, exist_ok=True)
+            db_file = db_dir / 'mpc_sample.db'
+            con = sqlite3.connect(str(db_file))
+            con.execute(
+                'CREATE TABLE samples (id INTEGER PRIMARY KEY, filename TEXT, sound_type TEXT, '
+                'sample_format TEXT, macro_category TEXT, sub_pack TEXT, bpm REAL, musical_key TEXT, '
+                'camelot TEXT, energy_level TEXT, size_mb REAL, rel_path TEXT)'
+            )
+            con.execute(
+                "INSERT INTO samples VALUES (1, 'Dusty_Kick.wav', 'KICK', 'WAV', 'Drums', 'Soul', 90.0, 'Am', '8A', 'HIGH', 0.5, 'Samples/Dusty_Kick.wav')"
+            )
+            con.commit()
+            con.close()
+
+            st1, raw1 = self.request(url + '/api/search?q=Dusty&limit=10')
+            self.assertEqual(st1, 200, raw1)
+            d1 = json.loads(raw1.decode('utf-8'))
+            self.assertFalse(d1['cache_hit'])
+            self.assertEqual(d1['count'], 1)
+
+            st2, raw2 = self.request(url + '/api/search?q=Dusty&limit=10')
+            self.assertEqual(st2, 200, raw2)
+            d2 = json.loads(raw2.decode('utf-8'))
+            self.assertTrue(d2['cache_hit'])
+
+            with patch.dict(sys.modules, {'cerebro_faiss_engine': type('FakeFaiss', (), {
+                'search_faiss_vector': staticmethod(lambda q, top_k=20: (_ for _ in ()).throw(RuntimeError('faiss index unavailable')))
+            })()}):
+                st3, raw3 = self.request(url + '/api/search?q=vintage%20bolero%20brass&limit=10')
+                self.assertEqual(st3, 200, raw3)
+                d3 = json.loads(raw3.decode('utf-8'))
+                self.assertIn('faiss_warning', d3)
+
+            st_pat, raw_pat = self.request(
+                url + '/api/cerebro_pattern_generate',
+                method='POST',
+                headers={'Origin': url, 'Content-Type': 'application/json'},
+                data=json.dumps({'style': 'oldies', 'bpm': 74, 'bars': 2}).encode('utf-8'),
+            )
+            self.assertEqual(st_pat, 200, raw_pat)
+            d_pat = json.loads(raw_pat.decode('utf-8'))
+            self.assertTrue(d_pat['success'])
+            self.assertEqual(d_pat['swing_unit'], 2)
+            self.assertEqual(d_pat['meter'], '12/8')
+            self.assertGreater(d_pat['midi_events_count'], 0)

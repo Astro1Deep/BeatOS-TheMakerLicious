@@ -9,8 +9,9 @@ Important: BeatOS runs on the user's computer and does not install sampler firmw
 - Live Landing Page (EN): https://astro1deep.github.io/BeatOS-TheMakerLicious/
 - Live Landing Page (ES): https://astro1deep.github.io/BeatOS-TheMakerLicious/index-es.html
 - Repository and source: https://github.com/Astro1Deep/BeatOS-TheMakerLicious
-- Latest stable release: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases/latest
+- Latest stable release (v3.9.1): https://github.com/Astro1Deep/BeatOS-TheMakerLicious/releases/latest
 - Complete English manual: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/en/MANUAL_COMPLETO.md
+- Hardware compatibility EN: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/en/COMPATIBILIDAD_HARDWARE.md
 - Manual completo en español: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/MANUAL_COMPLETO.md
 - Hardware compatibility EN: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/en/COMPATIBILIDAD_HARDWARE.md
 - Compatibilidad hardware ES: https://github.com/Astro1Deep/BeatOS-TheMakerLicious/blob/main/docs/COMPATIBILIDAD_HARDWARE.md

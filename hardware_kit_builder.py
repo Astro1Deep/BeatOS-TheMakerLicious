@@ -3654,6 +3654,15 @@ def export_mpc_program(
         root = tree.getroot()
         prog = root.find("Program")
         _set_xml_text(prog, "ProgramName", kit_name)
+        pp_el = prog.find("ProgramPads")
+        if pp_el is not None and pp_el.text and pp_el.text.strip().startswith("{"):
+            try:
+                pp_obj = json.loads(pp_el.text)
+                if isinstance(pp_obj, dict) and isinstance(pp_obj.get("ProgramPads"), dict):
+                    _apply_program_pads_colors(pp_obj["ProgramPads"], pads_data)
+                    pp_el.text = json.dumps(pp_obj, indent=4)
+            except Exception:
+                pass
 
         for inst in prog.findall("Instruments/Instrument"):
             pad_num = int(inst.get("number", "0"))
@@ -4071,10 +4080,13 @@ def export_mpc_project(
             key_str = _mpc_compat.normalize_key(key_str)
         data["key"] = key_str
         data["masterTempo"] = float(tempo)
+        data["masterTempoEnabled"] = True
+        data["currentSequence"] = 0
 
         for seq in data.get("sequences", []):
             if isinstance(seq, dict) and isinstance(seq.get("value"), dict):
                 seq["value"]["bpm"] = float(tempo)
+                seq["value"]["tempoEnable"] = True
 
         deduped_samples: List[Dict[str, Any]] = []
         seen_sample_keys = set()
@@ -4116,6 +4128,8 @@ def export_mpc_project(
             tracks[0]["samples"] = copy.deepcopy(data["samples"])
             prog = tracks[0].get("program", {})
             prog["name"] = effective_kit_name
+            if isinstance(prog.get("programPads"), dict):
+                _apply_program_pads_colors(prog["programPads"], normalized_pads)
             if isinstance(prog.get("mixable"), dict):
                 prog["mixable"]["volume"] = float(track_vol_target)
             drum = prog.get("drum", {})
@@ -9946,6 +9960,259 @@ def update_melodee_settings(
         if synced_qol_keys:
             res["synced_sampqol_keys"] = synced_qol_keys
     return res
+
+
+_MPC_ROLE_PAD_COLORS: Dict[str, int] = {
+    "KICK": 0xE62E2E,          # Rojo cálido
+    "SNARE": 0xE6B800,         # Ámbar / Dorado
+    "CLAP": 0xE6B800,
+    "RIM": 0xFF8C00,
+    "TOM": 0xFF6B35,
+    "HIHAT": 0x00B8D4,         # Cian
+    "CYMBAL": 0x00B8D4,
+    "PERCUSSION": 0x26C6DA,
+    "BASS_808": 0x9B30FF,      # Violeta subgrave
+    "BASS": 0x9B30FF,
+    "MELODIC_LOOP": 0x16C65A,  # Verde esmeralda
+    "KEYS_SYNTH": 0x16C65A,
+    "CHOP": 0x16C65A,
+    "LOOP": 0x16C65A,
+    "VOCAL": 0xE040FB,         # Magenta
+    "FX": 0xFF4081,
+}
+
+
+def _pad_color_for_role(sound_type: str) -> int:
+    """Devuelve color RGB 24-bit entero compatible con AC50/SampQOL/Melodee según rol acústico."""
+    st = str(sound_type or "").strip().upper()
+    if st in _MPC_ROLE_PAD_COLORS:
+        return _MPC_ROLE_PAD_COLORS[st]
+    for key, color in _MPC_ROLE_PAD_COLORS.items():
+        if key in st:
+            return color
+    return 0x4C8DFF
+
+
+def _apply_program_pads_colors(program_pads: Dict[str, Any], pads_map: Dict[Any, Any]) -> None:
+    """Rellena programPads.Universal=False, Type=5 y colores por pad 0..127 sin romper el esquema AC50."""
+    if not isinstance(program_pads, dict) or not isinstance(pads_map, dict):
+        return
+    pads_dict = program_pads.get("pads")
+    if not isinstance(pads_dict, dict):
+        pads_dict = {f"value{i}": 0 for i in range(128)}
+        program_pads["pads"] = pads_dict
+    program_pads["Universal"] = {"value0": False}
+    program_pads["Type"] = {"value0": 5}
+    program_pads.setdefault("universalPad", 0x229ED0)
+    for i in range(128):
+        p_info = pads_map.get(i + 1) or pads_map.get(str(i + 1)) or {}
+        has_sample = bool(
+            isinstance(p_info, dict)
+            and (p_info.get("sample_file") or p_info.get("sample_name") or p_info.get("sample_path") or p_info.get("source_path"))
+        )
+        if not has_sample:
+            pads_dict[f"value{i}"] = 0
+            continue
+        custom_col = p_info.get("pad_color")
+        if isinstance(custom_col, int) and 0 <= custom_col <= 0xFFFFFF:
+            pads_dict[f"value{i}"] = custom_col
+        else:
+            st = p_info.get("sound_type") or detect_sound_type(
+                str(p_info.get("sample_name") or p_info.get("sample_file") or "")
+            )
+            pads_dict[f"value{i}"] = _pad_color_for_role(st)
+
+
+def bjorklund_steps(pulses: int, steps: int, rotation: int = 0) -> List[bool]:
+    """Algoritmo exacto de Bjorklund E(k,n) para ritmos euclidianos (mpc-sample-kit)."""
+    if not isinstance(steps, int) or steps <= 0:
+        raise ValueError("Parámetro steps debe ser un entero positivo.")
+    p = max(0, min(int(pulses), steps))
+    if p == 0:
+        return [False] * steps
+    if p == steps:
+        return [True] * steps
+    a: List[List[bool]] = [[True] for _ in range(p)]
+    b: List[List[bool]] = [[False] for _ in range(steps - p)]
+    while len(b) > 1:
+        m = min(len(a), len(b))
+        merged = [a[i] + b[i] for i in range(m)]
+        rem = a[m:] if len(a) > m else b[m:]
+        a = merged
+        b = rem
+    seq = [cell for grp in (a + b) for cell in grp]
+    if seq and rotation:
+        rot = rotation % len(seq)
+        seq = seq[rot:] + seq[:rot]
+    return seq
+
+
+def generate_euclidean_mpc_pattern(
+    style: str = "boombap",
+    bpm: Optional[float] = None,
+    bars: int = 2,
+    swing: Optional[float] = None,
+    swing_unit: Optional[int] = None,
+    humanize_ms: Optional[float] = None,
+    limb_spread: float = 0.25,
+    conformity: float = 0.80,
+    seed: int = 1337,
+) -> Dict[str, Any]:
+    """Genera patrones MIDI algorítmicos para MPC Sample (Bjorklund + swing time-warp + limbSpread)."""
+    import random as _rnd
+
+    bars_i = int(bars)
+    if bars_i < 1 or bars_i > 16:
+        raise ValueError("Número de compases fuera de rango (1–16).")
+
+    presets: Dict[str, Dict[str, Any]] = {
+        "boombap": {"bpm": 90.0, "swing": 0.18, "swing_unit": 1, "hum": 6.0, "meter": "4/4", "voices": [
+            {"role": "KICK", "pad": 1, "note": 36, "pulses": 4, "steps": 16, "rot": 0, "accent": 116, "hit": 94},
+            {"role": "SNARE", "pad": 2, "note": 38, "pulses": 2, "steps": 16, "rot": 12, "accent": 112, "hit": 92},
+            {"role": "HIHAT", "pad": 3, "note": 42, "pulses": 8, "steps": 16, "rot": 0, "accent": 96, "hit": 74},
+            {"role": "PERCUSSION", "pad": 5, "note": 40, "pulses": 3, "steps": 16, "rot": 5, "accent": 82, "hit": 58},
+        ]},
+        "lofi_hiphop": {"bpm": 80.0, "swing": 0.22, "swing_unit": 1, "hum": 8.5, "meter": "4/4", "voices": [
+            {"role": "KICK", "pad": 1, "note": 36, "pulses": 3, "steps": 16, "rot": 0, "accent": 108, "hit": 86},
+            {"role": "SNARE", "pad": 2, "note": 38, "pulses": 2, "steps": 16, "rot": 12, "accent": 104, "hit": 84},
+            {"role": "HIHAT", "pad": 3, "note": 42, "pulses": 7, "steps": 16, "rot": 0, "accent": 84, "hit": 62},
+        ]},
+        "jazz_hop": {"bpm": 88.0, "swing": 0.33, "swing_unit": 2, "hum": 7.5, "meter": "4/4", "voices": [
+            {"role": "KICK", "pad": 1, "note": 36, "pulses": 4, "steps": 16, "rot": 0, "accent": 106, "hit": 84},
+            {"role": "SNARE", "pad": 2, "note": 38, "pulses": 3, "steps": 16, "rot": 12, "accent": 98, "hit": 64},
+            {"role": "HIHAT", "pad": 3, "note": 42, "pulses": 10, "steps": 16, "rot": 0, "accent": 92, "hit": 68},
+        ]},
+        "oldies": {"bpm": 74.0, "swing": 0.33, "swing_unit": 2, "hum": 6.5, "meter": "12/8", "voices": [
+            {"role": "KICK", "pad": 1, "note": 36, "pulses": 2, "steps": 12, "rot": 0, "accent": 104, "hit": 86},
+            {"role": "SNARE", "pad": 2, "note": 38, "pulses": 2, "steps": 12, "rot": 9, "accent": 102, "hit": 80},
+            {"role": "HIHAT", "pad": 3, "note": 42, "pulses": 12, "steps": 12, "rot": 0, "accent": 88, "hit": 56},
+        ]},
+        "bolero": {"bpm": 82.0, "swing": 0.14, "swing_unit": 2, "hum": 7.0, "meter": "4/4", "voices": [
+            {"role": "KICK", "pad": 1, "note": 36, "pulses": 3, "steps": 16, "rot": 0, "accent": 100, "hit": 82},
+            {"role": "PERCUSSION", "pad": 5, "note": 40, "pulses": 5, "steps": 16, "rot": 0, "accent": 94, "hit": 70},
+            {"role": "HIHAT", "pad": 3, "note": 42, "pulses": 8, "steps": 16, "rot": 0, "accent": 84, "hit": 60},
+        ]},
+        "drill": {"bpm": 142.0, "swing": 0.08, "swing_unit": 1, "hum": 3.5, "meter": "4/4", "voices": [
+            {"role": "KICK", "pad": 1, "note": 36, "pulses": 3, "steps": 16, "rot": 0, "accent": 122, "hit": 102},
+            {"role": "SNARE", "pad": 2, "note": 38, "pulses": 2, "steps": 16, "rot": 10, "accent": 118, "hit": 98},
+            {"role": "HIHAT", "pad": 3, "note": 42, "pulses": 9, "steps": 16, "rot": 0, "accent": 100, "hit": 72},
+        ]},
+        "trap": {"bpm": 140.0, "swing": 0.06, "swing_unit": 1, "hum": 3.0, "meter": "4/4", "voices": [
+            {"role": "KICK", "pad": 1, "note": 36, "pulses": 4, "steps": 16, "rot": 0, "accent": 120, "hit": 100},
+            {"role": "SNARE", "pad": 2, "note": 38, "pulses": 2, "steps": 16, "rot": 8, "accent": 116, "hit": 96},
+            {"role": "HIHAT", "pad": 3, "note": 42, "pulses": 11, "steps": 16, "rot": 0, "accent": 96, "hit": 68},
+        ]},
+        "house": {"bpm": 126.0, "swing": 0.16, "swing_unit": 1, "hum": 4.0, "meter": "4/4", "voices": [
+            {"role": "KICK", "pad": 1, "note": 36, "pulses": 4, "steps": 16, "rot": 0, "accent": 118, "hit": 108},
+            {"role": "CLAP", "pad": 2, "note": 38, "pulses": 2, "steps": 16, "rot": 12, "accent": 112, "hit": 98},
+            {"role": "HIHAT", "pad": 3, "note": 42, "pulses": 4, "steps": 16, "rot": 14, "accent": 102, "hit": 84},
+        ]},
+    }
+    st_clean = str(style or "boombap").strip().lower().replace("-", "_").replace(" ", "_")
+    spec = presets.get(st_clean) or presets["boombap"]
+    eff_bpm = max(40.0, min(260.0, float(bpm if bpm is not None else spec["bpm"])))
+    eff_swing = max(0.0, min(0.5, float(swing if swing is not None else spec["swing"])))
+    eff_unit = int(swing_unit if swing_unit in (1, 2) else spec["swing_unit"])
+    eff_hum = max(0.0, min(25.0, float(humanize_ms if humanize_ms is not None else spec["hum"])))
+    eff_spread = max(0.0, min(1.0, float(limb_spread)))
+    eff_conf = max(0.0, min(1.0, float(conformity)))
+    rng_gen = _rnd.Random(int(seed))
+
+    steps_per_bar = spec["voices"][0]["steps"]
+    total_steps = steps_per_bar * bars_i
+    step_ms = (60000.0 / eff_bpm) * (4.0 / steps_per_bar)
+
+    def _metric_weight(idx: int) -> float:
+        pos = idx % steps_per_bar
+        if pos == 0:
+            return 1.0
+        lvl = 0
+        v = pos
+        while v % 2 == 0:
+            lvl += 1
+            v //= 2
+        max_lvl = math.log2(max(2, steps_per_bar))
+        return 0.35 + 0.55 * (lvl / max_lvl)
+
+    shared_step_jitter = [(rng_gen.uniform(-1.0, 1.0) * eff_hum * (1.0 - eff_spread)) for _ in range(total_steps)]
+    tracks_out: List[Dict[str, Any]] = []
+    midi_events: List[Dict[str, Any]] = []
+
+    for v in spec["voices"]:
+        base_bar = bjorklund_steps(v["pulses"], steps_per_bar, v["rot"])
+        bar_chars = []
+        velocities: List[int] = []
+        for s_idx in range(total_steps):
+            on = base_bar[s_idx % steps_per_bar]
+            if not on:
+                velocities.append(0)
+                if s_idx < steps_per_bar:
+                    bar_chars.append(".")
+                continue
+            mw = _metric_weight(s_idx)
+            roll = rng_gen.random()
+            if mw < 1.0 and roll >= eff_conf:
+                mw = max(0.0, min(1.0, 0.45 + (1.0 - mw) * 0.75))
+            raw_vel = v["accent"] if mw >= 0.72 else v["hit"]
+            vel = max(1, min(127, int(round(raw_vel * (0.55 + 0.45 * mw)))))
+            velocities.append(vel)
+            if s_idx < steps_per_bar:
+                bar_chars.append("x" if vel >= 100 else ("o" if vel >= 72 else "s"))
+
+            # Swing time-warp según swingUnit (1 = 16ths, 2 = 8ths)
+            pair_size = 2 * eff_unit
+            in_pair = s_idx % pair_size
+            pair_start = (s_idx - in_pair) * step_ms
+            if in_pair < eff_unit:
+                warped_ms = pair_start + in_pair * step_ms * (1.0 + eff_swing)
+            else:
+                warped_ms = pair_start + eff_unit * step_ms * (1.0 + eff_swing) + (in_pair - eff_unit) * step_ms * (1.0 - eff_swing)
+
+            limb_off = rng_gen.uniform(-1.0, 1.0) * eff_hum * eff_spread
+            at_ms = max(0.0, round(warped_ms + shared_step_jitter[s_idx] + limb_off, 2))
+            midi_events.append({
+                "bar": (s_idx // steps_per_bar) + 1,
+                "step": (s_idx % steps_per_bar) + 1,
+                "pad": v["pad"],
+                "role": v["role"],
+                "channel": 1,
+                "midi_note": v["note"],
+                "velocity": vel,
+                "time_ms": at_ms,
+            })
+
+        tracks_out.append({
+            "role": v["role"],
+            "pad": v["pad"],
+            "midi_note": v["note"],
+            "channel": 1,
+            "euclidean": f"E({v['pulses']},{steps_per_bar})",
+            "pattern_1bar": "".join(bar_chars),
+            "velocities": velocities,
+        })
+
+    midi_events.sort(key=lambda ev: (ev["time_ms"], ev["midi_note"]))
+    return {
+        "success": True,
+        "style": st_clean,
+        "bpm": round(eff_bpm, 2),
+        "meter": spec["meter"],
+        "bars": bars_i,
+        "steps_per_bar": steps_per_bar,
+        "swing": round(eff_swing, 3),
+        "swing_unit": eff_unit,
+        "humanize_ms": round(eff_hum, 2),
+        "limb_spread": round(eff_spread, 3),
+        "conformity": round(eff_conf, 3),
+        "tracks": tracks_out,
+        "midi_events_count": len(midi_events),
+        "midi_events": midi_events,
+        "hardware_notes": [
+            "USB-MIDI en MPC Sample: activar SHIFT + PAD 8 (MIDI CONFIG) -> MIDI Port -> USB.",
+            "Filtrar Soft-Thru Echo en listeners USB-MIDI para evitar bucles de retorno.",
+            "Exclusividad MIDI vs Disk Mode: SHIFT + PAD 16 desconecta endpoints MIDI hasta expulsar la SD.",
+        ],
+    }
 
 
 if __name__ == "__main__":

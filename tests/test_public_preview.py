@@ -58,7 +58,7 @@ class PublicPreviewChecks(unittest.TestCase):
         self.assertTrue(all("astro1deep.github.io/BeatOS-TheMakerLicious/" in u for u in urls))
 
     def test_clean_zip_includes_readme_linked_landing_pages_and_screenshots(self):
-        from build_release import build_release
+        from build_release import VERSION, build_release
         import tempfile
         import zipfile
         with tempfile.TemporaryDirectory(prefix="beatos-release-preview-") as folder:
@@ -66,7 +66,7 @@ class PublicPreviewChecks(unittest.TestCase):
             build_release(archive)
             with zipfile.ZipFile(archive) as z:
                 names=set(z.namelist())
-                prefix="BeatOS-3.8.0/BeatOS/"
+                prefix=f"BeatOS-{VERSION}/BeatOS/"
                 for relative in (
                     "docs/index.html", "docs/index-es.html",
                     "docs/assets/screenshots/beatos-overview-en.png",

@@ -248,6 +248,67 @@ class APILanguageTests(unittest.TestCase):
                     )
                     self.assertNotEqual(es_payload.get("error"), en_payload.get("error"))
 
+    def test_ast_backend_spanish_error_strings_covered(self):
+        import ast
+        import re
+        from beatos_i18n import EXACT_EN, translate_text
+
+        repo_root = Path(__file__).resolve().parents[1]
+        spanish_hint = re.compile(
+            r"[áéíóúñ¿¡]|\b(no se|error al|faltan?|inválid|debe|archivo|muestra|carpeta|proyecto|ruta|requiere|permitid|banco|perfil|compresor|volumen)\b",
+            re.I,
+        )
+        uncovered = []
+        for fname in ("serve_mpc.py", "hardware_kit_builder.py", "index_mpc_library.py", "po_backup_protocols.py"):
+            tree = ast.parse((repo_root / fname).read_text(encoding="utf-8"))
+            for node in ast.walk(tree):
+                sample_str = None
+                if isinstance(node, ast.Raise) and isinstance(node.exc, ast.Call) and node.exc.args:
+                    a0 = node.exc.args[0]
+                    if isinstance(a0, ast.Constant) and isinstance(a0.value, str):
+                        sample_str = a0.value
+                    elif isinstance(a0, ast.JoinedStr):
+                        sample_str = "".join(v.value if isinstance(v, ast.Constant) else "1" for v in a0.values)
+                elif isinstance(node, ast.Dict):
+                    for k, v in zip(node.keys, node.values):
+                        if isinstance(k, ast.Constant) and k.value in ("error", "message", "warning", "detail"):
+                            if isinstance(v, ast.Constant) and isinstance(v.value, str):
+                                sample_str = v.value
+                            elif isinstance(v, ast.JoinedStr):
+                                sample_str = "".join(x.value if isinstance(x, ast.Constant) else "1" for x in v.values)
+                if sample_str and spanish_hint.search(sample_str):
+                    if sample_str not in EXACT_EN and translate_text(sample_str, "en") == sample_str:
+                        uncovered.append((fname, getattr(node, "lineno", 0), sample_str))
+        self.assertEqual(uncovered, [], f"Uncovered Spanish backend diagnostics: {uncovered[:10]}")
+
+    def test_induced_profile_bounce_melodee_backup_errors_translate(self):
+        generic_fallback = "Operation failed; original technical detail available in error_es."
+        with self.server() as url:
+            cases = [
+                ("/api/rack_mix_profiles/save", b"{}", "Assign at least 1 pad"),
+                ("/api/rack_mix_profiles/switch", b"{}", "Assign at least 1 pad"),
+                ("/api/rack_mix_profiles/reset", b"{}", "set_id or active pads"),
+                ("/api/audio_measure_bounce", b"{}", "Provide the path to the bounce WAV"),
+                ("/api/melodee_config", b'{"start_project": 123}', "must be a string"),
+                ("/api/po_backup_config", b'{"storage_mode": "invalid"}', "storage_mode must be"),
+            ]
+            for endpoint, body, expected_en in cases:
+                with self.subTest(endpoint=endpoint):
+                    status, en_payload = self.request(
+                        url + endpoint,
+                        data=body,
+                        headers={"Origin": url, "Content-Type": "application/json", "X-BeatOS-Language": "en"},
+                    )
+                    self.assertNotEqual(status, 200)
+                    self.assertNotEqual(en_payload.get("error"), generic_fallback)
+                    self.assertIn(expected_en, en_payload.get("error", ""))
+                    _, es_payload = self.request(
+                        url + endpoint,
+                        data=body,
+                        headers={"Origin": url, "Content-Type": "application/json", "X-BeatOS-Language": "es"},
+                    )
+                    self.assertNotEqual(es_payload.get("error"), en_payload.get("error"))
+
 
 if __name__ == "__main__":
     unittest.main()
