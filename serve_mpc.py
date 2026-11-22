@@ -2706,8 +2706,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
                           rhythm_analysis.get("groove_pattern") or fallback_style["style"]}
 
     if hiphop_adaptation and (
-        style_id in ("bolero", "oldies", "soul_vintage", "jazz_hop", "drumless", "bossa_samba", "cumbia_son", "tango_vals", "psych_library")
-        or style_id in ("lofi", "boombap")
+        (style_basis != "acoustic" and style_id in ("bolero", "oldies", "soul_vintage", "jazz_hop", "drumless", "bossa_samba", "cumbia_son", "tango_vals", "psych_library"))
         or adapt_mode in ("lofi_chill", "boombap_classic", "dilla_jazzhop", "drumless_alchemist")
     ):
         inferred_bpm = float(hiphop_adaptation["target_bpm"])
