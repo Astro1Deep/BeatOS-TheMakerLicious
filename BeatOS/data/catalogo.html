@@ -165,38 +165,38 @@
     }
 
     /* 2b. ASTRO1DEEP OBSIDIAN (GITHUB BANNER MONOLITH · HIGH-CONTRAST RELIEF) */
-    :root[data-theme="astro1deep-obsidian"],
-    body[data-theme="astro1deep-obsidian"] {
-      --bg-dark: #050507;
-      --bg-card: #0b0d12;
-      --bg-header: #11141c;
-      --bg-hover: #181c26;
-      --text-primary: #f4f6fb;
-      --text-muted: #a3adbf;
-      --mpc-red: #b0bac9;
-      --mpc-gold: #e2c07d;
-      --mpc-cyan: #cbd5e1;
-      --mpc-green: #34d399;
-      --border-color: #262b38;
-      --theme-accent: #cbd5e1;
-      --pad-cell-bg: linear-gradient(145deg, #13161f 0%, #08090d 100%);
-      --pad-cell-filled-bg: linear-gradient(145deg, #1c202c 0%, #0e1017 100%);
-      --pad-cell-empty-bg: #08090d;
-      --pad-border: #323846;
-      --dock-pad-bg: #0e1016;
-      --dock-pad-hover: #191d28;
-      --modal-bg: #0b0d12;
-      --modal-box-bg: rgba(203, 213, 225, 0.05);
-      --banner-bg: #050507;
-      --banner-paper: #0b0d12;
-      --banner-border: #262b38;
-      --banner-line: #cbd5e1;
-      --banner-device-bg: #050507;
-      --banner-accent: #cbd5e1;
-      --banner-accent2: #e2c07d;
-      --banner-accent3: #94a3b8;
-      --banner-text: #f4f6fb;
-      --banner-subtext: #a3adbf;
+    :root[data-theme="astro1deep-obsidian"] {
+      color-scheme: dark;
+      --bg-dark: #08090a;
+      --bg-card: #141519;
+      --bg-header: #191b20;
+      --bg-hover: #272a31;
+      --text-primary: #f4f5f7;
+      --text-muted: #b8bec8;
+      --mpc-red: #ffa3ac;
+      --mpc-gold: #efca86;
+      --mpc-cyan: #afc8e3;
+      --mpc-green: #91d6b1;
+      --border-color: #747d8c;
+      --theme-accent: #d5dbe5;
+      --pad-cell-bg: linear-gradient(145deg, #202229, #111216);
+      --pad-cell-filled-bg: linear-gradient(145deg, #2a2d34, #191b21);
+      --pad-cell-empty-bg: #111216;
+      --pad-border: #68717f;
+      --dock-pad-bg: #191b20;
+      --dock-pad-hover: #272a31;
+      --modal-bg: #141519;
+      --modal-box-bg: #202229;
+      --banner-bg: #08090a;
+      --banner-paper: #141519;
+      --banner-border: #555d6a;
+      --banner-line: #f4f5f7;
+      --banner-device-bg: #08090a;
+      --banner-accent: #d5dbe5;
+      --banner-accent2: #efca86;
+      --banner-accent3: #afc8e3;
+      --banner-text: #f4f5f7;
+      --banner-subtext: #b8bec8;
     }
 
     /* 3. AKAI MPC VINTAGE (ROGER LINN 1988 MPC 60 / 2000XL CLASSIC BEIGE) */
@@ -4502,6 +4502,47 @@
         grid-template-columns: minmax(0, 1fr) !important
       }
     }
+
+    [data-theme="astro1deep-obsidian"] :is(.header h1 span.logo-mpc, .tab-badge, .chip.active,
+      .btn-reset-filters:hover, .btn-play, .rack-floating-badge .count-tag, .btn-pad-target.active,
+      .btn-pad-play, .rack-btn-primary, .maint-btn-red, .tab-btn.active .tab-badge) {
+      background: var(--theme-accent);
+      color: var(--bg-dark);
+      box-shadow: none;
+    }
+    [data-theme="astro1deep-obsidian"] .tab-btn.active .tab-sub { color: var(--bg-dark); }
+    [data-theme="astro1deep-obsidian"] .tab-btn.active .tab-badge { background: var(--bg-dark); color: var(--theme-accent); }
+    [data-theme="astro1deep-obsidian"] .tab-btn.active { box-shadow: 0 0 16px #d5dbe530; }
+    [data-theme="astro1deep-obsidian"] .tab-btn:hover:not(.active) { background: var(--bg-hover); }
+    [data-theme="astro1deep-obsidian"] .po33-btn-action { background: var(--mpc-cyan); }
+    [data-theme="astro1deep-obsidian"] .po33-btn-danger { background: #873544; color: #fff; }
+    [data-theme="astro1deep-obsidian"] .rack-side-bank-card.active {
+      background: var(--bg-hover);
+      box-shadow: 0 0 12px #d5dbe530;
+    }
+    [data-theme="astro1deep-obsidian"] .hero-banner { background: #08090a; }
+    [data-theme="astro1deep-obsidian"] #heroBackdropImg { visibility: hidden; }
+    [data-theme="astro1deep-obsidian"] #heroBannerImg { width: 100%; max-height: 480px; }
+    [data-theme="astro1deep-obsidian"] .hero-banner.expanded #heroBannerImg { max-height: none; }
+    .theme-card-option:focus-visible,
+    [data-theme="astro1deep-obsidian"] :is(button, a, input, select, textarea, summary):focus-visible {
+      outline: 3px solid var(--theme-accent);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 3px var(--bg-dark);
+    }
+    .theme-card-option--obsidian {
+      background: #141519;
+      border: 1px solid #68717f;
+      border-radius: 8px;
+      color: #f4f5f7;
+      cursor: pointer;
+      font: inherit;
+      padding: 12px;
+      text-align: start;
+    }
+    .theme-card-option--obsidian strong,
+    .theme-card-option--obsidian span { display: block; }
+    .theme-card-option--obsidian span { color: #b8bec8; font-size: 12px; margin-top: 8px; }
   </style>
 </head>
 
@@ -6155,21 +6196,11 @@
             </div>
 
             <!-- 9. Astro1Deep Obsidian (GitHub Banner Relief) -->
-            <div class="theme-card-option" id="themeCard_astro1deep-obsidian"
-              onclick="setEcosystemTheme('astro1deep-obsidian')"
-              style="background:#050507; border:1px solid #262b38; border-radius:8px; padding:12px; cursor:pointer; transition:0.2s;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <strong style="color:#f4f6fb; font-size:13.5px;">👁️ Astro1Deep Obsidian</strong>
-                <div style="display:flex; gap:3px;">
-                  <span
-                    style="width:10px; height:10px; border-radius:50%; background:#181c26; border:1px solid #64748b;"></span>
-                  <span style="width:10px; height:10px; border-radius:50%; background:#cbd5e1;"></span>
-                  <span style="width:10px; height:10px; border-radius:50%; background:#e2c07d;"></span>
-                </div>
-              </div>
-              <p style="font-size:12px; color:#a3adbf; line-height:1.5;">Monolito de obsidiana (GitHub Banner): Negro
-                abisal (#050507), relieve en plata mercurio (#cbd5e1) y tipografía de alto contraste.</p>
-            </div>
+            <button type="button" class="theme-card-option theme-card-option--obsidian" id="themeCard_astro1deep-obsidian"
+                    aria-pressed="false" onclick="setEcosystemTheme('astro1deep-obsidian')">
+              <strong>👁️ Astro1Deep Obsidian</strong>
+              <span>Monolito de obsidiana (#08090a), relieve en plata cromo y tipografía de alto contraste.</span>
+            </button>
           </div>
         </div>
       </div>
@@ -13591,7 +13622,12 @@ const I18N = {
       // Palette changes preserve the user's selected patchbay/cable background.
       const heroImg = document.getElementById('heroBannerImg');
       const heroContainer = document.querySelector('.hero-banner');
-      if (heroImg) heroImg.src = themeObj.banner;
+      if (heroImg) {
+        heroImg.src = themeObj.banner;
+        heroImg.alt = themeObj.id === 'astro1deep-obsidian'
+          ? 'Emblema de Astro1Deep en negro y cromo'
+          : 'Banner blueprint original de BeatOS con MPC One, MPC Sample, Maschine+, SP-404MKII, EP-133 y PO-33';
+      }
       if (heroContainer) heroContainer.style.borderBottomColor = themeObj.accent;
 
       // Actualizar pill en header
@@ -13599,11 +13635,14 @@ const I18N = {
       const pillLabel = document.getElementById('themePillLabel');
       if (pillIcon) pillIcon.textContent = themeObj.icon;
       if (pillLabel) pillLabel.textContent = themeObj.shortName;
+      const activeBadge = document.getElementById('activeThemeBadge');
+      if (activeBadge) activeBadge.textContent = themeObj.name;
 
       // Actualizar cards en pestaña de Mantenimiento / Ajustes
       ECOSYSTEM_THEMES.forEach(t => {
         const card = document.getElementById('themeCard_' + t.id);
         if (card) {
+          if (card.tagName === 'BUTTON') card.setAttribute('aria-pressed', String(t.id === themeObj.id));
           if (t.id === themeObj.id) {
             card.style.border = '2px solid ' + t.borderActive;
             card.style.boxShadow = '0 0 16px ' + t.accent + '44';
