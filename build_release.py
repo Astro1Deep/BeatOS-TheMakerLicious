@@ -12,7 +12,7 @@ from index_mpc_library import render_catalog
 from beatos_paths import entry_html, ENTRY_NAMES, CATALOG_REL
 
 
-FILES = ('serve_mpc.py', 'hardware_kit_builder.py', 'po_backup_protocols.py', 'vendor/po33_decode.py', 'vendor/po33_verify.py', 'vendor/PO33_DECODER_LICENSE.txt', 'index_mpc_library.py', 'beatos_paths.py', 'beatos_i18n.py', 'beatos_runtime.py',
+FILES = ('serve_mpc.py', 'hardware_kit_builder.py', 'mpc_compat.py', 'po_backup_protocols.py', 'vendor/po33_decode.py', 'vendor/po33_verify.py', 'vendor/PO33_DECODER_LICENSE.txt', 'index_mpc_library.py', 'beatos_paths.py', 'beatos_i18n.py', 'beatos_runtime.py',
          'installer.py', 'install.sh', 'requirements-beatos.txt', 'schema.sql', 'LICENSE', 'LICENSE.md',
          'README.md', 'README_ES.md', 'language_config.json', 'GUIA_INSTALACION.md', 'GUIA_INSTALACION_EN.md', 'build_release.py',
          'templates/catalogo.html', 'docs/assets/po33-capture-worklet.js', 'docs/assets/beatos-maintenance.js', 'docs/MASTER_ECOSISTEMA_DISCOS.html', 'templates/template_drum.xpm',

@@ -58,8 +58,9 @@ class MuteGroups(unittest.TestCase):
                 if recalibrate:
                     calibrate_xpj(project, backup=False, smart_acoustics=False)
                 tracks = json.loads(gzip.decompress(project.read_bytes()).split(b"\n", 5)[5])["data"]["tracks"]
-                self.assertEqual(len(tracks), 1)
-                insts = tracks[0]["program"]["drum"]["instruments"]
+                drum_tracks = [t for t in tracks if t.get("program", {}).get("type", 0) not in (8, 9)]
+                self.assertEqual(len(drum_tracks), 1)
+                insts = drum_tracks[0]["program"]["drum"]["instruments"]
                 actual_positions = [n for n, inst in enumerate(insts, 1) if inst["layersv"][0]["active"]]
                 self.assertEqual(actual_positions, positions)
                 routes = [insts[n - 1]["mixable"]["audioRoute"] for n in positions]

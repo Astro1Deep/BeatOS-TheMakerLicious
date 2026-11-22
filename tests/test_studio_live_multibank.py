@@ -352,12 +352,12 @@ class TestStudioLiveAndMultibank(unittest.TestCase):
         # Pad 1 con volume_locked=True a 0.707946 NO fue sobrescrito por el centinela
         inst0 = obj["data"]["tracks"][0]["program"]["drum"]["instruments"][0]
         self.assertAlmostEqual(inst0["mixable"]["volume"], 0.707946, places=5)
-        # submix_split: Kick -> Submix 1 (dest=1, subIdx=0), 808 -> Submix 2 (dest=1, subIdx=1)
+        # submix_split (PR #21 canónico): Kick -> Track (dest=0, subIdx=0), 808 -> Submix 1 (dest=1, subIdx=0)
         inst1 = obj["data"]["tracks"][0]["program"]["drum"]["instruments"][1]
-        self.assertEqual(inst0["mixable"]["audioRoute"]["destination"], 1)
+        self.assertEqual(inst0["mixable"]["audioRoute"]["destination"], 0)
         self.assertEqual(inst0["mixable"]["audioRoute"]["audioRouteSubIndex"], 0)
         self.assertEqual(inst1["mixable"]["audioRoute"]["destination"], 1)
-        self.assertEqual(inst1["mixable"]["audioRoute"]["audioRouteSubIndex"], 1)
+        self.assertEqual(inst1["mixable"]["audioRoute"]["audioRouteSubIndex"], 0)
 
     def test_bounce_loudness_endpoint_and_cerebro_playbook_9_cards(self) -> None:
         st, res = self._req("POST", "/api/audio_measure_bounce", {"path": "Samples/Kick_Punch_90.wav"})

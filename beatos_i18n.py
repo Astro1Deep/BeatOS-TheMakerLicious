@@ -139,7 +139,6 @@ EXACT_EN = {
     'La base de datos SQLite no está disponible.': 'The SQLite database is unavailable.',
     'La base de datos SQLite no existe todavía. Ejecuta una reindexación primero.': 'The SQLite database does not exist yet. Run a reindex first.',
     'La muestra externa no pertenece a una biblioteca montada autorizada.': 'The external sample does not belong to an authorized mounted library.',
-    'La plantilla no declara SAMPLES': 'The template does not declare SAMPLES',
     'Missing backup file': 'Missing backup file',
     'Missing backup path': 'Missing backup path',
     'Mute group must be between 0 and 32': 'Mute group must be between 0 and 32',

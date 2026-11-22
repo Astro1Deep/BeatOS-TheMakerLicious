@@ -779,7 +779,7 @@ def sync_beatos_bridge(
                 pass
         return False
 
-    if os.environ.get("BEATOS_ALLOW_TEMP_BRIDGE") != "1" and _is_temp_test_root(str(root_dir)):
+    if os.environ.get("BEATOS_ALLOW_TEMP_BRIDGE") != "1" and _is_temp_test_root(str(root_dir)) and not _is_temp_test_root(str(Path.home())):
         return False
 
     libs = mounted_libraries if mounted_libraries is not None else discover_mounted_audio_libraries(root_dir)
@@ -2261,6 +2261,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
         filtered_pads_in = [x for x in pads_in if isinstance(x, dict)]
 
     pad_reports = []
+    text_tokens = [kit_name]
     sub_heavy_count = 0
     open_hat_count = 0
     closed_hat_count = 0
@@ -2279,6 +2280,7 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
         sname = str(item.get("sample_name") or item.get("sampleName") or "").strip()
         rel_path = str(item.get("rel_path") or item.get("relPath") or "").strip()
         stype = str(item.get("sound_type") or item.get("soundType") or "").strip().upper()
+        text_tokens.append(f"{sname} {rel_path}")
         filename = Path(rel_path).name or sname
         label_style = kit_mod.detect_musical_style(filename) if kit_mod else {"id": "standard"}
 
@@ -3610,7 +3612,7 @@ def get_system_status(root_dir: str, port: int = 8888):
         "disk_free_gb": round(disk_stat.free / (1024**3), 2) if disk_stat else 0,
         "disk_total_gb": round(disk_stat.total / (1024**3), 2) if disk_stat else 0,
         "task_state": _snapshot_task_state(),
-        "cerebro_os": detect_cerebro_os(root_dir, port),
+        "cerebro_os": detect_cerebro_os(root_dir),
         "capabilities_summary": caps_summary,
     }
 

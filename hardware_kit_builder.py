@@ -3893,14 +3893,7 @@ def _resolve_pad_submix_for_route_mode(sound_type: str, audio_route_mode: str) -
     if mode == "main":
         return 9
     if mode == "submix_split":
-        st = str(sound_type or "PERCUSSION").strip().upper()
-        if st in ("KICK", "SNARE", "CLAP", "TOM", "HIHAT", "CYMBAL", "PERCUSSION"):
-            return 1
-        if st in ("BASS_808", "BASS"):
-            return 2
-        if st in ("MELODIC_LOOP", "KEYS_SYNTH", "VOCAL", "CHOP", "LOOP"):
-            return 3
-        return 0
+        return mpc_role_submix(str(sound_type or "PERCUSSION").strip().upper())
     return 0
 
 
@@ -3958,6 +3951,7 @@ def export_mpc_project(
     gain_profile = str(opts.get("gain_profile") or "smart_pcm").strip().lower()
     force_gain_profile = bool(opts.get("force_gain_profile", False))
     audio_route_mode = str(opts.get("audio_route_mode") or "track").strip().lower()
+    pads_data = mpc_routed_pads(pads_data, audio_route_mode)
     multitrack_mode = str(opts.get("multitrack_mode") or "single").strip().lower()
     auto_tune_808 = bool(opts.get("auto_tune_808", False))
     mix_mode = _normalize_mix_mode(opts.get("mix_mode"))
@@ -4004,9 +3998,6 @@ def export_mpc_project(
         stype = str(p_copy.get("sound_type") or detect_sound_type(s_stem or s_name)).upper()
         p_copy["sound_type"] = stype
 
-        pad_default_submix = _resolve_pad_submix_for_route_mode(stype, audio_route_mode)
-        if ("submix" not in p_copy or p_copy.get("submix") in (None, "")) and pad_default_submix != 0:
-            p_copy["submix"] = pad_default_submix
         raw_vol = p_copy.get("volume")
         vol_locked = bool(p_copy.get("volume_locked"))
         is_default_vol = (not vol_locked) and (raw_vol is None or (math.isfinite(float(raw_vol)) and abs(float(raw_vol) - 0.707946) < 1e-5))
@@ -4040,7 +4031,7 @@ def export_mpc_project(
             except Exception:
                 pass
 
-        ext_pad = _extract_extended_pad_params(p_copy, default_submix=pad_default_submix)
+        ext_pad = _extract_extended_pad_params(p_copy)
         sample_root = ext_pad["root_note"] if ext_pad["root_note"] > 0 else 60
         if s_name not in seen_files:
             seen_files.add(s_name)
@@ -4190,8 +4181,7 @@ def export_mpc_project(
                 pan = float(p_info.get("pan", 0.500000))
                 tune = max(-24, min(24, int(p_info.get("tune", 0))))
                 mute = pad_mute_group(p_info)
-                pad_def_sub = _resolve_pad_submix_for_route_mode(inferred_type, audio_route_mode)
-                ext = _extract_extended_pad_params(p_info, default_submix=pad_def_sub)
+                ext = _extract_extended_pad_params(p_info)
 
                 inst["coarseTune"] = tune
                 inst["fineTune"] = ext["fine_tune"]
