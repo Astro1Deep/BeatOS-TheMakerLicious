@@ -349,7 +349,7 @@ ctx.locale.refresh();
 assert.equal(protectedTitle.nodeValue,'Nombre','protected project title must survive ES restoration');
 ctx.document.createTreeWalker=originalTreeWalker;
 
-assert.ok(!html.includes('beatos-maintenance.js'), 'dead beatos-maintenance.js reference must be removed');
+assert.ok(!html.includes('beatos-maintenance.js') || fs.existsSync(path.join(__dirname, '..', 'docs', 'assets', 'beatos-maintenance.js')), 'referenced beatos-maintenance.js asset must exist');
 const simStart = html.indexOf('function runCerebroSimilarSamples(');
 const simEnd = html.indexOf('function importExternalSampleToPad(', simStart);
 assert.ok(simStart > -1 && simEnd > simStart);
