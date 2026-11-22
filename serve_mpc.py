@@ -2697,7 +2697,9 @@ def analyze_rack_with_cerebro(root_dir: str, payload: dict, *, port: int | None 
             }
 
     if rhythm_analysis and rhythm_analysis.get("basis") != "kit_label":
-        inferred_bpm = rhythm_analysis.get("source_bpm") or inferred_bpm
+        ra_bpm = rhythm_analysis.get("source_bpm")
+        if ra_bpm and (bpm_source == "genre_inference" or (reference_sample and reference_sample.get("tagged_bpm"))):
+            inferred_bpm = ra_bpm
         acoustic_style = rhythm_analysis.get("acoustic_style_id")
         if style_basis == "undetermined" and acoustic_style in crate_digging_styles:
             style_id = acoustic_style
